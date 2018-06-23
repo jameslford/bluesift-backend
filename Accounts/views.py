@@ -1,3 +1,16 @@
+# Accounts.views.py
+
 from django.shortcuts import render
 
-# Create your views here.
+#def register_user(request):
+ #   if request.method == 'POST':
+
+
+
+
+
+
+
+#def register_supplier(request):
+ #   if request.method == 'POST':
+

@@ -6,8 +6,10 @@ from Plans.models import Plan
 
 
 
+
 class UserManager(BaseUserManager):
-    def create_user(self, email, first_name=None, last_name=None, password=None, is_active=True, is_staff=False, is_admin=False, is_supplier=False):
+      
+    def create_user(self, email, first_name=None, last_name=None, password=None, is_active=True, is_staff=False, is_admin=False, plan=None, confirmed=False, is_supplier=False):
         if not email:
             raise ValueError("User must have an email address")
         if not password:
@@ -23,6 +25,8 @@ class UserManager(BaseUserManager):
         user_obj.admin = is_admin
         user_obj.is_active = is_active
         user_obj.is_supplier = is_supplier
+        user_obj.confirmed = confirmed
+        user_obj.plan = plan
         user_obj.save(using=self.db)
         return user_obj
 
@@ -33,7 +37,8 @@ class UserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
             password=password,
-            is_staff=True
+            is_staff=True,
+            confirmed=True
         )
         return user
 
@@ -45,7 +50,8 @@ class UserManager(BaseUserManager):
             last_name=last_name,
             password=password,
             is_staff=True,
-            is_admin=True
+            is_admin=True,
+            confirmed=True
         )
         return user
 
@@ -58,16 +64,20 @@ class UserManager(BaseUserManager):
             is_supplier=True
         )
         return user
-    
+  
+        
+
 
 
 class User(AbstractBaseUser):
 
-    email               = models.EmailField(max_length=200, help_text = 'Email')
+    email               = models.EmailField(max_length=200, help_text ='Email', unique=True)
     first_name          = models.CharField(max_length=50, help_text='First Name', null=True)
     last_name           = models.CharField(max_length=50, help_text='Last Name', null=True)
-    plan                = models.ForeignKey(Plan, null=True, on_delete=models.SET_NULL)
+    plan                = models.ForeignKey(Plan,null=True, blank=True, on_delete=models.SET_NULL)
     is_supplier         = models.BooleanField(default=False)
+    date_registered     = models.DateTimeField(auto_now_add=True, null=True)
+    confirmed           = models.BooleanField(default=False)
 
     is_active           = models.BooleanField(default=True)
     staff               = models.BooleanField(default=False)
@@ -108,10 +118,8 @@ class User(AbstractBaseUser):
         return self.admin
 
 
-    class Meta:
-        unique_together = (('email','is_supplier'))
+    def has_perm(self, perm, obj=None):
+        return True
 
-    
-
-
-
+    def has_module_perms(self, app_label):
+        return True

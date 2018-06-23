@@ -2,12 +2,12 @@
 
 from django.db import models
 
-
 class Plan(models.Model):
-    CHOICES = (
+
+    TIERS = (
         (0,'Free'),
         (1,'Premium'),
         (2,'Enterprise')
-    )
+        )
+    tier = models.IntegerField(choices=TIERS, default=0)
 
-    selection = models.SmallIntegerField(choices=CHOICES)
