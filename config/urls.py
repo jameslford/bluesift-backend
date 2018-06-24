@@ -16,9 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from .views import landing
+from API.views import ProductList, create_user
 
 urlpatterns = [
     path('', landing),
     path('admin/', admin.site.urls),
+    path('products/', ProductList.as_view()),
+    path('register/', create_user),
    
 ]

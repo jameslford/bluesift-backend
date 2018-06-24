@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'djmoney',
     'rest_framework',
+    #'rest_framework.authtoken',
+    'API',
     'Accounts',
     'Libraries',
     'Plans',

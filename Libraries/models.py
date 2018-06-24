@@ -26,7 +26,11 @@ class SupplierProduct(models.Model):
 
 class Library(models.Model):
     owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    materials = models.ManyToManyField(Product)
+    materials = models.ManyToManyField(Product, null=True, blank=True)
+    name = models.CharField(max_length=50, default='Library')
+    
+    def __str__(self):
+        return self.name
    
 
 

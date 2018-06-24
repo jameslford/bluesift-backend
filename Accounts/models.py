@@ -55,15 +55,6 @@ class UserManager(BaseUserManager):
         )
         return user
 
-    def create_supplier(self, email, first_name=None, last_name=None, password=None):
-        user = self.create_user(
-            email,
-            first_name=first_name,
-            last_name=last_name,
-            password=password,
-            is_supplier=True
-        )
-        return user
   
         
 
