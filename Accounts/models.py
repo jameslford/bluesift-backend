@@ -9,15 +9,19 @@ from Plans.models import Plan
 
 class UserManager(BaseUserManager):
       
-    def create_user(self, email, first_name=None, last_name=None, password=None, is_active=True, is_staff=False, is_admin=False, plan=None, confirmed=False, is_supplier=False):
+    def create_user(self, email, first_name=None, 
+                        last_name=None, password=None, 
+                        is_active=True, is_staff=False, 
+                        is_admin=False, plan=None, 
+                        confirmed=False, is_supplier=False):
         if not email:
             raise ValueError("User must have an email address")
         if not password:
             raise ValueError("Users must have a password")
         user_obj = self.model(
-            email = self.normalize_email(email),
-            first_name = first_name,
-            last_name = last_name
+            email=self.normalize_email(email),
+            first_name=first_name,
+            last_name=last_name
         )
 
         user_obj.set_password(password)
@@ -25,7 +29,6 @@ class UserManager(BaseUserManager):
         user_obj.admin = is_admin
         user_obj.is_active = is_active
         user_obj.is_supplier = is_supplier
-        user_obj.confirmed = confirmed
         user_obj.plan = plan
         user_obj.save(using=self.db)
         return user_obj
@@ -37,8 +40,8 @@ class UserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
             password=password,
-            is_staff=True,
-            confirmed=True
+            is_active=True,
+            is_staff=True
         )
         return user
 
@@ -51,7 +54,7 @@ class UserManager(BaseUserManager):
             password=password,
             is_staff=True,
             is_admin=True,
-            confirmed=True
+            is_active=True  
         )
         return user
 
@@ -63,14 +66,15 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser):
 
     email               = models.EmailField(max_length=200, help_text ='Email', unique=True)
-    first_name          = models.CharField(max_length=50, help_text='First Name', null=True)
-    last_name           = models.CharField(max_length=50, help_text='Last Name', null=True)
+    first_name          = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
+    last_name           = models.CharField(max_length=50, help_text='Last Name', null=True, blank=True)
     plan                = models.ForeignKey(Plan,null=True, blank=True, on_delete=models.SET_NULL)
     is_supplier         = models.BooleanField(default=False)
     date_registered     = models.DateTimeField(auto_now_add=True, null=True)
-    confirmed           = models.BooleanField(default=False)
+    date_confirmed      = models.DateTimeField(auto_now_add=True, null=True)
+    
 
-    is_active           = models.BooleanField(default=True)
+    is_active           = models.BooleanField(default=False)
     staff               = models.BooleanField(default=False)
     admin               = models.BooleanField(default=False)
    

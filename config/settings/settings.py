@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'djmoney',
     'rest_framework',
-    #'rest_framework.authtoken',
+    'rest_framework.authtoken',
     'API',
     'Accounts',
     'Libraries',
@@ -132,3 +132,22 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'Accounts.User'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# setup for staging/development:
+'''EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'jameslford8@gmail.com'
+EMAIL_HOST_PASSWORD = '%&N2aBsub'
+EMAIL_PORT = 587'''
+
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
