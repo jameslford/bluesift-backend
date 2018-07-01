@@ -6,9 +6,15 @@ from django.contrib.auth import get_user_model
 from Products.models import Product, Manufacturer
 from django.conf import settings
 class ProductSerializer(serializers.ModelSerializer):
+
+    manufacturer_name = serializers.SerializerMethodField('get_manu_name')
     class Meta:
+
         model = Product
-        fields = ('manufacturer', 'name', 'image')
+        fields = ('manufacturer_name', 'manufacturer', 'name', 'image')
+
+    def get_manu_name (self, obj):
+        return obj.manufacturer.name
 
 '''class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=20)
@@ -45,6 +51,7 @@ class UserSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=100, required=False)
     password = serializers.CharField(max_length=20, write_only=True)
     is_supplier = serializers.BooleanField(default=False, required=False)
+    id = serializers.ReadOnlyField()
     
    
 
