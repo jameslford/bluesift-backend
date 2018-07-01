@@ -25,7 +25,7 @@ AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'
 AWS_MEDIA_BUCKET_NAME = "pixidesk-staging-media"
 AWS_S3_REGION_NAME =   'us-east-1'
 
-WSGI_APPLICATION = 'config.wsgi.application'
+#WSGI_APPLICATION = 'config.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
