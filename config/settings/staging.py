@@ -1,4 +1,5 @@
 from .base import *
+import dj_database_url
 
 DEBUG = True
 
@@ -8,10 +9,16 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.contrib.gis.db.backends.postgresql_psycopg2',
+        'NAME': 'BBDB',
+        'USER': 'postgres',
+        'PASSWORD': '',
     }
 }
+
+
+db_from_env = dj_database_url.config(conn_max_age=500)
+DATABASES['default'] = dj_database_url.config(db_from_env)
 
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'
