@@ -28,8 +28,8 @@ AWS_S3_REGION_NAME =   'us-east-1'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+       # 'rest_framework.authentication.BasicAuthentication',
+       # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     )
 }
