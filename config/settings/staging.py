@@ -36,8 +36,8 @@ REST_FRAMEWORK = {
 }
 
 
-EMAIL_USE_TLS = True
+'''EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'jameslford8@gmail.com'
 EMAIL_HOST_PASSWORD = '%&N2aBsub'
-EMAIL_PORT = 587
+EMAIL_PORT = 587'''
