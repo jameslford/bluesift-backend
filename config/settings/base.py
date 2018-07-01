@@ -41,6 +41,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+SITE_ID = 1
+
 
 TEMPLATES = [
     {
