@@ -1,1 +1,1 @@
-web: gunicorn BBdjango.wsgi --log-file -
+web: gunicorn BBdjango.config.wsgi --log-file -
