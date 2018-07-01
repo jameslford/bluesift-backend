@@ -15,6 +15,7 @@ INSTALLED_APPS = [
 
     'djmoney',
     'storages',
+    'corsheaders',
 
     'rest_framework',
     'rest_framework.authtoken',
