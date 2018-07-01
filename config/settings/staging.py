@@ -1,10 +1,10 @@
 from .base import *
 import dj_database_url
 
-DEBUG = False
+DEBUG = True
 SECRET_KEY = os.environ['SECRET_KEY']
 ALLOWED_HOSTS = ['*']
-
+CORS_ORIGIN_ALLOW_ALL = DEBUG
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DATABASES = {
