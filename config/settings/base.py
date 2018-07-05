@@ -98,7 +98,7 @@ AUTH_USER_MODEL = 'Accounts.User'
 
 
 STATICFILES_LOCATION = 'static'
-#STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
+STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
 
 MEDIAFILES_LOCATION = 'media'
-#DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
+DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
