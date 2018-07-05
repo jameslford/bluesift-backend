@@ -9,7 +9,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 
 ALLOWED_HOSTS = ['*']
-#CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
