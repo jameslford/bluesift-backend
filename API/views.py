@@ -14,10 +14,11 @@ from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
-from .serializers import ProductSerializer, CreateUserSerializer
+from .serializers import ProductSerializer, CreateUserSerializer, UserSerializer
 from Products.models import Product 
 from Libraries.models import UserLibrary, SupplierLibrary
 
@@ -34,6 +35,9 @@ class ProductList(APIView):
 @api_view(['POST'])
 def create_user(request):
     serializer = CreateUserSerializer(data=request.data)
+    
+    #serializer = CreateUserSerializer()
+
     if serializer.is_valid():
         user = serializer.save()
         lib_name = user.get_first_name() + "'s Library"

@@ -65,7 +65,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser):
 
-    email               = models.EmailField(max_length=200, help_text ='Email', unique=True)
+    email               = models.EmailField(max_length=200, unique=True)
     first_name          = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
     last_name           = models.CharField(max_length=50, help_text='Last Name', null=True, blank=True)
     plan                = models.ForeignKey(Plan,null=True, blank=True, on_delete=models.SET_NULL)
