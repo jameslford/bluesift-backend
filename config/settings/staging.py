@@ -10,7 +10,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 
@@ -46,71 +46,13 @@ REST_FRAMEWORK = {
 
 
 
-'''EMAIL_USE_TLS = True
+EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'jameslford8@gmail.com'
 EMAIL_HOST_PASSWORD = '%&N2aBsub'
-EMAIL_PORT = 587'''
+EMAIL_PORT = 587
 
 
 
 
 
-''' <!-- Staging policy -->
-<CORSConfiguration>
-	<CORSRule>
-		<AllowedOrigin>*</AllowedOrigin>
-		<AllowedMethod>GET</AllowedMethod>
-		<MaxAgeSeconds>3000</MaxAgeSeconds>
-		<AllowedHeader>Authorization</AllowedHeader>
-	</CORSRule>
-</CORSConfiguration> 
-
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "PublicReadGetObject",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "arn:aws:iam::111696298610:user/pixidesk-staging"
-            },
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::pixidesk-staging/*"
-        }
-    ]
-}
-
-'''
-
-
-''' <?xml version="1.0" encoding="UTF-8"?>
-<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-<CORSRule>
-    <AllowedOrigin>*</AllowedOrigin>
-    <AllowedMethod>PUT</AllowedMethod>
-    <AllowedMethod>POST</AllowedMethod>
-    <AllowedMethod>GET</AllowedMethod>
-    <MaxAgeSeconds>3000</MaxAgeSeconds>
-    <AllowedHeader>*</AllowedHeader>
-</CORSRule>
-</CORSConfiguration>
-
-
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "PublicReadGetObject",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "arn:aws:iam::111696298610:user/pixidesk-development"
-            },
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::pixidesk-development/*"
-        }
-    ]
-}
-
-
-'''
