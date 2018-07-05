@@ -8,7 +8,14 @@ STATIC_URL = '/static/'
 
 ALLOWED_HOSTS = []
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_HOST_USER = 'BuildingBook'
+EMAIL_HOST_PASSWORD = 'M&5#OXp29yMX'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-development'
 AWS_MEDIA_BUCKET_NAME = 'pixidesk-development-media'
