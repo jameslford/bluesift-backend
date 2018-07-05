@@ -3,6 +3,8 @@ import dj_database_url
 
 DEBUG = True
 
+
+STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
 
 
