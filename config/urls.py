@@ -20,7 +20,7 @@ from django.urls import path, include, re_path
 from rest_framework.authtoken import views
 from django.conf.urls import url
 from .views import landing
-from API.views import ProductList, create_user, activate
+from API.views import ProductList, create_user, activate, login
 
 urlpatterns = [
     path('', landing, name = 'home'),
@@ -29,6 +29,7 @@ urlpatterns = [
     path('register/', create_user),
     #url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', activate, name='activate'),
     path('activate/<uidb64>/<token>', activate, name='activate'),
-    path('login', views.obtain_auth_token)
+    path('login/', login)
+    #path('login/', views.obtain_auth_token)
    
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

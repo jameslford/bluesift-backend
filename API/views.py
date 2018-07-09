@@ -12,6 +12,7 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework.views import APIView
 from rest_framework import generics
+from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
 from rest_framework import status
@@ -82,7 +83,17 @@ def activate(request, uidb64, token):
 
 
 
+@api_view(["POST"])
+def login(request):
+    email = request.data.get("email")
+    password = request.data.get("password")
 
+    user = authenticate(email=email, password=password)
+    if not user:
+        return Response({"error": "Login failed"}, status=HTTP_401_UNAUTHORIZED)
+
+    token, _ = Token.objects.get(user=user)
+    return Response({"token": token.key})
 
 
 
