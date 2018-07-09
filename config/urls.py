@@ -14,7 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf.urls.static import static
+from django.conf import settings
 from django.urls import path, include, re_path
+from rest_framework.authtoken import views
 from django.conf.urls import url
 from .views import landing
 from API.views import ProductList, create_user, activate
@@ -25,6 +28,7 @@ urlpatterns = [
     path('products/', ProductList.as_view()),
     path('register/', create_user),
     #url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', activate, name='activate'),
-    path('activate/<uidb64>/<token>', activate, name='activate')
+    path('activate/<uidb64>/<token>', activate, name='activate'),
+    path('login', views.obtain_auth_token)
    
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
