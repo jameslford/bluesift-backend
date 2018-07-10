@@ -1,11 +1,14 @@
 # API.views.py
 import datetime
+from rest_framework.renderers import JSONRenderer
 
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model, login, authenticate
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
+from rest_framework.parsers import JSONParser
 from django.http import HttpResponse
+import json
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
@@ -14,13 +17,14 @@ from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from rest_framework.status import HTTP_401_UNAUTHORIZED
 
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
-from .serializers import ProductSerializer, CreateUserSerializer, UserSerializer
+from .serializers import ProductSerializer, CreateUserSerializer, UserSerializer, LoginSerializer, TokenSerializer
 from Products.models import Product 
 from Libraries.models import UserLibrary, SupplierLibrary
 
@@ -37,8 +41,6 @@ class ProductList(APIView):
 @api_view(['POST'])
 def create_user(request):
     serializer = CreateUserSerializer(data=request.data)
-    
-    #serializer = CreateUserSerializer()
 
     if serializer.is_valid():
         user = serializer.save()
@@ -81,29 +83,47 @@ def activate(request, uidb64, token):
     else:
         return HttpResponse('Activation link is invalid!')
 
+@api_view(['POST'])
+def get_token(request):
+    serializer = LoginSerializer(data=request.data)
+    userModel = get_user_model()
+    if serializer.is_valid():
+        email = serializer.data['email']
+        password = serializer.data['password']
+        try:
+            user = userModel.objects.get(email=email)
+        except(TypeError, ValueError, OverflowError, userModel.DoesNotExist):
+            user = None
+        if user:
+            if password == user.password:
+                if user.is_active == True:
+                    token = Token.objects.get(user=user)
+                    sToken = TokenSerializer(instance=token)
+                    sUser = UserSerializer(instance=user)
+                    content = {
+                        'key' : sToken.data['key'],
+                        'email' : sUser.data['email'],
+                        'first_name' : sUser.data['first_name'],
+                        'last_name' : sUser.data['last_name'],
+                        'is_supplier' : sUser.data['is_supplier'],
+                        'id' : sUser.data['id'],
+                    }
 
 
-@api_view(["POST"])
-def login(request):
-    email = request.data.get("email")
-    password = request.data.get("password")
 
-    user = authenticate(email=email, password=password)
-    if not user:
-        return Response({"error": "Login failed"}, status=HTTP_401_UNAUTHORIZED)
-
-    token, _ = Token.objects.get(user=user)
-    return Response({"token": token.key})
-
+                    # Serializer_list = [sToken.data, sUser.data]
+                    # content = {
+                    #     'data': Serializer_list,
+                    #     }
+                    return Response(content)
+                return HttpResponse("please verify your account")
+            return HttpResponse("incorrect password")
+        return HttpResponse("no user found")
+    return Response(serializer.errors)
 
 
-
-    
-
-'''
-{
-    "email":"john@gmail.com",
-    "password":"blahblah"
-}
-
-'''
+@api_view(['GET', 'POST'])
+def hello_world(request):
+    if request.method == 'POST':
+        return Response({"message": "Got some data!", "data": request.data['email']})
+    return Response({"message": "Hello, world!"})
