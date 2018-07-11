@@ -108,13 +108,6 @@ def get_token(request):
                         'is_supplier' : sUser.data['is_supplier'],
                         'id' : sUser.data['id'],
                     }
-
-
-
-                    # Serializer_list = [sToken.data, sUser.data]
-                    # content = {
-                    #     'data': Serializer_list,
-                    #     }
                     return Response(content)
                 return HttpResponse("please verify your account")
             return HttpResponse("incorrect password")

@@ -4,10 +4,21 @@ from djmoney.models.fields import MoneyField
 
 
 class Manufacturer(models.Model):
-    name = models.CharField(max_length=200)
+    name            = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
+
+
+class Application(models.Model):
+    area            = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.area
+
+class ProductType(models.Model):
+    application     = models.ForeignKey(Application, on_delete=models.CASCADE)
+    material        = models.CharField(max_length=100)
 
 
 
@@ -18,6 +29,7 @@ class Product(models.Model):
                         on_delete=models.CASCADE,
                         )
     image           = models.ImageField()
+    product_type    = models.ManyToManyField(ProductType)
 
     def __str__(self):
         return self.name
