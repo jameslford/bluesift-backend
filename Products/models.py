@@ -17,8 +17,25 @@ class Application(models.Model):
         return self.area
 
 class ProductType(models.Model):
-    application     = models.ForeignKey(Application, on_delete=models.CASCADE)
+    UNITS = (
+        ('Square Foot', 'Square Foot'),
+        ('Linear Foot', 'Linear Foot'),
+        ('Cubic Foot', 'Cubic Foot'),
+        ('Each', 'Each')
+        )
+    application     = models.ManyToManyField(Application)
     material        = models.CharField(max_length=100)
+    unit            = models.CharField(max_length=50, choices=UNITS, default='not asssigned')
+
+    def get_application_names(self):
+        try:
+            applications = self.application.all().values_list('area', flat=True)
+            return str(list(applications))
+        except:
+            return ''
+
+    def __str__ (self):
+        return self.material +'  '+ self.get_application_names()
 
 
 
@@ -29,30 +46,38 @@ class Product(models.Model):
                         on_delete=models.CASCADE,
                         )
     image           = models.ImageField()
-    product_type    = models.ManyToManyField(ProductType)
+    product_type    = models.ForeignKey(ProductType, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.name
 
     def is_priced(self):
-        if self.priced:
-            return True
-        return False
+        try:
+            count = self.priced.count()
+            if count > 0:
+                return True
+            return False
+        except:
+            return 
+
+    def get_units(self):
+        try:
+            return self.product_type.unit
+        except:
+            return
+
 
     def get_suppliers(self):
-        if self.priced:
-            suppliers = self.priced.all()
-            return suppliers
+        try:
+            suppliers = self.priced.filter(units_available__gt=0).order_by('price_per_unit')
+            values = suppliers.values('price_per_unit', 'supplier__email', 'units_available' ) 
+            return values
+        except:
+            return 
 
 
 
 class SupplierProduct(models.Model):
-    UNITS = (
-        (0,'Square Foot'),
-        (1, 'Linear Foot'),
-        (2, 'Cubic Foot'),
-        (3, 'Each')
-    )
 
     product             = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='priced')
     supplier            = models.ForeignKey(settings.AUTH_USER_MODEL, 
@@ -61,7 +86,11 @@ class SupplierProduct(models.Model):
                                             limit_choices_to={'is_supplier' : True}
                                             )
     price_per_unit      = MoneyField(max_digits=8, decimal_places=2, default_currency='USD')
-    unit                = models.SmallIntegerField(choices=UNITS)
+    units_available     = models.IntegerField(default=0)
+    units_per_order     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def name(self):
+        return self.supplier.get_first_name()
 
     def __str__(self):
         return self.supplier.get_first_name() + ' ' + self.product.name
