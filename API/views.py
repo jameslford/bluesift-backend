@@ -24,8 +24,21 @@ from rest_framework.decorators import api_view, permission_classes, parser_class
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
-from .serializers import ProductSerializer, CreateUserSerializer, UserSerializer, LoginSerializer, TokenSerializer
-from Products.models import Product 
+from .serializers import ( 
+                            ProductSerializer, 
+                            CreateUserSerializer, 
+                            UserSerializer, 
+                            LoginSerializer, 
+                            TokenSerializer, 
+                            ApplicationAreaSerializer,
+                            ProductTypeSerializer,
+                            )
+from Products.models import ( 
+                            Product, 
+                            Application,
+                            ProductType,
+                            )
+
 from Libraries.models import UserLibrary, SupplierLibrary
 
 #from config.urls import urlpatterns
@@ -33,8 +46,18 @@ from Libraries.models import UserLibrary, SupplierLibrary
 class ProductList(APIView):
     def get(self, request, format=None):
         products = Product.objects.all()
-        serialized = ProductSerializer(products, many=True)
-        return Response({"products": serialized.data})
+        application_areas = Application.objects.all()
+        product_types = ProductType.objects.all()
+
+        p_serialized = ProductSerializer(products, many=True)
+        a_serialized = ApplicationAreaSerializer(application_areas, many=True)
+        pt_serialized = ProductTypeSerializer(product_types, many=True) 
+               
+        return Response({
+                        "areas" : a_serialized.data, 
+                        "product_types": pt_serialized.data, 
+                        "products": p_serialized.data
+                        })
         
 
 
@@ -120,3 +143,10 @@ def hello_world(request):
     if request.method == 'POST':
         return Response({"message": "Got some data!", "data": request.data['email']})
     return Response({"message": "Hello, world!"})
+
+
+# class StructureView(APIView):
+#     def get(self, request, format=none):
+#         application_areas = Application.objects.all()
+#         serialized = ApplicationAreaSerializer(application_areas, many=True)
+#         return Response({"areas" : serialized.data })

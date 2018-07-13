@@ -16,6 +16,10 @@ class Application(models.Model):
     def __str__(self):
         return self.area
 
+    # def get_types(self):
+    #     try:
+    #         my_types = self.types.
+
 class ProductType(models.Model):
     UNITS = (
         ('Square Foot', 'Square Foot'),
@@ -23,7 +27,7 @@ class ProductType(models.Model):
         ('Cubic Foot', 'Cubic Foot'),
         ('Each', 'Each')
         )
-    application     = models.ManyToManyField(Application)
+    application     = models.ManyToManyField(Application, related_name='types')
     material        = models.CharField(max_length=100)
     unit            = models.CharField(max_length=50, choices=UNITS, default='not asssigned')
 
