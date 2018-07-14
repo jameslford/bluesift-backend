@@ -46,15 +46,15 @@ from Libraries.models import UserLibrary, SupplierLibrary
 class ProductList(APIView):
     def get(self, request, format=None):
         products = Product.objects.all()
-        application_areas = Application.objects.all()
+        application_types = Application.objects.all()
         product_types = ProductType.objects.all()
 
         p_serialized = ProductSerializer(products, many=True)
-        a_serialized = ApplicationAreaSerializer(application_areas, many=True)
+        a_serialized = ApplicationAreaSerializer(application_types, many=True)
         pt_serialized = ProductTypeSerializer(product_types, many=True) 
-               
+
         return Response({
-                        "areas" : a_serialized.data, 
+                        "application_types" : a_serialized.data, 
                         "product_types": pt_serialized.data, 
                         "products": p_serialized.data
                         })

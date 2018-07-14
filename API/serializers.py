@@ -55,7 +55,6 @@ class TokenSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
 
     manufacturer_name       = serializers.SerializerMethodField('get_manu_name')
-    # priced                  = SupplierProductSerializer(many=True)
 
     class Meta:
         model = Product
