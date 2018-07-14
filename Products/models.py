@@ -27,19 +27,18 @@ class ProductType(models.Model):
         ('Cubic Foot', 'Cubic Foot'),
         ('Each', 'Each')
         )
-    application     = models.ManyToManyField(Application, related_name='types')
     material        = models.CharField(max_length=100)
     unit            = models.CharField(max_length=50, choices=UNITS, default='not asssigned')
 
-    def get_application_names(self):
-        try:
-            applications = self.application.all().values_list('area', flat=True)
-            return str(list(applications))
-        except:
-            return ''
+    # def get_application_names(self):
+    #     try:
+    #         applications = self.application.all().values_list('area', flat=True)
+    #         return str(list(applications))
+    #     except:
+    #         return ''
 
     def __str__ (self):
-        return self.material +'  '+ self.get_application_names()
+        return self.material # +'  '+ self.get_application_names()
 
 
 
@@ -50,6 +49,7 @@ class Product(models.Model):
                         on_delete=models.CASCADE,
                         )
     image           = models.ImageField()
+    application     = models.ManyToManyField(Application)
     product_type    = models.ForeignKey(ProductType, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):

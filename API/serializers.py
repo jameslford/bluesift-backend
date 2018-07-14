@@ -61,12 +61,13 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ('manufacturer_name', 
                   'manufacturer', 
                   'name', 
-                  'image', 
-                  'product_type', 
+                  'image',
+                  'application', 
+                  'product_type',
                   'is_priced',
-                #   'priced', 
+                  'get_units',
                   'get_suppliers',
-                  'get_units' )
+                   )
 
     def get_manu_name (self, obj):
         return obj.manufacturer.name
@@ -80,9 +81,8 @@ class ProductTypeSerializer(serializers.ModelSerializer):
 
 
 class ApplicationAreaSerializer(serializers.ModelSerializer):
-    types = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
         model = Application
-        fields = ('id', 'area', 'types')
+        fields = ('id', 'area')
       
         
