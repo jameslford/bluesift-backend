@@ -20,12 +20,21 @@ from django.urls import path, include, re_path
 from rest_framework.authtoken import views
 from django.conf.urls import url
 from .views import landing
-from API.views import ProductList, create_user, activate, login, get_token, hello_world
+from API.views import (
+                        #ProductList, 
+                        create_user, 
+                        activate, 
+                        login, 
+                        get_token, 
+                        hello_world, 
+                        product_list
+                        )
 
 urlpatterns = [
     path('', landing, name = 'home'),
     path('admin/', admin.site.urls),
-    path('products/', ProductList.as_view()),
+    path('products/', product_list),
+    # path('products/', ProductList.as_view()),
     path('register/', create_user),
     #url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', activate, name='activate'),
     path('activate/<uidb64>/<token>', activate, name='activate'),

@@ -40,24 +40,154 @@ from Products.models import (
                             )
 
 from Libraries.models import UserLibrary, SupplierLibrary
+# , is_priced=False, property_type=None, application_type=None
 
-#from config.urls import urlpatterns
+@api_view(['GET'])
+def product_list(request):
+    is_priced = request.GET.get('is_priced', 'False')
+    product_type = request.GET.get('property_type', 'All')
+    application_type = request.GET.get('application_type', 'All')
+    manufacturer = request.GET.get('manufacturer', 'All')
 
-class ProductList(APIView):
-    def get(self, request, format=None):
-        products = Product.objects.all()
-        application_types = Application.objects.all()
-        product_types = ProductType.objects.all()
+    pTyped_products = parse_pt(product_type)
+    aTyped_products = parse_at(application_type, pTyped_products)
+    mTyped_products = parse_manufacturer(manufacturer, aTyped_products)
+    filtered_products = parse_priced(is_priced, mTyped_products)
 
-        p_serialized = ProductSerializer(products, many=True)
-        a_serialized = ApplicationAreaSerializer(application_types, many=True)
-        pt_serialized = ProductTypeSerializer(product_types, many=True) 
+    application_types = Application.objects.all()
+    product_types = ProductType.objects.all()
 
-        return Response({
-                        "application_types" : a_serialized.data, 
-                        "product_types": pt_serialized.data, 
-                        "products": p_serialized.data
-                        })
+    active_ats = active_at(filtered_products)
+    active_pts = active_pt(filtered_products)
+
+    products_serialized = ProductSerializer(filtered_products, many=True)
+    app_types_serialized = ApplicationAreaSerializer(application_types, many=True)
+    prod_types_seriallized = ProductTypeSerializer(product_types, many=True)
+    active_app_types_serialized = ApplicationAreaSerializer(active_ats, many=True)
+    active_prod_types_serialized = ProductTypeSerializer(active_pts, many=True)
+
+    return Response({
+                    "application_types": app_types_serialized.data,
+                    "product_types": prod_types_seriallized.data,
+                    "active_app_types": active_app_types_serialized.data,
+                    "active_prod_types": active_app_types_serialized.data,  
+                    "products": products_serialized.data
+                    })
+    
+
+
+
+def parse_pt(product_type):
+    products = Product.objects.all()
+    if product_type == 'All':
+        return products
+    else:
+        return products.filter(product_type=product_type)
+
+def parse_at(application_type, products):
+    if application_type == 'All':
+        return products
+    else:
+        return products.filter(application=application_type)
+
+def parse_manufacturer(manufacturer, products):
+    if manufacturer == 'All':
+        return products
+    else:
+        return products.filter(manufacturer=manufacturer)
+
+
+def parse_priced(is_priced, products):
+    if is_priced == 'True':   
+        prods = []
+        for product in products:
+            if product.is_priced() == True:
+                prods.append(product)
+                return prods
+    else:
+        return products
+
+
+def active_at(products):
+    if products:
+        actives = []
+        for product in products:
+            ats = product.application.all()
+            for at in ats:
+                actives.append(at)
+        active = set(actives)
+        return active
+    else:
+        return
+
+
+def active_pt(products):
+    if products:
+        actives = []
+        for product in products:
+            pt = product.product_type
+            actives.append(pt)
+        active = set(actives)
+        return active
+    else:
+        return
+
+
+
+
+        
+  
+
+
+    # application_types = Application.objects.all()
+    # product_types = ProductType.objects.all()
+    # products = Product.objects.all()
+
+    # if is_priced == 'True':
+    #     prods = []
+    #     for product in products:
+    #         if product.is_priced() == True:
+    #             prods.append(product)
+
+    #     p_serialized = ProductSerializer(prods, many=True)
+    #     a_serialized = ApplicationAreaSerializer(application_types, many=True)
+    #     pt_serialized = ProductTypeSerializer(product_types, many=True) 
+
+    #     return Response({
+    #             "application_types" : a_serialized.data, 
+    #             "product_types": pt_serialized.data, 
+    #             "products": p_serialized.data
+    #             })
+
+    # p_serialized = ProductSerializer(products, many=True)
+    # a_serialized = ApplicationAreaSerializer(application_types, many=True)
+    # pt_serialized = ProductTypeSerializer(product_types, many=True) 
+
+    # return Response({
+    #             "application_types" : a_serialized.data, 
+    #             "product_types": pt_serialized.data, 
+    #             "products": p_serialized.data
+    #             })
+
+
+
+
+
+# class ProductList(APIView):
+#     def get(self, request, format=None):
+#         application_types = Application.objects.all()
+#         product_types = ProductType.objects.all()
+#         products = Product.objects.all()
+
+#         p_serialized = ProductSerializer(products, many=True)
+#         a_serialized = ApplicationAreaSerializer(application_types, many=True)
+#         pt_serialized = ProductTypeSerializer(product_types, many=True) 
+
+#         return Response({
+#                         "application_types" : a_serialized.data, 
+#                         "product_types": pt_serialized.data, 
+#                         "products": p_serialized.data
+#                         })
         
 
 

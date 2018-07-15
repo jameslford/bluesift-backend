@@ -38,8 +38,10 @@ class ProductType(models.Model):
     #         return ''
 
     def __str__ (self):
-        return self.material # +'  '+ self.get_application_names()
+        return self.material + str(self.pk) # +'  '+ self.get_application_names()
 
+# class GetPriced(models.Manager):
+#     def get_quer
 
 
 class Product(models.Model):
