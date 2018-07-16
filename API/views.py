@@ -70,7 +70,7 @@ def product_list(request):
                     "application_types": app_types_serialized.data,
                     "product_types": prod_types_seriallized.data,
                     "active_app_types": active_app_types_serialized.data,
-                    "active_prod_types": active_app_types_serialized.data,  
+                    "active_prod_types": active_prod_types_serialized.data,  
                     "products": products_serialized.data
                     })
     
@@ -125,8 +125,9 @@ def active_pt(products):
     if products:
         actives = []
         for product in products:
-            pt = product.product_type
-            actives.append(pt)
+            if product.product_type:
+                pt = product.product_type
+                actives.append(pt)
         active = set(actives)
         return active
     else:

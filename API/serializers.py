@@ -77,7 +77,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductType
-        fields = '__all__'
+        fields = ('material', 'unit', 'id')
 
 
 class ApplicationAreaSerializer(serializers.ModelSerializer):
