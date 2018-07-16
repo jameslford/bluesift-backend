@@ -143,7 +143,7 @@ def active_pt(products):
 def app_type_enabler(active_ids, serialized_app_types):
     for app_type in serialized_app_types.data:
         if app_type['id'] in active_ids:
-            app_type['enabled'] = 'true'
+            app_type['enabled'] = True
     return serialized_app_types
 
 
