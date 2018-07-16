@@ -45,7 +45,7 @@ from Libraries.models import UserLibrary, SupplierLibrary
 @api_view(['GET'])
 def product_list(request):
     is_priced = request.GET.get('is_priced', 'False')
-    product_type = request.GET.get('property_type', 'All')
+    product_type = request.GET.get('product_type', 'All')
     application_type = request.GET.get('application_type', 'All')
     manufacturer = request.GET.get('manufacturer', 'All')
 
