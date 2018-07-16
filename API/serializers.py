@@ -41,17 +41,6 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ('key',)
 
 
-# class SupplierProductSerializer(serializers.Serializer):
-#     class Meta:
-#         model = SupplierProduct
-#         fields = (
-#                   'supplier', 
-#                   'price_per_unit', 
-#                   'units_available', 
-#                   'units_per_order',
-#                   )
-
-
 class ProductSerializer(serializers.ModelSerializer):
 
     manufacturer_name       = serializers.SerializerMethodField('get_manu_name')
@@ -75,14 +64,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductTypeSerializer(serializers.ModelSerializer):
+    enabled = serializers.BooleanField(default=False)
     class Meta:
         model = ProductType
-        fields = ('material', 'unit', 'id')
+        fields = ('material', 'unit', 'id', 'enabled')
 
 
 class ApplicationAreaSerializer(serializers.ModelSerializer):
+    enabled = serializers.BooleanField(default=False)
     class Meta:
         model = Application
-        fields = ('id', 'area')
+        fields = ('id', 'area', 'enabled')
       
         

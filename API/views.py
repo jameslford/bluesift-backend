@@ -44,33 +44,39 @@ from Libraries.models import UserLibrary, SupplierLibrary
 
 @api_view(['GET'])
 def product_list(request):
+
+    # parse request
     is_priced = request.GET.get('is_priced', 'False')
     product_type = request.GET.get('product_type', 'All')
     application_type = request.GET.get('application_type', 'All')
     manufacturer = request.GET.get('manufacturer', 'All')
 
+    # filter products
     pTyped_products = parse_pt(product_type)
     aTyped_products = parse_at(application_type, pTyped_products)
     mTyped_products = parse_manufacturer(manufacturer, aTyped_products)
     filtered_products = parse_priced(is_priced, mTyped_products)
-
-    application_types = Application.objects.all()
-    product_types = ProductType.objects.all()
-
-    active_ats = active_at(filtered_products)
-    active_pts = active_pt(filtered_products)
-
     products_serialized = ProductSerializer(filtered_products, many=True)
+
+    # filter application types
+    application_types = Application.objects.all()
     app_types_serialized = ApplicationAreaSerializer(application_types, many=True)
+    active_ats = active_at(filtered_products)
+    refined_ats = app_type_enabler(active_ats, app_types_serialized)
+
+    # filter product types
+    product_types = ProductType.objects.all()
     prod_types_seriallized = ProductTypeSerializer(product_types, many=True)
-    active_app_types_serialized = ApplicationAreaSerializer(active_ats, many=True)
-    active_prod_types_serialized = ProductTypeSerializer(active_pts, many=True)
+    active_pts = active_pt(filtered_products)
+    refined_pts = app_type_enabler(active_pts, prod_types_seriallized)
+
+    
+
+
 
     return Response({
-                    "application_types": app_types_serialized.data,
-                    "product_types": prod_types_seriallized.data,
-                    "active_app_types": active_app_types_serialized.data,
-                    "active_prod_types": active_prod_types_serialized.data,  
+                    "application_types": refined_ats.data,
+                    "product_types": refined_pts.data,
                     "products": products_serialized.data
                     })
     
@@ -114,7 +120,7 @@ def active_at(products):
         for product in products:
             ats = product.application.all()
             for at in ats:
-                actives.append(at)
+                actives.append(at.id)
         active = set(actives)
         return active
     else:
@@ -127,11 +133,18 @@ def active_pt(products):
         for product in products:
             if product.product_type:
                 pt = product.product_type
-                actives.append(pt)
+                actives.append(pt.id)
         active = set(actives)
         return active
     else:
         return
+
+
+def app_type_enabler(active_ids, serialized_app_types):
+    for app_type in serialized_app_types.data:
+        if app_type['id'] in active_ids:
+            app_type['enabled'] = 'true'
+    return serialized_app_types
 
 
 
