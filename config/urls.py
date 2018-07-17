@@ -26,7 +26,6 @@ from API.views import (
                         activate, 
                         login, 
                         get_token, 
-                        hello_world, 
                         product_list
                         )
 
@@ -34,13 +33,10 @@ urlpatterns = [
     path('', landing, name = 'home'),
     path('admin/', admin.site.urls),
     path('products/', product_list),
-    # path('products/', ProductList.as_view()),
     path('register/', create_user),
-    #url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', activate, name='activate'),
     path('activate/<uidb64>/<token>', activate, name='activate'),
     path('login/', login),
     path('get_token/', get_token),
-    path('hello/', hello_world)
-    #path('login/', views.obtain_auth_token)
+
    
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -51,6 +51,14 @@ def product_list(request):
     application_type = request.GET.get('application_type', 'All')
     manufacturer = request.GET.get('manufacturer', 'All')
 
+    # structure filter objects
+    filter_content = {
+        "is_priced" : is_priced,
+        "product_type" : product_type,
+        "application_type" : application_type,
+        "manufacturer" : manufacturer,
+    }
+
     # filter products
     pTyped_products = parse_pt(product_type)
     aTyped_products = parse_at(application_type, pTyped_products)
@@ -75,6 +83,7 @@ def product_list(request):
 
 
     return Response({
+                    "filter" : filter_content,
                     "application_types": refined_ats.data,
                     "product_types": refined_pts.data,
                     "products": products_serialized.data
@@ -104,7 +113,7 @@ def parse_manufacturer(manufacturer, products):
 
 
 def parse_priced(is_priced, products):
-    if is_priced == 'True':   
+    if is_priced == 'true':   
         prods = []
         for product in products:
             if product.is_priced() == True:
@@ -147,62 +156,6 @@ def app_type_enabler(active_ids, serialized_app_types):
     return serialized_app_types
 
 
-
-
-        
-  
-
-
-    # application_types = Application.objects.all()
-    # product_types = ProductType.objects.all()
-    # products = Product.objects.all()
-
-    # if is_priced == 'True':
-    #     prods = []
-    #     for product in products:
-    #         if product.is_priced() == True:
-    #             prods.append(product)
-
-    #     p_serialized = ProductSerializer(prods, many=True)
-    #     a_serialized = ApplicationAreaSerializer(application_types, many=True)
-    #     pt_serialized = ProductTypeSerializer(product_types, many=True) 
-
-    #     return Response({
-    #             "application_types" : a_serialized.data, 
-    #             "product_types": pt_serialized.data, 
-    #             "products": p_serialized.data
-    #             })
-
-    # p_serialized = ProductSerializer(products, many=True)
-    # a_serialized = ApplicationAreaSerializer(application_types, many=True)
-    # pt_serialized = ProductTypeSerializer(product_types, many=True) 
-
-    # return Response({
-    #             "application_types" : a_serialized.data, 
-    #             "product_types": pt_serialized.data, 
-    #             "products": p_serialized.data
-    #             })
-
-
-
-
-
-# class ProductList(APIView):
-#     def get(self, request, format=None):
-#         application_types = Application.objects.all()
-#         product_types = ProductType.objects.all()
-#         products = Product.objects.all()
-
-#         p_serialized = ProductSerializer(products, many=True)
-#         a_serialized = ApplicationAreaSerializer(application_types, many=True)
-#         pt_serialized = ProductTypeSerializer(product_types, many=True) 
-
-#         return Response({
-#                         "application_types" : a_serialized.data, 
-#                         "product_types": pt_serialized.data, 
-#                         "products": p_serialized.data
-#                         })
-        
 
 
 @api_view(['POST'])
@@ -282,15 +235,3 @@ def get_token(request):
     return Response(serializer.errors)
 
 
-@api_view(['GET', 'POST'])
-def hello_world(request):
-    if request.method == 'POST':
-        return Response({"message": "Got some data!", "data": request.data['email']})
-    return Response({"message": "Hello, world!"})
-
-
-# class StructureView(APIView):
-#     def get(self, request, format=none):
-#         application_areas = Application.objects.all()
-#         serialized = ApplicationAreaSerializer(application_areas, many=True)
-#         return Response({"areas" : serialized.data })
