@@ -47,7 +47,7 @@ def product_list(request):
 
     # parse request
     is_priced = request.GET.get('is_priced', 'False')
-    product_type = request.GET.get('product_type', 'All')
+    product_type = request.GET.get('product_type', '0')
     application_type = request.GET.get('application_type', '0')
     manufacturer = request.GET.get('manufacturer', 'All')
 
@@ -94,7 +94,7 @@ def product_list(request):
 
 def parse_pt(product_type):
     products = Product.objects.all()
-    if product_type == 'All':
+    if product_type == '0':
         return products
     else:
         return products.filter(product_type=product_type)
