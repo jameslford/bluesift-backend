@@ -5,6 +5,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth import get_user_model
 from Products.models import Product, Manufacturer, SupplierProduct, Application, ProductType
+from Libraries.models import UserLibrary
 from django.conf import settings
 
 
@@ -76,4 +77,8 @@ class ApplicationAreaSerializer(serializers.ModelSerializer):
         model = Application
         fields = ('id', 'area', 'enabled')
       
+class UserLibrarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserLibrary
+        fields = ('owner', 'name', 'products')
         

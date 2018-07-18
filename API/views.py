@@ -23,7 +23,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import ( 
                             ProductSerializer, 
                             CreateUserSerializer, 
@@ -32,6 +32,7 @@ from .serializers import (
                             TokenSerializer, 
                             ApplicationAreaSerializer,
                             ProductTypeSerializer,
+                            UserLibrarySerializer
                             )
 from Products.models import ( 
                             Product, 
@@ -41,6 +42,55 @@ from Products.models import (
 
 from Libraries.models import UserLibrary, SupplierLibrary
 # , is_priced=False, property_type=None, application_type=None
+
+@api_view(['GET','POST'])
+@permission_classes((IsAuthenticated,))
+def user_library(request):
+    products = Product.objects.all()
+    user = request.user
+
+    try:
+        user.user_library
+    except (UserLibrary.DoesNotExist):
+        UserLibrary.objects.create(owner=user)
+
+    library = user.user_library
+    products = library.products.all()
+    serialized_products = ProductSerializer(products, many=True)
+
+    if request.method == 'POST':
+        prod_id = request.POST.get('prod_id')
+        product = products.get(id=prod_id)
+        library.products.add(product)
+        library.save()
+        return Response({"library" : serialized_products.data})
+    elif request.method == 'GET':
+        return Response({"library" : serialized_products.data})
+       
+    
+
+    # if not user.user_library
+    #     UserLibrary.object.create(owner=user)
+    # if request.method == 'POST':
+    #     try:    
+    #         prod_id = request.POST.get('prod_id')
+    #         product = products.get(id=prod_id)
+    #         library.products.add(product)
+    #         library.save()
+    #         serialized_library = UserLibrarySerializer(library)
+    #         return Response({"library" : serialized_library.data})
+    #     except:
+    #         return HttpResponse('no post parameter')    
+    # elif request.method == 'GET':
+    #     serialized_library = UserLibrarySerializer(library)
+    #     return Response({"library" : serialized_library.data})
+    
+
+
+
+
+
+
 
 @api_view(['GET'])
 def product_list(request):
@@ -154,7 +204,6 @@ def app_type_enabler(active_ids, serialized_app_types):
         if app_type['id'] in active_ids:
             app_type['enabled'] = True
     return serialized_app_types
-
 
 
 

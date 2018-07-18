@@ -6,7 +6,7 @@ from .models import Manufacturer, Product, SupplierProduct, ProductType, Applica
 
 class ProductTypeAdmin(admin.ModelAdmin):
     model = ProductType
-    fields = ('material', 'unit', 'id', )
+    fields = ('material', 'unit' )
 
 admin.site.register(Manufacturer)
 admin.site.register(Product)

@@ -16,11 +16,9 @@ class Application(models.Model):
     def __str__(self):
         return self.area
 
-    # def get_types(self):
-    #     try:
-    #         my_types = self.types.
 
 class ProductType(models.Model):
+    
     UNITS = (
         ('Square Foot', 'Square Foot'),
         ('Linear Foot', 'Linear Foot'),
@@ -28,20 +26,11 @@ class ProductType(models.Model):
         ('Each', 'Each')
         )
     material        = models.CharField(max_length=100)
-    unit            = models.CharField(max_length=50, choices=UNITS, default='not asssigned')
-
-    # def get_application_names(self):
-    #     try:
-    #         applications = self.application.all().values_list('area', flat=True)
-    #         return str(list(applications))
-    #     except:
-    #         return ''
+    unit            = models.CharField(max_length=50, choices=UNITS, default='not assigned')
 
     def __str__ (self):
-        return self.material + str(self.pk) # +'  '+ self.get_application_names()
+        return self.material
 
-# class GetPriced(models.Manager):
-#     def get_quer
 
 
 class Product(models.Model):

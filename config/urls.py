@@ -26,7 +26,8 @@ from API.views import (
                         activate, 
                         login, 
                         get_token, 
-                        product_list
+                        product_list,
+                        user_library
                         )
 
 urlpatterns = [
@@ -37,6 +38,7 @@ urlpatterns = [
     path('activate/<uidb64>/<token>', activate, name='activate'),
     path('login/', login),
     path('get_token/', get_token),
+    path('library/', user_library ),
 
    
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
