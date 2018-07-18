@@ -48,15 +48,17 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('manufacturer_name', 
-                  'manufacturer', 
-                  'name', 
-                  'image',
-                  'application', 
-                  'product_type',
-                  'is_priced',
-                  'get_units',
-                  'get_suppliers',
+        fields = (
+                    'id',
+                    'manufacturer_name', 
+                    'manufacturer', 
+                    'name', 
+                    'image',
+                    'application', 
+                    'product_type',
+                    'is_priced',
+                    'get_units',
+                    'get_suppliers',
                    )
 
     def get_manu_name (self, obj):
