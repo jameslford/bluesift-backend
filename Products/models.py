@@ -10,6 +10,13 @@ class Manufacturer(models.Model):
     def __str__(self):
         return self.name
 
+    def products(self):
+        try:
+            products = self.products.all()
+            return products
+        except:
+            return
+
 
 class Application(models.Model):
     area            = models.CharField(max_length=100)
@@ -37,8 +44,10 @@ class ProductType(models.Model):
 class Product(models.Model):
     name            = models.CharField(max_length=200)
     manufacturer    = models.ForeignKey(
-                        Manufacturer, 
-                        on_delete=models.CASCADE,
+                        Manufacturer,
+                        null=True,
+                        related_name='products',
+                        on_delete=models.SET_NULL,
                         )
     image           = models.ImageField()
     application     = models.ManyToManyField(Application)

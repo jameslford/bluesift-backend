@@ -82,4 +82,9 @@ class UserLibrarySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserLibrary
         fields = ('owner', 'name', 'products')
+
+class ManufacturerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manufacturer
+        fields = ('id','name', 'products')
         

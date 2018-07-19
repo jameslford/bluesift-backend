@@ -32,7 +32,8 @@ from .serializers import (
                             TokenSerializer, 
                             ApplicationAreaSerializer,
                             ProductTypeSerializer,
-                            UserLibrarySerializer
+                            UserLibrarySerializer,
+                            ManufacturerSerializer
                             )
 from Products.models import ( 
                             Product, 
@@ -104,6 +105,7 @@ def product_list(request):
 
     # filter manufacturers
     manufacturers = Manufacturer.objects.all()
+    manufacturers_serialized = ManufacturerSerializer(manufacturers, many=True)
 
     # filter product types
     product_types = ProductType.objects.all()
@@ -119,6 +121,7 @@ def product_list(request):
                     "filter" : filter_content,
                     "application_types": refined_ats.data,
                     "product_types": refined_pts.data,
+                    "manufacturers": manufacturers_serialized.data,
                     "products": products_serialized.data
                     })
     
