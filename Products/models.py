@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Min
 from django.conf import settings
 from djmoney.models.fields import MoneyField
 
@@ -43,6 +44,7 @@ class Product(models.Model):
     application     = models.ManyToManyField(Application)
     product_type    = models.ForeignKey(ProductType, null=True, on_delete=models.SET_NULL)
 
+
     def __str__(self):
         return self.name
 
@@ -55,21 +57,35 @@ class Product(models.Model):
         except:
             return 
 
-    def get_units(self):
+    def units(self):
         try:
             return self.product_type.unit
         except:
             return
 
 
-    def get_suppliers(self):
+    def prices(self):
         try:
             suppliers = self.priced.filter(units_available__gt=0).order_by('price_per_unit')
-            values = suppliers.values('price_per_unit', 'supplier__email', 'units_available' ) 
+            values = suppliers.values('price_per_unit', 'supplier__email', 'units_available', 'id' )
+            self.is_priced = True
             return values
         except:
             return 
 
+    def lowest_price(self):
+        try:
+            suppliers = self.priced.filter(units_available__gt=0)
+            price = suppliers.aggregate(Min('price_per_unit'))
+            return price["price_per_unit__min"]
+        except:
+            return
+
+    def manufacturer_name(self):
+        return self.manufacturer.name
+
+    def material(self):
+        return self.product_type.material
 
 
 class SupplierProduct(models.Model):

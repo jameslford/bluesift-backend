@@ -44,25 +44,24 @@ class TokenSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
 
-    manufacturer_name       = serializers.SerializerMethodField('get_manu_name')
-
     class Meta:
         model = Product
         fields = (
                     'id',
                     'manufacturer_name', 
-                    'manufacturer', 
                     'name', 
                     'image',
+                    'material',
+                    'units',
+                    'is_priced',
+                    'lowest_price',
+                    'manufacturer', 
                     'application', 
                     'product_type',
-                    'is_priced',
-                    'get_units',
-                    'get_suppliers',
+                    'prices',
                    )
 
-    def get_manu_name (self, obj):
-        return obj.manufacturer.name
+
 
 
 

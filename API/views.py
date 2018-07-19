@@ -38,10 +38,11 @@ from Products.models import (
                             Product, 
                             Application,
                             ProductType,
+                            Manufacturer
                             )
 
 from Libraries.models import UserLibrary, SupplierLibrary
-# , is_priced=False, property_type=None, application_type=None
+
 
 @api_view(['GET','POST'])
 @permission_classes((IsAuthenticated,))
@@ -67,35 +68,6 @@ def user_library(request):
             return Response({"library" : serialized_products.data})
         elif request.method == 'GET':
             return Response({"library" : serialized_products.data})
-       
-    
-
-
-
-
-
-
-
-
-    # if not user.user_library
-    #     UserLibrary.object.create(owner=user)
-    # if request.method == 'POST':
-    #     try:    
-    #         prod_id = request.POST.get('prod_id')
-    #         product = products.get(id=prod_id)
-    #         library.products.add(product)
-    #         library.save()
-    #         serialized_library = UserLibrarySerializer(library)
-    #         return Response({"library" : serialized_library.data})
-    #     except:
-    #         return HttpResponse('no post parameter')    
-    # elif request.method == 'GET':
-    #     serialized_library = UserLibrarySerializer(library)
-    #     return Response({"library" : serialized_library.data})
-    
-
-
-
 
 
 
@@ -129,6 +101,9 @@ def product_list(request):
     app_types_serialized = ApplicationAreaSerializer(application_types, many=True)
     active_ats = active_at(filtered_products)
     refined_ats = app_type_enabler(active_ats, app_types_serialized)
+
+    # filter manufacturers
+    manufacturers = Manufacturer.objects.all()
 
     # filter product types
     product_types = ProductType.objects.all()
