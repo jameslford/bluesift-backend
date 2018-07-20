@@ -22,6 +22,8 @@ INSTALLED_APPS = [
 
     'API',
     'Accounts',
+    'Addresses',
+    'config',
     'Libraries',
     'Plans',
     'Products',

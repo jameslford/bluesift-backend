@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Min
-from django.conf import settings
 from djmoney.models.fields import MoneyField
+from Profiles.models import CompanyShippingLocation
 
 
 class Manufacturer(models.Model):
@@ -57,15 +57,6 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    def is_priced(self):
-        try:
-            count = self.priced.count()
-            if count > 0:
-                return True
-            return False
-        except:
-            return 
-
     def units(self):
         try:
             return self.product_type.unit
@@ -100,11 +91,7 @@ class Product(models.Model):
 class SupplierProduct(models.Model):
 
     product             = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='priced')
-    supplier            = models.ForeignKey(settings.AUTH_USER_MODEL, 
-                                            on_delete=models.CASCADE, 
-                                            related_name='supplier_products',
-                                            limit_choices_to={'is_supplier' : True}
-                                            )
+    supplier            = models.ForeignKey(CompanyShippingLocation, on_delete=models.CASCADE, related_name='priced_products')
     price_per_unit      = MoneyField(max_digits=8, decimal_places=2, default_currency='USD')
     units_available     = models.IntegerField(default=0)
     units_per_order     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
