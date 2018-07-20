@@ -3,6 +3,7 @@
 from django.db import models
 from django.conf import settings
 from Products.models import Product, SupplierProduct
+from Profiles.models import CompanyShippingLocation
 
 
 class UserLibrary(models.Model):
@@ -21,7 +22,7 @@ class UserLibrary(models.Model):
 class SupplierLibrary(models.Model):
     products    = models.ManyToManyField(SupplierProduct, related_name='suppliers_libraries')
     owner       = models.OneToOneField(
-                                        settings.AUTH_USER_MODEL, 
+                                        CompanyShippingLocation, 
                                         on_delete=models.CASCADE, 
                                         null=True,
                                         related_name='supplier_library'
