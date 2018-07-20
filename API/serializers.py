@@ -14,7 +14,7 @@ class UserSerializer(serializers.Serializer):
     email                   = serializers.EmailField(
                                     min_length=8, 
                                     max_length=32,
-                                    #required=True, 
+                                    required=True, 
                                     validators=[UniqueValidator(queryset=get_user_model().objects.all())]
                                     )
     first_name              = serializers.CharField(max_length=100, required=False)
@@ -34,7 +34,6 @@ class CreateUserSerializer(UserSerializer):
 class CreateSupplierSerializer(UserSerializer):
     company_name            = serializers.CharField(max_length=120, required=True)
     phone_number            = serializers.IntegerField(required=True)
-
 
 
 class LoginSerializer(serializers.Serializer):
