@@ -222,20 +222,23 @@ def create_user(request):
 
 @api_view(['POST'])
 def create_supplier(request):
-    serializer = CreateSupplierSerializer(data=request.data)
+    #serializer = CreateSupplierSerializer(data=request.data)
     userModel = get_user_model()
 
     if serializer.is_valid():
-        email = serializer.data['email']
-        password = serializer.data['password']
-        first_name = serializer.data['first_name']
-        last_name = serializer.data['last_name']
-        company_name = serializer.data['company_name']
-        phone_number = serializer.data['phone_number']
-        current_site = get_current_site(request)
-        supplier = userModel.objects.create_user(email=email, password=password, 
-                                            first_name=first_name, 
-                                            last_name=last_name, 
+        # email = serializer.data['email']
+        # password = serializer.data['password']
+        # first_name = serializer.data['first_name']
+        # last_name = serializer.data['last_name']
+        # company_name = serializer.data['company_name']
+        # phone_number = serializer.data['phone_number']
+        # current_site = get_current_site(request)
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        supplier = userModel.objects.create_user(
+                                            email=email, password=password, 
+                                            # first_name=first_name, 
+                                            # last_name=last_name, 
                                             is_supplier=True, 
                                             is_active=False
                                             )
