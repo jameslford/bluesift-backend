@@ -225,7 +225,7 @@ def create_supplier(request):
     #serializer = CreateSupplierSerializer(data=request.data)
     userModel = get_user_model()
 
-    if serializer.is_valid():
+    #if serializer.is_valid():
         # email = serializer.data['email']
         # password = serializer.data['password']
         # first_name = serializer.data['first_name']
@@ -233,30 +233,30 @@ def create_supplier(request):
         # company_name = serializer.data['company_name']
         # phone_number = serializer.data['phone_number']
         # current_site = get_current_site(request)
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        supplier = userModel.objects.create_user(
-                                            email=email, password=password, 
-                                            # first_name=first_name, 
-                                            # last_name=last_name, 
-                                            is_supplier=True, 
-                                            is_active=False
-                                            )
-        supplier.date_registered = datetime.datetime.now()
-        mail_subject = 'Activate your Building Book account.'
-        message = render_to_string('acc_activate_email.html', {
-            'user': supplier,
-            'domain': current_site.domain,
-            'uid': urlsafe_base64_encode(force_bytes(supplier.pk)).decode(),
-            'token': Token.objects.create(user=supplier)
-        })
-        to_email = supplier.email 
-        email = EmailMessage(mail_subject, message, to=[to_email])
-        email.send()
-        company = CompanyAccount.objects.create(name=company_name, phone_number=phone_number, owner=supplier)
-        location = CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
-        return Response(status=status.HTTP_201_CREATED)
-    return Response( status=status.HTTP_400_BAD_REQUEST)
+    email = request.POST.get('email')
+    password = request.POST.get('password')
+    supplier = userModel.objects.create_user(
+                                        email=email, password=password, 
+                                        # first_name=first_name, 
+                                        # last_name=last_name, 
+                                        is_supplier=True, 
+                                        is_active=False
+                                        )
+    supplier.date_registered = datetime.datetime.now()
+    mail_subject = 'Activate your Building Book account.'
+    message = render_to_string('acc_activate_email.html', {
+        'user': supplier,
+        'domain': current_site.domain,
+        'uid': urlsafe_base64_encode(force_bytes(supplier.pk)).decode(),
+        'token': Token.objects.create(user=supplier)
+    })
+    to_email = supplier.email 
+    email = EmailMessage(mail_subject, message, to=[to_email])
+    email.send()
+    company = CompanyAccount.objects.create(name=company_name, phone_number=phone_number, owner=supplier)
+    location = CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
+    return Response(status=status.HTTP_201_CREATED)
+    #return Response( status=status.HTTP_400_BAD_REQUEST)
         
 
 def activate(request, uidb64, token):
