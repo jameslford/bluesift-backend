@@ -255,8 +255,8 @@ def create_supplier(request):
         email.send()
         company = CompanyAccount.objects.create(name=company_name, phone_number=phone_number, owner=supplier)
         location = CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED)
+    return Response( status=status.HTTP_400_BAD_REQUEST)
         
 
 def activate(request, uidb64, token):
