@@ -53,7 +53,7 @@ class Product(models.Model):
     application     = models.ManyToManyField(Application)
     product_type    = models.ForeignKey(ProductType, null=True, on_delete=models.SET_NULL)
     is_priced       = models.BooleanField(default=False)
-    lowest_price    = models.DecimalField(max_digits=15, decimal_places=2, null=True)
+    lowest_price    = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
 
 
     def __str__(self):
