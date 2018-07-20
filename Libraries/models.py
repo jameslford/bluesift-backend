@@ -32,8 +32,6 @@ class SupplierLibrary(models.Model):
         return self.name
 
 
-    def fake_def(self):
-        pass
    
 
 

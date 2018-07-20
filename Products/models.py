@@ -52,6 +52,7 @@ class Product(models.Model):
     image           = models.ImageField()
     application     = models.ManyToManyField(Application)
     product_type    = models.ForeignKey(ProductType, null=True, on_delete=models.SET_NULL)
+    is_priced       = models.BooleanField(default=False)
 
 
     def __str__(self):
