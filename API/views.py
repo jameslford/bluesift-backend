@@ -233,7 +233,7 @@ def create_supplier(request):
         company_name = serializer.data['company_name']
         phone_number = serializer.data['phone_number']
         current_site = get_current_site(request)
-        supplier = userModel.objects.create(
+        supplier = userModel.objects.create_user(
                                             email=email, 
                                             password=password, 
                                             first_name=first_name, 
