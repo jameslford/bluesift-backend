@@ -21,8 +21,8 @@ from rest_framework.authtoken import views
 from django.conf.urls import url
 from .views import landing
 from API.views import (
-                        #ProductList, 
-                        create_user, 
+                        create_user,
+                        create_supplier, 
                         activate, 
                         login, 
                         get_token, 
@@ -34,7 +34,8 @@ urlpatterns = [
     path('', landing, name = 'home'),
     path('admin/', admin.site.urls),
     path('products/', product_list),
-    path('register/', create_user),
+    path('registerUser/', create_user),
+    path('registerSupplier/', create_supplier),
     path('activate/<uidb64>/<token>', activate, name='activate'),
     path('login/', login),
     path('get_token/', get_token),

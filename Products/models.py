@@ -44,14 +44,18 @@ class ProductType(models.Model):
 class Product(models.Model):
     name            = models.CharField(max_length=200)
     manufacturer    = models.ForeignKey(
-                        Manufacturer,
-                        null=True,
-                        related_name='products',
-                        on_delete=models.SET_NULL,
-                        )
+                                        Manufacturer,
+                                        null=True,
+                                        related_name='products',
+                                        on_delete=models.SET_NULL,
+                                        )
     image           = models.ImageField()
     application     = models.ManyToManyField(Application)
-    product_type    = models.ForeignKey(ProductType, null=True, on_delete=models.SET_NULL)
+    product_type    = models.ForeignKey(
+                                        ProductType, 
+                                        null=True, 
+                                        on_delete=models.SET_NULL
+                                        )
     is_priced       = models.BooleanField(default=False)
     lowest_price    = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
 
@@ -77,14 +81,6 @@ class Product(models.Model):
         except:
             return 
 
-    # def lowest_price(self):
-    #     try:
-    #         suppliers = self.priced.filter(units_available__gt=0)
-    #         price = suppliers.aggregate(Min('price_per_unit'))
-    #         return price["price_per_unit__min"]
-    #     except:
-    #         return
-
     def manufacturer_name(self):
         return self.manufacturer.name
 
@@ -99,6 +95,7 @@ class SupplierProduct(models.Model):
     price_per_unit      = MoneyField(max_digits=8, decimal_places=2, default_currency='USD')
     units_available     = models.IntegerField(default=0)
     units_per_order     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    for_sale            = models.BooleanField(default=False)
 
     def name(self):
         return self.supplier.get_first_name()

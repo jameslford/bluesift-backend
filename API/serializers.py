@@ -31,6 +31,11 @@ class CreateUserSerializer(UserSerializer):
         user = get_user_model()
         return user.objects.create(**validated_data)
 
+class CreateSupplierSerializer(UserSerializer):
+    company_name            = serializers.CharField(max_length=120, required=True)
+    phone_number            = serializers.IntegerField(required=True)
+
+
 
 class LoginSerializer(serializers.Serializer):
     password                = serializers.CharField(max_length=60)
