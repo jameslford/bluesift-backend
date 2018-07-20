@@ -6,7 +6,7 @@ from Products.models import Product, SupplierProduct
 
 
 class UserLibrary(models.Model):
-    products    = models.ManyToManyField(Product)
+    products    = models.ManyToManyField(Product, related_name='users_libraries')
     owner       = models.OneToOneField(
                                         settings.AUTH_USER_MODEL, 
                                         on_delete=models.CASCADE, 
@@ -19,7 +19,7 @@ class UserLibrary(models.Model):
         return self.name
 
 class SupplierLibrary(models.Model):
-    products    = models.ManyToManyField(SupplierProduct)
+    products    = models.ManyToManyField(SupplierProduct, related_name='suppliers_libraries')
     owner       = models.OneToOneField(
                                         settings.AUTH_USER_MODEL, 
                                         on_delete=models.CASCADE, 
@@ -32,7 +32,8 @@ class SupplierLibrary(models.Model):
         return self.name
 
 
-    
+    def fake_def(self):
+        pass
    
 
 
