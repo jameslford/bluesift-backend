@@ -53,6 +53,7 @@ class Product(models.Model):
     application     = models.ManyToManyField(Application)
     product_type    = models.ForeignKey(ProductType, null=True, on_delete=models.SET_NULL)
     is_priced       = models.BooleanField(default=False)
+    lowest_price    = models.DecimalField(max_digits=15, decimal_places=2, null=True)
 
 
     def __str__(self):
@@ -67,20 +68,22 @@ class Product(models.Model):
 
     def prices(self):
         try:
-            suppliers = self.priced.filter(units_available__gt=0).order_by('price_per_unit')
+            suppliers = self.priced.filter(units_available__gt=0)
             values = suppliers.values('price_per_unit', 'supplier__email', 'units_available', 'id' )
+            price = suppliers.aggregate(Min('price_per_unit'))
+            self.lowest_price = price["price_per_unit__min"]
             self.is_priced = True
             return values
         except:
             return 
 
-    def lowest_price(self):
-        try:
-            suppliers = self.priced.filter(units_available__gt=0)
-            price = suppliers.aggregate(Min('price_per_unit'))
-            return price["price_per_unit__min"]
-        except:
-            return
+    # def lowest_price(self):
+    #     try:
+    #         suppliers = self.priced.filter(units_available__gt=0)
+    #         price = suppliers.aggregate(Min('price_per_unit'))
+    #         return price["price_per_unit__min"]
+    #     except:
+    #         return
 
     def manufacturer_name(self):
         return self.manufacturer.name
