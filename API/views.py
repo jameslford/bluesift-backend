@@ -243,6 +243,7 @@ def create_supplier(request):
                                         is_active=False
                                         )
     supplier.date_registered = datetime.datetime.now()
+    current_site = get_current_site(request)
     mail_subject = 'Activate your Building Book account.'
     message = render_to_string('acc_activate_email.html', {
         'user': supplier,
