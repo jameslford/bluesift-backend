@@ -20,11 +20,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
 
-    'API',
     'Accounts',
     'Addresses',
     'config',
-    'Libraries',
     'Plans',
     'Products',
     'Profiles',

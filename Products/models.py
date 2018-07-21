@@ -1,7 +1,6 @@
 from django.db import models
 from django.db.models import Min
 from djmoney.models.fields import MoneyField
-from Profiles.models import CompanyShippingLocation
 
 
 class Manufacturer(models.Model):
@@ -88,21 +87,4 @@ class Product(models.Model):
         return self.product_type.material
 
 
-class SupplierProduct(models.Model):
-
-    product             = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='priced')
-    supplier            = models.ForeignKey(CompanyShippingLocation, on_delete=models.CASCADE, related_name='priced_products')
-    price_per_unit      = MoneyField(max_digits=8, decimal_places=2, default_currency='USD')
-    units_available     = models.IntegerField(default=0)
-    units_per_order     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    for_sale            = models.BooleanField(default=False)
-
-    def name(self):
-        return self.supplier.get_first_name()
-
-    def __str__(self):
-        return self.supplier.get_first_name() + ' ' + self.product.name
-
-    class Meta:
-        unique_together = ('product','supplier')
 
