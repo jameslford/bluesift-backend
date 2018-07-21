@@ -95,7 +95,7 @@ def create_supplier(request):
     to_email = supplier.email 
     email = EmailMessage(mail_subject, message, to=[to_email])
     email.send()
-    company = CompanyAccount.objects.create(name=company_name, phone_number=phone_number, owner=supplier)
+    company = CompanyAccount.objects.create(name=company_name, phone_number=phone_number, account_owner=supplier)
     CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
     return Response(status=status.HTTP_201_CREATED)
         
