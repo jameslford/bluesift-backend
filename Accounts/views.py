@@ -97,7 +97,8 @@ def create_supplier(request):
     email.send()
     company = CompanyAccount.objects.create(name=company_name, phone_number=phone_number, account_owner=supplier)
     CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
-    return Response(status=status.HTTP_201_CREATED)
+    serializer = UserSerializer(supplier)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
         
 
 def activate(request, uidb64, token):
