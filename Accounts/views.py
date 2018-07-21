@@ -71,7 +71,7 @@ def create_supplier(request):
 
     userModel = get_user_model()
     email = request.POST.get('email')
-    password = request.POST.get('password')
+    password = request.POST.get('Spassword')
     first_name = request.POST.get('first_name')
     last_name = request.POST.get('last_name')
     company_name = request.POST.get('company_name')
