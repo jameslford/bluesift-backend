@@ -76,8 +76,9 @@ def create_supplier(request):
     last_name = request.POST.get('last_name')
     company_name = request.POST.get('company_name')
     phone_number = request.POST.get('phone_number')
-    supplier = userModel.objects.create_user(
-                                        email=email, password=password, 
+    supplier = userModel.objects.create(
+                                        email=email, 
+                                        password=password, 
                                         first_name=first_name, 
                                         last_name=last_name, 
                                         is_supplier=True, 
