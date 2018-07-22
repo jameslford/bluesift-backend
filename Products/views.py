@@ -142,11 +142,16 @@ def app_type_enabler(active_ids, serialized_app_types):
     return serialized_app_types
 
 
+@api_view(['GET'])
+def get_product(request, pk):
+    product = Product.objects.get(id=pk)
+    serialized_product = ProductSerializer(product)
+    return Response({'product': serialized_product.data})
 
 
-class ProductDetail(RetrieveAPIView):
-    serializer_class = ProductSerializer
+# class ProductDetail(RetrieveAPIView):
+#     serializer_class = ProductSerializer
 
-    def get_queryset(self):
-        pk = self.kwargs['pk']
-        return Product.objects.filter(id=pk)
+#     def get_queryset(self):
+#         pk = self.kwargs['pk']
+#         return Product.objects.filter(id=pk)
