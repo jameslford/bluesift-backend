@@ -148,5 +148,5 @@ class ProductDetail(RetrieveAPIView):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
-        pid = self.kwargs['id']
-        return Product.objects.filter(id=pid)
+        pk = self.kwargs['pk']
+        return Product.objects.filter(id=pk)
