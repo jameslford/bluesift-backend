@@ -1,6 +1,7 @@
 # Products.views.py
 
 from django.shortcuts import render
+from rest_framework.generics import RetrieveAPIView
 
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -139,3 +140,13 @@ def app_type_enabler(active_ids, serialized_app_types):
         if app_type['id'] in active_ids:
             app_type['enabled'] = True
     return serialized_app_types
+
+
+
+
+class ProductDetail(RetrieveAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        pid = self.kwargs['id']
+        return Product.objects.filter(id=pid)
