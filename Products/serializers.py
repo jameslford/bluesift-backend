@@ -28,18 +28,22 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ProductTypeSerializer(serializers.ModelSerializer):
     enabled = serializers.BooleanField(default=False)
+    count = serializers.IntegerField(default=0)
     class Meta:
         model = ProductType
-        fields = ('material', 'unit', 'id', 'enabled')
+        fields = ('material', 'unit', 'id', 'enabled', 'count')
 
 
 class ApplicationAreaSerializer(serializers.ModelSerializer):
     enabled = serializers.BooleanField(default=False)
+    count = serializers.IntegerField(default=0)
     class Meta:
         model = Application
-        fields = ('id', 'area', 'enabled')
+        fields = ('id', 'area', 'enabled', 'count')
 
 class ManufacturerSerializer(serializers.ModelSerializer):
+    count = serializers.IntegerField(default=0)
+    enabled = serializers.BooleanField(default=False)
     class Meta:
         model = Manufacturer
-        fields = ('id','name', 'products')
+        fields = ('id','name', 'products', 'count', 'enabled')

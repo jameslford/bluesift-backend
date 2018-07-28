@@ -49,19 +49,20 @@ def product_list(request):
 
     # filter application types
     application_types = Application.objects.all()
-    app_types_serialized = ApplicationAreaSerializer(application_types, many=True)
-    active_ats = active_at(filtered_products)
-    refined_ats = app_type_enabler(active_ats, app_types_serialized)
+    # app_types_serialized = ApplicationAreaSerializer(application_types, many=True)
+    # active_ats = active_at(filtered_products)
+    refined_ats = app_type_enabler(ApplicationAreaSerializer, application_types, filtered_products, 'application')
 
     # filter manufacturers
     manufacturers = Manufacturer.objects.all()
-    manufacturers_serialized = ManufacturerSerializer(manufacturers, many=True)
+    refined_manu = app_type_enabler(ManufacturerSerializer, manufacturers, filtered_products, 'manufacturer')
+    #manufacturers_serialized = ManufacturerSerializer(manufacturers, many=True)
 
     # filter product types
     product_types = ProductType.objects.all()
-    prod_types_seriallized = ProductTypeSerializer(product_types, many=True)
-    active_pts = active_pt(filtered_products)
-    refined_pts = app_type_enabler(active_pts, prod_types_seriallized)
+    # prod_types_seriallized = ProductTypeSerializer(product_types, many=True)
+    # active_pts = active_pt(filtered_products)
+    refined_pts = app_type_enabler(ProductTypeSerializer, product_types, filtered_products, 'product')
 
     
 
@@ -69,9 +70,9 @@ def product_list(request):
 
     return Response({
                     "filter" : filter_content,
-                    "application_types": refined_ats.data,
-                    "product_types": refined_pts.data,
-                    "manufacturers": manufacturers_serialized.data,
+                    "application_types": refined_ats,
+                    #"product_types": refined_pts.data,
+                    "manufacturers": refined_manu,
                     "products": products_serialized.data
                     })
     
@@ -100,11 +101,12 @@ def parse_manufacturer(manufacturer, products):
 
 def parse_priced(is_priced, products):
     if is_priced == 'true':   
-        prods = []
-        for product in products:
-            if product.is_priced() == True:
-                prods.append(product)
-                return prods
+        return products.filter(is_priced=True)
+        # prods = []
+        # for product in products:
+        #     if product.is_priced() == True:
+        #         prods.append(product)
+                # return prods
     else:
         return products
 
@@ -135,11 +137,40 @@ def active_pt(products):
         return
 
 
-def app_type_enabler(active_ids, serialized_app_types):
-    for app_type in serialized_app_types.data:
-        if app_type['id'] in active_ids:
-            app_type['enabled'] = True
-    return serialized_app_types
+# def app_type_enabler(active_ids, serialized_app_types):
+#     for app_type in serialized_app_types.data:
+#         if app_type['id'] in active_ids:
+#             app_type['enabled'] = True
+#     return serialized_app_types
+
+
+
+def app_type_enabler(serializer, objects, products, argument):
+    serialized_types = []
+    for item in objects:
+        count = get_argument(item, products, argument)
+        # ATcount = products.filter(argument=item).count()
+        at_serialized = serializer(item).data
+        at_serialized['count'] = count
+        if count > 0:
+            at_serialized['enabled'] = True
+        serialized_types.append(at_serialized)
+    return serialized_types
+
+def get_argument(item, products, argument):
+    if argument == 'application':
+        return products.filter(application=item).count()
+    elif argument == 'manufacturer':
+        return products.filter(manufacturer=item).count()
+    elif argument == 'product':
+        return products.filter(product_type=item).count()
+
+
+
+
+
+
+
 
 
 @api_view(['GET'])
@@ -149,9 +180,3 @@ def get_product(request, pk):
     return Response({'product': serialized_product.data})
 
 
-# class ProductDetail(RetrieveAPIView):
-#     serializer_class = ProductSerializer
-
-#     def get_queryset(self):
-#         pk = self.kwargs['pk']
-#         return Product.objects.filter(id=pk)
