@@ -29,7 +29,7 @@ def product_list(request):
     # parse request
     is_priced = request.GET.get('is_priced', 'False')
     product_type = request.GET.get('product_type', '0')
-    application_type = request.GET.get('application_type', '0')
+    application_type = request.GET.getlist('application_type', '0')
     manufacturer = request.GET.get('manufacturer', 'All')
 
     # structure filter objects
