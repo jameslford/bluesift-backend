@@ -82,7 +82,7 @@ def parse_pt(product_type):
         return products.filter(product_type=product_type)
 
 def parse_at(application_type, products):
-    if application_type == '0':
+    if application_type == [0]:
         return products
     else:
         for at in application_type:
