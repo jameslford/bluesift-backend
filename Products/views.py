@@ -49,19 +49,14 @@ def product_list(request):
 
     # filter application types
     application_types = Application.objects.all()
-    # app_types_serialized = ApplicationAreaSerializer(application_types, many=True)
-    # active_ats = active_at(filtered_products)
     refined_ats = app_type_enabler(ApplicationAreaSerializer, application_types, filtered_products, 'application')
 
     # filter manufacturers
     manufacturers = Manufacturer.objects.all()
     refined_manu = app_type_enabler(ManufacturerSerializer, manufacturers, filtered_products, 'manufacturer')
-    #manufacturers_serialized = ManufacturerSerializer(manufacturers, many=True)
 
     # filter product types
     product_types = ProductType.objects.all()
-    # prod_types_seriallized = ProductTypeSerializer(product_types, many=True)
-    # active_pts = active_pt(filtered_products)
     refined_pts = app_type_enabler(ProductTypeSerializer, product_types, filtered_products, 'product')
 
     
@@ -102,54 +97,14 @@ def parse_manufacturer(manufacturer, products):
 def parse_priced(is_priced, products):
     if is_priced == 'true':   
         return products.filter(is_priced=True)
-        # prods = []
-        # for product in products:
-        #     if product.is_priced() == True:
-        #         prods.append(product)
-                # return prods
     else:
         return products
-
-
-def active_at(products):
-    if products:
-        actives = []
-        for product in products:
-            ats = product.application.all()
-            for at in ats:
-                actives.append(at.id)
-        active = set(actives)
-        return active
-    else:
-        return
-
-
-def active_pt(products):
-    if products:
-        actives = []
-        for product in products:
-            if product.product_type:
-                pt = product.product_type
-                actives.append(pt.id)
-        active = set(actives)
-        return active
-    else:
-        return
-
-
-# def app_type_enabler(active_ids, serialized_app_types):
-#     for app_type in serialized_app_types.data:
-#         if app_type['id'] in active_ids:
-#             app_type['enabled'] = True
-#     return serialized_app_types
-
 
 
 def app_type_enabler(serializer, objects, products, argument):
     serialized_types = []
     for item in objects:
         count = get_argument(item, products, argument)
-        # ATcount = products.filter(argument=item).count()
         at_serialized = serializer(item).data
         at_serialized['count'] = count
         if count > 0:
