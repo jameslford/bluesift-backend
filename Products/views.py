@@ -85,7 +85,9 @@ def parse_at(application_type, products):
     if application_type == '0':
         return products
     else:
-        return products.filter(application=application_type)
+        for at in application_type:
+            products = products.filter(application=at)
+        return products
 
 def parse_manufacturer(manufacturer, products):
     if manufacturer == 'All':
