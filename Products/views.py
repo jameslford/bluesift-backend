@@ -1,8 +1,10 @@
 # Products.views.py
 
 from django.shortcuts import render
-from rest_framework.generics import RetrieveAPIView
+from django.core.serializers import serialize
+from django.db.models import Q
 
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -30,15 +32,10 @@ def product_list(request):
     is_priced = request.GET.get('is_priced', 'False')
     product_type = request.GET.get('product_type', '0')
     application_type = request.GET.getlist('application_type', ['0'])
-    manufacturer = request.GET.get('manufacturer', 'All')
+    manufacturer = request.GET.getlist('manufacturer', ['0'])
 
     # structure filter objects
-    filter_content = {
-        "is_priced" : is_priced,
-        "product_type" : product_type,
-        "application_type" : application_type,
-        "manufacturer" : manufacturer,
-    }
+  
 
     # filter products
     pTyped_products = parse_pt(product_type)
@@ -46,6 +43,7 @@ def product_list(request):
     mTyped_products = parse_manufacturer(manufacturer, aTyped_products)
     filtered_products = parse_priced(is_priced, mTyped_products)
     products_serialized = ProductSerializer(filtered_products, many=True)
+ 
 
     # filter application types
     application_types = Application.objects.all()
@@ -59,9 +57,10 @@ def product_list(request):
     product_types = ProductType.objects.all()
     refined_pts = app_type_enabler(ProductTypeSerializer, product_types, filtered_products, 'product')
 
-    
-
-
+    filter_content = {
+        "is_priced" : is_priced,
+        "product_count" : filtered_products.count()
+    } 
 
     return Response({
                     "filter" : filter_content,
@@ -90,10 +89,13 @@ def parse_at(application_type, products):
         return products
 
 def parse_manufacturer(manufacturer, products):
-    if manufacturer == 'All':
+    if manufacturer == ['0']:
         return products
     else:
-        return products.filter(manufacturer=manufacturer)
+        query = Q(manufacturer=manufacturer[0])
+        for manu in manufacturer[1:]:
+            query |= Q(manufacturer=manu)
+        return products.filter(query)
 
 
 def parse_priced(is_priced, products):
