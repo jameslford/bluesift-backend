@@ -63,7 +63,7 @@ def product_list(request):
     } 
 
     return Response({
-                    "filter" : filter_content,
+                    "filter" : [filter_content],
                     "application_types": refined_ats,
                     "product_types": refined_pts,
                     "manufacturers": refined_manu,
