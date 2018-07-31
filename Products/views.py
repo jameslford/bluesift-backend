@@ -47,15 +47,15 @@ def product_list(request):
 
     # filter application types
     application_types = Application.objects.all()
-    refined_ats = app_type_enabler(ApplicationAreaSerializer, application_types, filtered_products, 'application')
+    refined_ats = type_refiner(ApplicationAreaSerializer, application_types, filtered_products, 'application')
 
     # filter manufacturers
     manufacturers = Manufacturer.objects.all()
-    refined_manu = app_type_enabler(ManufacturerSerializer, manufacturers, filtered_products, 'manufacturer')
+    refined_manu = type_refiner(ManufacturerSerializer, manufacturers, aTyped_products, 'manufacturer')
 
     # filter product types
     product_types = ProductType.objects.all()
-    refined_pts = app_type_enabler(ProductTypeSerializer, product_types, filtered_products, 'product')
+    refined_pts = type_refiner(ProductTypeSerializer, product_types, filtered_products, 'product')
 
     filter_content = {
         "is_priced" : is_priced,
@@ -105,7 +105,7 @@ def parse_priced(is_priced, products):
         return products
 
 
-def app_type_enabler(serializer, objects, products, argument):
+def type_refiner(serializer, objects, products, argument):
     serialized_types = []
     for item in objects:
         count = get_argument(item, products, argument)
@@ -119,11 +119,10 @@ def app_type_enabler(serializer, objects, products, argument):
 def get_argument(item, products, argument):
     if argument == 'application':
         return products.filter(application=item).count()
-    elif argument == 'manufacturer':
-        return products.filter(manufacturer=item).count()
     elif argument == 'product':
         return products.filter(product_type=item).count()
-
+    elif argument == 'manufacturer':
+        return products.filter(manufacturer=item).count()
 
 
 
