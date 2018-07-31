@@ -32,7 +32,7 @@ def product_list(request):
     is_priced = request.GET.get('is_priced', 'False')
     product_type = request.GET.get('product_type', '0')
     application_type = request.GET.getlist('application_type', ['0'])
-    manufacturer = request.GET.getlist('manufacturer', ['0'])
+    manufacturer = request.GET.get('manufacturer', '0')
 
     # structure filter objects
   
@@ -89,13 +89,10 @@ def parse_at(application_type, products):
         return products
 
 def parse_manufacturer(manufacturer, products):
-    if manufacturer == ['0']:
+    if manufacturer == '0':
         return products
     else:
-        query = Q(manufacturer=manufacturer[0])
-        for manu in manufacturer[1:]:
-            query |= Q(manufacturer=manu)
-        return products.filter(query)
+        return products.filter(manufacturer=manufacturer)
 
 
 def parse_priced(is_priced, products):
