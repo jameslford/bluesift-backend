@@ -128,6 +128,7 @@ def get_token(request):
         except(TypeError, ValueError, OverflowError, userModel.DoesNotExist):
             user = None
         if user:
+            email = sUser.data['email']
             if password == user.password:
                 if user.is_active == True:
                     token = Token.objects.get(user=user)
@@ -135,14 +136,14 @@ def get_token(request):
                     sUser = UserSerializer(instance=user)
                     content = {
                         'key' : sToken.data['key'],
-                        'email' : sUser.data['email'],
+                        'email' : email,
                         'first_name' : sUser.data['first_name'],
                         'last_name' : sUser.data['last_name'],
                         'is_supplier' : sUser.data['is_supplier'],
                         'id' : sUser.data['id'],
                     }
                     return Response(content)
-                return Response("please verify your account", status=status.HTTP_400_BAD_REQUEST)
-            return Response("incorrect password")
-        return Response("no user found")
+                return Response("Please check your inbox at " + email + " to verify your account", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Incorrect password for " + email, status=status.HTTP_401_UNAUTHORIZED)
+        return Response("No user found, please sign up", status=status.HTTP_404_NOT_FOUND)
     return Response(serializer.errors)
