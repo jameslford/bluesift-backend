@@ -128,12 +128,12 @@ def get_token(request):
         except(TypeError, ValueError, OverflowError, userModel.DoesNotExist):
             user = None
         if user:
+            sUser = UserSerializer(instance=user)
             email = sUser.data['email']
             if password == user.password:
                 if user.is_active == True:
                     token = Token.objects.get(user=user)
                     sToken = TokenSerializer(instance=token)
-                    sUser = UserSerializer(instance=user)
                     content = {
                         'key' : sToken.data['key'],
                         'email' : email,
