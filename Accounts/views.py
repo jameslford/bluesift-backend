@@ -7,11 +7,9 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpResponse
 
 import datetime
-
-
-
 
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -144,7 +142,7 @@ def get_token(request):
                         'id' : sUser.data['id'],
                     }
                     return Response(content)
-                return Response("please verify your account")
+                return Response("please verify your account", status=status.HTTP_400_BAD_REQUEST)
             return Response("incorrect password")
         return Response("no user found")
     return Response(serializer.errors)
