@@ -8,6 +8,7 @@ from django.conf.urls import url
 from .views import landing
 
 
+
 urlpatterns = [
     path('', landing, name = 'home'),
     path('admin/', admin.site.urls),

@@ -51,7 +51,7 @@ def product_list(request):
 
     # filter manufacturers
     manufacturers = Manufacturer.objects.all()
-    refined_manu = type_refiner(ManufacturerSerializer, manufacturers, aTyped_products, 'manufacturer')
+    refined_manu = type_refiner(ManufacturerSerializer, manufacturers, parse_priced(aTyped_products), 'manufacturer')
 
     # filter product types
     product_types = ProductType.objects.all()
