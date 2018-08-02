@@ -40,8 +40,8 @@ def product_list(request):
     # filter products
     pTyped_products = parse_pt(product_type)
     aTyped_products = parse_at(application_type, pTyped_products)
-    mTyped_products = parse_manufacturer(manufacturer, aTyped_products)
-    filtered_products = parse_priced(is_priced, mTyped_products)
+    priced_products = parse_priced(is_priced, aTyped_products)
+    filtered_products = parse_manufacturer(manufacturer, priced_products)
     products_serialized = ProductSerializer(filtered_products, many=True)
  
 
@@ -51,7 +51,7 @@ def product_list(request):
 
     # filter manufacturers
     manufacturers = Manufacturer.objects.all()
-    refined_manu = type_refiner(ManufacturerSerializer, manufacturers, parse_priced(aTyped_products), 'manufacturer')
+    refined_manu = type_refiner(ManufacturerSerializer, manufacturers, priced_products, 'manufacturer')
 
     # filter product types
     product_types = ProductType.objects.all()
