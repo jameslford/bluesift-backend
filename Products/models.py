@@ -41,22 +41,23 @@ class ProductType(models.Model):
 
 
 class Product(models.Model):
-    name            = models.CharField(max_length=200)
-    manufacturer    = models.ForeignKey(
+    name                = models.CharField(max_length=200)
+    manufacturer        = models.ForeignKey(
                                         Manufacturer,
                                         null=True,
                                         related_name='products',
                                         on_delete=models.SET_NULL,
                                         )
-    image           = models.ImageField()
-    application     = models.ManyToManyField(Application)
-    product_type    = models.ForeignKey(
+    image               = models.ImageField()
+    application         = models.ManyToManyField(Application)
+    product_type        = models.ForeignKey(
                                         ProductType, 
                                         null=True, 
                                         on_delete=models.SET_NULL
                                         )
-    is_priced       = models.BooleanField(default=False)
-    lowest_price    = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    is_priced           = models.BooleanField(default=False)
+    lowest_price        = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    manufacturer_url    = models.URLField(null=True, blank=True)
 
 
     def __str__(self):
