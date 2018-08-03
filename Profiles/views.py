@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from Profiles.models import CompanyAccount, CompanyShippingLocation, CustomerProfile
-from Product.models import Product
+from Products.models import Product
 # Create your views here.
 
 
