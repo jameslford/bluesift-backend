@@ -63,9 +63,12 @@ class CustomerProfile(models.Model):
     user                = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE, related_name='user_profile')
     addresses           = models.ManyToManyField(Address, related_name='addresses')
     phone_number        = models.IntegerField(null=True)
+    name                = models.CharField(max_length=40, blank=True, null=True)
 
     def __str__(self):
-        return self.shipping_address
+        return self.user + '"s library'
+
+    
     
 
 class CustomerProject(models.Model):
@@ -73,3 +76,6 @@ class CustomerProject(models.Model):
     address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL, related_name='projects')
     products = models.ManyToManyField(Product)
     nickname = models.CharField(max_length=50)
+
+    def __str__(self):
+            return self.nickname

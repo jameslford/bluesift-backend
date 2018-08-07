@@ -33,6 +33,7 @@ def product_list(request):
     product_type = request.GET.get('product_type', '0')
     application_type = request.GET.getlist('application_type', ['0'])
     manufacturer = request.GET.get('manufacturer', '0')
+    sort = request.GET.get('sort', 'none')
 
     # structure filter objects
   
@@ -42,6 +43,7 @@ def product_list(request):
     aTyped_products = parse_at(application_type, pTyped_products)
     priced_products = parse_priced(is_priced, aTyped_products)
     filtered_products = parse_manufacturer(manufacturer, priced_products)
+    sorted_products = product_sort()
     products_serialized = ProductSerializer(filtered_products, many=True)
  
 
@@ -120,6 +122,9 @@ def get_argument(item, products, argument):
         return products.filter(product_type=item).count()
     elif argument == 'manufacturer':
         return products.filter(manufacturer=item).count()
+
+def product_sort(products, argument):
+    
 
 
 

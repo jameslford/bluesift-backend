@@ -17,9 +17,10 @@ class ProductSerializer(serializers.ModelSerializer):
                     'is_priced',
                     'lowest_price',
                     'manufacturer', 
-                    'application', 
                     'product_type',
                     'prices',
+                    'manufacturer_url',
+                    'application', 
                    )
 
 
