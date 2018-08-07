@@ -66,7 +66,7 @@ class CustomerProfile(models.Model):
     name                = models.CharField(max_length=40, blank=True, null=True)
 
     def __str__(self):
-        return self.user + '"s library'
+        return self.user.get_first_name() + '"s library'
 
     
     
