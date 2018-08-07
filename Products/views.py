@@ -43,7 +43,7 @@ def product_list(request):
     aTyped_products = parse_at(application_type, pTyped_products)
     priced_products = parse_priced(is_priced, aTyped_products)
     filtered_products = parse_manufacturer(manufacturer, priced_products)
-    sorted_products = product_sort()
+   #sorted_products = product_sort()
     products_serialized = ProductSerializer(filtered_products, many=True)
  
 
@@ -124,7 +124,7 @@ def get_argument(item, products, argument):
         return products.filter(manufacturer=item).count()
 
 def product_sort(products, argument):
-    
+    pass
 
 
 
