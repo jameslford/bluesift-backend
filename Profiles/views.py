@@ -97,7 +97,7 @@ def check_customer_profile(user):
     try:
         profile = user.CustomerProfile
         return profile
-    except (profile.DoesNotExist):
+    except:
         profile = CustomerProfile.objects.create(user=user)
         return profile
 
