@@ -7,8 +7,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from Profiles.models import CompanyAccount, CompanyShippingLocation, CustomerProfile, CustomerProject, SupplierProduct
+from Profiles.models import( 
+                            CompanyAccount, 
+                            CompanyShippingLocation, 
+                            CustomerProfile, 
+                            CustomerProject, 
+                            SupplierProduct 
+                            )
 from Products.models import Product
+from .serializers import ShippingLocationSerializer, CustomerProjectSerializer 
 # Create your views here.
 
 
@@ -33,18 +40,12 @@ def user_library(request):
         return Response(status=status.HTTP_412_PRECONDITION_FAILED)
 
 
+
 def append_supplier_location(user, product, location_id=0):
-    try:
-        account = user.CompanyAccount
-    except (CompanyAccount.DoesNotExist):
-        account = CompanyAccount.objects.create(account_owner=user)
-    try:
-        count = account.shipping_locations.all().count()
-    except:
-        CompanyShippingLocation.objects.create(company_account=account)
-        count = account.shipping_locations.all().count()
+    account = check_company_account(user)
+    location_count = supplier_location_count(account)
     if location_id != 0:
-        location = CompanyShippingLocation.objects.get(id=location_id)
+        location = account.shipping_locations.get(id=location_id)
         SupplierProduct.objects.create(product=product, location=location)
         return status.HTTP_201_CREATED
     elif count == 1 and location_id == 0:
@@ -56,19 +57,77 @@ def append_supplier_location(user, product, location_id=0):
     else:
         return "user has no locations"
 
-        
 
 
-    
 
-def append_customer_project(user, prod_id):
-    pass
+
+
+def append_customer_project(user, product, project_id=0):
+    profile = check_customer_profile(user)
+    project_count = customer_project_count(profile)
+    if project_id != 0:
+        project = profile.projects.get(id=project_id)
+        CustomerProduct.objects.create(project=project, product=product)
+        return status.HTTP_201_CREATED
+    elif project_count == 1 and project_id == 0:
+        project = profile.projects.first()
+        CustomerProduct.objects.create(project=project, product=product)
+    elif project_count > 1 and project_id == 0:
+         return "project not specified"    
+    else:
+        return "user has no project"
+
+
 
 def get_supplier_lib(user):
-    pass
+    account = check_company_account(user)
+    locations = account.shpping_locations
+    serialized = ShippingLocationSerializer(locations, many=True)
+    return ({"locations" : serialized.data})
 
 def get_customer_lib(user):
-    pass
+    profile = check_customer_profile(user)
+    projects = profile.projects
+    serialized = CustomerProjectSerializer(projects, many=True)
+    return ({"projects" : serialized.data})
+
+
+
+def check_customer_profile(user):
+    try:
+        profile = user.CustomerProfile
+        return profile
+    except (profile.DoesNotExist):
+        profile = CustomerProfile.objects.create(user=user)
+        return profile
+
+def customer_project_count(profile):
+    try:
+        count = profile.projects.count()
+        return count
+    except:
+        CustomerProject.objects.create(owner=profile, nickname='Main Project')
+        count = profile.projects.count()
+        return count
+
+
+def check_company_account(user):
+    try:
+        account = user.CompanyAccount
+    except (CompanyAccount.DoesNotExist):
+        account = CompanyAccount.objects.create(account_owner=user)
+
+def supplier_location_count(account):
+    try:
+        count = account.shipping_locations.all().count()
+        return count
+    except:
+        CompanyShippingLocation.objects.create(company_account=account, nickname='Main Location')
+        count = account.shipping_locations.all().count()
+        return count
+
+
+
 
 
     # if user.is_supplier == True:
