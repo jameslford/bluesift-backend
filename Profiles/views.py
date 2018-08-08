@@ -89,8 +89,8 @@ def get_supplier_lib(user):
 def get_customer_lib(user):
     profile = check_customer_profile(user)
     projects = profile.projects
-    serialized = CustomerProjectSerializer(projects, many=True)
-    return ({"projects" : serialized.data})
+    serialized_projects = CustomerProjectSerializer(projects, many=True)
+    return ({"projects" : serialized_projects.data})
 
 
 

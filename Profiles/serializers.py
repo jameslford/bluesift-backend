@@ -13,7 +13,15 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
         model = CompanyShippingLocation
         fields = ('company_account','approved_seller','nickname', 'address', 'id')
 
+class CustomerProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerProduct
+        fields = ('application', 'product', 'project', 'id')
+
+
+
 class CustomerProjectSerializer(serializers.ModelSerializer):
+    customer_product = CustomerProductSerializer(many=True)
     class Meta:
         model = CustomerProject
         fields = ('owner', 'address', 'nickname', 'id')
