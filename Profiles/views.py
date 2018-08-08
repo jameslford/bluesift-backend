@@ -117,7 +117,7 @@ def get_project_products(project):
             # 'prices': product.product.prices(),
             'lowest_price': product.product.lowest_price,
             'is_priced': product.product.is_priced,
-            'product_type': product.product.product_type,
+            'product_type': product.product.product_type.material,
             # 'manufacturer_url': product.product.manufacturer_url
         }
         product_list.append(content)
