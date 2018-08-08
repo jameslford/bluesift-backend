@@ -44,8 +44,8 @@ class SupplierProduct(models.Model):
 
     product             = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='priced')
     supplier            = models.ForeignKey(CompanyShippingLocation, on_delete=models.CASCADE, related_name='priced_products')
-    price_per_unit      = MoneyField(max_digits=8, decimal_places=2, default_currency='USD')
-    units_available     = models.IntegerField(default=0)
+    price_per_unit      = MoneyField(null=True, max_digits=8, decimal_places=2, default_currency='USD')
+    units_available     = models.IntegerField(default=0, null=True)
     units_per_order     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     for_sale            = models.BooleanField(default=False)
 
@@ -60,22 +60,34 @@ class SupplierProduct(models.Model):
 
 
 class CustomerProfile(models.Model):
-    user                = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE, related_name='user_profile')
+    user                = models.OneToOneField(
+                                                settings.AUTH_USER_MODEL, 
+                                                null=True, 
+                                                on_delete=models.CASCADE, 
+                                                related_name='user_profile'
+                                                )
     addresses           = models.ManyToManyField(Address, related_name='addresses')
     phone_number        = models.IntegerField(null=True)
     name                = models.CharField(max_length=40, blank=True, null=True)
 
     def __str__(self):
-        return self.user.get_first_name() + '"s library'
+        return self.user.get_first_name() + "'s library"
 
     
     
 
 class CustomerProject(models.Model):
-    owner = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE, related_name='projects')
-    address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL, related_name='projects')
-    products = models.ManyToManyField(Product)
-    nickname = models.CharField(max_length=50)
+    owner               = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE, related_name='projects')
+    address             = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL, related_name='projects')
+    nickname            = models.CharField(max_length=50)
 
     def __str__(self):
             return self.nickname
+
+class CustomerProduct(models.Model):
+    application         = models.CharField(max_length=100, blank=True, null=True)
+    product             = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='customer_products')
+    project             = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, related_name='products')
+
+    def __str__(self):
+            return self.product.name
