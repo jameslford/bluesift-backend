@@ -108,11 +108,17 @@ def get_project_products(project):
     customer_products = project.products.all()
     for product in customer_products:
         # serializer = CustomerProductSerializer.data
-        application = product.application
-        product_name = product.product.name
         content = {
-            'name' : product_name,
-            'application' : application
+            'use': product.use,
+            'name': product.product.name,
+            'image': product.product.image,
+            'product_id': product.product.id,
+            'id': product.id,
+            'prices': product.product.prices(),
+            'lowest_price': product.product.lowest_price,
+            'is_priced': product.product.lowest_price,
+            'product_type': product.product.product_type,
+            'manufacturer_url': product.product.manufacturer_url
         }
         product_list.append(content)
     return product_list

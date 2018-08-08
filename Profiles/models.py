@@ -94,7 +94,7 @@ class CustomerProject(models.Model):
             return self.nickname
 
 class CustomerProduct(models.Model):
-    application         = models.CharField(max_length=100, blank=True, null=True)
+    use                 = models.CharField(max_length=100, blank=True, null=True)
     product             = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='customer_products')
     project             = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, related_name='products')
 
