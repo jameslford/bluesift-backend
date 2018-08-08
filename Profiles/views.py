@@ -95,7 +95,7 @@ def get_customer_lib(user):
 
 def check_customer_profile(user):
     try:
-        profile = user.CustomerProfile
+        profile = user.user_profile
         return profile
     except:
         profile = CustomerProfile.objects.create(user=user)

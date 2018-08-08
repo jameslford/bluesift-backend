@@ -77,8 +77,17 @@ class CustomerProfile(models.Model):
     
 
 class CustomerProject(models.Model):
-    owner               = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE, related_name='projects')
-    address             = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL, related_name='projects')
+    owner               = models.ForeignKey(
+                                            CustomerProfile, 
+                                            on_delete=models.CASCADE, 
+                                            related_name='projects'
+                                            )
+    address             = models.ForeignKey(
+                                            Address, 
+                                            null=True, 
+                                            on_delete=models.SET_NULL, 
+                                            related_name='projects'
+                                            )
     nickname            = models.CharField(max_length=50)
 
     def __str__(self):
