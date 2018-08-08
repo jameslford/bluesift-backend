@@ -82,13 +82,13 @@ def append_customer_project(user, product, project_id=0):
 
 def get_supplier_lib(user):
     account = check_company_account(user)
-    locations = account.shpping_locations
+    locations = account.shipping_locations
     serialized = ShippingLocationSerializer(locations, many=True)
     return ({"locations" : serialized.data})
 
 def get_customer_lib(user):
     profile = check_customer_profile(user)
-    projects = profile.project_set.all()
+    projects = profile.customerproject_set.all()
     projects_list = []
     for project in projects:
         products_list = get_project_products(project)
