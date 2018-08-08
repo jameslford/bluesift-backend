@@ -88,7 +88,7 @@ def get_supplier_lib(user):
 
 def get_customer_lib(user):
     profile = check_customer_profile(user)
-    projects = profile.projects
+    projects = profile.project_set.all()
     projects_list = []
     for project in projects:
         products_list = get_project_products(project)
