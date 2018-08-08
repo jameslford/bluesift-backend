@@ -24,7 +24,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
     customer_product = CustomerProductSerializer(many=True)
     class Meta:
         model = CustomerProject
-        fields = ('owner', 'address', 'nickname', 'id')
+        fields = ('owner', 'address', 'nickname', 'id', 'customer_product')
 
 
 
