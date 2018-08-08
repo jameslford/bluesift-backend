@@ -105,7 +105,7 @@ def get_customer_lib(user):
 
 def get_project_products(project):
     product_list = []
-    customer_products = project.customer_products
+    customer_products = project.products.all()
     for product in customer_products:
         # serializer = CustomerProductSerializer.data
         application = product.application
