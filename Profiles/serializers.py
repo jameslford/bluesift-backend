@@ -13,18 +13,21 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
         model = CompanyShippingLocation
         fields = ('company_account','approved_seller','nickname', 'address', 'id')
 
-class CustomerProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomerProduct
-        fields = ('application', 'product', 'project', 'id')
+# class CustomerProductSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CustomerProduct
+#         fields = ('application', 'product', 'project', 'id')
 
 
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
-    customer_products = CustomerProductSerializer(many=True, read_only=True)
     class Meta:
         model = CustomerProject
-        fields = ('owner', 'address', 'nickname', 'id', 'customer_products')
+        fields = ('owner', 'address', 'nickname', 'id')
 
 
 
+class CustomerProductSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=150)
+    application = serializers.CharField(max_length=150)
+    

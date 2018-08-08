@@ -16,7 +16,7 @@ from Profiles.models import(
                             SupplierProduct 
                             )
 from Products.models import Product
-from .serializers import ShippingLocationSerializer, CustomerProjectSerializer 
+from .serializers import ShippingLocationSerializer, CustomerProjectSerializer, CustomerProductSerializer 
 # Create your views here.
 
 
@@ -89,8 +89,33 @@ def get_supplier_lib(user):
 def get_customer_lib(user):
     profile = check_customer_profile(user)
     projects = profile.projects
-    serialized_projects = CustomerProjectSerializer(projects, many=True)
-    return ({"projects" : serialized_projects.data})
+    projects_list = []
+    for project in projects:
+        products_list = get_project_products(project)
+        address = project.address
+        nickname = project.nickname
+        content = {
+            'nickname': nickname,
+            'address': address,
+            'products': products_list
+        }
+        projects_list.append(content)
+    return {'projects': projects_list}
+
+
+def get_project_products(project):
+    product_list = []
+    customer_products = project.customer_products
+    for product in customer_products:
+        # serializer = CustomerProductSerializer.data
+        application = product.application
+        product_name = product.product.name
+        content = {
+            'name' : product_name,
+            'application' : application
+        }
+        product_list.append(content)
+    return product_list
 
 
 
