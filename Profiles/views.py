@@ -9,7 +9,8 @@ from rest_framework import status
 
 from Profiles.models import( 
                             CompanyAccount, 
-                            CompanyShippingLocation, 
+                            CompanyShippingLocation,
+                            CustomerProduct, 
                             CustomerProfile, 
                             CustomerProject, 
                             SupplierProduct 
