@@ -17,7 +17,7 @@ from Profiles.models import(
                             SupplierProduct 
                             )
 from Products.models import Product
-from Products.serializer import ProductSerializer
+from Products.serializers import ProductSerializer
 from .serializers import ShippingLocationSerializer, CustomerProjectSerializer, CustomerProductSerializer 
 # Create your views here.
 
