@@ -112,7 +112,7 @@ def get_project_products(project):
         serializer['id'] = product.id
         serializer['product_id'] = product.product.id
         serializer['use'] = product.use
-        serializer['name'] =  product.product.name,
+        serializer['name'] =  product.product.name
         serializer['image'] = str(settings.MEDIA_ROOT) + str(product.product.image)
         serializer['lowest_price'] = product.product.lowest_price
         serializer['is_priced'] = product.product.is_priced
