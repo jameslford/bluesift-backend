@@ -107,21 +107,35 @@ def get_project_products(project):
     product_list = []
     customer_products = project.products.all()
     for product in customer_products:
-        # serializer = CustomerProductSerializer.data
-        content = {
-            'use': product.use,
-            'name': product.product.name,
-            # 'image': product.product.image,
-            'product_id': product.product.id,
-            'id': product.id,
-            'prices': product.product.prices(),
-            'lowest_price': product.product.lowest_price,
-            'is_priced': product.product.is_priced,
-            'product_type': product.product.product_type.material,
-            # 'manufacturer_url': product.product.manufacturer_url
-        }
-        product_list.append(content)
+        serializer = CustomerProductSerializer().data
+        serializer['id'] = product.use,
+        serializer['product_id'] = product.product.name,
+        serializer['use'] = product.product.image,
+        serializer['name'] = product.product.id,   
+        serializer['image'] = product.id,
+        serializer['lowest_price'] = product.product.prices(),
+        serializer['is_priced'] = product.product.lowest_price,
+        serializer['product_type'] = product.product.is_priced,
+        serializer['prices'] = product.product.product_type
+        product_list.append(serializer)
     return product_list
+
+
+        # content = {
+        #     'use': product.use,
+        #     'name': product.product.name,
+        #     'image': product.product.image,
+        #     'product_id': product.product.id,
+        #     'id': product.id,
+        #     'prices': product.product.prices(),
+        #     'lowest_price': product.product.lowest_price,
+        #     'is_priced': product.product.is_priced,
+        #     'product_type': product.product.product_type.material,
+        #     # 'manufacturer_url': product.product.manufacturer_url
+        # }
+
+
+
 
 
 

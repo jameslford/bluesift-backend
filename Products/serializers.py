@@ -48,3 +48,5 @@ class ManufacturerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manufacturer
         fields = ('id','name', 'products', 'count', 'enabled')
+
+
