@@ -114,11 +114,11 @@ def get_project_products(project):
             'image': product.product.image,
             'product_id': product.product.id,
             'id': product.id,
-            # 'prices': product.product.prices(),
+            'prices': product.product.prices(),
             'lowest_price': product.product.lowest_price,
             'is_priced': product.product.is_priced,
             'product_type': product.product.product_type.material,
-            'manufacturer_url': product.product.manufacturer_url
+            # 'manufacturer_url': product.product.manufacturer_url
         }
         product_list.append(content)
     return product_list
