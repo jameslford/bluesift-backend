@@ -17,6 +17,7 @@ from Profiles.models import(
                             SupplierProduct 
                             )
 from Products.models import Product
+from Products.serializer import ProductSerializer
 from .serializers import ShippingLocationSerializer, CustomerProjectSerializer, CustomerProductSerializer 
 # Create your views here.
 
@@ -107,13 +108,15 @@ def get_customer_lib(user):
 def get_project_products(project):
     product_list = []
     customer_products = project.products.all()
-    for product in customer_products:
+    for customer_product in customer_products:
+        product = customer_product.product
+        serialized_product = ProductSerializer(product).data
         serializer = CustomerProductSerializer().data
         serializer['id'] = product.id
-        serializer['product_id'] = product.product.id
+        serializer['product_id'] = serialized_product['id']
         serializer['use'] = product.use
         serializer['name'] =  product.product.name
-        serializer['image'] = str(settings.MEDIA_ROOT) + str(product.product.image)
+        serializer['image'] = serialized_product['image']
         serializer['lowest_price'] = product.product.lowest_price
         serializer['is_priced'] = product.product.is_priced
         serializer['product_type'] = product.product.product_type.material
