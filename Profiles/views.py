@@ -111,7 +111,7 @@ def get_project_products(project):
         content = {
             'use': product.use,
             'name': product.product.name,
-            'image': product.product.image,
+            # 'image': product.product.image,
             'product_id': product.product.id,
             'id': product.id,
             'prices': product.product.prices(),
