@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.conf import settings
 
 
 from rest_framework.decorators import api_view, permission_classes, parser_classes
@@ -49,11 +50,11 @@ def append_supplier_location(user, product, location_id=0):
         location = account.shipping_locations.get(id=location_id)
         SupplierProduct.objects.create(product=product, location=location)
         return status.HTTP_201_CREATED
-    elif count == 1 and location_id == 0:
+    elif location_count == 1 and location_id == 0:
         location = account.shipping_locations.first()
         SupplierProduct.objects.create(product=product, location=location)
         return status.HTTP_201_CREATED
-    elif count > 1 and location_id == 0:
+    elif location_count > 1 and location_id == 0:
         return "location not specified"    
     else:
         return "user has no locations"
@@ -110,7 +111,7 @@ def get_project_products(project):
         serializer = CustomerProductSerializer().data
         serializer['id'] = product.use,
         serializer['product_id'] = product.product.name,
-        serializer['use'] = product.product.image,
+        serializer['use'] = str(settings.MEDIA_ROOT) + str(product.product.image),
         serializer['name'] = product.product.id,   
         serializer['image'] = product.id,
         serializer['lowest_price'] = product.product.prices(),
@@ -160,8 +161,10 @@ def customer_project_count(profile):
 def check_company_account(user):
     try:
         account = user.CompanyAccount
+        return account
     except (CompanyAccount.DoesNotExist):
         account = CompanyAccount.objects.create(account_owner=user)
+        return account
 
 def supplier_location_count(account):
     try:
