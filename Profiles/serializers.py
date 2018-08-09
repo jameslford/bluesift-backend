@@ -40,15 +40,15 @@ class CustomerProductSerializer(serializers.Serializer):
 
 
 
+# product.id,
+# product.product.id,   
 # product.use,
 # product.product.name,
 # product.product.image,
-# product.product.id,   
-# product.id,
-# product.product.prices(),
 # product.product.lowest_price,
 # product.product.is_priced,
-# product.product.product_type
+# product.product.product_type.material
+# product.product.prices(),
 
 # serializer['id'] = product.use,
 # serializer['product_id'] = product.product.name,
