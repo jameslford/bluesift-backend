@@ -112,15 +112,15 @@ def get_project_products(project):
         product = customer_product.product
         serialized_product = ProductSerializer(product).data
         serializer = CustomerProductSerializer().data
-        serializer['id'] = product.id
+        serializer['id'] = customer_product.id
         serializer['product_id'] = serialized_product['id']
-        serializer['use'] = product.use
-        serializer['name'] =  product.product.name
+        serializer['use'] = customer_product.use
+        serializer['name'] =  product.name
         serializer['image'] = serialized_product['image']
-        serializer['lowest_price'] = product.product.lowest_price
-        serializer['is_priced'] = product.product.is_priced
-        serializer['product_type'] = product.product.product_type.material
-        serializer['prices'] = product.product.prices()
+        serializer['lowest_price'] = product.lowest_price
+        serializer['is_priced'] = product.is_priced
+        serializer['product_type'] = product.product_type.material
+        serializer['prices'] = product.prices()
         product_list.append(serializer)
     return product_list
 
