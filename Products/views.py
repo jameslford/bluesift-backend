@@ -94,7 +94,8 @@ def product_list(request):
 def check_for_user(request):
     try:
         user = request.user
-        return get_user_info(user)
+        return "hamburg"
+        # return get_user_info(user)
     except:
         return
 
