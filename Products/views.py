@@ -100,7 +100,7 @@ def check_for_user(request):
 
 def get_user_info(user):
     projects = user.user_profile.projects
-    return projects.values('name','id')
+    return [projects.values('name','id')]
 
 
 def parse_pt(product_type):
