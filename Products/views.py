@@ -98,6 +98,11 @@ def check_for_user(request):
     except:
         return
 
+def get_user_info(user):
+    projects = user.user_profile.projects
+    return projects.values('name','id')
+
+
 def parse_pt(product_type):
     products = Product.objects.all()
     if product_type == '0':
