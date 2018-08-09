@@ -35,7 +35,10 @@ def product_list(request):
     manufacturer = request.GET.get('manufacturer', '0')
     sort = request.GET.get('sort', 'none')
 
-    # structure filter objects
+
+    # check for user
+    user_info = check_for_user(request)
+
   
 
     # filter products
@@ -43,21 +46,35 @@ def product_list(request):
     aTyped_products = parse_at(application_type, pTyped_products)
     priced_products = parse_priced(is_priced, aTyped_products)
     filtered_products = parse_manufacturer(manufacturer, priced_products)
-   #sorted_products = product_sort()
     products_serialized = ProductSerializer(filtered_products, many=True)
  
 
     # filter application types
     application_types = Application.objects.all()
-    refined_ats = type_refiner(ApplicationAreaSerializer, application_types, filtered_products, 'application')
+    refined_ats = type_refiner(
+                                ApplicationAreaSerializer, 
+                                application_types, 
+                                filtered_products, 
+                                'application'
+                                )
 
     # filter manufacturers
     manufacturers = Manufacturer.objects.all()
-    refined_manu = type_refiner(ManufacturerSerializer, manufacturers, priced_products, 'manufacturer')
+    refined_manu = type_refiner(
+                                ManufacturerSerializer, 
+                                manufacturers, 
+                                priced_products, 
+                                'manufacturer'
+                                )
 
     # filter product types
     product_types = ProductType.objects.all()
-    refined_pts = type_refiner(ProductTypeSerializer, product_types, filtered_products, 'product')
+    refined_pts = type_refiner(
+                                ProductTypeSerializer, 
+                                product_types, 
+                                filtered_products, 
+                                'product'
+                                )
 
     filter_content = {
         "is_priced" : is_priced,
@@ -66,6 +83,7 @@ def product_list(request):
 
     return Response({
                     "filter" : [filter_content],
+                    "user_info" : user_info,
                     "application_types": refined_ats,
                     "product_types": refined_pts,
                     "manufacturers": refined_manu,
@@ -73,7 +91,12 @@ def product_list(request):
                     })
     
 
-
+def check_for_user(request):
+    try:
+        user = request.user
+        return get_user_info(user)
+    except:
+        return
 
 def parse_pt(product_type):
     products = Product.objects.all()

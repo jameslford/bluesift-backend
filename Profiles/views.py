@@ -19,13 +19,12 @@ from Profiles.models import(
 from Products.models import Product
 from Products.serializers import ProductSerializer
 from .serializers import ShippingLocationSerializer, CustomerProjectSerializer, CustomerProductSerializer 
-# Create your views here.
+
 
 
 @api_view(['GET','POST'])
 @permission_classes((IsAuthenticated,))
 def user_library(request):
-    # products = Product.objects.all()
     user = request.user
     if request.method == 'POST':
         prod_id = request.POST.get('prod_id')
@@ -62,9 +61,6 @@ def append_supplier_location(user, product, location_id=0):
 
 
 
-
-
-
 def append_customer_project(user, product, project_id=0):
     profile = check_customer_profile(user)
     project_count = customer_project_count(profile)
@@ -88,6 +84,8 @@ def get_supplier_lib(user):
     serialized = ShippingLocationSerializer(locations, many=True)
     return ({"locations" : serialized.data})
 
+
+
 def get_customer_lib(user):
     profile = check_customer_profile(user)
     projects = profile.projects.all()
@@ -103,6 +101,7 @@ def get_customer_lib(user):
         }
         projects_list.append(content)
     return {'projects': projects_list}
+
 
 
 def get_project_products(project):
@@ -125,23 +124,6 @@ def get_project_products(project):
     return product_list
 
 
-        # content = {
-        #     'use': product.use,
-        #     'name': product.product.name,
-        #     'image': product.product.image,
-        #     'product_id': product.product.id,
-        #     'id': product.id,
-        #     'prices': product.product.prices(),
-        #     'lowest_price': product.product.lowest_price,
-        #     'is_priced': product.product.is_priced,
-        #     'product_type': product.product.product_type.material,
-        #     # 'manufacturer_url': product.product.manufacturer_url
-        # }
-
-
-
-
-
 
 def check_customer_profile(user):
     try:
@@ -150,6 +132,7 @@ def check_customer_profile(user):
     except:
         profile = CustomerProfile.objects.create(user=user)
         return profile
+
 
 def customer_project_count(profile):
     try:
@@ -161,6 +144,7 @@ def customer_project_count(profile):
         return count
 
 
+
 def check_company_account(user):
     try:
         account = user.CompanyAccount
@@ -168,6 +152,8 @@ def check_company_account(user):
     except (CompanyAccount.DoesNotExist):
         account = CompanyAccount.objects.create(account_owner=user)
         return account
+
+
 
 def supplier_location_count(account):
     try:
@@ -178,26 +164,3 @@ def supplier_location_count(account):
         count = account.shipping_locations.all().count()
         return count
 
-
-
-
-
-    # if user.is_supplier == True:
-        
-    # else:
-    #     try:
-    #         user.CustomerProfile        
-    #     except (CustomerProfile.DoesNotExist):
-    #         CustomerProfile.objects.create(user=user)
-        
-    #     lib_products = library.products.all()
-    #     serialized_products = ProductSerializer(lib_products, many=True)
-
-    #     if request.method == 'POST':
-    #         prod_id = request.POST.get('prod_id')
-    #         product = products.get(id=prod_id)
-    #         library.products.add(product)
-    #         library.save()
-    #         return Response({"library" : serialized_products.data})
-    #     elif request.method == 'GET':
-    #         return Response({"library" : serialized_products.data})
