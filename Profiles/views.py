@@ -92,15 +92,17 @@ def get_customer_lib(user):
     projects_list = []
     for project in projects:
         products_list = get_project_products(project)
-        address = project.address
-        nickname = project.nickname
         content = {
-            'nickname': nickname,
-            'address': address,
+            'id' : project.id,
+            'nickname': project.nickname,
+            'address': project.address,
             'products': products_list
         }
         projects_list.append(content)
-    return {'projects': projects_list}
+    return {
+            'projects': projects_list,
+            'project_count': projects.count()
+            }
 
 
 
