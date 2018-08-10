@@ -35,10 +35,6 @@ def product_list(request):
     manufacturer = request.GET.get('manufacturer', '0')
     sort = request.GET.get('sort', 'none')
 
-
-    # check for user
-    user_info = check_for_user(request)
-
   
 
     # filter products
