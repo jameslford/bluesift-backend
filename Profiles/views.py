@@ -190,9 +190,9 @@ def customer_project_count(profile):
 
 def check_company_account(user):
     try:
-        account = user.CompanyAccount
+        account = user.company_account
         return account
-    except (CompanyAccount.DoesNotExist):
+    except:
         account = CompanyAccount.objects.create(account_owner=user)
         return account
 
