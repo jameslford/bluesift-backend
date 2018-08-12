@@ -69,8 +69,8 @@ class SupplierProduct(models.Model):
         return self.my_price * 1.1
 
     def save(self, *args, **kwargs):
-       self.price_per_unit = set_price()
-       super(ModelName, self).save(*args, **kwargs) # Call the real save() method
+       self.price_per_unit = self.set_price()
+       super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
 
     class Meta:
         unique_together = ('product','supplier')            
