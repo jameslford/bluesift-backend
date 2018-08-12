@@ -45,10 +45,7 @@ class CompanyShippingLocation(models.Model):
         count = account.shipping_locations.all().count()
         number = count + 1
         self.number = number
-
-    def save(aelfs, *args, **kwargs):
-        self.assign_number(self)
-        super(Model, self).save(*args, **kwargs)
+        return number
 
 
 class SupplierProduct(models.Model):
