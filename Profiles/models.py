@@ -46,6 +46,10 @@ class CompanyShippingLocation(models.Model):
         number = count + 1
         self.number = number
 
+    def save(aelfs, *args, **kwargs):
+        self.assign_number(self)
+        super(Model, self).save(*args, **kwargs)
+
 
 class SupplierProduct(models.Model):
 
