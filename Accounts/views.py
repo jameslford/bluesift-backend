@@ -140,6 +140,7 @@ def get_token(request):
                         'first_name' : sUser.data['first_name'],
                         'last_name' : sUser.data['last_name'],
                         'is_supplier' : sUser.data['is_supplier'],
+                        'get_first_name' : sUser['get_first_name'],
                         'id' : sUser.data['id'],
                     }
                     return Response(content)
