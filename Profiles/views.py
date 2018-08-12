@@ -84,8 +84,8 @@ def append_customer_project(user, product, project_id=0):
 
 
 def get_supplier_lib(user):
-    account = check_company_account(user)
-    locations = check_shipping_locations(account) 
+    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
+    locations = CompanyShippingLocation.objects.get_or_create(company_account=account)[0]
     locations_list = []
     for location in locations:
         products_list = get_location_products(location)
@@ -200,7 +200,8 @@ def check_company_account(user):
         account = user.company_account
         return account
     except:
-        account = CompanyAccount.objects.create(account_owner=user)
+        CompanyAccount.objects.create(account_owner=user)
+        account = CompanyAccount
         return account
 
 
