@@ -38,7 +38,7 @@ class CompanyShippingLocation(models.Model):
     number              = models.IntegerField(null=True)
 
     def __str__(self):
-        return str(self.company_account + ' ' + str(self.number))
+        return str(self.company_account) + ' ' + str(self.number)
         
     def assign_number(self):
         account = self.company_account
