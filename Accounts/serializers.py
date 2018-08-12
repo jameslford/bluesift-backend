@@ -18,6 +18,7 @@ class UserSerializer(serializers.Serializer):
     first_name              = serializers.CharField(max_length=100, required=False)
     last_name               = serializers.CharField(max_length=100, required=False)
     password                = serializers.CharField(max_length=20, write_only=True)
+    get_first_name          = serializers.CharField(source='get_first_name')
     is_supplier             = serializers.BooleanField(default=False, required=False)
     id                      = serializers.ReadOnlyField()
     
