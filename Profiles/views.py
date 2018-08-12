@@ -100,7 +100,7 @@ def get_supplier_lib(user):
         locations_list.append(content)
     return {
                 'locations': locations_list,
-                'locations_count': locations_list.count()
+                'locations_count': len(locations_list)
             }
 
 
@@ -127,7 +127,7 @@ def get_customer_lib(user):
         projects_list.append(content)
     return {
             'projects': projects_list,
-            'project_count': projects_list.count()
+            'project_count': len(products_list)
             }
 
 
