@@ -108,9 +108,9 @@ def check_shipping_locations(account):
         locations = account.shipping_locations.all()
         return locations
     except:
-        location = CompanyShippingLocation.create(company_account=account)
+        location = CompanyShippingLocation.objects.create(company_account=account)
         return location
-        
+
 def get_customer_lib(user):
     profile = check_customer_profile(user)
     projects = profile.projects.all()
