@@ -66,7 +66,7 @@ class SupplierProduct(models.Model):
         return self.supplier.get_first_name()
 
     def __str__(self):
-        return self.supplier.get_first_name() + ' ' + self.product.name
+        return self.supplier.__str__ + ' ' + self.product.name
 
     def set_price(self):
         self.price_per_unit = self.my_price*1.1
