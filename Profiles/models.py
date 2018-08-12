@@ -44,7 +44,7 @@ class CompanyShippingLocation(models.Model):
     def assign_number(self):
         account = self.company_account
         count = account.shipping_locations.all().count()
-        number = count + decimal.Decimal(1.10)
+        number = count + 1 
         return number
 
     def save(self,*args,**kwargs):
@@ -67,7 +67,7 @@ class SupplierProduct(models.Model):
         return str(self.supplier) + ' ' + str(self.product.name)
 
     def set_price(self):
-        return self.my_price * 
+        return self.my_price * decimal.Decimal(1.10)
 
     def save(self, *args, **kwargs):
        self.price_per_unit = self.set_price()
