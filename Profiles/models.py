@@ -44,8 +44,12 @@ class CompanyShippingLocation(models.Model):
         account = self.company_account
         count = account.shipping_locations.all().count()
         number = count + 1
-        self.number = number
         return number
+
+    def save(self,*args,**kwargs):
+        self.number = self.assign_number()
+        super(CompanyShippingLocation, self).save(*args,**kwargs)
+
 
 
 class SupplierProduct(models.Model):
