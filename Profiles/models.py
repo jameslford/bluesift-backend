@@ -63,7 +63,7 @@ class SupplierProduct(models.Model):
     for_sale            = models.BooleanField(default=False)
 
     def name(self):
-        return self.supplier.get_first_name()
+        return self.supplier.__str__ + self.product.name
 
     def __str__(self):
         return self.supplier.__str__ + ' ' + self.product.name
