@@ -70,9 +70,9 @@ class SupplierProduct(models.Model):
         return self.my_price * decimal.Decimal(1.10)
 
     def save(self, *args, **kwargs):
-       self.price_per_unit = self.set_price()
-       self.product.prices()
-       super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
+        self.price_per_unit = self.set_price()
+        super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
+        self.product.prices()
 
     class Meta:
         unique_together = ('product','supplier')            
