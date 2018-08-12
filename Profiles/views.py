@@ -85,7 +85,8 @@ def append_customer_project(user, product, project_id=0):
 
 def get_supplier_lib(user):
     account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    locations = CompanyShippingLocation.objects.get_or_create(company_account=account)[0]
+    CompanyShippingLocation.objects.get_or_create(company_account=account)
+    locations = CompanyShippingLocation.objects.all()
     locations_list = []
     for location in locations:
         products_list = get_location_products(location)
