@@ -62,14 +62,15 @@ class SupplierProduct(models.Model):
     units_per_order     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     for_sale            = models.BooleanField(default=False)
 
-    def name(self):
-        return str(self.supplier) + ' ' + str(self.product.name)
-
     def __str__(self):
         return str(self.supplier) + ' ' + str(self.product.name)
 
     def set_price(self):
-        self.price_per_unit = self.my_price*1.1
+        return self.my_price * 1.1
+
+    def def save(self, *args, **kwargs):
+       self.price_per_unit = set_price()
+       super(ModelName, self).save(*args, **kwargs) # Call the real save() method
 
     class Meta:
         unique_together = ('product','supplier')            
