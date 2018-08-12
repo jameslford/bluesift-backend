@@ -127,7 +127,7 @@ def get_customer_lib(user):
         projects_list.append(content)
     return {
             'projects': projects_list,
-            'project_count': projects.count()
+            'project_count': projects_list.count()
             }
 
 
