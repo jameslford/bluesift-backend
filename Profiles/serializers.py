@@ -13,12 +13,6 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
         model = CompanyShippingLocation
         fields = ('company_account','approved_seller','nickname', 'address', 'id')
 
-# class CustomerProductSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = CustomerProduct
-#         fields = ('application', 'product', 'project', 'id')
-
-
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,24 +32,23 @@ class CustomerProductSerializer(serializers.Serializer):
     product_type    = serializers.CharField(max_length=120)
     prices          = serializers.ListField()
 
+class SupplierProductSerializer(serializers.Serializer):
+    # supplier product fields
+    id              = serializers.ReadOnlyField()
+    name            = serializers.CharField(max_length=120)
+    units_available = serializers.IntegerField(default=0)
+    units_per_order = serializers.DecimalField(max_digits=10, decimal_places=2, default=0)
+    my_price        = serializers.DecimalField( max_digits=8, decimal_places=2)
+    for_sale        = serializers.BooleanField(default=False)
+    price_per_unit  = serializers.DecimalField( max_digits=8, decimal_places=2)
+    # product fields
+    product_id      = serializers.IntegerField()
+    product_type    = serializers.CharField(max_length=120)
+    image           = serializers.ImageField()
+    is_priced       = serializers.BooleanField()
+    prices          = serializers.ListField()
+    lowest_price    = serializers.DecimalField(max_digits=7,decimal_places=2)
 
 
-# product.id,
-# product.product.id,   
-# product.use,
-# product.product.name,
-# product.product.image,
-# product.product.lowest_price,
-# product.product.is_priced,
-# product.product.product_type.material
-# product.product.prices(),
 
-# serializer['id'] = product.use,
-# serializer['product_id'] = product.product.name,
-# serializer['use'] = product.product.image,
-# serializer['name'] = product.product.id,   
-# serializer['image'] = product.id,
-# serializer['lowest_price'] = product.product.prices(),
-# serializer['is_priced'] = product.product.lowest_price,
-# serializer['product_type'] = product.product.is_priced,
-# serializer['prices'] = product.product.product_type
+

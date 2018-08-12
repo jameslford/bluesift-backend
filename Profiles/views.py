@@ -18,7 +18,12 @@ from Profiles.models import(
                             )
 from Products.models import Product
 from Products.serializers import ProductSerializer
-from .serializers import ShippingLocationSerializer, CustomerProjectSerializer, CustomerProductSerializer 
+from .serializers import(
+                            ShippingLocationSerializer, 
+                            CustomerProjectSerializer, 
+                            CustomerProductSerializer, 
+                            SupplierProductSerializer
+                        )
 
 
 
@@ -81,8 +86,21 @@ def append_customer_project(user, product, project_id=0):
 def get_supplier_lib(user):
     account = check_company_account(user)
     locations = account.shipping_locations
-    serialized = ShippingLocationSerializer(locations, many=True)
-    return ({"locations" : serialized.data})
+    locations_list = []
+    for location in locations:
+        products_list = get_location_products(location)
+        content = {
+            'id': location.id,
+            'nickname': location.nickname,
+            'address': location.address,
+            'approved_seller': location.approved_seller,
+            'products': products_list
+        }
+        locations_list.append(content)
+    return {
+                'locations': locations_list,
+                'locations_count': locations_list.count()
+            }
 
 
 
@@ -113,9 +131,10 @@ def get_project_products(project):
         product = customer_product.product
         serialized_product = ProductSerializer(product).data
         serializer = CustomerProductSerializer().data
+        #customer product fields
         serializer['id'] = customer_product.id
-        serializer['product_id'] = serialized_product['id']
         serializer['use'] = customer_product.use
+        serializer['product_id'] = serialized_product['id']
         serializer['name'] =  product.name
         serializer['image'] = serialized_product['image']
         serializer['lowest_price'] = product.lowest_price
@@ -125,6 +144,28 @@ def get_project_products(project):
         product_list.append(serializer)
     return product_list
 
+def get_location_products(location):
+    product_list = []
+    supplier_products = location.priced_products.all()
+    for supplier_product in supplier_products:
+        product = supplier_product.product
+        serialized_product = ProductSerializer(product).data
+        serializer = SupplierProductSerializer().data
+        # supplier product fields
+        serializer['id'] = supplier_product.id
+        serializer['my_price'] = supplier_product.my_price
+        serializer['for_sale'] = supplier_product.for_sale
+        serializer['units_available'] = supplier_product.units_avaliable
+        serializer['units_per_order'] = supplier_product.units_per_order
+        serializer['price_per_unit'] = supplier_product.price_per_unit
+        # product fields
+        serializer['product_id'] = product.id
+        serializer['product_type'] = product.product_type
+        serializer['image'] = serialized_product['image']
+        serializer['lowest_price'] = product.lowest_price
+        serializer['prices'] = product.prices()
+        product_list.append(serializer)
+    return product_list
 
 
 def check_customer_profile(user):
