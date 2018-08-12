@@ -3,6 +3,7 @@ from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
 from djmoney.models.fields import MoneyField
+import decimal
 
 
 
@@ -43,7 +44,7 @@ class CompanyShippingLocation(models.Model):
     def assign_number(self):
         account = self.company_account
         count = account.shipping_locations.all().count()
-        number = count + 1
+        number = count + decimal.Decimal(1.10)
         return number
 
     def save(self,*args,**kwargs):
@@ -66,7 +67,7 @@ class SupplierProduct(models.Model):
         return str(self.supplier) + ' ' + str(self.product.name)
 
     def set_price(self):
-        return self.my_price * 1.1
+        return self.my_price * 
 
     def save(self, *args, **kwargs):
        self.price_per_unit = self.set_price()
