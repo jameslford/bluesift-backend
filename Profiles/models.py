@@ -8,7 +8,7 @@ from djmoney.models.fields import MoneyField
 
 class CompanyAccount(models.Model):
     name                = models.CharField(max_length=120)
-    account_owner       = models.ForeignKey(
+    account_owner       = models.OneToOneField(
                                             settings.AUTH_USER_MODEL,
                                             null=True,
                                             on_delete=models.CASCADE,
@@ -19,7 +19,10 @@ class CompanyAccount(models.Model):
     phone_number        = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        if self.name:
+            return self.name
+        else:
+            return self.account_owner.get_first_name() + "'s Company"
 
 
 
@@ -32,12 +35,16 @@ class CompanyShippingLocation(models.Model):
     address             = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
     nickname            = models.CharField(max_length=120, null=True, blank=True)
     approved_seller     = models.BooleanField(default=False)
+    number              = models.IntegerField(null=True)
 
     def __str__(self):
-        if self.nickname:
-            return self.nickname
-        else:
-            return self.address
+        return str(self.company_account + ' ' + str(self.number))
+        
+    def assign_number(self):
+        account = self.company_account
+        count = account.shipping_locations.all().count()
+        number = count + 1
+        self.number = number
 
 
 class SupplierProduct(models.Model):
