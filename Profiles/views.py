@@ -85,7 +85,7 @@ def append_customer_project(user, product, project_id=0):
 
 def get_supplier_lib(user):
     account = check_company_account(user)
-    locations = account.shipping_locations
+    locations = account.shipping_locations.all()
     locations_list = []
     for location in locations:
         products_list = get_location_products(location)
