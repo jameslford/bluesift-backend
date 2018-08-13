@@ -48,11 +48,14 @@ def user_library(request):
 
 
 
+# _________________Supplier handling_________________________________
+
+# Supplier POST request
 def append_supplier_location(user, product, location_id=0):
-    account = check_company_account(user)
-    location_count = supplier_location_count(account)
+    locations = get_company_shipping_locations(user)
+    location_count = locations.count()
     if location_id != 0:
-        location = account.shipping_locations.get(id=location_id)
+        location = CompanyShippingLocation.objects.get(id=location_id)
         SupplierProduct.objects.create(product=product, location=location)
         return status.HTTP_201_CREATED
     elif location_count == 1 and location_id == 0:
@@ -66,27 +69,10 @@ def append_supplier_location(user, product, location_id=0):
 
 
 
-def append_customer_project(user, product, project_id=0):
-    profile = check_customer_profile(user)
-    project_count = customer_project_count(profile)
-    if project_id != 0:
-        project = profile.projects.get(id=project_id)
-        CustomerProduct.objects.create(project=project, product=product)
-        return status.HTTP_201_CREATED
-    elif project_count == 1 and project_id == 0:
-        project = profile.projects.first()
-        CustomerProduct.objects.create(project=project, product=product)
-    elif project_count > 1 and project_id == 0:
-         return "project not specified"    
-    else:
-        return "user has no project"
 
-
-
+# Supplier GET request
 def get_supplier_lib(user):
-    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    CompanyShippingLocation.objects.get_or_create(company_account=account)
-    locations = CompanyShippingLocation.objects.all()
+    locations = get_company_shipping_locations(user)
     locations_list = []
     for location in locations:
         products_list = get_location_products(location)
@@ -104,13 +90,65 @@ def get_supplier_lib(user):
             }
 
 
-def check_shipping_locations(account):
-    try:
-        locations = account.shipping_locations.all()
+
+
+def get_location_products(location):
+    product_list = []
+    supplier_products = location.priced_products.all()
+    for supplier_product in supplier_products:
+        product = supplier_product.product
+        serialized_product = ProductSerializer(product).data
+        serializer = SupplierProductSerializer().data
+        # supplier product fields
+        serializer['id'] = supplier_product.id
+        serializer['my_price'] = supplier_product.my_price
+        serializer['for_sale'] = supplier_product.for_sale
+        serializer['units_available'] = supplier_product.units_available
+        serializer['units_per_order'] = supplier_product.units_per_order
+        serializer['price_per_unit'] = supplier_product.price_per_unit
+        # product fields
+        serializer['product_id'] = product.id
+        serializer['product_type'] = product.product_type.material
+        serializer['image'] = serialized_product['image']
+        serializer['is_priced'] = product.is_priced
+        serializer['lowest_price'] = product.lowest_price
+        serializer['prices'] = product.prices()
+        product_list.append(serializer)
+    return product_list
+
+
+
+def get_company_shipping_locations(user):
+    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
+    locations = account.shipping_locations.all()
+    if locations:
         return locations
-    except:
-        location = CompanyShippingLocation.objects.create(company_account=account)
-        return location
+    else:
+        CompanyShippingLocation.objects.create(company_account=account)
+        return account.shipping_locations.all()
+
+
+
+# ______________Customer handling_________________________
+
+def append_customer_project(user, product, project_id=0):
+    profile = check_customer_profile(user)
+    project_count = customer_project_count(profile)
+    if project_id != 0:
+        project = profile.projects.get(id=project_id)
+        CustomerProduct.objects.create(project=project, product=product)
+        return status.HTTP_201_CREATED
+    elif project_count == 1 and project_id == 0:
+        project = profile.projects.first()
+        CustomerProduct.objects.create(project=project, product=product)
+    elif project_count > 1 and project_id == 0:
+         return "project not specified"    
+    else:
+        return "user has no project"
+
+def get_customer_projects(user):
+    profile = CustomerProfile.objects.get_or_create(user=user)[0]
+
 
 def get_customer_lib(user):
     profile = check_customer_profile(user)
@@ -152,68 +190,46 @@ def get_project_products(project):
         product_list.append(serializer)
     return product_list
 
-def get_location_products(location):
-    product_list = []
-    supplier_products = location.priced_products.all()
-    for supplier_product in supplier_products:
-        product = supplier_product.product
-        serialized_product = ProductSerializer(product).data
-        serializer = SupplierProductSerializer().data
-        # supplier product fields
-        serializer['id'] = supplier_product.id
-        serializer['my_price'] = supplier_product.my_price
-        serializer['for_sale'] = supplier_product.for_sale
-        serializer['units_available'] = supplier_product.units_available
-        serializer['units_per_order'] = supplier_product.units_per_order
-        serializer['price_per_unit'] = supplier_product.price_per_unit
-        # product fields
-        serializer['product_id'] = product.id
-        serializer['product_type'] = product.product_type.material
-        serializer['image'] = serialized_product['image']
-        serializer['is_priced'] = product.is_priced
-        serializer['lowest_price'] = product.lowest_price
-        serializer['prices'] = product.prices()
-        product_list.append(serializer)
-    return product_list
-
-
-def check_customer_profile(user):
-    try:
-        profile = user.user_profile
-        return profile
-    except:
-        profile = CustomerProfile.objects.create(user=user)
-        return profile
-
-
-def customer_project_count(profile):
-    try:
-        count = profile.projects.count()
-        return count
-    except:
-        CustomerProject.objects.create(owner=profile, nickname='Main Project')
-        count = profile.projects.count()
-        return count
 
 
 
-def check_company_account(user):
-    try:
-        account = user.company_account
-        return account
-    except:
-        CompanyAccount.objects.create(account_owner=user)
-        account = CompanyAccount
-        return account
+# def check_customer_profile(user):
+#     try:
+#         profile = user.user_profile
+#         return profile
+#     except:
+#         profile = CustomerProfile.objects.create(user=user)
+#         return profile
+
+
+# def customer_project_count(profile):
+#     try:
+#         count = profile.projects.count()
+#         return count
+#     except:
+#         CustomerProject.objects.create(owner=profile, nickname='Main Project')
+#         count = profile.projects.count()
+#         return count
 
 
 
-def supplier_location_count(account):
-    try:
-        count = account.shipping_locations.all().count()
-        return count
-    except:
-        CompanyShippingLocation.objects.create(company_account=account, nickname='Main Location')
-        count = account.shipping_locations.all().count()
-        return count
+# def check_company_account(user):
+#     try:
+#         account = user.company_account
+#         return account
+#     except:
+#         CompanyAccount.objects.create(account_owner=user)
+#         account = CompanyAccount
+#         return account
+
+
+
+# def supplier_location_count(account):
+#     try:
+#         count = account.shipping_locations.all().count()
+#         return count
+#     except:
+#         CompanyShippingLocation.objects.create(company_account=account, nickname='Main Location')
+#         count = account.shipping_locations.all().count()
+#         return count
 
