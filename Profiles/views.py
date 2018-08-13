@@ -60,7 +60,7 @@ def append_supplier_location(user, product, location_id=0):
         return status.HTTP_201_CREATED
     elif location_count == 1 and location_id == 0:
         location = locations.first()
-        SupplierProduct.objects.create(product=product, location=location)
+        SupplierProduct.objects.create(product=product, supplier=location)
         return status.HTTP_201_CREATED
     elif location_count > 1 and location_id == 0:
         return "location not specified"    
