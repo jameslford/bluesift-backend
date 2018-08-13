@@ -151,11 +151,6 @@ def product_sort(products, argument):
 
 
 
-
-
-
-
-
 @api_view(['GET'])
 def get_product(request, pk):
     product = Product.objects.get(id=pk)
