@@ -125,7 +125,7 @@ def get_company_shipping_locations(user):
         return locations
     else:
         CompanyShippingLocation.objects.create(company_account=account)
-        return account.shipping_locations.all()
+        return CompanyShippingLocation.objects.filter(company_account=account)[0]
 
 
 
