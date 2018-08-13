@@ -170,6 +170,7 @@ def get_location_products(location):
         serializer['product_id'] = product.id
         serializer['product_type'] = product.product_type.material
         serializer['image'] = serialized_product['image']
+        serializer['is_priced'] = product.is_priced
         serializer['lowest_price'] = product.lowest_price
         serializer['prices'] = product.prices()
         product_list.append(serializer)
