@@ -29,7 +29,7 @@ from .models import(
 def product_list(request):
 
     # parse request
-    is_priced = request.GET.get('is_priced', 'False')
+    for_sale = request.GET.get('for_sale', 'False')
     product_type = request.GET.get('product_type', '0')
     application_type = request.GET.getlist('application_type', ['0'])
     manufacturer = request.GET.get('manufacturer', '0')
@@ -40,9 +40,10 @@ def product_list(request):
     # filter products
     pTyped_products = parse_pt(product_type)
     aTyped_products = parse_at(application_type, pTyped_products)
-    priced_products = parse_priced(is_priced, aTyped_products)
-    filtered_products = parse_manufacturer(manufacturer, priced_products)
-    products_serialized = ProductSerializer(filtered_products, many=True)
+    for_sale_products = parse_for_sale(for_sale, aTyped_products)
+    filtered_products = parse_manufacturer(manufacturer, for_sale_products)
+    sorted_products = sort_products(sort, filtered_products)
+    products_serialized = ProductSerializer(sorted_products, many=True)
  
 
     # filter application types
@@ -59,7 +60,7 @@ def product_list(request):
     refined_manu = type_refiner(
                                 ManufacturerSerializer, 
                                 manufacturers, 
-                                priced_products, 
+                                for_sale_products, 
                                 'manufacturer'
                                 )
 
@@ -73,7 +74,7 @@ def product_list(request):
                                 )
 
     filter_content = {
-        "is_priced" : is_priced,
+        "for_sale" : for_sale,
         "product_count" : filtered_products.count()
     } 
 
@@ -85,6 +86,16 @@ def product_list(request):
                     "products": products_serialized.data
                     })
     
+def sort_products(sort, products):
+    if sort == 'none':
+        return products
+    else:
+        try:
+           sorted_products = products.order_by('sort')
+           return sorted_products
+        except:
+            return products
+
 
 
 def parse_pt(product_type):
@@ -109,9 +120,9 @@ def parse_manufacturer(manufacturer, products):
         return products.filter(manufacturer=manufacturer)
 
 
-def parse_priced(is_priced, products):
-    if is_priced == 'true':   
-        return products.filter(is_priced=True)
+def parse_for_sale(for_sale, products):
+    if for_sale == 'true':   
+        return products.filter(for_sale=True)
     else:
         return products
 
