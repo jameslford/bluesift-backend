@@ -68,10 +68,11 @@ class SupplierProduct(models.Model):
         return str(self.supplier) + ' ' + str(self.product.name)
 
     def set_price(self):
-        return self.my_price * decimal.Decimal(1.10)
+        if self.my_price:
+            self.price_per_unit = self.my_price * decimal.Decimal(1.10)
 
     def save(self, *args, **kwargs):
-        self.price_per_unit = self.set_price()
+        self.set_price()
         if self.for_sale == True:
             if self.units_available <= 0:
                 self.for_sale = False
