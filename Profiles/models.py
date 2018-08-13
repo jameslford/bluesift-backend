@@ -76,6 +76,8 @@ class SupplierProduct(models.Model):
         if self.for_sale == True:
             if self.units_available <= 0:
                 self.for_sale = False
+            if self.supplier.approved_seller == False:
+                self.for_sale = False
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
         self.product.prices()
 
