@@ -58,7 +58,7 @@ class Product(models.Model):
     is_priced           = models.BooleanField(default=False)
     lowest_price        = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     manufacturer_url    = models.URLField(null=True, blank=True)
-    for_sale            = models.models.BooleanField(default=False)
+    for_sale            = models.BooleanField(default=False)
 
 
     def __str__(self):
