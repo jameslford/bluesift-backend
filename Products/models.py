@@ -71,14 +71,14 @@ class Product(models.Model):
 
 
     def prices(self):
-        try:
-            suppliers = self.priced.filter(units_available__gt=0)
+        suppliers = self.priced.filter(units_available__gt=0)
+        if suppliers:
             values = suppliers.values('price_per_unit', 'supplier__email', 'units_available', 'id' )
             price = suppliers.aggregate(Min('price_per_unit'))
             self.lowest_price = price["price_per_unit__min"]
             self.is_priced = True
             return values
-        except:
+        else:
             return 
 
     def manufacturer_name(self):
