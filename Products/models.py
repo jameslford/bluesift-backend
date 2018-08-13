@@ -89,7 +89,7 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
        self.prices()
-       super(ModelName, self).save(*args, **kwargs) # Call the real save() method
+       super(Product, self).save(*args, **kwargs) # Call the real save() method
 
 
 
