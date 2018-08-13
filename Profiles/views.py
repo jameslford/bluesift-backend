@@ -74,6 +74,7 @@ def append_supplier_location(user, product, location_id=0):
 def get_supplier_lib(user):
     locations = get_company_shipping_locations(user)
     locations_list = []
+    product_id_list = []
     for location in locations:
         products_list = get_location_products(location)
         content = {
@@ -81,12 +82,14 @@ def get_supplier_lib(user):
             'nickname': location.nickname,
             'address': location.address,
             'approved_seller': location.approved_seller,
-            'products': products_list
+            'products': products_list[0]
         }
         locations_list.append(content)
+        product_id_list.append(products_list[1])
     return {
                 'locations': locations_list,
-                'locations_count': len(locations_list)
+                'locations_count': len(locations_list),
+                'product_ids': set(product_id_list[1])
             }
 
 
@@ -94,6 +97,7 @@ def get_supplier_lib(user):
 
 def get_location_products(location):
     product_list = []
+    product_id_list = []
     supplier_products = location.priced_products.all()
     for supplier_product in supplier_products:
         product = supplier_product.product
@@ -114,7 +118,8 @@ def get_location_products(location):
         serializer['lowest_price'] = product.lowest_price
         serializer['prices'] = product.prices()
         product_list.append(serializer)
-    return product_list
+        product_id_list.append(supplier_product.product.id)
+    return [product_list, product_id_list]
 
 
 
@@ -151,24 +156,28 @@ def get_customer_lib(user):
     profile = check_customer_profile(user)
     projects = profile.projects.all()
     projects_list = []
+    product_id_list = []
     for project in projects:
         products_list = get_project_products(project)
         content = {
             'id' : project.id,
             'nickname': project.nickname,
             'address': project.address,
-            'products': products_list
+            'products': products_list[0]
         }
         projects_list.append(content)
+        product_id_list.append(products_list[1])
     return {
             'projects': projects_list,
-            'project_count': len(products_list)
+            'project_count': len(projects_list),
+            'product_ids': set(product_id_list)
             }
 
 
 
 def get_project_products(project):
     product_list = []
+    product_id_list = []
     customer_products = project.products.all()
     for customer_product in customer_products:
         product = customer_product.product
@@ -185,8 +194,9 @@ def get_project_products(project):
         serializer['product_type'] = product.product_type.material
         serializer['prices'] = product.prices()
         product_list.append(serializer)
-    return product_list
-    
+        product_id_list.append(customer_product.product.id)
+    return [product_list, product_id_list]
+
 
 def get_customer_projects(user):
     profile = CustomerProfile.objects.get_or_create(user=user)[0]
