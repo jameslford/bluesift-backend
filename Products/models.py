@@ -58,6 +58,7 @@ class Product(models.Model):
     is_priced           = models.BooleanField(default=False)
     lowest_price        = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     manufacturer_url    = models.URLField(null=True, blank=True)
+    for_sale            = models.models.BooleanField(default=False)
 
 
     def __str__(self):
@@ -82,15 +83,21 @@ class Product(models.Model):
         else:
             return 
 
+    def for_sale_by_supplier(self):
+        sellers = self.priced.filter(for_sale=True)
+        if sellers:
+            self.for_sale = True
+            self.save()
+        else:
+            return
+
+
     def manufacturer_name(self):
         return self.manufacturer.name
 
     def material(self):
         return self.product_type.material
 
-    # def save(self, *args, **kwargs):
-    #    self.prices()
-    #    super(Product, self).save(*args, **kwargs) # Call the real save() method
 
 
 

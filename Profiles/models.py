@@ -72,6 +72,9 @@ class SupplierProduct(models.Model):
 
     def save(self, *args, **kwargs):
         self.price_per_unit = self.set_price()
+        if self.for_sale == True:
+            if self.units_available <= 0:
+                self.for_sale = False
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
         self.product.prices()
 
@@ -92,6 +95,7 @@ class CustomerProfile(models.Model):
 
     def __str__(self):
         return self.user.get_first_name() + "'s library"
+
 
     
     
