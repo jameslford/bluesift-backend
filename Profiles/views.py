@@ -163,7 +163,7 @@ def get_location_products(location):
         serializer['id'] = supplier_product.id
         serializer['my_price'] = supplier_product.my_price
         serializer['for_sale'] = supplier_product.for_sale
-        serializer['units_available'] = supplier_product.units_avaliable
+        serializer['units_available'] = supplier_product.units_available
         serializer['units_per_order'] = supplier_product.units_per_order
         serializer['price_per_unit'] = supplier_product.price_per_unit
         # product fields
