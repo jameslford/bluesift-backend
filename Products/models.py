@@ -77,6 +77,7 @@ class Product(models.Model):
             price = suppliers.aggregate(Min('price_per_unit'))
             self.lowest_price = price["price_per_unit__min"]
             self.is_priced = True
+            self.save()
             return values
         else:
             return 
@@ -87,9 +88,9 @@ class Product(models.Model):
     def material(self):
         return self.product_type.material
 
-    def save(self, *args, **kwargs):
-       self.prices()
-       super(Product, self).save(*args, **kwargs) # Call the real save() method
+    # def save(self, *args, **kwargs):
+    #    self.prices()
+    #    super(Product, self).save(*args, **kwargs) # Call the real save() method
 
 
 
