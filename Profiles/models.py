@@ -50,6 +50,7 @@ class CompanyShippingLocation(models.Model):
     def save(self,*args,**kwargs):
         self.number = self.assign_number()
         super(CompanyShippingLocation, self).save(*args,**kwargs)
+        
 
 
 
@@ -72,7 +73,8 @@ class SupplierProduct(models.Model):
     def save(self, *args, **kwargs):
         self.price_per_unit = self.set_price()
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
-        self.prices()
+        self.product.prices()
+        self.product.save()
 
     class Meta:
         unique_together = ('product','supplier')            
