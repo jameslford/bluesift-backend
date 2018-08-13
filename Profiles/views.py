@@ -132,22 +132,19 @@ def get_company_shipping_locations(user):
 # ______________Customer handling_________________________
 
 def append_customer_project(user, product, project_id=0):
-    profile = check_customer_profile(user)
-    project_count = customer_project_count(profile)
+    projects = get_customer_projects(user)
+    project_count = projects.count()
     if project_id != 0:
-        project = profile.projects.get(id=project_id)
+        project = CustomerProject.objects.get(id=project_id)
         CustomerProduct.objects.create(project=project, product=product)
         return status.HTTP_201_CREATED
     elif project_count == 1 and project_id == 0:
-        project = profile.projects.first()
+        project = projects.first()
         CustomerProduct.objects.create(project=project, product=product)
     elif project_count > 1 and project_id == 0:
          return "project not specified"    
     else:
         return "user has no project"
-
-def get_customer_projects(user):
-    profile = CustomerProfile.objects.get_or_create(user=user)[0]
 
 
 def get_customer_lib(user):
@@ -189,8 +186,16 @@ def get_project_products(project):
         serializer['prices'] = product.prices()
         product_list.append(serializer)
     return product_list
+    
 
-
+def get_customer_projects(user):
+    profile = CustomerProfile.objects.get_or_create(user=user)[0]
+    projects = profile.projects.all()
+    if projects:
+        return projects
+    else:
+        CustomerProject.objects.create(owner=profile)
+        return CustomerProject.objects.filter(owner=profile)[0]
 
 
 # def check_customer_profile(user):

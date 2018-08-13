@@ -35,6 +35,7 @@ def product_list(request):
     manufacturer = request.GET.get('manufacturer', '0')
     sort = request.GET.get('sort', 'none')
 
+
   
 
     # filter products
