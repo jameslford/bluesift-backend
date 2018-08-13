@@ -73,7 +73,6 @@ class SupplierProduct(models.Model):
     def save(self, *args, **kwargs):
         self.price_per_unit = self.set_price()
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
-        self.product.prices()
         self.product.save()
 
     class Meta:

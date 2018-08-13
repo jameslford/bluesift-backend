@@ -87,5 +87,9 @@ class Product(models.Model):
     def material(self):
         return self.product_type.material
 
+    def save(self, *args, **kwargs):
+       self.prices()
+       super(ModelName, self).save(*args, **kwargs) # Call the real save() method
+
 
 
