@@ -18,6 +18,7 @@ class ProductSerializer(serializers.ModelSerializer):
                     'material',
                     'units',
                     'is_priced',
+                    'for_sale',
                     'lowest_price',
                     'manufacturer', 
                     'product_type',
