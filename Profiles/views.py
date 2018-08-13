@@ -59,7 +59,7 @@ def append_supplier_location(user, product, location_id=0):
         SupplierProduct.objects.create(product=product, location=location)
         return status.HTTP_201_CREATED
     elif location_count == 1 and location_id == 0:
-        location = account.shipping_locations.first()
+        location = locations.first()
         SupplierProduct.objects.create(product=product, location=location)
         return status.HTTP_201_CREATED
     elif location_count > 1 and location_id == 0:
