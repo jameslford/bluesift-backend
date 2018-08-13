@@ -89,7 +89,7 @@ def get_supplier_lib(user):
     return {
                 'locations': locations_list,
                 'locations_count': len(locations_list),
-                'product_ids': set(product_id_list)
+                'product_ids': set(product_id_list[0])
             }
 
 
