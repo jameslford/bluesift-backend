@@ -41,17 +41,9 @@ def create_user(request):
     serializer = CreateUserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        lib_name = user.get_first_name() + "'s Library"
         user.date_registered = datetime.datetime.now()
-
-        current_site = get_current_site(request)
         mail_subject = 'Activate your Building Book account.'
-        message = render_to_string('acc_activate_email.html', {
-            'user': user,
-            'domain': current_site.domain,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
-            'token': Token.objects.create(user=user)
-        })
+        message = get_message(user)
         to_email = user.email 
         email = EmailMessage(mail_subject, message, to=[to_email])
         email.send()
@@ -59,8 +51,6 @@ def create_user(request):
         CustomerProject.objects.create(owner=profile, nickname='First Project')
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 
@@ -83,14 +73,8 @@ def create_supplier(request):
                                         is_active=False
                                         )
     supplier.date_registered = datetime.datetime.now()
-    current_site = get_current_site(request)
     mail_subject = 'Activate your Building Book account.'
-    message = render_to_string('acc_activate_email.html', {
-        'user': supplier,
-        'domain': current_site.domain,
-        'uid': urlsafe_base64_encode(force_bytes(supplier.pk)).decode(),
-        'token': Token.objects.create(user=supplier)
-    })
+    message = get_message(supplier)
     to_email = supplier.email 
     email = EmailMessage(mail_subject, message, to=[to_email])
     email.send()
@@ -98,6 +82,17 @@ def create_supplier(request):
     CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
     serializer = UserSerializer(supplier)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+def get_message(user):
+    message = render_to_string('acc_activate_email.html', {
+        'user': user,
+        'domain': 'thawing-castle-74732.herokuapp.com/general',
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+        'token': Token.objects.create(user=user)
+    })
+    return message 
+
         
 
 def activate(request, uidb64, token):
