@@ -112,7 +112,7 @@ def activate(request, uidb64, token):
         user.date_confirmed = datetime.datetime.now()
         user.save()
         login(request, user)
-        return redirect('home')
+        return redirect('https://thawing-castle-74732.herokuapp.com/general')
     else:
         return Response('Activation link is invalid!')
 

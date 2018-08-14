@@ -170,7 +170,7 @@ def get_customer_lib(user):
     return {
             'projects': projects_list,
             'project_count': len(projects_list),
-            'product_ids': set(product_id_list)
+            'product_ids': set(product_id_list[0])
             }
 
 
