@@ -153,8 +153,7 @@ def append_customer_project(user, product, project_id=0):
 
 
 def get_customer_lib(user):
-    profile = check_customer_profile(user)
-    projects = profile.projects.all()
+    projects = get_customer_projects(user)
     projects_list = []
     product_id_list = []
     for project in projects:
