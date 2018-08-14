@@ -43,7 +43,8 @@ def create_user(request):
         user = serializer.save()
         user.date_registered = datetime.datetime.now()
         mail_subject = 'Activate your Building Book account.'
-        message = get_message(user)
+        current_site = get_current_site(request)
+        message = get_message(user, current_site)
         to_email = user.email 
         email = EmailMessage(mail_subject, message, to=[to_email])
         email.send()
@@ -74,7 +75,8 @@ def create_supplier(request):
                                         )
     supplier.date_registered = datetime.datetime.now()
     mail_subject = 'Activate your Building Book account.'
-    message = get_message(supplier)
+    current_site = get_current_site(request)
+    message = get_message(supplier, current_site)
     to_email = supplier.email 
     email = EmailMessage(mail_subject, message, to=[to_email])
     email.send()
@@ -84,10 +86,10 @@ def create_supplier(request):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-def get_message(user):
+def get_message(user, current_site):
     message = render_to_string('acc_activate_email.html', {
         'user': user,
-        'domain': 'thawing-castle-74732.herokuapp.com/general',
+        'domain': current_site.domain,
         'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
         'token': Token.objects.create(user=user)
     })
