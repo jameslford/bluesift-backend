@@ -1,64 +1,108 @@
 from django.db import models
 from django.db.models import Min
-from djmoney.models.fields import MoneyField
 
 
 class Manufacturer(models.Model):
-    name            = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
 
     def products(self):
         try:
-            products = self.products.all()
+            products = self.products
             return products
         except:
             return
 
+class Category(models.Model):
 
-class Application(models.Model):
-    area            = models.CharField(max_length=100)
+    label = models.CharField(max_length=40, unique=True)
 
     def __str__(self):
-        return self.area
+        return self.label
+
+class Material(models.Model):
+
+    label = models.CharField(max_length=40)
+    category = models.ForeignKey(Category, related_name='materials', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('category', 'label')
 
 
-class ProductType(models.Model):
-    
+    def __str__(self):
+        return self.category.label + self.label
+
+
+class Build(models.Model):
     UNITS = (
         ('Square Foot', 'Square Foot'),
         ('Linear Foot', 'Linear Foot'),
         ('Cubic Foot', 'Cubic Foot'),
         ('Each', 'Each')
         )
-    material        = models.CharField(max_length=100)
-    unit            = models.CharField(max_length=50, choices=UNITS, default='not assigned')
 
-    def __str__ (self):
-        return self.material
+    label = models.CharField(max_length=40)
+    unit = models.CharField(max_length=50, choices=UNITS, default='not assigned')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="build_types", null=True)
 
+    class Meta:
+        unique_together = ('category', 'label')
+
+    def __str__(self):
+        return self.category.label + self.label
+
+class Look(models.Model):
+    label = models.CharField(max_length=40, unique=True)
+
+    def __str__(self):
+        return self.label
 
 
 class Product(models.Model):
-    name                = models.CharField(max_length=200)
-    manufacturer        = models.ForeignKey(
+    name = models.CharField(max_length=200)
+
+    manufacturer = models.ForeignKey(
                                         Manufacturer,
                                         null=True,
                                         related_name='products',
                                         on_delete=models.SET_NULL,
                                         )
-    image               = models.ImageField()
-    application         = models.ManyToManyField(Application)
-    product_type        = models.ForeignKey(
-                                        ProductType, 
-                                        null=True, 
-                                        on_delete=models.SET_NULL
-                                        )
-    is_priced           = models.BooleanField(default=False)
-    lowest_price        = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    manufacturer_url    = models.URLField(null=True, blank=True)
-    for_sale            = models.BooleanField(default=False)
+
+
+    manufacturer_url = models.URLField(null=True, blank=True)
+    lowest_price= models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    is_priced = models.BooleanField(default=False)
+    for_sale = models.BooleanField(default=False)
+    image = models.ImageField()
+    
+    # categorized
+    build = models.ForeignKey(Build, on_delete=models.CASCADE)
+    material = models.ForeignKey(Material, null=True, on_delete=models.SET_NULL)
+
+    # application
+    walls = models.BooleanField(default=False)
+    countertops = models.BooleanField(default=False)
+    floors = models.BooleanField(default=False)
+
+    # special area
+    shower = models.BooleanField(default=False)
+    exterior = models.BooleanField(default=False)
+    covered = models.BooleanField(default=False)
+    pool = models.BooleanField(default=False)
+
+
+    thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
+    manufacturer_sku = models.CharField(max_length=50, null=True, blank=True)
+    manu_collection = models.CharField(max_length=50, null=True, blank=True)
+
+    look = models.ForeignKey(Look, null=True, on_delete=models.SET_NULL)
+    image_2 = models.ImageField(null=True)
+    lrv = models.IntegerField(null=True)
+    cof = models.DecimalField(max_digits=3, decimal_places=2, null=True)
+    width = models.DecimalField(max_digits=6, decimal_places=3, null=True)
+    length = models.DecimalField(max_digits=6, decimal_places=3, null=True)
 
 
     def __str__(self):
@@ -66,7 +110,7 @@ class Product(models.Model):
 
     def units(self):
         try:
-            return self.product_type.unit
+            return self.build.unit
         except:
             return
 
@@ -87,10 +131,3 @@ class Product(models.Model):
 
     def manufacturer_name(self):
         return self.manufacturer.name
-
-    def material(self):
-        return self.product_type.material
-
-
-
-

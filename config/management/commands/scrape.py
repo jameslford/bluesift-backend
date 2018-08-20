@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
-from scraper import daltile_scraper
+from scraper import scrape_main
 
 class Command(BaseCommand):
-    daltile_scraper.run()
+    def handle(self, *args, **options):
+        scrape_main.run_all()
+        

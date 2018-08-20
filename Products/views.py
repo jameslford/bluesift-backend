@@ -18,9 +18,9 @@ from .serializers import(
 
 from .models import(
                     Product, 
-                    Application, 
+                    Build,
+                    Material, 
                     Manufacturer, 
-                    ProductType
                     )
 
 
