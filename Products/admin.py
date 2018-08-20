@@ -2,13 +2,9 @@
 
 from django.contrib import admin
 
-from .models import Manufacturer, Product, ProductType, Application
+from .models import Manufacturer, Product
 
-class ProductTypeAdmin(admin.ModelAdmin):
-    model = ProductType
-    fields = ('material', 'unit' )
 
 admin.site.register(Manufacturer)
 admin.site.register(Product)
-admin.site.register(ProductType, ProductTypeAdmin)
-admin.site.register(Application)
+
