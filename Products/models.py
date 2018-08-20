@@ -32,7 +32,7 @@ class Material(models.Model):
 
 
     def __str__(self):
-        return self.category.label + self.label
+        return self.category.label + ' | ' + self.label
 
 
 class Build(models.Model):
@@ -51,7 +51,7 @@ class Build(models.Model):
         unique_together = ('category', 'label')
 
     def __str__(self):
-        return self.category.label + self.label
+        return self.category.label + ' | ' + self.label
 
 class Look(models.Model):
     label = models.CharField(max_length=40, unique=True)
@@ -96,13 +96,16 @@ class Product(models.Model):
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     manufacturer_sku = models.CharField(max_length=50, null=True, blank=True)
     manu_collection = models.CharField(max_length=50, null=True, blank=True)
+    width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank= True)
+    length = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
 
-    look = models.ForeignKey(Look, null=True, on_delete=models.SET_NULL)
-    image_2 = models.ImageField(null=True)
-    lrv = models.IntegerField(null=True)
-    cof = models.DecimalField(max_digits=3, decimal_places=2, null=True)
-    width = models.DecimalField(max_digits=6, decimal_places=3, null=True)
-    length = models.DecimalField(max_digits=6, decimal_places=3, null=True)
+    look = models.ForeignKey(Look, null=True, blank=True, on_delete=models.SET_NULL)
+    image_2 = models.ImageField(null=True, blank=True)
+    lrv = models.IntegerField(null=True, blank=True)
+    cof = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
+    residential_warranty = models.IntegerField(null=True, blank=True)
+    commercial_warranty = models.IntegerField(null=True, blank=True)
+    
 
 
     def __str__(self):
@@ -131,3 +134,10 @@ class Product(models.Model):
 
     def manufacturer_name(self):
         return self.manufacturer.name
+
+    def save(self, *args, **kwargs):
+        if self.material:
+            if self.material.category == self.build.category:
+                super(Product, self).save(*args, **kwargs) 
+        else:
+            super(Product, self).save(*args, **kwargs)
