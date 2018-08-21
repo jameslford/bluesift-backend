@@ -87,10 +87,11 @@ class Product(models.Model):
     floors = models.BooleanField(default=False)
 
     # special area
-    shower = models.BooleanField(default=False)
+    shower_floors = models.BooleanField(default=False)
+    shower_walls = models.BooleanField(default=False)
     exterior = models.BooleanField(default=False)
     covered = models.BooleanField(default=False)
-    pool = models.BooleanField(default=False)
+    pool_linings = models.BooleanField(default=False)
 
 
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
@@ -141,3 +142,9 @@ class Product(models.Model):
                 super(Product, self).save(*args, **kwargs) 
         else:
             super(Product, self).save(*args, **kwargs)
+
+    def category_name(self):
+        return self.build.category.label
+
+    def category_id(self):
+        return self.build.category.id
