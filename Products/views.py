@@ -144,8 +144,10 @@ def bool_response(products, args):
         count = products.filter(**search).count()
         content['count'] = count
         if arg[0] == 'True':
-            content['enabled'] == True
-        bool_filter.append(content)
+            content['enabled'] = True
+            bool_filter.append(content)
+        else:
+            bool_filter.append(content)
     return bool_filter
 
 
