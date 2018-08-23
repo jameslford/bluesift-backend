@@ -143,7 +143,7 @@ def bool_response(products, args):
         search = {arg[1]:True}
         count = products.filter(**search).count()
         content['count'] = count
-        if arg[0] == True:
+        if arg[0] == 'True':
             content['enabled'] == True
         bool_filter.append(content)
     return bool_filter
