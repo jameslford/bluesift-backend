@@ -66,9 +66,6 @@ def product_list(request):
     # ____filter_____
     products = check_booleans(products, product_boolean_args)
 
-    if manufacturers[0]:
-        products = or_list_query(products, manufacturers)
-
     if count == 1:
         if builds[0]:
             products = subtract_else(products, builds)
@@ -79,11 +76,70 @@ def product_list(request):
 
 
     elif count > 1:
-       products = parse_BMC(products, materials, categories, builds)
+        products = parse_BMC(products, materials, categories, builds)
+    
+    filter_manufacturer = set(products.values_list('manufacturer__id', 'manufacturer__name'))
+    second_man = []
+    for manu in filter_manufacturer:
+        manu = list(manu)
+        count = products.filter(manufacturer__id=manu[0]).count()
+        manu.append(count)
+        second_man.append(manu)
+
+    if manufacturers[0]:
+        products = or_list_query(products, manufacturers)
+
+    all_cats = Category.objects.all().values('label', 'id')
+    filter_cats = products.values_list('build__category__id', flat=True).distinct()
+    filter_builds = products.values_list('build__id', flat=True).distinct()
+    filter_mats = products.values_list('material__id', flat=True).distinct()
+
+
+    for cat in all_cats:
+        cat['enabled'] = False
+        cat['builds'] = []
+        cat['materials'] = []
+        if cat['id'] in filter_cats:
+            cat['enabled'] = True
+        cat_builds = Build.objects.filter(category__id=cat['id'])
+        cat_mats = Material.objects.filter(category__id=cat['id'])
+        for cb in cat_builds:
+            listing = {'label': cb.label, 'id': cb.id, 'enabled': False}
+            if cb.id in filter_builds:
+                listing['enabled'] = True
+                cat['builds'].append(listing)
+            else:
+                cat['builds'].append(listing)
+        for mat in cat_mats:
+            listing = {'label': mat.label, 'id': mat.id, 'enabled': False}
+            if mat.id in filter_mats:
+                listing['enabled'] = True
+                cat['materials'].append(listing)
+            else:
+                cat['materials'].append(listing)
+
+    filter_bools = {
+        'walls': walls[0],
+        'floors': floors[0],
+        'counter tops': countertops[0],
+        'exterior': exterior[0],
+        'covered': covered[0],
+        'shower_walls': shower_walls[0],
+        'shower_floors': shower_floors[0],
+    }
+
+
+    filter_response = {
+        'manufacturers' : second_man,
+        'all_cats': all_cats,
+        'filter_bools': filter_bools
+    }
 
     return Response({
-                    'products': ProductSerializer(products, many=True).data
-                    })
+        'for_sale': for_sale[0],
+        'filter': filter_response,
+        'products': ProductSerializer(products, many=True).data
+        })
 
 
 
@@ -124,13 +180,10 @@ def parse_BMC(products, materials, categories, builds):
     return _products
 
 
-
-
 def subtract_else(products, args):
     search = {args[1]:args[0][0]}
     return products.filter(**search)
 
-    
 
 def check_booleans(products, arg_list):
     _products = products
