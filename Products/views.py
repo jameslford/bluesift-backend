@@ -44,7 +44,7 @@ def product_list(request):
     for_sale        = [request.GET.get('for_sale'), 'for_sale']
     floors          = [request.GET.get('floors'), 'floors']
     walls           = [request.GET.get('walls'), 'walls']
-    countertops     = [request.GET.get('counters'), 'countertops']
+    countertops     = [request.GET.get('countertops'), 'countertops']
     exterior        = [request.GET.get('exterior'), 'exterior']
     covered         = [request.GET.get('covered'), 'covered']
     shower_floors   = [request.GET.get('showerFloor'), 'shower_floors']
