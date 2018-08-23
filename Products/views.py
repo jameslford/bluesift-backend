@@ -78,13 +78,15 @@ def product_list(request):
     elif count > 1:
         products = parse_BMC(products, materials, categories, builds)
     
-    filter_manufacturer = set(products.values_list('manufacturer__id', 'manufacturer__name'))
-    second_man = []
-    for manu in filter_manufacturer:
-        manu = list(manu)
-        count = products.filter(manufacturer__id=manu[0]).count()
-        manu.append(count)
-        second_man.append(manu)
+    manufacturer_values = products.values('manufacturer__id', 'manufacturer__name').distinct()
+    filter_manufacturer = []
+    for manu in manufacturer_values:
+        count = products.filter(manufacturer__id=manu['manufacturer__id']).count()
+        manu['count'] = count
+        manu['enabled'] = False
+        if manu['manufacturer__id'] in manufacturer_values:
+            manu['enabled'] = True
+        filter_manufacturer.append(manu)
 
     if manufacturers[0]:
         products = or_list_query(products, manufacturers)
@@ -118,28 +120,35 @@ def product_list(request):
             else:
                 cat['materials'].append(listing)
 
-    filter_bools = {
-        'walls': walls[0],
-        'floors': floors[0],
-        'counter tops': countertops[0],
-        'exterior': exterior[0],
-        'covered': covered[0],
-        'shower_walls': shower_walls[0],
-        'shower_floors': shower_floors[0],
-    }
 
+    product_count = products.count()
 
     filter_response = {
-        'manufacturers' : second_man,
+        'manufacturers' : filter_manufacturer,
         'all_cats': all_cats,
-        'filter_bools': filter_bools
+        'filter_bools': bool_response(products, product_boolean_args)
     }
 
     return Response({
         'for_sale': for_sale[0],
+        'product_count': product_count,
         'filter': filter_response,
         'products': ProductSerializer(products, many=True).data
         })
+
+def bool_response(products, args):
+    bool_filter = []
+    for arg in args:
+        content = {'label': arg[1], 'count': 0, 'enabled': False}
+        search = {arg[1]:True}
+        count = products.filter(**search).count()
+        content['count'] = count
+        if arg[0] == True:
+            content['enabled'] == True
+        bool_filter.append(content)
+    return bool_filter
+
+
 
 
 
