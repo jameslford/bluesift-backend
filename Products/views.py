@@ -84,9 +84,12 @@ def product_list(request):
         count = products.filter(manufacturer__id=manu['manufacturer__id']).count()
         manu['count'] = count
         manu['enabled'] = False
+        manu['id'] = manu['manufacturer__id']
         if manu['manufacturer__id'] in manufacturer_values:
             manu['enabled'] = True
-        filter_manufacturer.append(manu)
+            filter_manufacturer.append(manu)
+        else:
+            filter_manufacturer.append(manu)
 
     if manufacturers[0]:
         products = or_list_query(products, manufacturers)
