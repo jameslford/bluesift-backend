@@ -47,8 +47,8 @@ def product_list(request):
     countertops     = [request.GET.get('countertops'), 'countertops']
     exterior        = [request.GET.get('exterior'), 'exterior']
     covered         = [request.GET.get('covered'), 'covered']
-    shower_floors   = [request.GET.get('showerFloor'), 'shower_floors']
-    shower_walls    = [request.GET.get('showerWall'), 'shower_walls']
+    shower_floors   = [request.GET.get('shower_floors'), 'shower_floors']
+    shower_walls    = [request.GET.get('shower_walls'), 'shower_walls']
     pool_linings    = [request.GET.get('pool_lining'), 'pool_linings']
 
     # specialty values
