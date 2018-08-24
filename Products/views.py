@@ -78,18 +78,21 @@ def product_list(request):
     elif count > 1:
         products = parse_BMC(products, materials, categories, builds)
     
+    all_manufacturers = Manufacturer.objects.all()
     manufacturer_values = products.values('manufacturer__id', 'manufacturer__name').distinct()
     filter_manufacturer = []
-    for manu in manufacturer_values:
-        count = products.filter(manufacturer__id=manu['manufacturer__id']).count()
-        manu['count'] = count
-        manu['id'] = manu['manufacturer__id']
-        if str(manu['id']) in manufacturers[0]:
-            manu['enabled'] = True
-            filter_manufacturer.append(manu)
+    for manu in all_manufacturers:
+        unit = {}
+        count = products.filter(manufacturer=manu).count()
+        unit['count'] = count
+        unit['id'] = manu.id
+        unit['label'] = manu.name
+        if str(manu.id) in manufacturers[0]:
+            unit['enabled'] = True
+            filter_manufacturer.append(unit)
         else:
-            manu['enabled'] = False
-            filter_manufacturer.append(manu)
+            unit['enabled'] = False
+            filter_manufacturer.append(unit)
             
 
     if manufacturers[0]:
