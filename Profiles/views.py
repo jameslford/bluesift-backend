@@ -83,12 +83,12 @@ def supplier_library_append(request):
 
 def customer_short_lib(request):
     user = request.user
-    proj_id = request.GET.get('proj_id', 'none')
+    proj_id = request.GET.get('proj_id')
     projects = get_customer_projects(user)
     project = projects.first()
     projects_list = []
     product_ids = []
-    if projects.count() > 1:
+    if proj_id:
         project = projects.get(id=proj_id)
     for proj in projects:
         content = {}
