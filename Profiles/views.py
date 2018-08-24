@@ -90,6 +90,7 @@ def customer_short_lib(request):
     product_ids = []
     if proj_id:
         project = projects.get(id=proj_id)
+    selected_project = {'id':project.id, 'nickname': project.nickname }
     for proj in projects:
         content = {}
         content['nickname'] = proj.nickname
@@ -101,6 +102,7 @@ def customer_short_lib(request):
     full_content = {
         'list': projects_list,
         'count': projects.count(),
+        'selected_project': selected_project,
         'product_ids': product_ids
     }
     response = {'shortLib': full_content}
