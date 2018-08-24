@@ -1,54 +1,67 @@
 from rest_framework import serializers
-from .models import( 
-                    CompanyAccount, 
-                    CompanyShippingLocation, 
-                    SupplierProduct, 
-                    CustomerProfile, 
-                    CustomerProject, 
-                    CustomerProduct
-                    )
+from .models import(
+    CompanyAccount,
+    CompanyShippingLocation,
+    SupplierProduct,
+    CustomerProfile,
+    CustomerProject,
+    CustomerProduct
+    )
 
-class ShippingLocationSerializer(serializers.ModelSerializer):
+
+class CompanyAccountSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CompanyShippingLocation
-        fields = ('company_account','approved_seller','nickname', 'address', 'id')
+        model = CompanyAccount
 
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerProfile
+
+
+class CustomerProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerProduct
+        fields = (
+            'id',
+            'product',
+            'use',
+            'project',
+            'product_name',
+            'product_id',
+            'product_image',
+            'product_category',
+            'product_build',
+            'product_material',
+            'product_lowest_price',
+            'product_for_sale'
+            )
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
+    products = CustomerProductSerializer(many=True)
     class Meta:
         model = CustomerProject
-        fields = ('owner', 'address', 'nickname', 'id')
+        fields = ('owner', 'address', 'nickname', 'id', 'products')
 
+class SupplierProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupplierProduct
+        fields = (
+            'my_price'
+            'price_per_unit',
+            'units_available',
+            'units_per_order',
+            'for sale',
+            'product_name',
+            'product_id',
+            'product_image',
+            'product_category',
+            'product_build',
+            'product_material',
+            'product_lowest_price'
+        )
 
-
-class CustomerProductSerializer(serializers.Serializer):
-    id = serializers.ReadOnlyField()
-    product_id = serializers.IntegerField()
-    use = serializers.CharField()
-    name = serializers.CharField(max_length=120)
-    image = serializers.ImageField()
-    lowest_price = serializers.DecimalField(max_digits=7, decimal_places=2)
-    is_priced = serializers.BooleanField()
-    product_type = serializers.CharField(max_length=120)
-    prices = serializers.ListField()
-
-class SupplierProductSerializer(serializers.Serializer):
-    # supplier product fields
-    id = serializers.ReadOnlyField()
-    name = serializers.CharField(max_length=120)
-    units_available = serializers.IntegerField(default=0)
-    units_per_order = serializers.DecimalField(max_digits=10, decimal_places=2, default=0)
-    my_price = serializers.DecimalField( max_digits=8, decimal_places=2)
-    for_sale = serializers.BooleanField(default=False)
-    price_per_unit  = serializers.DecimalField( max_digits=8, decimal_places=2)
-    # product fields
-    product_id = serializers.IntegerField()
-    product_type = serializers.CharField(max_length=120)
-    image = serializers.ImageField()
-    is_priced = serializers.BooleanField()
-    prices = serializers.ListField()
-    lowest_price = serializers.DecimalField(max_digits=7,decimal_places=2)
-
-
-
-
+class ShippingLocationSerializer(serializers.ModelSerializer):
+    products = SupplierProductSerializer(many=True)
+    class Meta:
+        model = CompanyShippingLocation
+        fields = ('company_account', 'approved_seller', 'nickname', 'address', 'id', 'products')

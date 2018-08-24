@@ -45,7 +45,12 @@ class Build(models.Model):
 
     label = models.CharField(max_length=40)
     unit = models.CharField(max_length=50, choices=UNITS, default='not assigned')
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="build_types", null=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="build_types",
+        null=True
+        )
 
     class Meta:
         unique_together = ('category', 'label')
@@ -64,11 +69,11 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
 
     manufacturer = models.ForeignKey(
-                                        Manufacturer,
-                                        null=True,
-                                        related_name='products',
-                                        on_delete=models.SET_NULL,
-                                        )
+        Manufacturer,
+        null=True,
+        related_name='products',
+        on_delete=models.SET_NULL,
+        )
 
 
     manufacturer_url = models.URLField(null=True, blank=True)
@@ -97,7 +102,7 @@ class Product(models.Model):
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     manufacturer_sku = models.CharField(max_length=50, null=True, blank=True)
     manu_collection = models.CharField(max_length=50, null=True, blank=True)
-    width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank= True)
+    width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     length = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
 
     look = models.ForeignKey(Look, null=True, blank=True, on_delete=models.SET_NULL)
@@ -106,7 +111,7 @@ class Product(models.Model):
     cof = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
     residential_warranty = models.IntegerField(null=True, blank=True)
     commercial_warranty = models.IntegerField(null=True, blank=True)
-    
+
 
 
     def __str__(self):
@@ -129,8 +134,6 @@ class Product(models.Model):
             self.for_sale = True
             self.save()
             return values
-        else:
-            return 
 
 
     def manufacturer_name(self):
