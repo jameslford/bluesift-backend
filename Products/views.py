@@ -129,10 +129,12 @@ def product_list(request):
 
 
     product_count = products.count()
+    bools = bool_response(products, product_boolean_args)
+
 
     filter_response = {
-        'for_sale': bool_response(products, product_boolean_args[0]),
-        'filter_bools': bool_response(products, product_boolean_args[1:]),
+        'for_sale': bools[0],
+        'filter_bools': bools[1:] ,
         'manufacturers' : filter_manufacturer,
         'all_cats': all_cats
     }
