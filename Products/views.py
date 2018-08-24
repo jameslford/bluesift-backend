@@ -133,7 +133,7 @@ def product_list(request):
     filter_response = {
         'manufacturers' : filter_manufacturer,
         'all_cats': all_cats,
-        'filter_bools': bool_response(products, product_boolean_args)
+        'filter_bools': bool_response(products, product_boolean_args[1:])
     }
 
     return Response({
