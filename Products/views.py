@@ -85,7 +85,8 @@ def product_list(request):
         manu['count'] = count
         manu['enabled'] = False
         manu['id'] = manu['manufacturer__id']
-        if manu['manufacturer__id'] in manufacturer_values:
+        filter_manufacturer.append(manu)
+        if manu['manufacturer__id'] in manufacturers:
             manu['enabled'] = True
             filter_manufacturer.append(manu)
         else:
