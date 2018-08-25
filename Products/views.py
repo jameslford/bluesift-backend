@@ -106,6 +106,7 @@ def product_list(request):
 
     for cat in all_cats:
         cat['enabled'] = False
+        cat['count'] = products.filter(build__category=cat['id']).count()
         cat['builds'] = []
         cat['materials'] = []
         if str(cat['id']) in categories[0]:
@@ -113,14 +114,16 @@ def product_list(request):
         cat_builds = Build.objects.filter(category__id=cat['id'])
         cat_mats = Material.objects.filter(category__id=cat['id'])
         for cb in cat_builds:
-            listing = {'label': cb.label, 'id': cb.id, 'enabled': False}
+            count = products.filter(build=cb).count()
+            listing = {'label': cb.label, 'id': cb.id, 'count': count, 'enabled': False}
             if str(cb.id) in builds[0]:
                 listing['enabled'] = True
                 cat['builds'].append(listing)
             else:
                 cat['builds'].append(listing)
         for mat in cat_mats:
-            listing = {'label': mat.label, 'id': mat.id, 'enabled': False}
+            count = products.filter(material=mat).count()
+            listing = {'label': mat.label, 'id': mat.id, 'count': count, 'enabled': False}
             if str(mat.id) in materials[0]:
                 listing['enabled'] = True
                 cat['materials'].append(listing)
