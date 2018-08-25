@@ -108,20 +108,20 @@ def product_list(request):
         cat['enabled'] = False
         cat['builds'] = []
         cat['materials'] = []
-        if cat['id'] in filter_cats:
+        if str(cat['id']) in categories[0]:
             cat['enabled'] = True
         cat_builds = Build.objects.filter(category__id=cat['id'])
         cat_mats = Material.objects.filter(category__id=cat['id'])
         for cb in cat_builds:
             listing = {'label': cb.label, 'id': cb.id, 'enabled': False}
-            if cb.id in filter_builds:
+            if str(cb.id) in builds[0]:
                 listing['enabled'] = True
                 cat['builds'].append(listing)
             else:
                 cat['builds'].append(listing)
         for mat in cat_mats:
             listing = {'label': mat.label, 'id': mat.id, 'enabled': False}
-            if mat.id in filter_mats:
+            if str(mat.id) in materials[0]:
                 listing['enabled'] = True
                 cat['materials'].append(listing)
             else:
