@@ -77,11 +77,11 @@ class Product(models.Model):
 
 
     manufacturer_url = models.URLField(null=True, blank=True)
-    lowest_price= models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     is_priced = models.BooleanField(default=False)
     for_sale = models.BooleanField(default=False)
-    image = models.ImageField()
-    
+    image = models.ImageField(null=True)
+
     # categorized
     build = models.ForeignKey(Build, on_delete=models.CASCADE)
     material = models.ForeignKey(Material, null=True, on_delete=models.SET_NULL)
@@ -90,6 +90,7 @@ class Product(models.Model):
     walls = models.BooleanField(default=False)
     countertops = models.BooleanField(default=False)
     floors = models.BooleanField(default=False)
+    cabinet_fronts = models.BooleanField(default=False)
 
     # special area
     shower_floors = models.BooleanField(default=False)
@@ -123,11 +124,10 @@ class Product(models.Model):
         except:
             return
 
-
     def prices(self):
         sellers = self.priced.filter(for_sale=True)
         if sellers:
-            values = sellers.values('price_per_unit', 'supplier', 'units_available', 'id' )
+            values = sellers.values('price_per_unit', 'supplier', 'units_available', 'id')
             price = sellers.aggregate(Min('price_per_unit'))
             self.lowest_price = price["price_per_unit__min"]
             self.is_priced = True
@@ -142,7 +142,7 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if self.material:
             if self.material.category == self.build.category:
-                super(Product, self).save(*args, **kwargs) 
+                super(Product, self).save(*args, **kwargs)
         else:
             super(Product, self).save(*args, **kwargs)
 

@@ -1,71 +1,71 @@
-# Products.views.py
+''' Products.views.py '''
 
-from django.shortcuts import render
-from django.core.serializers import serialize
 from django.db.models import Q
 
-from rest_framework.generics import RetrieveAPIView
-from rest_framework.decorators import api_view, permission_classes, parser_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .serializers import(
-                        ProductSerializer, 
-                        ManufacturerSerializer
-                        )
+    ProductSerializer,
+    ManufacturerSerializer
+    )
 
 from .models import(
-                    Product, 
-                    Build,
-                    Material, 
-                    Manufacturer,
-                    Category 
-                    )
-
-
+    Product,
+    Build,
+    Material,
+    Manufacturer,
+    Category
+    )
 
 @api_view(['GET'])
 def product_list(request):
 
-    products = Product.objects.all()
-
-    # ______parse request________
-
-    # product lists
-    manufacturers   = [request.GET.getlist('manufacturers'), 'manufacturer']
-    builds          = [request.GET.getlist('build'), 'build__id']
-    materials       = [request.GET.getlist('material'), 'material']
-    look            = [request.GET.getlist('look'), 'look']
-    
-    # method lists
-    categories      = [request.GET.getlist('categories'), 'build__category']
-
-
-    for_sale        = [request.GET.get('for_sale'), 'for_sale']
-    floors          = [request.GET.get('floors'), 'floors']
-    walls           = [request.GET.get('walls'), 'walls']
-    countertops     = [request.GET.get('countertops'), 'countertops']
-    exterior        = [request.GET.get('exterior'), 'exterior']
-    covered         = [request.GET.get('covered'), 'covered']
-    shower_floors   = [request.GET.get('shower_floors'), 'shower_floors']
-    shower_walls    = [request.GET.get('shower_walls'), 'shower_walls']
-    pool_linings    = [request.GET.get('pool_lining'), 'pool_linings']
-
-    # specialty values
+    manufacturers = [request.GET.getlist('manufacturers'), 'manufacturer']
+    builds = [request.GET.getlist('build'), 'build__id']
+    materials = [request.GET.getlist('material'), 'material']
+    look = [request.GET.getlist('look'), 'look']
+    categories = [request.GET.getlist('categories'), 'build__category']
+    for_sale = [request.GET.get('for_sale'), 'for_sale']
+    floors = [request.GET.get('floors'), 'floors']
+    walls = [request.GET.get('walls'), 'walls']
+    countertops = [request.GET.get('countertops'), 'countertops']
+    counter_fronts = [request.GET.get('counter_fronts'), 'counter_fronts']
+    exterior = [request.GET.get('exterior'), 'exterior']
+    covered = [request.GET.get('covered'), 'covered']
+    shower_floors = [request.GET.get('shower_floors'), 'shower_floors']
+    shower_walls = [request.GET.get('shower_walls'), 'shower_walls']
+    pool_linings = [request.GET.get('pool_lining'), 'pool_linings']
     cof = request.GET.get('cof')
     lrv = request.GET.get('lrv')
     color = request.GET.get('color')
-
-    # sort
     sort = request.GET.get('sort', 'none')
 
-    # arguments
-    product_boolean_args = [for_sale, floors, walls, countertops, exterior, covered, shower_floors, shower_walls, pool_linings]
-    count = len(categories[0]) + len(builds[0]) + len(materials[0])
+    products = Product.objects.all()
 
-    # ____filter_____
+    product_boolean_args = [
+        for_sale,
+        floors,
+        walls,
+        countertops,
+        counter_fronts,
+        exterior,
+        covered,
+        shower_floors,
+        shower_walls,
+        pool_linings
+        ]
+    
     products = check_booleans(products, product_boolean_args)
 
+    filter_manufacturer = filter_manufacturers(products, manufacturers)
+
+    if manufacturers[0]:
+        products = or_list_query(products, manufacturers)
+
+    all_cats = filter_BCM(products, categories, builds, materials)
+
+    count = len(categories[0]) + len(builds[0]) + len(materials[0])
     if count == 1:
         if builds[0]:
             products = subtract_else(products, builds)
@@ -73,37 +73,30 @@ def product_list(request):
             products = subtract_else(products, materials)
         if categories[0]:
             products = subtract_else(products, categories)
-
-
     elif count > 1:
         products = parse_BMC(products, materials, categories, builds)
-    
-    all_manufacturers = Manufacturer.objects.all()
-    manufacturer_values = products.values('manufacturer__id', 'manufacturer__name').distinct()
-    filter_manufacturer = []
-    for manu in all_manufacturers:
-        unit = {}
-        count = products.filter(manufacturer=manu).count()
-        unit['count'] = count
-        unit['id'] = manu.id
-        unit['label'] = manu.name
-        if str(manu.id) in manufacturers[0]:
-            unit['enabled'] = True
-            filter_manufacturer.append(unit)
-        else:
-            unit['enabled'] = False
-            filter_manufacturer.append(unit)
-            
 
-    if manufacturers[0]:
-        products = or_list_query(products, manufacturers)
 
+    product_count = products.count()
+    bools = bool_response(products, product_boolean_args)
+
+
+    filter_response = {
+        'for_sale': bools[0],
+        'filter_bools': bools[1:],
+        'manufacturers' : filter_manufacturer,
+        'all_cats': all_cats
+    }
+
+    return Response({
+        'product_count': product_count,
+        'filter': filter_response,
+        'products': ProductSerializer(products, many=True).data
+        })
+
+
+def filter_BCM(products, categories, builds, materials):
     all_cats = Category.objects.all().values('label', 'id')
-    filter_cats = products.values_list('build__category__id', flat=True).distinct()
-    filter_builds = products.values_list('build__id', flat=True).distinct()
-    filter_mats = products.values_list('material__id', flat=True).distinct()
-
-
     for cat in all_cats:
         cat['enabled'] = False
         cat['count'] = products.filter(build__category=cat['id']).count()
@@ -113,10 +106,10 @@ def product_list(request):
             cat['enabled'] = True
         cat_builds = Build.objects.filter(category__id=cat['id'])
         cat_mats = Material.objects.filter(category__id=cat['id'])
-        for cb in cat_builds:
-            count = products.filter(build=cb).count()
-            listing = {'label': cb.label, 'id': cb.id, 'count': count, 'enabled': False}
-            if str(cb.id) in builds[0]:
+        for build in cat_builds:
+            count = products.filter(build=build).count()
+            listing = {'label': build.label, 'id': build.id, 'count': count, 'enabled': False}
+            if str(build.id) in builds[0]:
                 listing['enabled'] = True
                 cat['builds'].append(listing)
             else:
@@ -129,24 +122,26 @@ def product_list(request):
                 cat['materials'].append(listing)
             else:
                 cat['materials'].append(listing)
+    return all_cats
 
 
-    product_count = products.count()
-    bools = bool_response(products, product_boolean_args)
+def filter_manufacturers(products, args):
+    all_manufacturers = Manufacturer.objects.all()
+    filter_manufacturer = []
+    for manu in all_manufacturers:
+        unit = {}
+        count = products.filter(manufacturer=manu).count()
+        unit['count'] = count
+        unit['id'] = manu.id
+        unit['label'] = manu.name
+        if str(manu.id) in args[0]:
+            unit['enabled'] = True
+            filter_manufacturer.append(unit)
+        else:
+            unit['enabled'] = False
+            filter_manufacturer.append(unit)
+    return filter_manufacturer
 
-
-    filter_response = {
-        'for_sale': bools[0],
-        'filter_bools': bools[1:] ,
-        'manufacturers' : filter_manufacturer,
-        'all_cats': all_cats
-    }
-
-    return Response({
-        'product_count': product_count,
-        'filter': filter_response,
-        'products': ProductSerializer(products, many=True).data
-        })
 
 def bool_response(products, args):
     bool_filter = []
@@ -162,51 +157,41 @@ def bool_response(products, args):
             bool_filter.append(content)
     return bool_filter
 
-
-
-
-
-
 def parse_BMC(products, materials, categories, builds):
     materials_list = materials[0]
     build_list = builds[0]
     categories_list = categories[0]
-    _products = products
     hit = False
+    _products = products
     if build_list:
         hit = True
-        _products = products.filter(build=build_list[0])
+        _products = products.filter(build__id=build_list[0])
         for build in build_list[1:]:
-            _products = _products | products.filter(build=build)
-    if materials_list and hit == False:
-        hit = True
-        _products = products.filter(material=materials_list[0])
-        for material in materials_list[1:]:
-            _products = _products | products.filter(material=material)
-    elif materials_list and hit == True:
-        for material in materials_list:
-            active_cats = set(_products.values_list('build__category__id', flat=True))
-            material_category = Material.objects.get(id=material).category.id
-            if material_category in active_cats:
+            _products = _products | products.filter(build__id=build)
+    if materials_list and hit:
+        active_cats = set(_products.values_list('build__category__id', flat=True))
+        for mat in materials_list:
+            mat_object = Material.objects.get(id=mat)
+            if mat_object.category.id in active_cats:
+                material_category = mat_object.categoy
                 exempt = _products.exclude(build__category=material_category)
-                active = _products.filter(material=material)
+                active = _products.filter(material=mat_object)
                 _products = exempt | active
             else:
-                _products = _products | products.filter(material=material)
-        for category in categories_list[1:]:
-            _products = _product | products.filter(build__category=category)
-    elif categories_list and hit == True:
-        for category in categories:
-            exempt = _products.exclude(build__category=category)
-            new = products.filter(build__category=category)
-            _products = exempt | new
+                _products = _products | products.filter(material=mat_object)
+    elif materials_list:
+        _products = products.filter(material=materials_list[0])
+        for mat in materials_list[1:]:
+            _products = _products | products.filter(material__id=mat)
+    if categories_list:
+        for cat in categories_list:
+            _products = _products | products.filter(build__category__id=cat)
     return _products
 
 
 def subtract_else(products, args):
     search = {args[1]:args[0][0]}
     return products.filter(**search)
-
 
 def check_booleans(products, arg_list):
     _products = products
@@ -215,9 +200,6 @@ def check_booleans(products, arg_list):
             search = {arg[1]:arg[0]}
             _products = _products.filter(**search)
     return _products
-
-
-
 
 def or_list_query(products, arg_list):
     _products = products
@@ -234,275 +216,9 @@ def or_list_query(products, arg_list):
         return _products
 
 
-#     if categories_list:
-#         active_cats = _products.values_list('build__category__id', flat=True)
-#         for cat in categories:
-#             if cat in active_cats:
-#                 pass
-#             else:
-#                 new = products.filter(build__category=cat)
-#                 _products = _products | new
-#     return _products   
-
-    
-# def cat_iteration(orignal_products, products, item, class_name, arg_name):
-#     activate_categories = set(products.values_list('build__category__id', flat=True))
-#     item_cat = class_name.objects.get(id=item).category
-#     search = {arg_name:item}
-#     if item_cat.id  in activate_categories:
-#         exempt = products.exclude(build__category=item_cat)
-#         shaving = orignal_products.filter(**search)
-#         return exempt | shaving
-#     else:
-#         new = orignal_products.filter(**search)
-#         return new
-
-    # _products = products
-    # if categories_list:
-    #     hit = True
-    #     _products = products.filter(build__category=categories_list[0])
-    #     for cat in categories_list[1:]:
-    #         _products = _products | products.filter(build__category=cat)
-    # if builds_list:
-    #     if hit == True:
-    #         for build in builds_list:
-    #             if _products.filter(build=build):
-
-
-    #     else:
-    #         pass
-    # if materials_list:
-    #     if hit == True:
-    #         pass
-    #     else:
-    #         pass
-
-
-
-
-    # if builds[0]:
-    #     b_first = {build[1]: build[0][0]}
-    #     _products = products.filter(**b_first)
-    #     for b in build[0][1:]:
-    #         search = {build[1]: b}
-    #         _products = _products | products.filter(**search)
-    #     if materials[0]:
-    #         for mat in materials[0]:
-    #             m_search = {materials[1]:mat}
-    #             _products = _products | products.filter(**m_search)
-    #     if 
-
-        
-
-    # return _products
-
-
-
-
-
-# def check_categories(products, categories, materials, builds):
-
-#     cats = [cat for cat in categories]
-
-#     for build in builds[0]:
-#             build_object = Build.objects.get(id=build)
-#             cats.append(build_object.category.id)
-
-#     for mat in materials[0]:
-#             material_object = Material.objects.get(id=mat)
-#             cats.append(material_object.category.id)
-
-#     cat_set = set(cats)
-#     cat_list = list(cat_set)
-#     set_count = len(cat_set)
-
-#     if set_count == 0:
-#         return products
-#     else:
-#         _products = products.objects.filter(build__category=cat_list[0])
-#         for cat in cat_list[1:]:
-#             _products = _products | product.objects.filter(build__category=cat)
-#         if builds[0]:
-#             _products = filter_builds(_products)
-
-
-
-
-# def filter_builds(products, builds, categories='cats'):
-#     _products = products
-#     term = builds[1]
-#     build_list = builds[0]
-#     if build_list:
-#         _products
-#     else:
-#         return products
-
-# def filter_categories(products, categories):
-#     _products = products
-#     if categories[0]:
-#         _products = _products.filter(build__category=categories[0])
-#         for cat in categories[1:]:
-#             _products = _products | product.filter(build__category=cat)
-#         return _products
-#     else:
-#         return _products
-
-
-
-
-
-
-
-
-# def check_list(products, arg_list):
-#     _products = products
-#     full_args = [arg for arg in arg_list if arg[0]]
-#     if full_args:
-#         first_search = {full_args[0][1]:full_args[0][0]}
-#         _products = _products.filter(**first_search)
-#         for args in full_args[1:]:
-#             for arg in args[0]:
-#                 next_search = {args[1]:arg}
-#                 _products = _products | products.filter()
-
-
-
-    # for args in arg_list:
-    #     if args[0]:
-    #         term = args[1]
-    #         first_search = {term: args[0][0]}
-    #         _products = products.filter(**first_search)
-    #         for arg in arg_list[0][1:]:
-    #             second_search = {arg_list[1]:arg}
-    #             results = results | _products.filter(**second_search)
-    #         return results
-
-
-
-
-
-
-
-  
-
-#     # filter products
-#     pTyped_products = parse_pt(product_type)
-#     aTyped_products = parse_at(application_type, pTyped_products)
-#     for_sale_products = parse_for_sale(for_sale, aTyped_products)
-#     filtered_products = parse_manufacturer(manufacturer, for_sale_products)
-#     sorted_products = sort_products(sort, filtered_products)
-#     products_serialized = ProductSerializer(sorted_products, many=True)
- 
-
-#     # filter application types
-#     application_types = Application.objects.all()
-#     refined_ats = type_refiner(
-#                                 ApplicationAreaSerializer, 
-#                                 application_types, 
-#                                 filtered_products, 
-#                                 'application'
-#                                 )
-
-#     # filter manufacturers
-#     manufacturers = Manufacturer.objects.all()
-#     refined_manu = type_refiner(
-#                                 ManufacturerSerializer, 
-#                                 manufacturers, 
-#                                 for_sale_products, 
-#                                 'manufacturer'
-#                                 )
-
-#     # filter product types
-#     product_types = ProductType.objects.all()
-#     refined_pts = type_refiner(
-#                                 ProductTypeSerializer, 
-#                                 product_types, 
-#                                 filtered_products, 
-#                                 'product'
-#                                 )
-
-#     filter_content = {
-#         "for_sale" : for_sale,
-#         "product_count" : filtered_products.count()
-#     } 
-
-#     return Response({
-#                     "filter" : [filter_content],
-#                     "application_types": refined_ats,
-#                     "product_types": refined_pts,
-#                     "manufacturers": refined_manu,
-#                     "products": products_serialized.data
-#                     })
-    
-# def sort_products(sort, products):
-#     if sort == 'none':
-#         return products
-#     else:
-#         try:
-#            sorted_products = products.order_by('sort')
-#            return sorted_products
-#         except:
-#             return products
-
-
-
-# def parse_pt(product_type):
-#     products = Product.objects.all()
-#     if product_type == '0':
-#         return products
-#     else:
-#         return products.filter(product_type=product_type)
-
-# def parse_at(application_type, products):
-#     if application_type == ['0']:
-#         return products
-#     else:
-#         for at in application_type:
-#             products = products.filter(application=at)
-#         return products
-
-# def parse_manufacturer(manufacturer, products):
-#     if manufacturer == '0':
-#         return products
-#     else:
-#         return products.filter(manufacturer=manufacturer)
-
-
-# def parse_for_sale(for_sale, products):
-#     if for_sale == 'true':   
-#         return products.filter(for_sale=True)
-#     else:
-#         return products
-
-
-# def type_refiner(serializer, objects, products, argument):
-#     serialized_types = []
-#     for item in objects:
-#         count = get_argument(item, products, argument)
-#         at_serialized = serializer(item).data
-#         at_serialized['count'] = count
-#         if count > 0:
-#             at_serialized['enabled'] = True
-#         serialized_types.append(at_serialized)
-#     return serialized_types
-
-# def get_argument(item, products, argument):
-#     if argument == 'application':
-#         return products.filter(application=item).count()
-#     elif argument == 'product':
-#         return products.filter(product_type=item).count()
-#     elif argument == 'manufacturer':
-#         return products.filter(manufacturer=item).count()
-
-# def product_sort(products, argument):
-#     pass
-
-
 
 @api_view(['GET'])
 def get_product(request, pk):
     product = Product.objects.get(id=pk)
     serialized_product = ProductSerializer(product)
     return Response({'product': serialized_product.data})
-
-
