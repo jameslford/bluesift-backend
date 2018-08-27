@@ -30,7 +30,7 @@ def product_list(request):
     floors = [request.GET.get('floors'), 'floors']
     walls = [request.GET.get('walls'), 'walls']
     countertops = [request.GET.get('countertops'), 'countertops']
-    counter_fronts = [request.GET.get('counter_fronts'), 'counter_fronts']
+    cabinet_fronts = [request.GET.get('cabinet_fronts'), 'cabinet_fronts']
     exterior = [request.GET.get('exterior'), 'exterior']
     covered = [request.GET.get('covered'), 'covered']
     shower_floors = [request.GET.get('shower_floors'), 'shower_floors']
@@ -48,7 +48,7 @@ def product_list(request):
         floors,
         walls,
         countertops,
-        counter_fronts,
+        cabinet_fronts,
         exterior,
         covered,
         shower_floors,
