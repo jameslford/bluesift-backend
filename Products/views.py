@@ -7,7 +7,8 @@ from rest_framework.response import Response
 
 from .serializers import(
     ProductSerializer,
-    ManufacturerSerializer
+    ManufacturerSerializer,
+    ProductDetailSerializer
     )
 
 from .models import(
@@ -220,5 +221,5 @@ def or_list_query(products, arg_list):
 @api_view(['GET'])
 def get_product(request, pk):
     product = Product.objects.get(id=pk)
-    serialized_product = ProductSerializer(product)
+    serialized_product = ProductDetailSerializer(product)
     return Response({'product': serialized_product.data})

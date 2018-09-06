@@ -64,9 +64,21 @@ class Look(models.Model):
     def __str__(self):
         return self.label
 
+class Finish(models.Model):
+    label = models.CharField(max_length=40, unique=True)
+
+    def __str__(self):
+        return self.label
+
+class ShadeVariation(models.Model):
+    label = models.CharField(max_length=40, unique=True)
+
+    def __str__(self):
+        return self.label
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
+    bb_sku = models.CharField(max_length=200, unique=True)
 
     manufacturer = models.ForeignKey(
         Manufacturer,
@@ -81,6 +93,9 @@ class Product(models.Model):
     is_priced = models.BooleanField(default=False)
     for_sale = models.BooleanField(default=False)
     image = models.ImageField(null=True)
+    last_scraped = models.DateTimeField(null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     # categorized
     build = models.ForeignKey(Build, on_delete=models.CASCADE)
@@ -99,12 +114,11 @@ class Product(models.Model):
     covered = models.BooleanField(default=False)
     pool_linings = models.BooleanField(default=False)
 
-
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     manufacturer_sku = models.CharField(max_length=50, null=True, blank=True)
     manu_collection = models.CharField(max_length=50, null=True, blank=True)
-    width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
-    length = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    width = models.CharField(max_length=20, null=True, blank=True)
+    length = models.CharField(max_length=20, null=True, blank=True)
 
     look = models.ForeignKey(Look, null=True, blank=True, on_delete=models.SET_NULL)
     image_2 = models.ImageField(null=True, blank=True)
@@ -112,8 +126,9 @@ class Product(models.Model):
     cof = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
     residential_warranty = models.IntegerField(null=True, blank=True)
     commercial_warranty = models.IntegerField(null=True, blank=True)
-
-
+    finish = models.ForeignKey(Finish, null=True, on_delete=models.SET_NULL)
+    shade_variation = models.ForeignKey(ShadeVariation, null=True, on_delete=models.SET_NULL)
+    notes = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -151,3 +166,9 @@ class Product(models.Model):
 
     def category_id(self):
         return self.build.category.id
+
+    def look_label(self):
+        return self.look.label
+
+    def size(self):
+        return self.width + self.length
