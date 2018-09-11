@@ -76,6 +76,13 @@ class ShadeVariation(models.Model):
     def __str__(self):
         return self.label
 
+class Image(models.Model):
+    original_url = models.CharField(max_length=300, unique=True)
+    image = models.ImageField(null=True)
+
+    def __str__(self):
+            return self.original_url
+
 class Product(models.Model):
     name = models.CharField(max_length=200)
     bb_sku = models.CharField(max_length=200, unique=True)
@@ -92,7 +99,7 @@ class Product(models.Model):
     lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     is_priced = models.BooleanField(default=False)
     for_sale = models.BooleanField(default=False)
-    image = models.ImageField(null=True)
+    image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     last_scraped = models.DateTimeField(null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
