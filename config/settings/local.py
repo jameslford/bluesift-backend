@@ -19,7 +19,7 @@ EMAIL_USE_TLS = True
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-development'
 AWS_MEDIA_BUCKET_NAME = 'pixidesk-development-media'
-AWS_S3_REGION_NAME =   'us-east-1'
+AWS_S3_REGION_NAME = 'us-east-1'
 
 
 

@@ -81,7 +81,7 @@ class Image(models.Model):
     image = models.ImageField(null=True)
 
     def __str__(self):
-            return self.original_url
+        return self.original_url
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
