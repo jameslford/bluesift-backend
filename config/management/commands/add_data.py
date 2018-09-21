@@ -19,103 +19,104 @@ class Command(BaseCommand):
             print('No argument specified for data sample: Random or Full')
             return
         data_path = os.getcwd() + '\\config\\management\\data\\*.csv'
-        files = glob.glob(data_path)
-        data = max(files, key=os.path.getctime)
-        with open(data) as readfile:
-            reader = csv.reader(readfile)
-            if options['extent'] == 'Random':
-                tiles = list(range(397, 482))
-                armstrong = random.sample(range(0, 397), 100)
-                fandm = random.sample(range(483, 5000), 200)
-                sample = tiles + armstrong + fandm
-                random_rows = [row for idx, row in enumerate(reader) if idx in sample]
-                for row in random_rows:
-                    bbsku = row[29]
-                    if Product.objects.filter(bb_sku=bbsku).exists():
-                        continue
-                    else:
-                        image_actual = row[0]
-                        manufacturer_name = row[2]
-                        build_label = row[7]
-                        material_label = row[9]
-                        original_image = row[6]
-                        category = row[31]
-                        look_label = row[13]
-                        finish_label = row[14]
+        print(data_path)
+        # files = glob.glob(data_path)
+        # data = max(files, key=os.path.getctime)
+        # with open(data) as readfile:
+        #     reader = csv.reader(readfile)
+        #     if options['extent'] == 'Random':
+        #         tiles = list(range(397, 482))
+        #         armstrong = random.sample(range(0, 397), 100)
+        #         fandm = random.sample(range(483, 5000), 200)
+        #         sample = tiles + armstrong + fandm
+        #         random_rows = [row for idx, row in enumerate(reader) if idx in sample]
+        #         for row in random_rows:
+        #             bbsku = row[29]
+        #             if Product.objects.filter(bb_sku=bbsku).exists():
+        #                 continue
+        #             else:
+        #                 image_actual = row[0]
+        #                 manufacturer_name = row[2]
+        #                 build_label = row[7]
+        #                 material_label = row[9]
+        #                 original_image = row[6]
+        #                 category = row[31]
+        #                 look_label = row[13]
+        #                 finish_label = row[14]
 
-                        category = Category.objects.get_or_create(label=category)[0]
-                        manufacturer = Manufacturer.objects.get_or_create(name=manufacturer_name)[0]
-                        build = Build.objects.get_or_create(label=build_label, category=category)[0]
-                        image = Image.objects.get_or_create(original_url=original_image, image=image_actual)[0]
-                        # date_scraped = row[28]
+        #                 category = Category.objects.get_or_create(label=category)[0]
+        #                 manufacturer = Manufacturer.objects.get_or_create(name=manufacturer_name)[0]
+        #                 build = Build.objects.get_or_create(label=build_label, category=category)[0]
+        #                 image = Image.objects.get_or_create(original_url=original_image, image=image_actual)[0]
+        #                 # date_scraped = row[28]
 
 
-                        material = None
-                        if material_label:
-                            material = Material.objects.get_or_create(label=material_label, category=category)[0]
+        #                 material = None
+        #                 if material_label:
+        #                     material = Material.objects.get_or_create(label=material_label, category=category)[0]
 
-                        look = None
-                        if look_label:
-                            look = Look.objects.get_or_create(label=look_label)[0]
+        #                 look = None
+        #                 if look_label:
+        #                     look = Look.objects.get_or_create(label=look_label)[0]
 
-                        finish = None
-                        if finish_label:
-                            finish = Finish.objects.get_or_create(label=finish_label)[0]
+        #                 finish = None
+        #                 if finish_label:
+        #                     finish = Finish.objects.get_or_create(label=finish_label)[0]
                         
-                        thickness = None
-                        try:
-                            thickness = decimal.Decimal(row[8])
-                        except:
-                            thickness = 0
-                        # cof = None
+        #                 thickness = None
+        #                 try:
+        #                     thickness = decimal.Decimal(row[8])
+        #                 except:
+        #                     thickness = 0
+        #                 # cof = None
 
-                        # # lrv = row[15]
-                        # residential_warranty = row[17]
-                        # commercial_warranty = row[18]
-                        # for cat in [residential_warranty, commercial_warranty]:
-                        #     try:
-                        #         cat = int(cat)
-                        #     else:
-                        #         cat = None
-
-
+        #                 # # lrv = row[15]
+        #                 # residential_warranty = row[17]
+        #                 # commercial_warranty = row[18]
+        #                 # for cat in [residential_warranty, commercial_warranty]:
+        #                 #     try:
+        #                 #         cat = int(cat)
+        #                 #     else:
+        #                 #         cat = None
 
 
-                        arguments = {
-                            'name': row[1],
-                            'bb_sku': bbsku,
-                            'manufacturer_url': row[3],
-                            'manufacturer_color': row[4],
-                            'manu_collection': row[5],
-                            'thickness':  thickness,
-                            'manufacturer_sku': row[10],
-                            'length': row[11],
-                            'width': row[12],
-                            # 'residential_warranty': row[17], 
-                            # 'lrv': row[15],
-                            # 'cof': row[16],
-                            # 'commercial_warranty': row[18],
-                            'walls': row[19],
-                            'countertops': row[20],
-                            'floors': row[21],
-                            'cabinet_fronts': row[22],
-                            'shower_floors': row[23],
-                            'shower_walls': row[24],
-                            'exterior': row[25],
-                            'covered': row[26],
-                            'pool_linings': row[27],
-                            'look': look,
-                            'finish': finish,
-                            'notes': row[30],
-                            'manufacturer': manufacturer,
-                            'build': build,
-                            'material': material,
-                            'image': image,
-                        }
 
-                        kwargs = {k: v for k, v in arguments.items() if v is not None or v != ''}
 
-                        Product.objects.create(**kwargs)
+        #                 arguments = {
+        #                     'name': row[1],
+        #                     'bb_sku': bbsku,
+        #                     'manufacturer_url': row[3],
+        #                     'manufacturer_color': row[4],
+        #                     'manu_collection': row[5],
+        #                     'thickness':  thickness,
+        #                     'manufacturer_sku': row[10],
+        #                     'length': row[11],
+        #                     'width': row[12],
+        #                     # 'residential_warranty': row[17], 
+        #                     # 'lrv': row[15],
+        #                     # 'cof': row[16],
+        #                     # 'commercial_warranty': row[18],
+        #                     'walls': row[19],
+        #                     'countertops': row[20],
+        #                     'floors': row[21],
+        #                     'cabinet_fronts': row[22],
+        #                     'shower_floors': row[23],
+        #                     'shower_walls': row[24],
+        #                     'exterior': row[25],
+        #                     'covered': row[26],
+        #                     'pool_linings': row[27],
+        #                     'look': look,
+        #                     'finish': finish,
+        #                     'notes': row[30],
+        #                     'manufacturer': manufacturer,
+        #                     'build': build,
+        #                     'material': material,
+        #                     'image': image,
+        #                 }
+
+        #                 kwargs = {k: v for k, v in arguments.items() if v is not None or v != ''}
+
+        #                 Product.objects.create(**kwargs)
     
 
 
