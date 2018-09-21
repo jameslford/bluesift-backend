@@ -1,5 +1,6 @@
 from .base import *
 import dj_database_url
+import os
 
 DEBUG = True
 
@@ -51,3 +52,5 @@ EMAIL_HOST_USER = 'BuildingBook'
 EMAIL_HOST_PASSWORD = 'M&5#OXp29yMX'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+DATA_PATH = os.getcwd() + '/config/management/data/*.csv'

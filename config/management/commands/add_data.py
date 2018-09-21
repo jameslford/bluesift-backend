@@ -1,9 +1,9 @@
-import os
 import decimal
 import csv
 import random
 import glob
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from Products.models import Manufacturer, Category, Look, Material, Build, Product, Finish, Image
 
@@ -18,7 +18,7 @@ class Command(BaseCommand):
         if not options:
             print('No argument specified for data sample: Random or Full')
             return
-        data_path = os.getcwd() + '\\config\\management\\data\\*.csv'
+        data_path = settings.DATA_PATH
         print(data_path)
         # files = glob.glob(data_path)
         # data = max(files, key=os.path.getctime)
