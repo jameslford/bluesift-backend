@@ -123,7 +123,8 @@ class Product(models.Model):
 
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     manufacturer_sku = models.CharField(max_length=50, null=True, blank=True)
-    manu_collection = models.CharField(max_length=50, null=True, blank=True)
+    manu_collection = models.CharField(max_length=200, null=True, blank=True)
+    manufacturer_color = models.CharField(max_length=200, null=True, blank=True)
     width = models.CharField(max_length=20, null=True, blank=True)
     length = models.CharField(max_length=20, null=True, blank=True)
 
