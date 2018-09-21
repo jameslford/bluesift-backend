@@ -16,7 +16,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'
 AWS_MEDIA_BUCKET_NAME = "pixidesk-staging-media"
-AWS_S3_REGION_NAME =   'us-east-1'
+AWS_S3_REGION_NAME = 'us-east-1'
 
 
 DATABASES = {
@@ -51,8 +51,3 @@ EMAIL_HOST_USER = 'BuildingBook'
 EMAIL_HOST_PASSWORD = 'M&5#OXp29yMX'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
-
-
-
-
