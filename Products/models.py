@@ -180,3 +180,6 @@ class Product(models.Model):
 
     def size(self):
         return self.width + self.length
+
+    def actual_image(self):
+        return self.image.image
