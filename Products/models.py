@@ -78,7 +78,7 @@ class ShadeVariation(models.Model):
 
 class Image(models.Model):
     original_url = models.CharField(max_length=300, unique=True)
-    image = models.ImageField(null=True)
+    image = models.ImageField(max_length=300, null=True)
 
     def __str__(self):
         return self.original_url
