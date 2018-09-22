@@ -53,4 +53,4 @@ EMAIL_HOST_PASSWORD = 'M&5#OXp29yMX'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-DATA_PATH = os.getcwd() + '/config/management/data/*.csv'
+DATA_PATH = os.getcwd() + '/config/management/data/*.txt'
