@@ -47,7 +47,7 @@ class Command(BaseCommand):
                         category = Category.objects.get_or_create(label=category)[0]
                         manufacturer = Manufacturer.objects.get_or_create(name=manufacturer_name)[0]
                         build = Build.objects.get_or_create(label=build_label, category=category)[0]
-                        image = Image.objects.get_or_create(original_url=original_image, image=image_actual)[0]
+                        image = Image.objects.get_or_create(original_url=original_image, image=original_image)[0]
                         # date_scraped = row[28]
 
 
