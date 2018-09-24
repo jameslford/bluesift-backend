@@ -6,6 +6,8 @@ import random
 import glob
 
 from django.conf import settings
+from django.core.files import File
+from django.core.files.temp import NamedTemporaryFile
 from django.core.management.base import BaseCommand
 from Products.models import Manufacturer, Category, Look, Material, Build, Product, Finish, Image
 
@@ -45,81 +47,80 @@ class Command(BaseCommand):
                         look_label = row[13]
                         finish_label = row[14]
                         image_request = requests.get(original_image).content
+                        if image_request.status_code == requests.codes.ok :
+                            temp_img = NamedTemporaryFile(delete=True)
+                            temp_img.write(image_request)
+                            temp_img.flush()
+                            image_name = image_actual.split('\\')[-1]
+                            image_file = File(temp_img, image_name)
+                            image = Image.objects.get_or_create(original_url=original_image, image=image_file)
 
-                        category = Category.objects.get_or_create(label=category)[0]
-                        manufacturer = Manufacturer.objects.get_or_create(name=manufacturer_name)[0]
-                        build = Build.objects.get_or_create(label=build_label, category=category)[0]
-                        requests.encoding = 'utf-8'
-                        image = Image.objects.get_or_create(original_url=original_image, image=image_request)[0]
-                        # date_scraped = row[28]
 
 
-                        material = None
-                        if material_label:
-                            material = Material.objects.get_or_create(label=material_label, category=category)[0]
+                            category = Category.objects.get_or_create(label=category)[0]
+                            manufacturer = Manufacturer.objects.get_or_create(name=manufacturer_name)[0]
+                            build = Build.objects.get_or_create(label=build_label, category=category)[0]
+                            requests.encoding = 'utf-8'
+                            # image = Image.objects.get_or_create(original_url=original_image, image=image_request)[0]
+                            # date_scraped = row[28]
 
-                        look = None
-                        if look_label:
-                            look = Look.objects.get_or_create(label=look_label)[0]
+                            material = None
+                            if material_label:
+                                material = Material.objects.get_or_create(label=material_label, category=category)[0]
 
-                        finish = None
-                        if finish_label:
-                            finish = Finish.objects.get_or_create(label=finish_label)[0]
-                        
-                        thickness = None
-                        try:
-                            thickness = decimal.Decimal(row[8])
-                        except:
-                            thickness = 0
-                        # cof = None
+                            look = None
+                            if look_label:
+                                look = Look.objects.get_or_create(label=look_label)[0]
 
-                        # # lrv = row[15]
-                        # residential_warranty = row[17]
-                        # commercial_warranty = row[18]
-                        # for cat in [residential_warranty, commercial_warranty]:
-                        #     try:
-                        #         cat = int(cat)
-                        #     else:
-                        #         cat = None
+                            finish = None
+                            if finish_label:
+                                finish = Finish.objects.get_or_create(label=finish_label)[0]
+                            
+                            thickness = None
+                            try:
+                                thickness = decimal.Decimal(row[8])
+                            except:
+                                thickness = 0
 
 
 
 
-                        arguments = {
-                            'name': row[1],
-                            'bb_sku': bbsku,
-                            'manufacturer_url': row[3],
-                            'manufacturer_color': row[4],
-                            'manu_collection': row[5],
-                            'thickness':  thickness,
-                            'manufacturer_sku': row[10],
-                            'length': row[11],
-                            'width': row[12],
-                            # 'residential_warranty': row[17], 
-                            # 'lrv': row[15],
-                            # 'cof': row[16],
-                            # 'commercial_warranty': row[18],
-                            'walls': row[19],
-                            'countertops': row[20],
-                            'floors': row[21],
-                            'cabinet_fronts': row[22],
-                            'shower_floors': row[23],
-                            'shower_walls': row[24],
-                            'exterior': row[25],
-                            'covered': row[26],
-                            'pool_linings': row[27],
-                            'look': look,
-                            'finish': finish,
-                            'notes': row[30],
-                            'manufacturer': manufacturer,
-                            'build': build,
-                            'material': material,
-                            'image': image,
-                        }
 
-                        kwargs = {k: v for k, v in arguments.items() if v is not None or v != ''}
+                            arguments = {
+                                'name': row[1],
+                                'bb_sku': bbsku,
+                                'manufacturer_url': row[3],
+                                'manufacturer_color': row[4],
+                                'manu_collection': row[5],
+                                'thickness':  thickness,
+                                'manufacturer_sku': row[10],
+                                'length': row[11],
+                                'width': row[12],
+                                # 'residential_warranty': row[17], 
+                                # 'lrv': row[15],
+                                # 'cof': row[16],
+                                # 'commercial_warranty': row[18],
+                                'walls': row[19],
+                                'countertops': row[20],
+                                'floors': row[21],
+                                'cabinet_fronts': row[22],
+                                'shower_floors': row[23],
+                                'shower_walls': row[24],
+                                'exterior': row[25],
+                                'covered': row[26],
+                                'pool_linings': row[27],
+                                'look': look,
+                                'finish': finish,
+                                'notes': row[30],
+                                'manufacturer': manufacturer,
+                                'build': build,
+                                'material': material,
+                                'image': image,
+                            }
 
-                        Product.objects.create(**kwargs)
+                            kwargs = {k: v for k, v in arguments.items() if v is not None or v != ''}
+
+                            Product.objects.create(**kwargs)
     
 
 
