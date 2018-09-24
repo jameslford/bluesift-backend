@@ -49,6 +49,7 @@ class Command(BaseCommand):
                         category = Category.objects.get_or_create(label=category)[0]
                         manufacturer = Manufacturer.objects.get_or_create(name=manufacturer_name)[0]
                         build = Build.objects.get_or_create(label=build_label, category=category)[0]
+                        requests.encoding = 'utf-8'
                         image = Image.objects.get_or_create(original_url=original_image, image=image_request)[0]
                         # date_scraped = row[28]
 
