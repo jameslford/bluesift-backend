@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from Products.models import Product, Manufacturer, Build, Look, Material
+from Products.models import Product, Manufacturer, Build, Look, Material, Image, Finish
 
 
 class Command(BaseCommand):
@@ -9,4 +9,5 @@ class Command(BaseCommand):
         Build.objects.all().delete()
         Look.objects.all().delete()
         Material.objects.all().delete()
-        
+        Image.objects.all().delete()
+        Finish.objects.all().delete()

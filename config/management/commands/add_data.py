@@ -44,12 +44,12 @@ class Command(BaseCommand):
                         category = row[31]
                         look_label = row[13]
                         finish_label = row[14]
-                        r = requests.get(original_image).content
+                        image_request = requests.get(original_image).content
 
                         category = Category.objects.get_or_create(label=category)[0]
                         manufacturer = Manufacturer.objects.get_or_create(name=manufacturer_name)[0]
                         build = Build.objects.get_or_create(label=build_label, category=category)[0]
-                        image = Image.objects.get_or_create(original_url=original_image, image=r)[0]
+                        image = Image.objects.get_or_create(original_url=original_image, image=image_request)[0]
                         # date_scraped = row[28]
 
 
