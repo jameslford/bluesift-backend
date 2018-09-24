@@ -46,10 +46,10 @@ class Command(BaseCommand):
                         category = row[31]
                         look_label = row[13]
                         finish_label = row[14]
-                        image_request = requests.get(original_image).content
-                        if image_request.status_code == requests.codes.ok :
+                        image_request = requests.get(original_image)
+                        if image_request.status_code == requests.codes.ok:
                             temp_img = NamedTemporaryFile(delete=True)
-                            temp_img.write(image_request)
+                            temp_img.write(image_request.content)
                             temp_img.flush()
                             image_name = image_actual.split('\\')[-1]
                             image_file = File(temp_img, image_name)
