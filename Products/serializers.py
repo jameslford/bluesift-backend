@@ -2,12 +2,18 @@
 # Products.serializers.py
 
 from rest_framework import serializers
-from .models import Product, Manufacturer
+from .models import Product, Manufacturer, Image
+
+class ImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Image
+        fields = ('original_url','image')
 
 
 
 class ProductSerializer(serializers.ModelSerializer):
-
+    serialized_image = ImageSerializer()
     class Meta:
         model = Product
         fields = (
@@ -19,7 +25,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'lowest_price',
             'is_priced',
             'for_sale',
-            'actual_image',
+            'serialized_image',
+            # 'actual_image',
             'build',
             'material',
             'walls',
