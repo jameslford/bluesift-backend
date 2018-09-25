@@ -52,8 +52,14 @@ class Command(BaseCommand):
                             temp_img.write(image_request.content)
                             temp_img.flush()
                             image_name = image_actual.split('\\')[-1]
-                            image_file = File(temp_img, image_name)
-                            image = Image.objects.get_or_create(original_url=original_image, image=image_file)
+                            image_file = File(temp_img)
+                            image = Image()
+                            try:
+                                image = Image.objects.get(original_url=original_image)
+                            except:
+                                image = image.objects.create(original_url=original_image)
+                                image.image.save(image_name, image_file, save=True)
+
 
 
 
