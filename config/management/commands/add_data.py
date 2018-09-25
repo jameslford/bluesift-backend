@@ -5,8 +5,9 @@ import os
 import random
 import glob
 
+from io import BytesIO
 from django.conf import settings
-from django.core.files import File
+from django.core import files
 from django.core.files.temp import NamedTemporaryFile
 from django.core.management.base import BaseCommand
 from Products.models import Manufacturer, Category, Look, Material, Build, Product, Finish, Image
@@ -23,8 +24,8 @@ class Command(BaseCommand):
             print('No argument specified for data sample: Random or Full')
             return
         data_path = settings.DATA_PATH
-        files = glob.glob(data_path)
-        data = max(files, key=os.path.getctime)
+        data_files = glob.glob(data_path)
+        data = max(data_files, key=os.path.getctime)
         with open(data) as readfile:
             reader = csv.reader(readfile)
             if options['extent'] == 'Random':
@@ -48,17 +49,14 @@ class Command(BaseCommand):
                         finish_label = row[14]
                         image_request = requests.get(original_image)
                         if image_request.status_code == requests.codes.ok:
-                            temp_img = NamedTemporaryFile(delete=True)
-                            temp_img.write(image_request.content)
-                            temp_img.flush()
+                            # temp_img = NamedTemporaryFile(delete=True)
+                            # temp_img.write(image_request.content)
+                            # temp_img.flush()
+                            fp = BytesIO()
+                            fp.write(image_request.content)
                             image_name = image_actual.split('\\')[-1]
-                            image_file = File(temp_img)
-                            image = Image()
-                            try:
-                                image = Image.objects.get(original_url=original_image)
-                            except:
-                                image = Image.objects.create(original_url=original_image)
-                                image.image.save(image_name, image_file, save=True)
+                            image = Image.objects.get_or_create(original_url=original_image)
+                            image.image.save(image_name, files.File(fp))
 
 
 
