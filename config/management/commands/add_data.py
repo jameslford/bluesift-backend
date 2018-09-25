@@ -57,7 +57,7 @@ class Command(BaseCommand):
                             try:
                                 image = Image.objects.get(original_url=original_image)
                             except:
-                                image = image.objects.create(original_url=original_image)
+                                image = Image.objects.create(original_url=original_image)
                                 image.image.save(image_name, image_file, save=True)
 
 
