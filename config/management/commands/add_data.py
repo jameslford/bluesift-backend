@@ -55,7 +55,7 @@ class Command(BaseCommand):
                             fp = BytesIO()
                             fp.write(image_request.content)
                             image_name = image_actual.split('\\')[-1]
-                            image = Image.objects.get_or_create(original_url=original_image)
+                            image = Image.objects.get_or_create(original_url=original_image)[0]
                             image.image.save(image_name, files.File(fp))
 
 
