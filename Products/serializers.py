@@ -25,7 +25,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'lowest_price',
             'is_priced',
             'for_sale',
-            'serialized_image',
+            'image',
             # 'actual_image',
             'build',
             'material',
