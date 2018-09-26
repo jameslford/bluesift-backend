@@ -1,4 +1,5 @@
 ''' Products.views.py '''
+import math
 
 from django.db.models import Q
 
@@ -101,6 +102,7 @@ def product_list(request):
 
     return Response({
         'product_count': product_count,
+        'page_count': math.ceil(product_count/paginator.page_size),
         'filter': filter_response,
         'products': serialized_products.data
         })
