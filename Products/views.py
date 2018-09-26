@@ -45,7 +45,7 @@ def product_list(request):
     lrv = request.GET.get('lrv')
     color = request.GET.get('color')
     sort = request.GET.get('sort', 'none')
-    # page = request.GET.get('page', 1)
+    page = request.GET.get('page', 1)
 
     products = Product.objects.all()
 
@@ -91,6 +91,12 @@ def product_list(request):
     products_response = paginator.paginate_queryset(products, request)
     serialized_products = ProductSerializer(products_response, many=True)
 
+    page_count = math.ceil(product_count/paginator.page_size),
+    load_more = True
+    if not page:
+        page = 1
+    if page + 1 >= page_count:
+        load_more = False
 
 
     filter_response = {
@@ -102,7 +108,8 @@ def product_list(request):
 
     return Response({
         'product_count': product_count,
-        'page_count': math.ceil(product_count/paginator.page_size),
+        'load_more': load_more,
+        'current_page': page,
         'filter': filter_response,
         'products': serialized_products.data
         })
