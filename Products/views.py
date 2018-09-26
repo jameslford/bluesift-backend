@@ -91,8 +91,9 @@ def product_list(request):
     products_response = paginator.paginate_queryset(products, request)
     serialized_products = ProductSerializer(products_response, many=True)
 
-    page_count = math.ceil(product_count/paginator.page_size),
+    page_count = math.ceil(product_count/paginator.page_size)
     load_more = True
+    page = int(page)
     if not page:
         page = 1
     if page + 1 >= page_count:
