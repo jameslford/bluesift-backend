@@ -87,7 +87,7 @@ def product_list(request):
     bools = bool_response(products, product_boolean_args)
 
     paginator = PageNumberPagination()
-    paginator.page_size = 4
+    paginator.page_size = 16
     products_response = paginator.paginate_queryset(products, request)
     serialized_products = ProductSerializer(products_response, many=True)
 
