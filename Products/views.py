@@ -39,7 +39,7 @@ def product_list(request):
     covered = [request.GET.get('covered'), 'covered']
     shower_floors = [request.GET.get('shower_floors'), 'shower_floors']
     shower_walls = [request.GET.get('shower_walls'), 'shower_walls']
-    pool_linings = [request.GET.get('pool_lining'), 'pool_linings']
+    pool_linings = [request.GET.get('pool_lining'), 'pool_lining']
     cof = request.GET.get('cof')
     lrv = request.GET.get('lrv')
     color = request.GET.get('color')
