@@ -85,7 +85,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'width',
             'thickness',
             'length',
-            'image_2',
             'residential_warranty',
             'commercial_warranty',
             'material',
@@ -94,7 +93,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'units',
             'prices',
             'manufacturer_url',
-            'description',
             'look_label',
             'size'
         )
