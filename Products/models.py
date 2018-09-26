@@ -176,7 +176,10 @@ class Product(models.Model):
         return self.build.category.id
 
     def look_label(self):
-        return self.look.label
+        if self.look:
+            return self.look.label
+        else: 
+            return None
 
     def size(self):
         return self.width + self.length
