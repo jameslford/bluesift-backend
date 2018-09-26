@@ -2,8 +2,11 @@
 
 from django.db.models import Q
 
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
 
 from .serializers import(
     ProductSerializer,
@@ -41,6 +44,7 @@ def product_list(request):
     lrv = request.GET.get('lrv')
     color = request.GET.get('color')
     sort = request.GET.get('sort', 'none')
+    # page = request.GET.get('page', 1)
 
     products = Product.objects.all()
 
@@ -81,6 +85,12 @@ def product_list(request):
     product_count = products.count()
     bools = bool_response(products, product_boolean_args)
 
+    paginator = PageNumberPagination()
+    paginator.page_size = 20
+    products_response = paginator.paginate_queryset(products, request)
+    serialized_products = ProductSerializer(products_response, many=True)
+
+
 
     filter_response = {
         'for_sale': bools[0],
@@ -92,7 +102,7 @@ def product_list(request):
     return Response({
         'product_count': product_count,
         'filter': filter_response,
-        'products': ProductSerializer(products, many=True).data
+        'products': serialized_products.data
         })
 
 
