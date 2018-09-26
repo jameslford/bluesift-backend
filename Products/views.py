@@ -96,7 +96,7 @@ def product_list(request):
     page = int(page)
     if not page:
         page = 1
-    if page + 1 >= page_count:
+    if page == page_count:
         load_more = False
 
 
