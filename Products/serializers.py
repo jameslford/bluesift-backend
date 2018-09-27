@@ -19,30 +19,16 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'image',
+
             'manufacturer',
             'manufacturer_name',
-            'manufacturer_url',
+
             'lowest_price',
-            'is_priced',
-            'for_sale',
-            'image',
-            # 'actual_image',
-            'build',
-            'material',
-            'walls',
-            'countertops',
-            'floors',
-            'shower_floors',
-            'shower_walls',
-            'exterior',
-            'covered',
-            'pool_linings',
-            'material',
-            'category_name',
-            'category_id',
+            'units',
+
             'units',
             'prices',
-            'manufacturer_url',
             )
 
 
@@ -61,24 +47,38 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+
             'manufacturer',
             'manufacturer_name',
             'manufacturer_url',
             'manufacturer_sku',
+            'manu_collection',
+            'manufacturer_color',
+
             'lowest_price',
             'is_priced',
             'for_sale',
+            'units',
+            'prices',
+
             'image',
             'build',
             'material',
+            'category_name',
+            'material',
+            'category_id',
+            'look_label',
+
             'walls',
             'countertops',
+            'cabinet_fronts',
             'floors',
             'shower_floors',
             'shower_walls',
             'exterior',
             'covered',
             'pool_linings',
+
             'lrv',
             'cof',
             'look',
@@ -87,12 +87,5 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'length',
             'residential_warranty',
             'commercial_warranty',
-            'material',
-            'category_name',
-            'category_id',
-            'units',
-            'prices',
-            'manufacturer_url',
-            'look_label',
             'size'
         )
