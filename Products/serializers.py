@@ -62,8 +62,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'prices',
 
             'image',
-            'build',
-            'material',
+            'build_label',
+            'material_label',
             'category_name',
             'material',
             'category_id',

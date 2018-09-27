@@ -180,6 +180,18 @@ class Product(models.Model):
             return self.look.label
         else: 
             return None
+    
+    def build_label(self):
+        if self.build:
+            return self.build.label
+        else: 
+            return None
+
+    def material_label(self):
+        if self.material:
+            return self.material.label
+        else:
+            return None
 
     def size(self):
         return self.width + self.length
