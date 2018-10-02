@@ -154,6 +154,7 @@ class Product(models.Model):
                 'price_per_unit',
                 'supplier',
                 'units_available',
+                'units_per_order',
                 'id',
                 'supplier__address__address_line_1',
                 'supplier__address__address_line_2',
