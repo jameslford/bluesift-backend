@@ -150,7 +150,7 @@ class Product(models.Model):
     def prices(self):
         sellers = self.priced.filter(for_sale=True)
         if sellers:
-            values = sellers.values('price_per_unit', 'supplier', 'units_available', 'id')
+            values = sellers.values('price_per_unit', 'supplier', 'units_available', 'id', 'supplier__nickname', 'supplier__company_account__name')
             price = sellers.aggregate(Min('price_per_unit'))
             self.lowest_price = price["price_per_unit__min"]
             self.is_priced = True

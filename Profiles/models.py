@@ -36,7 +36,7 @@ class CompanyShippingLocation(models.Model):
     address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=120, null=True, blank=True)
     approved_seller = models.BooleanField(default=False)
-    number = models.IntegerField(null=True)
+    number = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return str(self.company_account) + ' ' + str(self.number)
@@ -49,6 +49,8 @@ class CompanyShippingLocation(models.Model):
 
     def save(self, *args, **kwargs):
         self.number = self.assign_number()
+        if not self.nickname:
+            self.nickname = self.company_account.name + ' ' + str(self.number)
         super(CompanyShippingLocation, self).save(*args, **kwargs)
 
 
