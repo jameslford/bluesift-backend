@@ -22,6 +22,7 @@ INSTALLED_APPS = [
 
     'Accounts',
     'Addresses',
+    'Carts',
     'config',
     'Plans',
     'Products',
