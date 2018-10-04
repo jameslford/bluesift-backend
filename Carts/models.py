@@ -30,7 +30,7 @@ class CartManager(models.Manager):
 class Cart(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True
         )
@@ -45,8 +45,8 @@ class Cart(models.Model):
         return str(self.id)
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.SET_NULL)
-    product = models.ForeignKey(SupplierProduct, on_delete=models.SET_NULL, blank=True)
+    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(SupplierProduct, on_delete=models.CASCADE, blank=True)
     quantity = models.IntegerField()
 
     def __str__(self):
