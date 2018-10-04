@@ -1,4 +1,4 @@
-from django.urls import path, include, re_path
+from django.urls import path
 from .views import create_supplier, create_user, activate, get_token
 
 

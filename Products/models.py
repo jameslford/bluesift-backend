@@ -190,13 +190,13 @@ class Product(models.Model):
     def look_label(self):
         if self.look:
             return self.look.label
-        else: 
+        else:
             return None
-    
+
     def build_label(self):
         if self.build:
             return self.build.label
-        else: 
+        else:
             return None
 
     def material_label(self):
