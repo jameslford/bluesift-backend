@@ -17,7 +17,7 @@ def add_to_cart(request):
         except SupplierProduct.DoesNotExist:
             return Response("Product not found", status=status.HTTP_404_NOT_FOUND)
     cart_obj, new_obj = Cart.objects.new_or_get(request)
-    for item in cart_obj.items:
+    for item in cart_obj.items.all():
         if item.product == prod_obj:
             qty = qty + item.quantity
             item.delete()
