@@ -26,7 +26,7 @@ def add_to_cart(request):
             'Order quantity is greater than units available',
             status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
             )
-    CartItem.objects.create(cart_obj, prod_obj, qty)
+    CartItem.objects.create(cart=cart_obj, product=prod_obj, quantity=qty)
     return Response(status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
