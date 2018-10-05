@@ -21,7 +21,7 @@ def add_to_cart(request):
         if item.product == prod_obj:
             qty = qty + item.quantity
             item.delete()
-    if prod_obj.units_available < qty:
+    if prod_obj.units_available < int(qty):
         return Response(
             'Order quantity is greater than units available',
             status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
