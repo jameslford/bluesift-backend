@@ -66,13 +66,13 @@ def create_supplier(request):
     company_name = request.POST.get('company_name')
     phone_number = request.POST.get('phone_number')
     supplier = userModel.objects.create(
-                                        email=email, 
-                                        password=password, 
-                                        first_name=first_name, 
-                                        last_name=last_name, 
-                                        is_supplier=True, 
-                                        is_active=False
-                                        )
+        email=email,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        is_supplier=True,
+        is_active=False
+        )
     supplier.date_registered = datetime.datetime.now()
     mail_subject = 'Activate your Building Book account.'
     current_site = get_current_site(request)
@@ -93,9 +93,9 @@ def get_message(user, current_site):
         'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
         'token': Token.objects.create(user=user)
     })
-    return message 
+    return message
 
-        
+
 
 def activate(request, uidb64, token):
     userModel = get_user_model()
@@ -144,4 +144,4 @@ def get_token(request):
                 return Response("Please check your inbox at " + email + " to verify your account", status=status.HTTP_400_BAD_REQUEST)
             return Response("Incorrect password for " + email, status=status.HTTP_401_UNAUTHORIZED)
         return Response("No user found, please sign up", status=status.HTTP_404_NOT_FOUND)
-    return Response(serializer.errors)
+    return Response("we're sorry, but we're having trouble logging you in")

@@ -23,11 +23,13 @@ from .models import(
 @api_view(['GET'])
 def product_list(request):
 
-    manufacturers = [request.GET.getlist('manufacturers'), 'manufacturer']
-    builds = [request.GET.getlist('build'), 'build__id']
+    request_url = request.GET.urlencode().split('&')
+    request_url = ['&&'+query for query in request_url]
+    manufacturers = [request.GET.getlist('manufacturer'), 'manufacturer']
+    builds = [request.GET.getlist('build__id'), 'build__id']
     materials = [request.GET.getlist('material'), 'material']
     look = [request.GET.getlist('look'), 'look']
-    categories = [request.GET.getlist('categories'), 'build__category']
+    categories = [request.GET.getlist('build__category'), 'build__category']
     for_sale = [request.GET.get('for_sale'), 'for_sale']
     floors = [request.GET.get('floors'), 'floors']
     walls = [request.GET.get('walls'), 'walls']
@@ -106,6 +108,7 @@ def product_list(request):
 
     return Response({
         'product_count': product_count,
+        'query' : request_url,
         'load_more': load_more,
         'current_page': page,
         'filter': filter_response,
