@@ -123,7 +123,7 @@ def supplier_short_lib(request):
         content['nickname'] = local.nickname
         content['id'] = local.id
         locations_list.append(content)
-    products = location.products.all()
+    products = location.priced_products.all()
     for prod in products:
         product_ids.append(prod.id)
     full_content = {
