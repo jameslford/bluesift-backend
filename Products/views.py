@@ -25,6 +25,7 @@ def product_list(request):
 
     request_url = request.GET.urlencode().split('&')
     request_url = ['&&'+query for query in request_url]
+    request_url = [query for query in request_url if 'page' not in query]
     manufacturers = [request.GET.getlist('manufacturer'), 'manufacturer']
     builds = [request.GET.getlist('build__id'), 'build__id']
     materials = [request.GET.getlist('material'), 'material']
