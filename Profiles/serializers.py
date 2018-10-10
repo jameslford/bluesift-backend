@@ -46,7 +46,7 @@ class SupplierProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupplierProduct
         fields = (
-            'my_price'
+            'my_price',
             'price_per_unit',
             'units_available',
             'units_per_order',
