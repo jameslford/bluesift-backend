@@ -35,4 +35,4 @@ def add_to_cart(request):
 def cart_details(request):
     cart_obj, new_obj = Cart.objects.new_or_get(request)
     serialized_cart = CartSerializer(cart_obj)
-    return Response(serialized_cart.data)
+    return Response({'cart': serialized_cart.data})
