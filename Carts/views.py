@@ -41,4 +41,6 @@ def cart_details(request):
     cart_obj, new_obj = Cart.objects.new_or_get(request)
     # serialized_cart = CartSerializer(cart_obj)
     # return Response({'cart': serialized_cart.data})
-    return Response({'cart': cart_obj.id})
+    items = cart_obj.items.all()
+    items = [item.product.id for item in items]
+    return Response({'cart': cart_obj.id, 'items': items})
