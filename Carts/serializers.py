@@ -9,7 +9,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = ('product', 'quantity')
 
 class CartSerializer(serializers.ModelSerializer):
-    cartitem_set = CartItemSerializer(read_only=True, many=True)
+    items = CartItemSerializer(read_only=True, many=True)
     class Meta:
         model = Cart
-        fields = ('cartitem_set',)
+        fields = ('items',)

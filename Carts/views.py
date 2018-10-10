@@ -39,8 +39,8 @@ def add_to_cart(request):
 @api_view(['GET'])
 def cart_details(request):
     cart_obj, new_obj = Cart.objects.new_or_get(request)
-    # serialized_cart = CartSerializer(cart_obj)
+    serialized_cart = CartSerializer(cart_obj)
     # return Response({'cart': serialized_cart.data})
-    items = cart_obj.items.all()
-    items = [item.product.id for item in items]
-    return Response({'cart': cart_obj.id, 'items': items})
+    # items = cart_obj.items.all()
+    # items = [item.product.id for item in items]
+    return Response({'cart': serialized_cart.data })
