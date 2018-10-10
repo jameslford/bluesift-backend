@@ -50,7 +50,7 @@ class SupplierProductSerializer(serializers.ModelSerializer):
             'price_per_unit',
             'units_available',
             'units_per_order',
-            'for sale',
+            'for_sale',
             'product_name',
             'product_id',
             'product_image',
