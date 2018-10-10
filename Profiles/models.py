@@ -89,7 +89,7 @@ class SupplierProduct(models.Model):
         return self.product.material.label
 
     def product_image(self):
-        return str(self.product.image.url)
+        return str(self.product.image.imgae.url)
 
     def product_lowest_price(self):
         return str(self.product.lowest_price)
