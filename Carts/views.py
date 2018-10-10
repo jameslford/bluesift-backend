@@ -10,6 +10,7 @@ from .serializers import CartSerializer
 @api_view(['POST'])
 def add_to_cart(request):
     supplier_product_id = request.POST.get('supplier_product_id')
+    supplier_product_id = int(supplier_product_id)
     qty = request.POST.get('qty')
     qty = int(qty)
     if supplier_product_id is not None:
