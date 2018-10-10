@@ -82,7 +82,7 @@ def product_list(request):
     elif count > 1:
         products = parse_BMC(products, materials, categories, builds)
 
-
+    
     product_count = products.count()
     bools = bool_response(products, product_boolean_args)
 

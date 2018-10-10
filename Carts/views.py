@@ -11,6 +11,7 @@ from .serializers import CartSerializer
 def add_to_cart(request):
     supplier_product_id = request.POST.get('supplier_product_id')
     qty = request.POST.get('qty')
+    qty = int(qty)
     if supplier_product_id is not None:
         try:
             prod_obj = SupplierProduct.objects.get(id=supplier_product_id)
@@ -21,7 +22,7 @@ def add_to_cart(request):
         if item.product == prod_obj:
             qty = qty + item.quantity
             item.delete()
-    if prod_obj.units_available < int(qty):
+    if prod_obj.units_available < qty:
         return Response(
             'Order quantity is greater than units available',
             status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
