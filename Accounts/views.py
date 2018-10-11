@@ -31,6 +31,11 @@ from Profiles.models import(
     CustomerProject
     )
 
+from Profiles.serializers import(
+    CompanyAccountSerializer,
+    CustomerProfileSerializer
+)
+
 
 @api_view(['POST'])
 def create_user(request):
@@ -150,4 +155,15 @@ def get_token(request):
 def user_details(request):
     user = request.user
     serialized_user = UserSerializer(user)
-    return Response(serialized_user.data)
+    if user.is_supplier:
+        account = CompanyAccount.objects.get_or_create(user=user)
+        serialized_account = CompanyAccountSerializer(account)
+    else:
+        account = CustomerProfile.objects.get_or_create(user=user)
+        serialized_account = CustomerProfileSerializer(user=user)
+
+    context = {
+        'user': serialized_user.data,
+        'account': serialized_account.data
+    }
+    return Response(context)

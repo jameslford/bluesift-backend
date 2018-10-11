@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from Addresses.serializers import AddressSerializer
 from .models import(
     CompanyAccount,
     CompanyShippingLocation,
@@ -10,12 +11,16 @@ from .models import(
 
 
 class CompanyAccountSerializer(serializers.ModelSerializer):
+    address = AddressSerializer(read_only=True)
     class Meta:
         model = CompanyAccount
+        fields = ('name', 'phone_number', 'address')
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
+    addresses = AddressSerializer(read_only=True, many=True)
     class Meta:
         model = CustomerProfile
+        fields = ('phone_number', 'addresses')
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):

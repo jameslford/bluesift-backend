@@ -26,7 +26,6 @@ class CompanyAccount(models.Model):
             return self.account_owner.get_first_name() + "'s Company"
 
 
-
 class CompanyShippingLocation(models.Model):
     company_account = models.ForeignKey(
         CompanyAccount,
