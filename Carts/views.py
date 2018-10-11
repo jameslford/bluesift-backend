@@ -43,4 +43,6 @@ def cart_details(request):
     # return Response({'cart': serialized_cart.data})
     # items = cart_obj.items.all()
     # items = [item.product.id for item in items]
-    return Response({'cart': serialized_cart.data})
+    return Response({
+        'cart': serialized_cart.data,
+        })

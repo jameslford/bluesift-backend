@@ -1,40 +1,36 @@
 # Accounts.views.py
 
+import datetime
 from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth import get_user_model, login, authenticate
+from django.contrib.auth import get_user_model, login
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
-from django.http import HttpResponse
 
-import datetime
 
 from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from .serializers import(
-                        CreateSupplierSerializer,
-                        CreateUserSerializer,
-                        UserSerializer,
-                        LoginSerializer,
-                        TokenSerializer
-                        )
+    CreateSupplierSerializer,
+    CreateUserSerializer,
+    UserSerializer,
+    LoginSerializer,
+    TokenSerializer
+    )
 
 from Profiles.models import(
-                            CompanyAccount,
-                            CompanyShippingLocation,
-                            CustomerProfile,
-                            CustomerProject
-                            ) 
+    CompanyAccount,
+    CompanyShippingLocation,
+    CustomerProfile,
+    CustomerProject
+    )
 
-
-
-                    
 
 @api_view(['POST'])
 def create_user(request):
@@ -57,7 +53,6 @@ def create_user(request):
 
 @api_view(['POST'])
 def create_supplier(request):
-
     userModel = get_user_model()
     email = request.POST.get('email')
     password = request.POST.get('Spassword')
@@ -77,10 +72,14 @@ def create_supplier(request):
     mail_subject = 'Activate your Building Book account.'
     current_site = get_current_site(request)
     message = get_message(supplier, current_site)
-    to_email = supplier.email 
+    to_email = supplier.email
     email = EmailMessage(mail_subject, message, to=[to_email])
     email.send()
-    company = CompanyAccount.objects.create(name=company_name, phone_number=phone_number, account_owner=supplier)
+    company = CompanyAccount.objects.create(
+        name=company_name,
+        phone_number=phone_number,
+        account_owner=supplier
+        )
     CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
     serializer = UserSerializer(supplier)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -145,3 +144,10 @@ def get_token(request):
             return Response("Incorrect password for " + email, status=status.HTTP_401_UNAUTHORIZED)
         return Response("No user found, please sign up", status=status.HTTP_404_NOT_FOUND)
     return Response("we're sorry, but we're having trouble logging you in")
+
+@permission_classes((IsAuthenticated,))
+@api_view(['POST'])
+def user_details(request):
+    user = request.user
+    serialized_user = UserSerializer(user)
+    return Response(serialized_user.data)
