@@ -8,7 +8,7 @@ import decimal
 
 
 class CompanyAccount(models.Model):
-    name = models.CharField(max_length=120)
+    name = models.CharField(max_length=120, null=True)
     account_owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         null=True,
