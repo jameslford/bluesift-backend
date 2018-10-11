@@ -156,7 +156,7 @@ def user_details(request):
     user = request.user
     serialized_user = UserSerializer(user)
     if user.is_supplier:
-        account = CompanyAccount.objects.get_or_create(user=user)
+        account = CompanyAccount.objects.get_or_create(account_owner=user)
         serialized_account = CompanyAccountSerializer(account)
     else:
         account = CustomerProfile.objects.get_or_create(user=user)
