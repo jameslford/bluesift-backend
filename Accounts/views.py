@@ -150,7 +150,7 @@ def get_token(request):
         return Response("No user found, please sign up", status=status.HTTP_404_NOT_FOUND)
     return Response("we're sorry, but we're having trouble logging you in")
 
-@permission_classes((IsAuthenticated,))
+# @permission_classes((IsAuthenticated,))
 @api_view(['POST'])
 def user_details(request):
     user = request.user
