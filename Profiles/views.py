@@ -146,7 +146,7 @@ def supplier_library(request):
     user = request.user
     locations = get_company_shipping_locations(user)
     serialized_locs = ShippingLocationSerializer(locations, many=True)
-    return Response(serialized_locs.data, status=status.HTTP_200_OK)
+    return Response({'locations': serialized_locs.data}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
