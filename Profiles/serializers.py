@@ -8,7 +8,7 @@ from .models import(
     CustomerProject,
     CustomerProduct
     )
-from Products.serializers import ProductDetailSerializer
+from Products.serializers import ProductSemiDetailSerializer
 
 
 class CompanyAccountSerializer(serializers.ModelSerializer):
@@ -49,7 +49,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
         fields = ('owner', 'address', 'nickname', 'id', 'products')
 
 class SupplierProductSerializer(serializers.ModelSerializer):
-    product = ProductDetailSerializer(read_only=True)
+    product = ProductSemiDetailSerializer(read_only=True)
     class Meta:
         model = SupplierProduct
         fields = (
