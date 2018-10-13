@@ -125,7 +125,7 @@ def supplier_short_lib(request):
         locations_list.append(content)
     products = location.priced_products.all()
     for prod in products:
-        product_ids.append(prod.id)
+        product_ids.append(prod.product.id)
     full_content = {
         'list': locations_list,
         'count': locations.count(),
