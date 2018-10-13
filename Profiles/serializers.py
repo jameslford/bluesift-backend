@@ -8,6 +8,7 @@ from .models import(
     CustomerProject,
     CustomerProduct
     )
+from Products.serializers import ProductDetailSerializer
 
 
 class CompanyAccountSerializer(serializers.ModelSerializer):
@@ -48,6 +49,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
         fields = ('owner', 'address', 'nickname', 'id', 'products')
 
 class SupplierProductSerializer(serializers.ModelSerializer):
+    product = ProductDetailSerializer(read_only=True)
     class Meta:
         model = SupplierProduct
         fields = (
@@ -57,13 +59,14 @@ class SupplierProductSerializer(serializers.ModelSerializer):
             'units_available',
             'units_per_order',
             'for_sale',
-            'product_name',
-            'product_id',
-            'product_image',
-            'product_category',
-            'product_build',
-            'product_material',
-            'product_lowest_price'
+            'product'
+            # 'product_name',
+            # 'product_id',
+            # 'product_image',
+            # 'product_category',
+            # 'product_build',
+            # 'product_material',
+            # 'product_lowest_price'
         )
 
 class ShippingLocationSerializer(serializers.ModelSerializer):
