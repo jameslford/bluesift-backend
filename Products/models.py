@@ -204,6 +204,10 @@ class Product(models.Model):
             return self.material.label
         else:
             return None
+    
+    def finish_label(self):
+        if self.finish:
+            return self.finish.label
 
     def size(self):
         return self.width + self.length

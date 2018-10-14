@@ -62,7 +62,7 @@ class ProductSemiDetailSerializer(serializers.ModelSerializer):
             'build_label',
             'material_label',
             'category_name',
-            'finish',
+            'finish_label',
             'material',
             'category_id',
             'look_label',
@@ -113,7 +113,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'material_label',
             'category_name',
             'material',
-            'finish',
+            'finish_label',
             'category_id',
             'look_label',
 
