@@ -22,6 +22,7 @@ from Products.models import Product
 from .serializers import(
     CustomerProjectSerializer,
     ShippingLocationSerializer,
+    ShippingLocationDetailSerializer,
     )
 
 def get_customer_projects(user):
@@ -145,7 +146,7 @@ def customer_library(request):
 def supplier_library(request):
     user = request.user
     locations = get_company_shipping_locations(user)
-    serialized_locs = ShippingLocationSerializer(locations, many=True)
+    serialized_locs = ShippingLocationDetailSerializer(locations, many=True)
     return Response({'locations': serialized_locs.data}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
@@ -178,10 +179,11 @@ def get_lib(request):
         return customer_library(request)
 
 
-
-
-
-
+@api_view(['GET'])
+def supplier_list(request):
+    suppliers = CompanyShippingLocation.objects.all()
+    serialized_suppliers = ShippingLocationSerializer(suppliers, many=True)
+    return Response({'suppliers': serialized_suppliers.data})
 
 
 

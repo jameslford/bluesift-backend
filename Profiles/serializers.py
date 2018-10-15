@@ -60,17 +60,27 @@ class SupplierProductSerializer(serializers.ModelSerializer):
             'units_per_order',
             'for_sale',
             'product'
-            # 'product_name',
-            # 'product_id',
-            # 'product_image',
-            # 'product_category',
-            # 'product_build',
-            # 'product_material',
-            # 'product_lowest_price'
         )
 
-class ShippingLocationSerializer(serializers.ModelSerializer):
+class ShippingLocationDetailSerializer(serializers.ModelSerializer):
     priced_products = SupplierProductSerializer(many=True, read_only=True)
     class Meta:
         model = CompanyShippingLocation
-        fields = ('company_account', 'approved_seller', 'nickname', 'address', 'id', 'priced_products')
+        fields = (
+            'company_account',
+            'approved_seller',
+            'nickname',
+            'address',
+            'id',
+            'priced_products'
+            )
+
+class ShippingLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyShippingLocation
+        fields = (
+            'company_account',
+            'nickname',
+            'address'
+            )
+
