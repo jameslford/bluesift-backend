@@ -79,6 +79,7 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyShippingLocation
         fields = (
+            'id',
             'company_account',
             'nickname',
             'address'
