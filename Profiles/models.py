@@ -2,8 +2,11 @@ from django.db import models
 from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
+from django.conf import settings
 from djmoney.models.fields import MoneyField
 import decimal
+import requests
+import googlemaps
 
 
 
@@ -19,6 +22,7 @@ class CompanyAccount(models.Model):
     headquarters = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True)
     phone_number = models.IntegerField(null=True, blank=True)
 
+
     def __str__(self):
         if self.name:
             return self.name
@@ -32,10 +36,12 @@ class CompanyShippingLocation(models.Model):
         on_delete=models.CASCADE,
         related_name='shipping_locations'
         )
-    address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=120, null=True, blank=True)
     approved_seller = models.BooleanField(default=False)
     number = models.IntegerField(null=True, blank=True)
+    lat = models.FloatField(null=True, blank=True)
+    lng = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return str(self.company_account) + ' ' + str(self.number)
@@ -46,10 +52,35 @@ class CompanyShippingLocation(models.Model):
         number = count + 1
         return number
 
+    def address_string(self):
+        add = self.address
+        al1 = add.address_line_1
+        al2 = add.address_line_2
+        city = add.city
+        state = add.state
+        return f'{al1}, {city}, {state}, {add.postal_code}'
+
+    def get_latlng(self):
+        key = settings.GMAPS_API_KEY
+        gmaps = googlemaps.Client(key=key)
+        add = self.address_string()
+        location = gmaps.geocode(add)[0]['geometry']['location']
+        lat = location['lat']
+        lng = location['lng']
+        return [lat, lng]
+
+
+
     def save(self, *args, **kwargs):
-        self.number = self.assign_number()
+        if not self.number:
+            self.number = self.assign_number()
         if not self.nickname:
             self.nickname = self.company_account.name + ' ' + str(self.number)
+        if not self.lat:
+            lat_long = self.get_latlng()
+            if lat_long:
+                self.lat = lat_long[0]
+                self.lng = lat_long[1]
         super(CompanyShippingLocation, self).save(*args, **kwargs)
 
 
