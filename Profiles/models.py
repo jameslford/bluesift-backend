@@ -1,12 +1,9 @@
+import decimal
+import googlemaps
 from django.db import models
 from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
-from django.conf import settings
-from djmoney.models.fields import MoneyField
-import decimal
-import requests
-import googlemaps
 
 
 
