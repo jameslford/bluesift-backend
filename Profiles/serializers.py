@@ -82,6 +82,8 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
             'id',
             'company_account',
             'nickname',
-            'address'
+            'address',
+            'lat',
+            'lng'
             )
 
