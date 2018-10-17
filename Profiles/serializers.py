@@ -72,7 +72,10 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
             'nickname',
             'address',
             'id',
-            'priced_products'
+            'priced_products',
+            'lat',
+            'lng',
+            'image'
             )
 
 class ShippingLocationSerializer(serializers.ModelSerializer):
@@ -86,4 +89,6 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
             'lat',
             'lng'
             )
+
+
 

@@ -184,3 +184,13 @@ def supplier_list(request):
     suppliers = CompanyShippingLocation.objects.all()
     serialized_suppliers = ShippingLocationSerializer(suppliers, many=True)
     return Response({'suppliers': serialized_suppliers.data})
+
+@api_view(['GET'])
+def supplier_detail(request, pk):
+    # s_id = request.GET.get('id')
+    supplier = CompanyShippingLocation.objects.get(id=pk)
+    if supplier:
+        serialized = ShippingLocationDetailSerializer(supplier)
+        return Response({'supplier': serialized.data}, status=status.HTTP_200_OK)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
