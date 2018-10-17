@@ -75,6 +75,7 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
             'priced_products',
             'lat',
             'lng',
+            'address_string',
             'image'
             )
 
