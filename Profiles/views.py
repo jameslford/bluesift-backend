@@ -191,6 +191,6 @@ def supplier_detail(request, pk):
     supplier = CompanyShippingLocation.objects.get(id=pk)
     if supplier:
         serialized = ShippingLocationDetailSerializer(supplier)
-        return Response({'supplier': serialized.data}, status=status.HTTP_200_OK)
+        return Response({'location': serialized.data}, status=status.HTTP_200_OK)
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
