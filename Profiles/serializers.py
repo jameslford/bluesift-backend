@@ -68,6 +68,7 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
         model = CompanyShippingLocation
         fields = (
             'company_account',
+            'company_name',
             'approved_seller',
             'nickname',
             'address',
@@ -85,6 +86,7 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'company_account',
+            'company_name',
             'nickname',
             'address',
             'lat',

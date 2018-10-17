@@ -8,10 +8,9 @@ from Products.models import Product
 
 
 class CompanyAccount(models.Model):
-    name = models.CharField(max_length=120, null=True)
+    name = models.CharField(max_length=120)
     account_owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        null=True,
         on_delete=models.CASCADE,
         limit_choices_to={'is_supplier' : True},
         related_name='company_account'
@@ -66,6 +65,9 @@ class CompanyShippingLocation(models.Model):
         lat = location['lat']
         lng = location['lng']
         return [lat, lng]
+
+    def company_name(self):
+        return self.company_account.name
 
 
 
