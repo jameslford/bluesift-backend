@@ -64,7 +64,6 @@ def product_list(request):
     
     products = check_booleans(products, product_boolean_args)
 
-    filter_manufacturer = filter_manufacturers(products, manufacturers)
 
     if manufacturers[0]:
         products = or_list_query(products, manufacturers)
@@ -82,7 +81,8 @@ def product_list(request):
     elif count > 1:
         products = parse_BMC(products, materials, categories, builds)
 
-    
+    filter_manufacturer = filter_manufacturers(products, manufacturers)    
+
     product_count = products.count()
     bools = bool_response(products, product_boolean_args)
 
