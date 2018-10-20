@@ -195,7 +195,7 @@ def parse_BMC(products, materials, categories, builds):
         for mat in materials_list:
             mat_object = Material.objects.get(id=mat)
             if mat_object.category.id in active_cats:
-                material_category = mat_object.categoy
+                material_category = mat_object.category
                 exempt = _products.exclude(build__category=material_category)
                 active = _products.filter(material=mat_object)
                 _products = exempt | active
