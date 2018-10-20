@@ -105,10 +105,10 @@ def product_list(request):
 
 
     filter_response = {
-        'thk': thickness,
         'for_sale': bools[0],
         'filter_bools': bools[1:],
         'manufacturers' : filter_manufacturer,
+        'thicknesses': thickness,
         'all_cats': all_cats
     }
 
