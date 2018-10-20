@@ -1,6 +1,7 @@
 ''' Products.views.py '''
 import math
 
+from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -99,7 +100,9 @@ def product_list(request):
     if page == page_count:
         load_more = False
 
-    thickness = products.values_list('thickness', flat=True).distinct()
+    # thickness = products.values_list('thickness', flat=True).distinct()
+    thickness = products.values('thickness').distinct().annotate(count=Count('thickness'))
+
 
     filter_response = {
         'thk': thickness,
