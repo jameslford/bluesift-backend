@@ -99,8 +99,10 @@ def product_list(request):
     if page == page_count:
         load_more = False
 
+    thickness = products.values('thickness').distinct()
 
     filter_response = {
+        'thk': thickness,
         'for_sale': bools[0],
         'filter_bools': bools[1:],
         'manufacturers' : filter_manufacturer,
