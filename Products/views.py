@@ -1,6 +1,6 @@
 ''' Products.views.py '''
 import math
-
+from decimal import Decimal
 from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -44,11 +44,18 @@ def product_list(request):
     pool_linings = [request.GET.get('pool_linings'), 'pool_linings']
     cof = request.GET.get('cof')
     lrv = request.GET.get('lrv')
+    thk = request.GET.get('thk')
     color = request.GET.get('color')
     sort = request.GET.get('sort', 'none')
     page = request.GET.get('page', 1)
 
     products = Product.objects.all()
+
+    if thk:
+        thk = Decimal(thk)
+        products = products.filter(thickness=thk)
+
+    
 
     product_boolean_args = [
         for_sale,
