@@ -99,7 +99,7 @@ def product_list(request):
     if page == page_count:
         load_more = False
 
-    thickness = products.values('thickness').distinct()
+    thickness = products.values_list('thickness', flat=True).distinct()
 
     filter_response = {
         'thk': thickness,
