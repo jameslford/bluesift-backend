@@ -59,9 +59,6 @@ def product_list(request):
 
     if finish:
         products = products.filter(finish=finish)
-
-    if for_sale_in_store:
-        products = products.filter(priced__for_sale_in_store=True)
     
 
     product_boolean_args = [
