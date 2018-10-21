@@ -118,8 +118,8 @@ def product_list(request):
     finishes = [f for f in finishes if f['finish__label']]
 
     filter_response = {
-        'for_sale': bools[0],
-        'filter_bools': bools[1:],
+        'availability': [bools[0], bools[1]],
+        'applications': bools[2:],
         'manufacturers' : filter_manufacturer,
         'thicknesses': thickness,
         'finishes': finishes,
