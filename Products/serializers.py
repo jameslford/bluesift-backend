@@ -51,8 +51,8 @@ class ProductSemiDetailSerializer(serializers.ModelSerializer):
             'manufacturer_color',
 
             'lowest_price',
-            'is_priced',
-            'for_sale',
+            'for_sale_in_store',
+            'for_sale_online',
             'units',
 
             'image',
