@@ -33,9 +33,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
             'lowest_price',
             'units',
-
-            'units',
-            'prices',
             )
 
 class ProductSemiDetailSerializer(serializers.ModelSerializer):
@@ -103,8 +100,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'manufacturer_color',
 
             'lowest_price',
-            'is_priced',
-            'for_sale',
             'units',
             'prices',
 

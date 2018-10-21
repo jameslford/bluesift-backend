@@ -86,7 +86,6 @@ class Image(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=200)
     bb_sku = models.CharField(max_length=200, unique=True)
-
     manufacturer = models.ForeignKey(
         Manufacturer,
         null=True,
@@ -94,15 +93,17 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         )
 
+    
+    lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    for_sale_online = models.BooleanField(default=False)
+    for_sale_in_store = models.BooleanField(default=False)
+
 
     manufacturer_url = models.URLField(null=True, blank=True)
-    lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    is_priced = models.BooleanField(default=False)
-    for_sale = models.BooleanField(default=False)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     last_scraped = models.DateTimeField(null=True)
-    date_created = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True, blank=True)
+    last_modified = models.DateTimeField(auto_now=True, blank=True)
 
     # categorized
     build = models.ForeignKey(Build, on_delete=models.CASCADE)
@@ -147,11 +148,43 @@ class Product(models.Model):
         except:
             return
 
+    def in_store_sellers(self):
+        in_store_sellers = self.priced.filter(for_sale_in_store=True)
+        if in_store_sellers:
+            return in_store_sellers
+
+    def online_sellers(self):
+        online_sellers = self.priced.filter(for_sale_online=True)
+        if online_sellers:
+            return online_sellers
+        
+
+    def set_prices(self):
+        online_sellers = self.priced.filter(for_sale_online=True)
+        if online_sellers.count() > 0:
+            self.for_sale_online = True
+            self.save()
+        in_store_sellers = self.priced.filter(for_sale_in_store=True)
+        if in_store_sellers.count() > 0:
+            self.for_sale_in_store = True
+            self.save()
+        all_sellers = online_sellers | in_store_sellers
+        all_sellers = all_sellers.distinct()
+        if all_sellers.count() > 0:
+            price = all_sellers.aggregate(Min('my_price'))
+            self.lowest_price = price["my_price__min"]
+            self.save()
+
+
     def prices(self):
-        sellers = self.priced.filter(for_sale=True)
-        if sellers:
+        sellers  = self.priced.filter(for_sale_online=True)
+        sellers = sellers | self.priced.filter(for_sale_in_store=True)
+        if sellers.count() > 0:
             values = sellers.values(
-                'price_per_unit',
+                'online_ppu',
+                'my_price',
+                'for_sale_online',
+                'for_sale_in_store',
                 'supplier',
                 'units_available',
                 'units_per_order',
@@ -163,12 +196,8 @@ class Product(models.Model):
                 'supplier__address__postal_code',
                 'supplier__company_account__name'
                 )
-            price = sellers.aggregate(Min('price_per_unit'))
-            self.lowest_price = price["price_per_unit__min"]
-            self.is_priced = True
-            self.for_sale = True
-            self.save()
             return values
+
 
 
     def manufacturer_name(self):

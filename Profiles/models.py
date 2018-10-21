@@ -34,7 +34,7 @@ class CompanyShippingLocation(models.Model):
         )
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=120, null=True, blank=True)
-    approved_seller = models.BooleanField(default=False)
+    approved_online_seller = models.BooleanField(default=False)
     number = models.IntegerField(null=True, blank=True)
     lat = models.FloatField(null=True, blank=True)
     lng = models.FloatField(null=True, blank=True)
@@ -98,10 +98,11 @@ class SupplierProduct(models.Model):
         related_name='priced_products'
         )
     my_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    price_per_unit = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    online_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     units_available = models.IntegerField(default=0, null=True)
     units_per_order = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    for_sale = models.BooleanField(default=False)
+    for_sale_in_store = models.BooleanField(default=False)
+    for_sale_online = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.supplier) + ' ' + str(self.product.name)
@@ -124,19 +125,19 @@ class SupplierProduct(models.Model):
     def product_lowest_price(self):
         return str(self.product.lowest_price)
 
-    def set_price(self):
+    def set_online_price(self):
         if self.my_price:
-            self.price_per_unit = self.my_price * decimal.Decimal(1.10)
+            self.online_ppu = self.my_price * decimal.Decimal(settings.MARKUP)
 
     def save(self, *args, **kwargs):
-        self.set_price()
-        if self.for_sale:
-            if self.units_available <= 0:
-                self.for_sale = False
-            if self.supplier.approved_seller is False:
-                self.for_sale = False
+        self.set_online_price()
+        if self.units_available <= 0:
+            self.for_sale_in_store = False
+            self.for_sale_online = False
+        if self.supplier.approved_online_seller is False:
+            self.for_sale_online = False
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
-        self.product.prices()
+        self.product.set_prices()
 
     class Meta:
         unique_together = ('product', 'supplier')

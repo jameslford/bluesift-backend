@@ -32,7 +32,8 @@ def product_list(request):
     materials = [request.GET.getlist('material'), 'material']
     look = [request.GET.getlist('look'), 'look']
     categories = [request.GET.getlist('build__category'), 'build__category']
-    for_sale = [request.GET.get('for_sale'), 'for_sale']
+    for_sale_online = [request.GET.get('for_sale_online'), 'for_sale_online']
+    for_sale_in_store = [request.GET.get('for_sale_in_store'), 'for_sale_in_store']
     floors = [request.GET.get('floors'), 'floors']
     walls = [request.GET.get('walls'), 'walls']
     countertops = [request.GET.get('countertops'), 'countertops']
@@ -58,10 +59,14 @@ def product_list(request):
 
     if finish:
         products = products.filter(finish=finish)
+
+    if for_sale_in_store:
+        products = products.filter(priced__for_sale_in_store=True)
     
 
     product_boolean_args = [
-        for_sale,
+        # for_sale_online,
+        # for_sale_in_store,
         floors,
         walls,
         countertops,
