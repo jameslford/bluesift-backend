@@ -44,6 +44,7 @@ def product_list(request):
     pool_linings = [request.GET.get('pool_linings'), 'pool_linings']
     cof = request.GET.get('cof')
     lrv = request.GET.get('lrv')
+    finish = request.GET.get('finish')
     thk = request.GET.get('thk')
     color = request.GET.get('color')
     sort = request.GET.get('sort', 'none')
@@ -55,6 +56,8 @@ def product_list(request):
         thk = Decimal(thk)
         products = products.filter(thickness=thk)
 
+    if finish:
+        products = products.filter(finish=finish)
     
 
     product_boolean_args = [
@@ -109,6 +112,7 @@ def product_list(request):
 
     # thickness = products.values_list('thickness', flat=True).distinct()
     thickness = products.values('thickness').distinct().annotate(count=Count('thickness'))
+    finishes = products.values('finish__label', 'id').annotate(count=Count('finish__label'))
 
 
     filter_response = {
@@ -116,6 +120,7 @@ def product_list(request):
         'filter_bools': bools[1:],
         'manufacturers' : filter_manufacturer,
         'thicknesses': thickness,
+        'finishes': finishes,
         'all_cats': all_cats
     }
 

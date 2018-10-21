@@ -135,7 +135,7 @@ class Product(models.Model):
     residential_warranty = models.IntegerField(null=True, blank=True)
     commercial_warranty = models.IntegerField(null=True, blank=True)
     finish = models.ForeignKey(Finish, null=True, on_delete=models.SET_NULL)
-    shade_variation = models.ForeignKey(ShadeVariation, null=True, on_delete=models.SET_NULL)
+    shade_variation = models.ForeignKey(ShadeVariation, null=True, blank=True, on_delete=models.SET_NULL)
     notes = models.TextField(null=True, blank=True)
 
     def __str__(self):
