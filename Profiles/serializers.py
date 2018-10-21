@@ -69,7 +69,7 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
         fields = (
             'company_account',
             'company_name',
-            'approved_seller',
+            'approved_online_seller',
             'nickname',
             'address',
             'id',
