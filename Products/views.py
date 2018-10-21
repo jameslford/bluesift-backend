@@ -62,8 +62,8 @@ def product_list(request):
     
 
     product_boolean_args = [
-        # for_sale_online,
-        # for_sale_in_store,
+        for_sale_online,
+        for_sale_in_store,
         floors,
         walls,
         countertops,
