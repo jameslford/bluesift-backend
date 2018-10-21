@@ -112,7 +112,7 @@ def product_list(request):
 
     # thickness = products.values_list('thickness', flat=True).distinct()
     thickness = products.values('thickness').distinct().annotate(count=Count('thickness'))
-    finishes = products.values('finish__label', 'id').annotate(count=Count('finish__label'))
+    finishes = products.values('finish__label', 'finish__id').annotate(count=Count('finish__label'))
 
 
     filter_response = {
