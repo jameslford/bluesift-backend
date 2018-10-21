@@ -84,8 +84,8 @@ class Image(models.Model):
         return self.original_url
 
 class Product(models.Model):
-    name = models.CharField(max_length=200)
-    bb_sku = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=300)
+    bb_sku = models.CharField(max_length=300, unique=True)
     manufacturer = models.ForeignKey(
         Manufacturer,
         null=True,
@@ -135,7 +135,7 @@ class Product(models.Model):
     cof = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
     residential_warranty = models.IntegerField(null=True, blank=True)
     commercial_warranty = models.IntegerField(null=True, blank=True)
-    finish = models.ForeignKey(Finish, null=True, on_delete=models.SET_NULL)
+    finish = models.ForeignKey(Finish, null=True, blank=True, on_delete=models.SET_NULL)
     shade_variation = models.ForeignKey(ShadeVariation, null=True, blank=True, on_delete=models.SET_NULL)
     notes = models.TextField(null=True, blank=True)
 
