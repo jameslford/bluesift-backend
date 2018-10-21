@@ -55,10 +55,11 @@ class SupplierProductSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'my_price',
-            'price_per_unit',
+            'online_ppu',
             'units_available',
             'units_per_order',
-            'for_sale',
+            'for_sale_online',
+            'for_sale_in_store',
             'product'
         )
 
