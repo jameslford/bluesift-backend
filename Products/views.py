@@ -52,13 +52,17 @@ def product_list(request):
     page = request.GET.get('page', 1)
 
     products = Product.objects.all()
+    thk_enabled = False
+    fin_enabled = False
 
     if thk:
         thk = Decimal(thk)
         products = products.filter(thickness=thk)
+        thk_enabled = True
 
     if finish:
         products = products.filter(finish=finish)
+        fin_enabled = True
     
 
     product_boolean_args = [
@@ -114,15 +118,22 @@ def product_list(request):
 
     # thickness = products.values_list('thickness', flat=True).distinct()
     thickness = products.values('thickness').distinct().annotate(count=Count('thickness'))
+    new_thk = []
+    for thick in thickness:
+        thick['enabled'] = thk_enabled
+        new_thk.append(thick)
     finishes = products.values('finish__label', 'finish__id').annotate(count=Count('finish__label'))
     finishes = [f for f in finishes if f['finish__label']]
+    new_fin = []
+    for fin in finishes:
+        fin['enabled'] = fin_enabled
 
     filter_response = {
         'availability': [bools[0], bools[1]],
         'applications': bools[2:],
         'manufacturers' : filter_manufacturer,
-        'thicknesses': thickness,
-        'finishes': finishes,
+        'thicknesses': new_thk,
+        'finishes': new_fin,
         'all_cats': all_cats
     }
 
