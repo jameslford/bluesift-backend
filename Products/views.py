@@ -127,6 +127,7 @@ def product_list(request):
     new_fin = []
     for fin in finishes:
         fin['enabled'] = fin_enabled
+        new_fin.append(fin)
 
     filter_response = {
         'availability': [bools[0], bools[1]],
