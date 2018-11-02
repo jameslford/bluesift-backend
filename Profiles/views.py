@@ -202,3 +202,6 @@ def add_supplier_location(request):
     serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
     if serialized_loc.is_valid():
         serialized_loc.save()
+        return Response('Done!', status=status.HTTP_201_CREATED)
+    else:
+        return Response(serialized_loc.errors)
