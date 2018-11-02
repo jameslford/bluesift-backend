@@ -19,6 +19,7 @@ from Profiles.models import(
     SupplierProduct
     )
 from Products.models import Product
+from Addresses.models import Address
 from .serializers import(
     CustomerProjectSerializer,
     ShippingLocationSerializer,
@@ -201,7 +202,23 @@ def supplier_detail(request, pk):
 def add_supplier_location(request):
     serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
     if serialized_loc.is_valid():
-        serialized_loc.save()
-        return Response('Done!', status=status.HTTP_201_CREATED)
-    else:
-        return Response(serialized_loc.errors)
+        company_account = serialized_loc['company_account']
+        phone = serialized_loc['phone_number']
+        nickname = serialized_loc['nickname']
+        address = serialized_loc['address']
+        street = address['address_line_1']
+        city = address['city']
+        state = address['state']
+        postal_code = address['postal_code']
+        new_add = Address.objects.create(address_line_1=street, city=city, state=state, postal_code=postal_code)
+        if new_add:
+            new_loc = CompanyShippingLocation.objects.create(company_account=company_account, phone_number=phone, nickname=nickname, address=address)
+            if new_loc:
+                return Response('Done!', status=status.HTTP_201_CREATED)
+            else:
+                return Response('no new loc', status=status.HTTP_412_PRECONDITION_FAILED)
+        else:
+            return Response('no new add', status=status.HTTP_300_MULTIPLE_CHOICES)
+
+    # else:
+    #     return Response(serialized_loc.errors)
