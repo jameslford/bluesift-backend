@@ -196,7 +196,7 @@ def supplier_detail(request, pk):
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def add_supplier_location(request):
     serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
