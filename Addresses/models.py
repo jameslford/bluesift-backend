@@ -6,7 +6,7 @@ class Address(models.Model):
     address_line_2 = models.CharField(max_length=120, null=True, blank=True)
     city = models.CharField(max_length=120)
     country = models.CharField(max_length=120, blank=True, null=True, default='United States of America')
-    state = models.CharField(max_length=120, choices=states)
+    state = models.CharField(max_length=120)
     postal_code = models.CharField(max_length=11)
 
     def __str__(self):
