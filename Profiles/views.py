@@ -20,6 +20,7 @@ from Profiles.models import(
     )
 from Products.models import Product
 from Addresses.models import Address
+from Addresses.serializers import AddressSerializer
 from .serializers import(
     CustomerProjectSerializer,
     ShippingLocationSerializer,
@@ -206,6 +207,14 @@ def add_supplier_location(request):
         return Response('Done!', status=status.HTTP_201_CREATED)
     else:
         return Response(serialized_loc.errors)
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def add_address(request):
+    serialized_add = AddressSerializer(data=request.data)
+    if serialized_add.is_valid():
+        serialized_add.save()
+        return Response('Donezo', status=status.HTTP_201_CREATED)
         # serialized_loc = request.data
         # company_account = serialized_loc['company_account']
         # phone = serialized_loc['phone_number']
