@@ -200,8 +200,9 @@ def supplier_detail(request, pk):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def add_supplier_location(request):
-    serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
-    if serialized_loc.is_valid():
+    # serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
+    # if serialized_loc.is_valid():
+        serialized_loc = request.data
         company_account = serialized_loc['company_account']
         phone = serialized_loc['phone_number']
         nickname = serialized_loc['nickname']
