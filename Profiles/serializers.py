@@ -108,11 +108,11 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        # address = validated_data.get('address')
-        # address = Address.objects.create(address)
+        address = validated_data.get('address')
+        address = Address.objects.create(**address)
         # comp_account = validated_data.get('company_account')
         # phone = validated_data.get('phone_number')
         # nick = validated_data.get('nickname')
         # return CompanyShippingLocation.objects.create(company_account=comp_account, phone_number=phone, nickname=nick, address=address)
-        return CompanyShippingLocation.objects.create(**validated_data)
+        return CompanyShippingLocation.objects.create(address=address, **validated_data)
 
