@@ -66,6 +66,7 @@ class SupplierProductSerializer(serializers.ModelSerializer):
 
 class ShippingLocationDetailSerializer(serializers.ModelSerializer):
     priced_products = SupplierProductSerializer(many=True, read_only=True)
+    address = AddressSerializer(read_only=True)
     class Meta:
         model = CompanyShippingLocation
         fields = (
