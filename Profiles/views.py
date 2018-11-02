@@ -23,6 +23,7 @@ from .serializers import(
     CustomerProjectSerializer,
     ShippingLocationSerializer,
     ShippingLocationDetailSerializer,
+    ShippingLocationUpdateSerializer
     )
 
 def get_customer_projects(user):
@@ -194,3 +195,10 @@ def supplier_detail(request, pk):
         return Response({'location': serialized.data}, status=status.HTTP_200_OK)
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def add_supplier_location(request):
+    serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
+    if serialized_loc.is_valid():
+        serialized_loc.save()

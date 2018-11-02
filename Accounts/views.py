@@ -108,7 +108,7 @@ def activate(request, uidb64, token):
         user = userModel.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, userModel.DoesNotExist):
         user = None
-    if user is not None and user == Token.objects.get(user=user).user :
+    if user is not None and user == Token.objects.get(user=user).user:
         user.is_active = True
         user.date_confirmed = datetime.datetime.now()
         user.save()

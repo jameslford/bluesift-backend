@@ -95,4 +95,16 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
             )
 
 
+class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+    class Meta:
+        model = CompanyShippingLocation
+        fields = (
+            'company_account',
+            'address',
+            'nickname',
+            'phone_number'
+        )
 
+    def create(self, validated_data):
+        return CompanyShippingLocation.objects.create(validated_data)

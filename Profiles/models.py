@@ -35,6 +35,7 @@ class CompanyShippingLocation(models.Model):
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=120, null=True, blank=True)
     approved_online_seller = models.BooleanField(default=False)
+    phone_number = models.CharField(max_length=10)
     number = models.IntegerField(null=True, blank=True)
     lat = models.FloatField(null=True, blank=True)
     lng = models.FloatField(null=True, blank=True)
