@@ -77,11 +77,11 @@ class CompanyShippingLocation(models.Model):
             self.number = self.assign_number()
         if not self.nickname:
             self.nickname = self.company_account.name + ' ' + str(self.number)
-        # if not self.lat:
-        #     lat_long = self.get_latlng()
-        #     if lat_long:
-        #         self.lat = lat_long[0]
-        #         self.lng = lat_long[1]
+        if not self.lat:
+            lat_long = self.get_latlng()
+            if lat_long:
+                self.lat = lat_long[0]
+                self.lng = lat_long[1]
         super(CompanyShippingLocation, self).save(*args, **kwargs)
 
 
