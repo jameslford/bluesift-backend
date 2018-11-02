@@ -97,7 +97,7 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
 
 
 class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
-    # address = AddressSerializer()
+    address = AddressSerializer()
     class Meta:
         model = CompanyShippingLocation
         fields = (
