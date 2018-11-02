@@ -1,5 +1,4 @@
 import decimal
-import googlemaps
 from django.db import models
 from django.conf import settings
 from Addresses.models import Address
@@ -37,8 +36,6 @@ class CompanyShippingLocation(models.Model):
     approved_online_seller = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=10)
     number = models.IntegerField(null=True, blank=True)
-    lat = models.FloatField(null=True, blank=True)
-    lng = models.FloatField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True)
 
     def __str__(self):
@@ -51,37 +48,16 @@ class CompanyShippingLocation(models.Model):
         return number
 
     def address_string(self):
-        add = self.address
-        al1 = add.address_line_1
-        al2 = add.address_line_2
-        city = add.city
-        state = add.state
-        return f'{al1}, {city}, {state}, {add.postal_code}'
-
-    def get_latlng(self):
-        key = settings.GMAPS_API_KEY
-        gmaps = googlemaps.Client(key=key)
-        add = self.address_string()
-        location = gmaps.geocode(add)[0]['geometry']['location']
-        lat = location['lat']
-        lng = location['lng']
-        return [lat, lng]
+        return self.address.address_string()
 
     def company_name(self):
         return self.company_account.name
-
-
 
     def save(self, *args, **kwargs):
         if not self.number:
             self.number = self.assign_number()
         if not self.nickname:
             self.nickname = self.company_account.name + ' ' + str(self.number)
-        if not self.lat:
-            lat_long = self.get_latlng()
-            if lat_long:
-                self.lat = lat_long[0]
-                self.lng = lat_long[1]
         super(CompanyShippingLocation, self).save(*args, **kwargs)
 
 
