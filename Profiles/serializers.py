@@ -76,23 +76,20 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
             'address',
             'id',
             'priced_products',
-            'lat',
-            'lng',
-            'address_string',
             'image'
             )
 
 class ShippingLocationSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()    
     class Meta:
         model = CompanyShippingLocation
         fields = (
             'id',
             'company_account',
             'company_name',
+            'address',
             'nickname',
             'address_string',
-            'lat',
-            'lng'
             )
 
 

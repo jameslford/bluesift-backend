@@ -8,7 +8,10 @@ class AddressSerializer(serializers.ModelSerializer):
             'address_line_1', 
             # 'address_line_2',
             'city',
-            # 'country',
+            'country',
             'state',
-            'postal_code'
+            'postal_code',
+            'lat',
+            'lng',
+            'address_string'
         )
