@@ -1,16 +1,15 @@
 ''' views for returning customer and supplier projects/locations and 
     accompanying products. supporting functions first, actual views at bottom '''
 
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.conf import settings
 
 
-from rest_framework.decorators import api_view, permission_classes, parser_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from Profiles.models import( 
+from Profiles.models import(
     CompanyAccount,
     CompanyShippingLocation,
     CustomerProduct,
@@ -19,7 +18,7 @@ from Profiles.models import(
     SupplierProduct
     )
 from Products.models import Product
-from Addresses.models import Address
+# from Addresses.models import Address
 from Addresses.serializers import AddressSerializer
 from .serializers import(
     CustomerProjectSerializer,
@@ -154,7 +153,11 @@ def supplier_library(request):
     user = request.user
     locations = get_company_shipping_locations(user)
     serialized_locs = ShippingLocationDetailSerializer(locations, many=True)
-    return Response({'locations': serialized_locs.data}, status=status.HTTP_200_OK)
+    markup = settings.MARKUP
+    return Response({
+        'locations': serialized_locs.data,
+        'markup': markup
+    }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
@@ -211,6 +214,15 @@ def add_supplier_location(request):
         return Response('Done!', status=status.HTTP_201_CREATED)
     else:
         return Response(serialized_loc.errors)
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def del_supplier_product(request):
+    user = request.user
+    prod_id = request.POST.get('prod_id')
+    product = SupplierProduct.objects.get(prod_id)
+    if product.supplier.company_account.account_owner == user:
+        product.delete()
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
