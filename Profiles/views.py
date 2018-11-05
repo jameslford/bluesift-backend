@@ -70,7 +70,7 @@ def supplier_library_append(request):
     user = request.user
     locations = get_company_shipping_locations(user)
     prod_id = request.POST.get('prod_id')
-    location_id = request.POST.get('location_id', 0)
+    location_id = request.POST.get('proj_id', 0)
     product = Product.objects.get(id=prod_id)
     count = locations.count()
     if location_id != 0:
