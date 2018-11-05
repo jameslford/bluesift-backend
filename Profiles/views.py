@@ -106,7 +106,7 @@ def customer_short_lib(request):
     full_content = {
         'list': projects_list,
         'count': projects.count(),
-        'selected_project': selected_project,
+        'selected_location': selected_project,
         'product_ids': product_ids
     }
     response = {'shortLib': full_content}
@@ -133,6 +133,10 @@ def supplier_short_lib(request):
     full_content = {
         'list': locations_list,
         'count': locations.count(),
+        'selected_location': {
+            'nickname': location.nickname,
+            'id': location.id
+        },                  
         'product_ids': product_ids
     }
     response = {'shortLib': full_content}
