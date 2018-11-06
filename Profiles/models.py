@@ -47,6 +47,9 @@ class CompanyShippingLocation(models.Model):
         number = count + 1
         return number
 
+    def product_count(self):
+        return self.priced_products.count()
+
     def address_string(self):
         return self.address.address_string()
 

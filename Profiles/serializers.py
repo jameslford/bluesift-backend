@@ -74,6 +74,7 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
             'company_name',
             'approved_online_seller',
             'nickname',
+            'product_count',
             'address',
             'phone_number',
             'id',
