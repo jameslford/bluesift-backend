@@ -155,8 +155,8 @@ def supplier_library(request):
     serialized_locs = ShippingLocationDetailSerializer(locations, many=True)
     markup = settings.MARKUP
     return Response({
-        'locations': serialized_locs.data,
-        'markup': markup
+        'markup': markup,
+        'locations': serialized_locs.data
     }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
