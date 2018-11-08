@@ -65,7 +65,7 @@ class SupplierProductSerializer(serializers.ModelSerializer):
         )
 
 class ShippingLocationDetailSerializer(serializers.ModelSerializer):
-    priced_products = SupplierProductSerializer(many=True, read_only=True)
+    priced_products = serializers.SerializerMethodField()
     address = AddressSerializer(read_only=True)
     class Meta:
         model = CompanyShippingLocation
@@ -81,6 +81,9 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
             'priced_products',
             'image'
             )
+    def get_priced_products(self, instance):
+        prods = instance.priced_products.all().order_by('id')
+        return SupplierProductSerializer(prods, many=True).data
 
 class ShippingLocationSerializer(serializers.ModelSerializer):
     address = AddressSerializer()    
@@ -106,6 +109,7 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
             'nickname',
             'phone_number'
         )
+
 
     def create(self, validated_data):
         address = validated_data.pop('address')
