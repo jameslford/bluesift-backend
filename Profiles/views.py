@@ -244,6 +244,8 @@ def supplier_product(request, pk):
             if serialized_prod.is_valid():
                 serialized_prod.update(product, request.data)
                 return Response(status=status.HTTP_202_ACCEPTED)
+            else:
+                return Response(serialized_prod.errors)
 
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
