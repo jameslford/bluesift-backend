@@ -238,11 +238,11 @@ def supplier_product(request, pk):
         if request.method == 'DELETE':
             product.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        
+       
         if request.method == 'PUT':
             serialized_prod = SupplierProductUpdateSerializer(data=request.data)
             if serialized_prod.is_valid():
-                serialized_prod.update(product)
+                serialized_prod.update(product, request.data)
                 return Response(status=status.HTTP_202_ACCEPTED)
 
     else:
