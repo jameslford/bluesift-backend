@@ -129,7 +129,7 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        instance.my_price = validated_data.get('my_price', 20)
+        instance.my_price = validated_data.get('my_price', instance.my_price)
         instance.units_available = validated_data.get('units_available', instance.units_available)
         instance.units_per_order = validated_data.get('units_per_order', instance.units_per_order)
         instance.for_sale_in_store = validated_data.get('for_sale_in_store', instance.for_sale_in_store)
