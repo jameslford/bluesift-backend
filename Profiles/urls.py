@@ -1,6 +1,14 @@
 ''' profiles.urls.py '''
 from django.urls import path
-from .views import get_lib, get_short_lib, append_lib, supplier_list, supplier_detail, add_supplier_location, add_address
+from .views import(
+    get_lib,
+    get_short_lib,
+    append_lib,
+    supplier_list,
+    supplier_detail,
+    add_supplier_location,
+    supplier_product
+    )
 
 urlpatterns = [
     path('getLib', get_lib),
@@ -9,5 +17,5 @@ urlpatterns = [
     path('supplierList', supplier_list),
     path('supplierDetails/<int:pk>', supplier_detail),
     path('addSupplierLocation', add_supplier_location),
-    path('addAddress', add_address)
+    path('supplierProduct/<int:pk>', supplier_product )
 ]

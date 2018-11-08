@@ -18,8 +18,7 @@ from Profiles.models import(
     SupplierProduct
     )
 from Products.models import Product
-# from Addresses.models import Address
-from Addresses.serializers import AddressSerializer
+
 from .serializers import(
     CustomerProjectSerializer,
     ShippingLocationSerializer,
@@ -215,40 +214,22 @@ def add_supplier_location(request):
     else:
         return Response(serialized_loc.errors)
 
-@api_view(['POST'])
+
+
+@api_view(['PUT', 'DELETE'])
 @permission_classes((IsAuthenticated,))
-def del_supplier_product(request):
+def supplier_product(request, pk):
     user = request.user
-    prod_id = request.POST.get('prod_id')
-    product = SupplierProduct.objects.get(prod_id)
+    product = SupplierProduct.objects.get(pk)
     if product.supplier.company_account.account_owner == user:
-        product.delete()
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-def add_address(request):
-    serialized_add = AddressSerializer(data=request.data)
-    if serialized_add.is_valid():
-        serialized_add.save()
-        return Response('Donezo', status=status.HTTP_201_CREATED)
-        # serialized_loc = request.data
-        # company_account = serialized_loc['company_account']
-        # phone = serialized_loc['phone_number']
-        # nickname = serialized_loc['nickname']
-        # address = serialized_loc['address']
-        # street = address['address_line_1']
-        # city = address['city']
-        # state = address['state']
-        # postal_code = address['postal_code']
-        # new_add = Address.objects.create(address_line_1=street, city=city, state=state, postal_code=postal_code)
-        # if new_add:
-        #     new_loc = CompanyShippingLocation.objects.create(company_account=company_account, phone_number=phone, nickname=nickname, address=address)
-        #     if new_loc:
-        #         return Response('Done!', status=status.HTTP_201_CREATED)
-        #     else:
-        #         return Response('no new loc', status=status.HTTP_412_PRECONDITION_FAILED)
-        # else:
-        #     return Response('no new add', status=status.HTTP_300_MULTIPLE_CHOICES)
+        if request.method == 'DELETE':
+            product.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # else:
-    #     return Response(serialized_loc.errors)
+        # if request.method == 'PUT':
+        #     arg = request.PUT.get('arg')
+        #     if arg == 'my_price':
+
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
