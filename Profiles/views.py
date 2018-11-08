@@ -245,7 +245,7 @@ def supplier_product(request, pk):
                 serialized_prod.update(product, request.data)
                 return Response(status=status.HTTP_202_ACCEPTED)
             else:
-                return Response(serialized_prod.errors)
+                return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
 
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
