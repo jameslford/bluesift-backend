@@ -242,7 +242,7 @@ def supplier_product(request, pk):
         if request.method == 'PUT':
             serialized_prod = SupplierProductUpdateSerializer(data=request.data)
             if serialized_prod.is_valid():
-                serialized_prod.update(product, request.data)
+                serialized_prod.update(instance=product, validated_data=request.data)
                 return Response(status=status.HTTP_202_ACCEPTED)
             else:
                 return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
