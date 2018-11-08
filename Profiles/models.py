@@ -1,4 +1,4 @@
-import decimal
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 from Addresses.models import Address
@@ -107,7 +107,7 @@ class SupplierProduct(models.Model):
 
     def set_online_price(self):
         if self.my_price:
-            self.online_ppu = self.my_price * settings.MARKUP
+            self.online_ppu = self.my_price * Decimal(settings.MARKUP)
 
     def save(self, *args, **kwargs):
         self.set_online_price()
