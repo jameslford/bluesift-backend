@@ -23,7 +23,8 @@ from .serializers import(
     CustomerProjectSerializer,
     ShippingLocationSerializer,
     ShippingLocationDetailSerializer,
-    ShippingLocationUpdateSerializer
+    ShippingLocationUpdateSerializer,
+    SupplierProductUpdateSerializer
     )
 
 def get_customer_projects(user):
@@ -204,15 +205,26 @@ def supplier_detail(request, pk):
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 @permission_classes((IsAuthenticated,))
-def add_supplier_location(request):
-    serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
-    if serialized_loc.is_valid():
-        serialized_loc.save()
-        return Response('Done!', status=status.HTTP_201_CREATED)
-    else:
-        return Response(serialized_loc.errors)
+def supplier_location(request, pk=None):
+
+    if request.method == 'POST':
+        serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
+        if serialized_loc.is_valid():
+            serialized_loc.save()
+            return Response('Done!', status=status.HTTP_201_CREATED)
+        else:
+            return Response(serialized_loc.errors)
+
+    if request.method == 'GET':
+        location = CompanyShippingLocation.objects.get(id=pk)
+        if location:
+            serialized = ShippingLocationDetailSerializer(location)
+            return Response({'location': serialized.data}, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -226,6 +238,12 @@ def supplier_product(request, pk):
         if request.method == 'DELETE':
             product.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        if request.method == 'PUT':
+            serialized_prod = SupplierProductUpdateSerializer(data=request.data)
+            if serialized_prod.is_valid():
+                serialized_prod.update(product)
+                return Response(status=status.HTTP_202_ACCEPTED)
 
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
