@@ -220,16 +220,12 @@ def add_supplier_location(request):
 @permission_classes((IsAuthenticated,))
 def supplier_product(request, pk):
     user = request.user
-    product = SupplierProduct.objects.get(pk)
+    product = SupplierProduct.objects.get(id=pk)
     if product.supplier.company_account.account_owner == user:
 
         if request.method == 'DELETE':
             product.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
-        # if request.method == 'PUT':
-        #     arg = request.PUT.get('arg')
-        #     if arg == 'my_price':
 
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)

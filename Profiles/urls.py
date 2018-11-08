@@ -17,5 +17,5 @@ urlpatterns = [
     path('supplierList', supplier_list),
     path('supplierDetails/<int:pk>', supplier_detail),
     path('addSupplierLocation', add_supplier_location),
-    path('supplierProduct/<int:pk>', supplier_product )
+    path('supplierProduct/<int:pk>/', supplier_product )
 ]
