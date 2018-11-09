@@ -2,12 +2,15 @@
 
 import datetime
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.contrib.auth.hashers import check_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import get_user_model, login, authenticate
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
+from django.conf import settings
 
 
 from rest_framework import status
@@ -20,8 +23,7 @@ from .serializers import(
     CreateSupplierSerializer,
     CreateUserSerializer,
     UserSerializer,
-    LoginSerializer,
-    TokenSerializer
+    UserResponseSerializer
     )
 
 from Profiles.models import(
@@ -118,37 +120,23 @@ def activate(request, uidb64, token):
         return Response('Activation link is invalid!')
 
 @api_view(['POST'])
-def get_token(request):
-    serializer = LoginSerializer(data=request.data)
-    userModel = get_user_model()
-    if serializer.is_valid():
-        email = serializer.data['email']
-        password = serializer.data['password']
-        try:
-            user = userModel.objects.get(email=email)
-        except(TypeError, ValueError, OverflowError, userModel.DoesNotExist):
-            user = None
-        if user:
-            sUser = UserSerializer(instance=user)
-            email = sUser.data['email']
-            if password == user.password:
-                if user.is_active == True:
-                    token = Token.objects.get(user=user)
-                    sToken = TokenSerializer(instance=token)
-                    content = {
-                        'key' : sToken.data['key'],
-                        'email' : email,
-                        'first_name' : sUser.data['first_name'],
-                        'last_name' : sUser.data['last_name'],
-                        'is_supplier' : sUser.data['is_supplier'],
-                        'get_first_name' : str(user.get_first_name()),
-                        'id' : sUser.data['id'],
-                    }
-                    return Response(content)
-                return Response("Please check your inbox at " + email + " to verify your account", status=status.HTTP_400_BAD_REQUEST)
-            return Response("Incorrect password for " + email, status=status.HTTP_401_UNAUTHORIZED)
-        return Response("No user found, please sign up", status=status.HTTP_404_NOT_FOUND)
-    return Response("we're sorry, but we're having trouble logging you in")
+def custom_login(request):
+    email = request.POST.get('email')
+    password = request.POST.get('password')
+    user_model = get_user_model()
+    user = user_model.objects.get(email=email)
+    if not user:
+        return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
+
+    if password != user.password:
+        return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
+
+    if not user.is_active:
+        return Response('Please check your inbox at ' + email + ' to verify your account', status=status.HTTP_400_BAD_REQUEST)
+
+    serialized_user = UserResponseSerializer(user)
+    return Response(serialized_user.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))

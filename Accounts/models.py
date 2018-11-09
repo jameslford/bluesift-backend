@@ -102,6 +102,9 @@ class User(AbstractBaseUser):
     def get_short_name(self):
         return self.email
 
+    def get_token(self):
+        return self.token
+
     @property
     def is_staff(self):
         if self.is_admin:

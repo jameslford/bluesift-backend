@@ -49,6 +49,7 @@ SITE_ID = 1
 
 GMAPS_API_KEY = 'AIzaSyD1ehaLv6OBqN3m_qjif2N7Gge0PDP5ams'
 
+# AUTHENTICATION_BACKENDS = ['config.email_authentication.EmailBackend']
 
 TEMPLATES = [
     {
