@@ -9,6 +9,7 @@ DATA_PATH = os.getcwd() + '\\config\\management\\data\\*.csv'
 
 ALLOWED_HOSTS = []
 
+REDIRECT_URL = 'https://www.google.com/'
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 EMAIL_HOST = 'smtp.sendgrid.net'

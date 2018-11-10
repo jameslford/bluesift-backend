@@ -13,6 +13,7 @@ ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+REDIRECT_URL = 'https://www.google.com/'
 
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'

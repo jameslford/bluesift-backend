@@ -115,7 +115,7 @@ def activate(request, uidb64, token):
         user.date_confirmed = datetime.datetime.now()
         user.save()
         login(request, user)
-        return redirect('https://thawing-castle-74732.herokuapp.com/general')
+        return redirect(settings.REDIRECT_URL)
     else:
         return Response('Activation link is invalid!')
 
@@ -123,19 +123,24 @@ def activate(request, uidb64, token):
 def custom_login(request):
     email = request.POST.get('email')
     password = request.POST.get('password')
-    user_model = get_user_model()
-    user = user_model.objects.get(email=email)
-    if not user:
-        return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
+    content = {'email': email, 'type': str(type(email))}
+    return Response(content)
+    # user_model = get_user_model()
+    # user = user_model.objects.get(email=email)
+    # if not user:
+    #     return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
 
-    if password != user.password:
-        return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
+    # if password != user.password:
+    #     return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
 
-    if not user.is_active:
-        return Response('Please check your inbox at ' + email + ' to verify your account', status=status.HTTP_400_BAD_REQUEST)
+    # if not user.is_active:
+    #     return Response(
+    #         'Please check your inbox at ' + email + ' to verify your account',
+    #         status=status.HTTP_400_BAD_REQUEST
+    #         )
 
-    serialized_user = UserResponseSerializer(user)
-    return Response(serialized_user.data, status=status.HTTP_200_OK)
+    # serialized_user = UserResponseSerializer(user)
+    # return Response(serialized_user.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
