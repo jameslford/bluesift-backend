@@ -121,7 +121,7 @@ def activate(request, uidb64, token):
 
 @api_view(['POST'])
 def custom_login(request):
-    return Response(str(request.data))
+    return Response(request.data['email'])
     # email = request.data.get('email')
     # password = request.data.get('password')
     # # content = {'email': email, 'type': str(type(email))}
