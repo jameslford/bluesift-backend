@@ -40,6 +40,8 @@ class CreateSupplierSerializer(UserSerializer):
     phone_number            = serializers.IntegerField(required=True)
 
 class LoginSerializer(serializers.Serializer):
-    pass
+    email = serializers.CharField(max_length=50)
+    password = serializers.CharField(max_length=20, write_only=True)
+    
 
   

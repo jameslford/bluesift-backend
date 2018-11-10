@@ -23,7 +23,8 @@ from .serializers import(
     CreateSupplierSerializer,
     CreateUserSerializer,
     UserSerializer,
-    UserResponseSerializer
+    UserResponseSerializer,
+    LoginSerializer
     )
 
 from Profiles.models import(
@@ -121,7 +122,10 @@ def activate(request, uidb64, token):
 
 @api_view(['POST'])
 def custom_login(request):
-    return Response(request.data['email'])
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer['email']
+        return Response(email)
     # email = request.data.get('email')
     # password = request.data.get('password')
     # # content = {'email': email, 'type': str(type(email))}
