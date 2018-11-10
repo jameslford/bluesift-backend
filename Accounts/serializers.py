@@ -39,6 +39,7 @@ class CreateSupplierSerializer(UserSerializer):
     company_name            = serializers.CharField(max_length=120, required=True)
     phone_number            = serializers.IntegerField(required=True)
 
-
+class LoginSerializer(serializers.Serializer):
+    pass
 
   
