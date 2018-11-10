@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
+import json
 
 
 from rest_framework import status
@@ -122,7 +123,8 @@ def activate(request, uidb64, token):
 
 @api_view(['POST'])
 def custom_login(request):
-    email = request.data
+    body = json.loads(request.data)
+    email = body['email']
     return Response(email)
     # serializer = LoginSerializer(request.data)
     # if serializer.is_valid():
