@@ -122,7 +122,7 @@ def activate(request, uidb64, token):
 
 @api_view(['POST'])
 def custom_login(request):
-    serializer = LoginSerializer(data=request.data)
+    serializer = LoginSerializer(request.data)
     if serializer.is_valid():
         email = serializer['email']
         return Response({'email':email})
