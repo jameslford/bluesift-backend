@@ -123,28 +123,29 @@ def activate(request, uidb64, token):
 
 @api_view(['POST'])
 def custom_login(request):
-    serializer = LoginSerializer(data=request.data)
-    if serializer.is_valid():
-        email = serializer.data['email']
-        password = serializer.data['password']
-        user_model = get_user_model()
-        user = user_model.objects.get(email=email)
-        if not user:
-            return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
+    # serializer = LoginSerializer(data=request.data)
+    return Response(request.data)
+    # if serializer.is_valid():
+    #     email = serializer.data['email']
+    #     password = serializer.data['password']
+    #     user_model = get_user_model()
+    #     user = user_model.objects.get(email=email)
+    #     if not user:
+    #         return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
 
-        if password != user.password:
-            return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
+    #     if password != user.password:
+    #         return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
 
-        if not user.is_active:
-            return Response(
-                'Please check your inbox at ' + email + ' to verify your account',
-                status=status.HTTP_400_BAD_REQUEST
-                )
+    #     if not user.is_active:
+    #         return Response(
+    #             'Please check your inbox at ' + email + ' to verify your account',
+    #             status=status.HTTP_400_BAD_REQUEST
+    #             )
 
-        serialized_user = UserResponseSerializer(user)
-        return Response(serialized_user.data, status=status.HTTP_200_OK)
-    else:
-        return Response(serializer.errors)
+    #     serialized_user = UserResponseSerializer(user)
+    #     return Response(serialized_user.data, status=status.HTTP_200_OK)
+    # else:
+    #     return Response(serializer.errors)
 
 
 @api_view(['GET'])
