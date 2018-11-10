@@ -125,7 +125,7 @@ def custom_login(request):
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
         email = serializer['email']
-        return Response(email)
+        return Response({'email':email})
     # email = request.data.get('email')
     # password = request.data.get('password')
     # # content = {'email': email, 'type': str(type(email))}
