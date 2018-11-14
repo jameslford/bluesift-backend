@@ -32,9 +32,8 @@ def get_customer_projects(user):
     projects = profile.projects.all()
     if projects:
         return projects
-    else:
-        CustomerProject.objects.create(owner=profile)
-        return CustomerProject.objects.filter(owner=profile)
+    CustomerProject.objects.create(owner=profile)
+    return CustomerProject.objects.filter(owner=profile)
 
 
 def get_company_shipping_locations(user):
@@ -42,9 +41,8 @@ def get_company_shipping_locations(user):
     locations = account.shipping_locations.all()
     if locations:
         return locations
-    else:
-        CompanyShippingLocation.objects.create(company_account=account)
-        return CompanyShippingLocation.objects.filter(company_account=account)
+    CompanyShippingLocation.objects.create(company_account=account)
+    return CompanyShippingLocation.objects.filter(company_account=account)
 
 
 def customer_library_append(request):

@@ -26,21 +26,13 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
-    product = ProductPricelessSerializer(many=True)
+    product = ProductPricelessSerializer()
     class Meta:
         model = CustomerProduct
         fields = (
             'id',
             'product',
             'use',
-            'project',
-            'product_name',
-            'product_id',
-            'product_image',
-            'product_category',
-            'product_build',
-            'product_material',
-            'product_lowest_price',
             )
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
