@@ -49,6 +49,3 @@ class Address(models.Model):
                 self.lat = lat_long[0]
                 self.lng = lat_long[1]
                 super(Address, self).save(*args, **kwargs)
-            
-
-

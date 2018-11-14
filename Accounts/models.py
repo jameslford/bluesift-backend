@@ -9,19 +9,24 @@ from Plans.models import Plan
 
 class UserManager(BaseUserManager):
      
-    def create_user(self, email, first_name=None, 
-                    last_name=None, password=None, 
-                    is_active=True, is_staff=False, 
-                    is_admin=False, plan=None, 
-                    confirmed=False, is_supplier=False):
+    def create_user(
+            self,
+            email,
+            full_name=None,
+            password=None,
+            is_active=True,
+            is_staff=False,
+            is_admin=False,
+            plan=None,
+            is_supplier=False
+            ):
         if not email:
             raise ValueError("User must have an email address")
         if not password:
             raise ValueError("Users must have a password")
         user_obj = self.model(
             email=self.normalize_email(email),
-            first_name=first_name,
-            last_name=last_name
+            full_name=full_name,
         )
 
         user_obj.set_password(password)
@@ -33,33 +38,28 @@ class UserManager(BaseUserManager):
         user_obj.save(using=self.db)
         return user_obj
 
-    def create_staffuser(self, email, first_name=None, last_name=None, password=None):
+    def create_staffuser(self, email, full_name=None, password=None):
 
         user = self.create_user(
             email,
-            first_name=first_name,
-            last_name=last_name,
+            full_name=full_name,
             password=password,
             is_active=True,
             is_staff=True
         )
         return user
 
-    def create_superuser(self, email, first_name=None, last_name=None, password=None):
+    def create_superuser(self, email, full_name=None, password=None):
 
         user = self.create_user(
             email,
-            first_name=first_name,
-            last_name=last_name,
+            full_name=full_name,
             password=password,
             is_staff=True,
             is_admin=True,
-            is_active=True  
-        )
+            is_active=True
+            )
         return user
-
-  
-        
 
 
 
@@ -74,9 +74,9 @@ class User(AbstractBaseUser):
     is_active = models.BooleanField(default=False)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
-   
-    objects             = UserManager()
-    
+
+    objects = UserManager()
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 

@@ -115,8 +115,8 @@ def create_user(request):
 
 
 
-@api_view(['POST'])
-def create_supplier(request):
+# @api_view(['POST'])
+# def create_supplier(request):
     userModel = get_user_model()
     email = request.POST.get('email')
     password = request.POST.get('Spassword')
