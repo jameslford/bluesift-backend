@@ -62,8 +62,7 @@ def customer_library_append(request):
         project = projects.first()
         CustomerProduct.objects.create(project=project, product=product)
         return Response(status=status.HTTP_201_CREATED)
-    else:
-        return Response(status=status.HTTP_412_PRECONDITION_FAILED)
+    return Response(status=status.HTTP_412_PRECONDITION_FAILED)
 
 def supplier_library_append(request):
     user = request.user
@@ -135,7 +134,7 @@ def supplier_short_lib(request):
         'selected_location': {
             'nickname': location.nickname,
             'id': location.id
-        },                  
+        },
         'product_ids': product_ids
     }
     response = {'shortLib': full_content}
@@ -165,8 +164,7 @@ def append_lib(request):
     user = request.user
     if user.is_supplier:
         return supplier_library_append(request)
-    else:
-        return customer_library_append(request)
+    return customer_library_append(request)
 
 
 @api_view(['GET'])
@@ -175,8 +173,7 @@ def get_short_lib(request):
     user = request.user
     if user.is_supplier:
         return supplier_short_lib(request)
-    else:
-        return customer_short_lib(request)
+    return customer_short_lib(request)
 
 
 @api_view(['GET'])
@@ -185,8 +182,7 @@ def get_lib(request):
     user = request.user
     if user.is_supplier:
         return supplier_library(request)
-    else:
-        return customer_library(request)
+    return customer_library(request)
 
 
 @api_view(['GET'])
@@ -202,8 +198,7 @@ def supplier_detail(request, pk):
     if supplier:
         serialized = ShippingLocationDetailSerializer(supplier)
         return Response({'location': serialized.data}, status=status.HTTP_200_OK)
-    else:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @permission_classes((IsAuthenticated,))
@@ -214,8 +209,7 @@ def supplier_location(request, pk=None):
         if serialized_loc.is_valid():
             serialized_loc.save()
             return Response('Done!', status=status.HTTP_201_CREATED)
-        else:
-            return Response(serialized_loc.errors)
+        return Response(serialized_loc.errors)
 
     if request.method == 'GET':
         location = CompanyShippingLocation.objects.get(id=pk)
@@ -224,8 +218,6 @@ def supplier_location(request, pk=None):
             return Response({'location': serialized.data}, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 @api_view(['PUT', 'DELETE'])
@@ -238,14 +230,13 @@ def supplier_product(request, pk):
         if request.method == 'DELETE':
             product.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-       
+
         if request.method == 'PUT':
             serialized_prod = SupplierProductUpdateSerializer(data=request.data)
             if serialized_prod.is_valid():
                 serialized_prod.update(instance=product, validated_data=request.data)
                 return Response(status=status.HTTP_202_ACCEPTED)
-            else:
-                return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+            return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
 
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)

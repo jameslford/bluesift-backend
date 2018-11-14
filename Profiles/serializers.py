@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
-from Products.serializers import ProductSemiDetailSerializer
+from Products.serializers import ProductSemiDetailSerializer, ProductPricelessSerializer
 from .models import(
     CompanyAccount,
     CompanyShippingLocation,
@@ -26,6 +26,7 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
+    product = ProductPricelessSerializer(many=True)
     class Meta:
         model = CustomerProduct
         fields = (
@@ -40,7 +41,6 @@ class CustomerProductSerializer(serializers.ModelSerializer):
             'product_build',
             'product_material',
             'product_lowest_price',
-            'product_for_sale'
             )
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
