@@ -7,7 +7,7 @@ from Products.models import Product
 
 
 class CompanyAccount(models.Model):
-    name = models.CharField(max_length=120)
+    name = models.CharField(max_length=120, unique=True)
     account_owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

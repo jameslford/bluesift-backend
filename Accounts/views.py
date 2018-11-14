@@ -3,6 +3,7 @@
 import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.db import IntegrityError
 from django.contrib.auth.hashers import check_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import get_user_model, login, authenticate
@@ -43,23 +44,60 @@ from Profiles.serializers import(
 
 @api_view(['POST'])
 def create_user(request):
+    is_supplier = bool(request.data.get('is_supplier'))
     full_name = request.data.get('full_name')
     email = request.data.get('email')
-    is_supplier = bool(request.data.get('is_supplier'))
-    company_name = request.data.get('company_account')['company_name']
     password = request.data.get('password')
+    company_name = request.data.get('company_account')['company_name']
     phone_number = request.data.get('company_account')['phone_number']
+    user_model = get_user_model()
 
-    context = {
-        'name': full_name,
-        'email': email,
-        'supp': is_supplier,
-        'comp': company_name,
-        'phone': phone_number,
-        'pass': password
-    }
+    try:
+        user = user_model.objects.create(
+            full_name=full_name,
+            email=email,
+            password=password,
+            is_supplier=is_supplier,
+            date_registered=datetime.datetime.now()
+            )
+    except IntegrityError as err:
+        if 'unique constraint' in err.args[0]:
+            return Response('User already exist', status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    return Response(context)
+    current_site = get_current_site(request)
+    message = get_message(user, current_site)
+    to_email = user.email
+    email_obj = EmailMessage(
+        subject="Activate your Buildbook account",
+        body=message,
+        to=[to_email]
+    )
+    email_obj.send()
+
+    if not is_supplier:
+        profile = CustomerProfile.objects.create(user=user)
+        CustomerProject.objects.create(owner=profile, nickname='First Project')
+        return Response('Created', status=status.HTTP_201_CREATED)
+    if is_supplier:
+        try:
+            company = CompanyAccount.objects.create(
+                name=company_name,
+                phone_number=phone_number,
+                account_owner=user
+                )
+            return Response('Created', status=status.HTTP_201_CREATED)
+        except IntegrityError as err:
+            if 'unique constraint' in err.args[0]:
+                user.delete()
+                return Response('Comapny account already exist', status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
     # # serializer = CreateUserSerializer(data=request.data)
     # if serializer.is_valid():
     #     user = serializer.save()
@@ -101,11 +139,7 @@ def create_supplier(request):
     to_email = supplier.email
     email = EmailMessage(mail_subject, message, to=[to_email])
     email.send()
-    company = CompanyAccount.objects.create(
-        name=company_name,
-        phone_number=phone_number,
-        account_owner=supplier
-        )
+
     CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
     serializer = UserSerializer(supplier)
     return Response(serializer.data, status=status.HTTP_201_CREATED)

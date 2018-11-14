@@ -66,8 +66,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser):
 
     email = models.EmailField(max_length=200, unique=True)
-    first_name = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
-    last_name = models.CharField(max_length=50, help_text='Last Name', null=True, blank=True)
+    full_name = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
     plan = models.ForeignKey(Plan, null=True, blank=True, on_delete=models.SET_NULL)
     is_supplier = models.BooleanField(default=False)
     date_registered = models.DateTimeField(auto_now_add=True, null=True)
@@ -85,17 +84,10 @@ class User(AbstractBaseUser):
         return self.email
 
     def get_first_name(self):
-        if self.first_name:
-            return self.first_name
+        if self.full_name:
+            first_name = self.full_name.split(' ')[0]
+            return first_name
         return self.email
-
-    def get_last_name(self):
-        if self.last_name:
-            return self.last_name
-        
-    def get_fullname(self):
-        if self.first_name and self.last_name:
-            return self.first_name + self.last_name
 
     def get_short_name(self):
         return self.email
