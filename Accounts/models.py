@@ -8,12 +8,12 @@ from Plans.models import Plan
 
 
 class UserManager(BaseUserManager):
-      
+     
     def create_user(self, email, first_name=None, 
-                        last_name=None, password=None, 
-                        is_active=True, is_staff=False, 
-                        is_admin=False, plan=None, 
-                        confirmed=False, is_supplier=False):
+                    last_name=None, password=None, 
+                    is_active=True, is_staff=False, 
+                    is_admin=False, plan=None, 
+                    confirmed=False, is_supplier=False):
         if not email:
             raise ValueError("User must have an email address")
         if not password:
@@ -65,18 +65,16 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser):
 
-    email               = models.EmailField(max_length=200, unique=True)
-    first_name          = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
-    last_name           = models.CharField(max_length=50, help_text='Last Name', null=True, blank=True)
-    plan                = models.ForeignKey(Plan,null=True, blank=True, on_delete=models.SET_NULL)
-    is_supplier         = models.BooleanField(default=False)
-    date_registered     = models.DateTimeField(auto_now_add=True, null=True)
-    date_confirmed      = models.DateTimeField(auto_now_add=True, null=True)
-    
-
-    is_active           = models.BooleanField(default=False)
-    staff               = models.BooleanField(default=False)
-    admin               = models.BooleanField(default=False)
+    email = models.EmailField(max_length=200, unique=True)
+    first_name = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
+    last_name = models.CharField(max_length=50, help_text='Last Name', null=True, blank=True)
+    plan = models.ForeignKey(Plan, null=True, blank=True, on_delete=models.SET_NULL)
+    is_supplier = models.BooleanField(default=False)
+    date_registered = models.DateTimeField(auto_now_add=True, null=True)
+    date_confirmed = models.DateTimeField(auto_now_add=True, null=True)
+    is_active = models.BooleanField(default=False)
+    staff = models.BooleanField(default=False)
+    admin = models.BooleanField(default=False)
    
     objects             = UserManager()
     

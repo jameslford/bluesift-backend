@@ -14,7 +14,7 @@ class CompanyAccount(models.Model):
         limit_choices_to={'is_supplier' : True},
         related_name='company_account'
         )
-    headquarters = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True)
+    headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.IntegerField(null=True, blank=True)
 
 

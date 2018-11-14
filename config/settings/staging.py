@@ -14,7 +14,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 REDIRECT_URL = 'https://www.google.com/'
-
+DEFAULT_ADDRESS_INSTANCE=1
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'
 AWS_MEDIA_BUCKET_NAME = "pixidesk-staging-media"

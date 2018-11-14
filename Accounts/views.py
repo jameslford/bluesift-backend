@@ -43,20 +43,37 @@ from Profiles.serializers import(
 
 @api_view(['POST'])
 def create_user(request):
-    serializer = CreateUserSerializer(data=request.data)
-    if serializer.is_valid():
-        user = serializer.save()
-        user.date_registered = datetime.datetime.now()
-        mail_subject = 'Activate your Building Book account.'
-        current_site = get_current_site(request)
-        message = get_message(user, current_site)
-        to_email = user.email 
-        email = EmailMessage(mail_subject, message, to=[to_email])
-        email.send()
-        profile = CustomerProfile.objects.create(user=user)
-        CustomerProject.objects.create(owner=profile, nickname='First Project')
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    full_name = request.data.get('full_name')
+    email = request.data.get('email')
+    is_supplier = bool(request.data.get('is_supplier'))
+    company_name = request.data.get('company_account.company_name')
+    password = request.data.get('password')
+    phone_number = request.data.get('phone_number')
+
+    context = {
+        'name': full_name,
+        'email': email,
+        'supp': is_supplier,
+        'comp': company_name,
+        'phone': phone_number,
+        'pass': password
+    }
+
+    return Response(context)
+    # # serializer = CreateUserSerializer(data=request.data)
+    # if serializer.is_valid():
+    #     user = serializer.save()
+    #     user.date_registered = datetime.datetime.now()
+    #     mail_subject = 'Activate your Building Book account.'
+    #     current_site = get_current_site(request)
+    #     message = get_message(user, current_site)
+    #     to_email = user.email 
+    #     email = EmailMessage(mail_subject, message, to=[to_email])
+    #     email.send()
+    #     profile = CustomerProfile.objects.create(user=user)
+    #     CustomerProject.objects.create(owner=profile, nickname='First Project')
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+    # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
