@@ -24,7 +24,6 @@ class UserResponseSerializer(serializers.ModelSerializer):
         fields = (
             'email',
             'get_first_name',
-            'last_name',
             'is_supplier',
             'auth_token'
             )
