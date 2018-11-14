@@ -46,9 +46,9 @@ def create_user(request):
     full_name = request.data.get('full_name')
     email = request.data.get('email')
     is_supplier = bool(request.data.get('is_supplier'))
-    company_name = request.data.get('company_account.company_name')
+    company_name = request.data.get('company_account')['company_name']
     password = request.data.get('password')
-    phone_number = request.data.get('phone_number')
+    phone_number = request.data.get('company_account')['phone_number']
 
     context = {
         'name': full_name,
