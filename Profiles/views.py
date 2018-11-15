@@ -144,7 +144,7 @@ def customer_library(request):
     user = request.user
     projects = get_customer_projects(user)
     serialized_projs = CustomerProjectSerializer(projects, many=True)
-    return Response(serialized_projs.data, status=status.HTTP_200_OK)
+    return Response({'projects': serialized_projs.data}, status=status.HTTP_200_OK)
     # return Response(serialized_projs.errors)
 
 
