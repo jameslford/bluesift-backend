@@ -27,13 +27,7 @@ from .serializers import(
     SupplierProductUpdateSerializer
     )
 
-def get_customer_projects(user):
-    profile = CustomerProfile.objects.get_or_create(user=user)[0]
-    projects = profile.projects.all()
-    if projects:
-        return projects
-    CustomerProject.objects.create(owner=profile)
-    return CustomerProject.objects.filter(owner=profile)
+
 
 
 def get_company_shipping_locations(user):
@@ -138,12 +132,20 @@ def supplier_short_lib(request):
     response = {'shortLib': full_content}
     return Response(response, status=status.HTTP_200_OK)
 
+def get_customer_projects(user):
+    profile = CustomerProfile.objects.get_or_create(user=user)[0]
+    projects = profile.projects.all()
+    if projects:
+        return projects
+    CustomerProject.objects.create(owner=profile)
+    return CustomerProject.objects.filter(owner=profile)
 
 def customer_library(request):
     user = request.user
     projects = get_customer_projects(user)
     serialized_projs = CustomerProjectSerializer(projects, many=True)
     return Response(serialized_projs.data, status=status.HTTP_200_OK)
+    # return Response(serialized_projs.errors)
 
 
 def supplier_library(request):

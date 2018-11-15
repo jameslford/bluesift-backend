@@ -36,30 +36,40 @@ class ProductSerializer(serializers.ModelSerializer):
             )
 
 class ProductPricelessSerializer(ProductSerializer):
-    fields = (
-        'manufacturer_url',
-        'manufacturer_sku',
-        'manu_collection',
-        'manufacturer_color',
+    image = ImageSerializer()
+    class Meta:
+        model = Product
+        fields = (
+            'id',
+            'name',
+            'image',
+            'manufacturer',
+            'manufacturer_name',
+            'lowest_price',
+            'units',
+            'manufacturer_url',
+            'manufacturer_sku',
+            'manu_collection',
+            'manufacturer_color',
 
-        'build_label',
-        'material_label',
-        'category_name',
-        'finish_label',
-        'material',
-        'category_id',
-        'look_label',
+            'build_label',
+            'material_label',
+            'category_name',
+            'finish_label',
+            'material',
+            'category_id',
+            'look_label',
 
-        'lrv',
-        'cof',
-        'look',
-        'width',
-        'thickness',
-        'length',
-        'residential_warranty',
-        'commercial_warranty',
-        'size'
-    )
+            'lrv',
+            'cof',
+            'look',
+            'width',
+            'thickness',
+            'length',
+            'residential_warranty',
+            'commercial_warranty',
+            'size'
+        )
 
 class ProductSemiDetailSerializer(serializers.ModelSerializer):
     image = ImageSerializer()

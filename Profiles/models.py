@@ -17,12 +17,10 @@ class CompanyAccount(models.Model):
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.IntegerField(null=True, blank=True)
 
-
     def __str__(self):
         if self.name:
             return self.name
-        else:
-            return self.account_owner.get_first_name() + "'s Company"
+        return self.account_owner.get_first_name() + "'s Company"
 
 
 class CompanyShippingLocation(models.Model):
@@ -156,8 +154,7 @@ class CustomerProject(models.Model):
     def __str__(self):
         if self.nickname:
             return self.nickname
-        else:
-            return self.owner.user.get_first_name()
+        return self.owner.user.get_first_name()
 
 class CustomerProduct(models.Model):
     use = models.CharField(max_length=100, blank=True, null=True)
