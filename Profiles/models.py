@@ -135,6 +135,11 @@ class CustomerProfile(models.Model):
     def __str__(self):
         return self.user.get_first_name() + "'s library"
 
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = self.user.get_first_name() + "'s library"
+        super(CustomerProfile, self).save(*args, **kwargs)
+
 
 
 class CustomerProject(models.Model):
