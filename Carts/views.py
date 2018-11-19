@@ -19,7 +19,8 @@ def add_to_cart(request):
         except SupplierProduct.DoesNotExist:
             return Response("Product not found", status=status.HTTP_404_NOT_FOUND)
     cart_id = request.session.get('cart_id', None)
-    qs = super().get_queryset().filter(id=cart_id)
+    qs = Cart.objects.filter(id=cart_id)
+    # qs = super().get_queryset().filter(id=cart_id)
     if qs.count() == 1:
         cart_obj = qs.first()
 
@@ -28,7 +29,7 @@ def add_to_cart(request):
             cart_obj.save()
     else:
         cart_obj = Cart.objects.new(user=request.user)
-        new_obj = True
+        # new_obj = True
         request.session['cart_id'] = cart_obj.id
     for item in cart_obj.items.all():
         if item.product == prod_obj:
