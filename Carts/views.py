@@ -9,8 +9,9 @@ from .serializers import CartSerializer
 
 @api_view(['POST'])
 def add_to_cart(request):
-    supplier_product_id = request.POST.get('supplier_product_id')
+    supplier_product_id = request.POST.get('supplier_product_id', None)
     supplier_product_id = int(supplier_product_id)
+    cart_id = request.POST.get('cart_id', None)
     qty = request.POST.get('qty')
     qty = int(qty)
     if supplier_product_id is not None:
@@ -18,7 +19,6 @@ def add_to_cart(request):
             prod_obj = SupplierProduct.objects.get(id=supplier_product_id)
         except SupplierProduct.DoesNotExist:
             return Response("Product not found", status=status.HTTP_404_NOT_FOUND)
-    cart_id = request.session.get('cart_id', None)
     qs = Cart.objects.filter(id=cart_id)
     if qs.count() == 1:
         cart_obj = qs.first()
@@ -28,7 +28,6 @@ def add_to_cart(request):
             cart_obj.save()
     else:
         cart_obj = Cart.objects.create(user=request.user)
-        request.session['cart_id'] = cart_obj.id
     for item in cart_obj.items.all():
         if item.product == prod_obj:
             qty = qty + item.quantity

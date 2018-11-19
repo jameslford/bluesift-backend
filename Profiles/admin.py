@@ -1,12 +1,12 @@
 from django.contrib import admin
 from .models import(
-                    CompanyAccount, 
-                    CompanyShippingLocation, 
-                    CustomerProfile,
-                    CustomerProduct, 
-                    CustomerProject,
-                    SupplierProduct
-                    )
+    CompanyAccount,
+    CompanyShippingLocation,
+    CustomerProfile,
+    CustomerProduct,
+    CustomerProject,
+    SupplierProduct
+    )
 
 
 admin.site.register(CompanyAccount)
