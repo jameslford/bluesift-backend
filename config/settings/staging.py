@@ -1,6 +1,6 @@
-from .base import *
-import dj_database_url
 import os
+import dj_database_url
+from .base import *
 
 DEBUG = True
 
@@ -14,7 +14,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 REDIRECT_URL = 'https://www.google.com/'
-DEFAULT_ADDRESS_INSTANCE=1
+DEFAULT_ADDRESS_INSTANCE = 1
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'
 AWS_MEDIA_BUCKET_NAME = "pixidesk-staging-media"
@@ -40,8 +40,8 @@ DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-       # 'rest_framework.authentication.BasicAuthentication',
-       # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     )
 }

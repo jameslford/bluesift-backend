@@ -39,7 +39,13 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
     products = CustomerProductSerializer(many=True)
     class Meta:
         model = CustomerProject
-        fields = ('owner', 'address', 'nickname', 'id', 'products')
+        fields = (
+            'owner',
+            'address',
+            'nickname',
+            'id',
+            'products'
+            )
 
 class SupplierProductSerializer(serializers.ModelSerializer):
     product = ProductSemiDetailSerializer(read_only=True)
