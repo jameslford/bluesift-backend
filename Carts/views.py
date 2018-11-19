@@ -10,26 +10,27 @@ from .serializers import CartSerializer
 @api_view(['POST'])
 def add_to_cart(request):
     supplier_product_id = request.POST.get('supplier_product_id', None)
-    supplier_product_id = int(supplier_product_id)
     cart_id = request.POST.get('cart_id', None)
-    if cart_id:
-        cart_id = int(cart_id)
     qty = request.POST.get('qty')
     qty = int(qty)
-    if supplier_product_id is not None:
+
+    if supplier_product_id:
+        supplier_product_id = int(supplier_product_id)
         try:
             prod_obj = SupplierProduct.objects.get(id=supplier_product_id)
         except SupplierProduct.DoesNotExist:
             return Response("Product not found", status=status.HTTP_404_NOT_FOUND)
-    qs = Cart.objects.filter(id=cart_id)
-    if qs.count() == 1:
-        cart_obj = qs.first()
 
-        if request.user.is_authenticated and cart_obj.user is None:
+    if cart_id:
+        cart_id = int(cart_id)
+        cart_obj = Cart.objects.get_or_create(id=cart_id)[0]
+    else:
+        cart_obj = Cart.objects.create()
+
+    if request.user.is_authenticated and cart_obj.user is None:
             cart_obj.user = request.user
             cart_obj.save()
-    else:
-        cart_obj = Cart.objects.create(user=request.user)
+
     for item in cart_obj.items.all():
         if item.product == prod_obj:
             qty = qty + item.quantity
@@ -46,6 +47,8 @@ def add_to_cart(request):
         'item_id': item.id
     }
     return Response({'context': context}, status=status.HTTP_201_CREATED)
+
+
 
 @api_view(['GET'])
 def cart_details(request):
