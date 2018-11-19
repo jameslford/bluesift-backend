@@ -12,6 +12,8 @@ def add_to_cart(request):
     supplier_product_id = request.POST.get('supplier_product_id', None)
     supplier_product_id = int(supplier_product_id)
     cart_id = request.POST.get('cart_id', None)
+    if cart_id:
+        cart_id = int(cart_id)
     qty = request.POST.get('qty')
     qty = int(qty)
     if supplier_product_id is not None:
