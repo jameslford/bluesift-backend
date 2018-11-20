@@ -53,3 +53,7 @@ class CartItem(models.Model):
 
     def __str__(self):
         return str(self.id)
+
+    def total(self):
+        price = self.product.online_ppu
+        return price * self.quantity
