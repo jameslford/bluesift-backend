@@ -53,7 +53,7 @@ def add_to_cart(request):
 @api_view(['GET'])
 def cart_details(request, pk):
     # cart_id = request.GET.get('cart_id', None)
-    cart_obj = Cart.objects.get_or_create(id=pk)
+    cart_obj = Cart.objects.get_or_create(id=pk)[0]
     if request.user.is_authenticated and cart_obj.user is None:
         cart_obj.user = request.user
         cart_obj.save()
