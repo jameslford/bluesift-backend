@@ -46,6 +46,12 @@ class Cart(models.Model):
     def __str__(self):
         return str(self.id)
 
+    def add_total(self):
+        total = 0
+        for item in self.items:
+            total = total + item.total()
+        return total
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(SupplierProduct, on_delete=models.CASCADE, blank=True)
