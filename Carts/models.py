@@ -48,7 +48,7 @@ class Cart(models.Model):
 
     def add_total(self):
         total = 0
-        for item in self.items:
+        for item in self.items.all():
             total = total + item.total()
         return total
 
