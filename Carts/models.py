@@ -36,8 +36,6 @@ class Cart(models.Model):
         null=True,
         blank=True
         )
-    subtotal = models.DecimalField(default=0.00, max_digits=100, decimal_places=2)
-    total = models.DecimalField(default=0.00, max_digits=100, decimal_places=2)
     updated = models.DateTimeField(auto_now=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -46,11 +44,15 @@ class Cart(models.Model):
     def __str__(self):
         return str(self.id)
 
-    def add_total(self):
+    def add_subtotal(self):
         total = 0
         for item in self.items.all():
             total = total + item.total()
         return total
+
+    def add_total(self):
+        subtotal = self.subtotal
+        return subtotal * 1.08
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)

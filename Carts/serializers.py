@@ -9,7 +9,8 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = (
             'product',
             'quantity',
-            'id'
+            'id',
+            'total'
             )
 
 class CartSerializer(serializers.ModelSerializer):
@@ -19,5 +20,6 @@ class CartSerializer(serializers.ModelSerializer):
         fields = (
             'items',
             'id',
+            'add_subtotal',
             'add_total'
             )
