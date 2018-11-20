@@ -65,4 +65,4 @@ class CartItem(models.Model):
 
     def total(self):
         price = self.product.online_ppu
-        return price * self.quantity
+        return price * decimal.Decimal(self.quantity)
