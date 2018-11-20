@@ -51,7 +51,7 @@ class Cart(models.Model):
         return total
 
     def add_total(self):
-        subtotal = self.add_subtotal
+        subtotal = self.add_subtotal()
         return subtotal * 1.08
 
 class CartItem(models.Model):
