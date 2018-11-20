@@ -53,7 +53,7 @@ class Cart(models.Model):
 
     def add_total(self):
         subtotal = self.add_subtotal()
-        return subtotal * decimal.Decimal(1.08)
+        return subtotal * decimal.Decimal('1.08')
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
