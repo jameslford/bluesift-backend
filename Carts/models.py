@@ -46,6 +46,7 @@ class Cart(models.Model):
         return str(self.id)
 
     def add_subtotal(self):
+        total = decimal.Decimal('0.00')
         for item in self.items.all():
             total = total + item.total()
         return total
