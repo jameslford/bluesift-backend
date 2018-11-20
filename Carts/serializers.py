@@ -10,7 +10,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             'product',
             'quantity',
             'id',
-            'total'
+            'add_total'
             )
 
 class CartSerializer(serializers.ModelSerializer):
