@@ -46,7 +46,7 @@ class Cart(models.Model):
         return str(self.id)
 
     def add_subtotal(self):
-        total = 0
+        total = None
         for item in self.items.all():
             total = total + item.total()
         return total
