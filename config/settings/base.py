@@ -4,7 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-MARKUP = '1.1'
+MARKUP = '1.10'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
