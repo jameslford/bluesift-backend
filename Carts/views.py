@@ -28,8 +28,8 @@ def add_to_cart(request):
         cart_obj = Cart.objects.create()
 
     if request.user.is_authenticated and cart_obj.user is None:
-            cart_obj.user = request.user
-            cart_obj.save()
+        cart_obj.user = request.user
+        cart_obj.save()
 
     for item in cart_obj.items.all():
         if item.product == prod_obj:
@@ -52,7 +52,11 @@ def add_to_cart(request):
 
 @api_view(['GET'])
 def cart_details(request):
-    cart_obj, new_obj = Cart.objects.new_or_get(request)
+    cart_id = request.GET.get('cart_id', None)
+    cart_obj = Cart.objects.get_or_create(id=cart_id)
+    if request.user.is_authenticated and cart_obj.user is None:
+        cart_obj.user = request.user
+        cart_obj.save()
     serialized_cart = CartSerializer(cart_obj)
     # return Response({'cart': serialized_cart.data})
     # items = cart_obj.items.all()
