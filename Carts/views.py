@@ -7,10 +7,33 @@ from .models import Cart, CartItem
 from .serializers import CartSerializer
 
 
+def new_or_get(request, pk):
+    user = request.user
+    if not user.is_authenticated:
+        if pk:
+            cart_obj = Cart.objects.get_or_create(id=pk)[0]
+            return cart_obj
+        cart_obj = Cart.objects.create()
+        return cart_obj
+    if not pk:
+        if user.cart:
+            cart_obj = user.cart
+            return cart_obj
+        cart_obj = Cart.objects.create(user=user)
+        return cart_obj
+    if user.cart.id == pk:
+        return user.cart
+    temp_cart = Cart.objects.get_or_create(id=pk)
+    temp_items = [item for item in temp_cart.items.all()]
+    cart_obj = user.cart
+    for item in temp_items:
+        item.cart = cart_obj
+        item.save()
+    return cart_obj
+
 @api_view(['POST'])
-def add_to_cart(request):
+def add_to_cart(request, pk=None):
     supplier_product_id = request.POST.get('supplier_product_id', None)
-    cart_id = request.POST.get('cart_id', None)
     qty = request.POST.get('qty')
     qty = int(qty)
 
@@ -21,21 +44,15 @@ def add_to_cart(request):
         except SupplierProduct.DoesNotExist:
             return Response("Product not found", status=status.HTTP_404_NOT_FOUND)
 
-    if cart_id:
-        cart_id = int(cart_id)
-        cart_obj = Cart.objects.get_or_create(id=cart_id)[0]
-    else:
-        cart_obj = Cart.objects.create()
-
-    if request.user.is_authenticated and cart_obj.user is None:
-        cart_obj.user = request.user
-        cart_obj.save()
+    cart_obj = new_or_get(request, pk)
 
     for item in cart_obj.items.all():
         if item.product == prod_obj:
             qty = qty + item.quantity
             item.delete()
-    if prod_obj.units_available < qty:
+    units_av = prod_obj.units_available
+    if units_av < qty:
+        item = CartItem.objects.create(cart=cart_obj, product=prod_obj, quantity=units_av)
         return Response(
             'Order quantity is greater than units available',
             status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
@@ -49,18 +66,11 @@ def add_to_cart(request):
     return Response({'context': context}, status=status.HTTP_201_CREATED)
 
 
-
 @api_view(['GET'])
-def cart_details(request, pk):
-    # cart_id = request.GET.get('cart_id', None)
-    cart_obj = Cart.objects.get_or_create(id=pk)[0]
-    if request.user.is_authenticated and cart_obj.user is None:
-        cart_obj.user = request.user
-        cart_obj.save()
+def cart_details(request, pk=None):
+    cart_obj = new_or_get(request, pk)
     serialized_cart = CartSerializer(cart_obj)
+    return Response({'cart': serialized_cart.data})
     # return Response({'cart': serialized_cart.data})
     # items = cart_obj.items.all()
     # items = [item.product.id for item in items]
-    return Response({
-        'cart': serialized_cart.data,
-        })

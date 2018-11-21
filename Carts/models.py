@@ -5,7 +5,6 @@ from Profiles.models import SupplierProduct
 
 
 # class CartManager(models.Manager):
-#     def new_or_get(self, request):
 #         cart_id = request.session.get("cart_id", None)
 #         token = request
 #         qs = super().get_queryset().filter(id=cart_id)
