@@ -36,6 +36,7 @@ def add_to_cart(request, pk=None):
     supplier_product_id = request.POST.get('supplier_product_id', None)
     qty = request.POST.get('qty')
     qty = int(qty)
+    prod_obj = None
 
     if supplier_product_id:
         supplier_product_id = int(supplier_product_id)
