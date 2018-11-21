@@ -23,7 +23,7 @@ def new_or_get(request, pk):
         return cart_obj
     if user.cart.id == pk:
         return user.cart
-    temp_cart = Cart.objects.get_or_create(id=pk)
+    temp_cart = Cart.objects.get_or_create(id=pk)[0]
     temp_items = [item for item in temp_cart.items.all()]
     cart_obj = user.cart
     for item in temp_items:
