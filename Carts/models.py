@@ -55,6 +55,9 @@ class Cart(models.Model):
         subtotal = self.add_subtotal()
         return subtotal * decimal.Decimal('1.08')
 
+    def item_count(self):
+        return self.items.count()
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(SupplierProduct, on_delete=models.CASCADE, blank=True)
