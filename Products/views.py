@@ -106,23 +106,23 @@ def product_list(request):
 
     cat_set = pbuild_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_cats = Category.objects.all()
-    cat_facets = facet(cat_set, all_cats, 'build__category__id', cat, cat_queries)
+    cat_facets = facet(cat_set, all_cats, 'build__category', cat, cat_queries)
 
     build_set = pcat_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_builds = Build.objects.all()
-    build_facets = facet(build_set, all_builds, 'build__id', build, build_queries)
+    build_facets = facet(build_set, all_builds, 'build', build, build_queries)
 
     mat_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_mats = Material.objects.all()
-    mat_facets = facet(mat_set, all_mats, 'material__id', mat, mat_queries)
+    mat_facets = facet(mat_set, all_mats, 'material', mat, mat_queries)
 
     manu_set = pcat_prods.intersection(pbuild_prods, pmat_prods, pfin_prods, pthk_prods)
     all_manu = Manufacturer.objects.all()
-    manu_facets = facet(manu_set, all_manu, 'manufacturer__id', manu, manu_queries)
+    manu_facets = facet(manu_set, all_manu, 'manufacturer', manu, manu_queries)
 
     fin_set = pcat_prods.intersection(pbuild_prods, pmat_prods, pmanu_prods, pthk_prods)
     all_fin = Finish.objects.all()
-    fin_facets = facet(fin_set, all_fin, 'finish__id', fin, fin_queries)
+    fin_facets = facet(fin_set, all_fin, 'finish', fin, fin_queries)
 
     # thk_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods)
 
