@@ -88,11 +88,11 @@ def product_list(request):
         arg = {application: True}
         products = products.filter(**arg)
 
-    pcat_prods = or_list_query(products, cat_queries, 'build__category__id')
-    pbuild_prods = or_list_query(products, build_queries, 'build__id')
-    pmat_prods = or_list_query(products, mat_queries, 'material__id')
-    pmanu_prods = or_list_query(products, manu_queries, 'manufacturer__id')
-    pfin_prods = or_list_query(products, fin_queries, 'finish__id')
+    pcat_prods = or_list_query(products, cat_queries, 'build__category')
+    pbuild_prods = or_list_query(products, build_queries, 'build')
+    pmat_prods = or_list_query(products, mat_queries, 'material')
+    pmanu_prods = or_list_query(products, manu_queries, 'manufacturer')
+    pfin_prods = or_list_query(products, fin_queries, 'finish')
     pthk_prods = or_list_query(products, thk_queries, 'thickness')
     
     product_final = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods, pthk_prods)
@@ -140,13 +140,13 @@ def product_list(request):
         load_more = False
 
     facet_list = [
-            avai_facets,
-            app_facets,
-            cat_facets,
-            build_facets,
-            mat_facets,
-            manu_facets,
-            fin_facets
+        avai_facets,
+        app_facets,
+        cat_facets,
+        build_facets,
+        mat_facets,
+        manu_facets,
+        fin_facets
         ]
     serialized_products = ProductSerializer(products_response, many=True)
 
