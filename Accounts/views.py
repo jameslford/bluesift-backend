@@ -44,17 +44,18 @@ from Profiles.serializers import(
 
 @api_view(['POST'])
 def create_user(request):
-    is_supplier = request.data.get('is_supplier')
+    is_supplier = request.data.get('is_supplier', False)
     if is_supplier == 'true':
         is_supplier = True
-    else:
-        is_supplier = False
     full_name = request.data.get('full_name')
     email = request.data.get('email')
     password = request.data.get('password')
     company_name = request.data.get('company_account')['company_name']
     phone_number = request.data.get('company_account')['phone_number']
     user_model = get_user_model()
+
+    if not email:
+        return Response('Must have email', status=status.HTTP_400_BAD_REQUEST)
 
     try:
         user = user_model.objects.create(

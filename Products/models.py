@@ -3,10 +3,10 @@ from django.db.models import Min
 
 
 class Manufacturer(models.Model):
-    name = models.CharField(max_length=200)
+    label = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.name
+        return self.label
 
     def products(self):
         try:
@@ -201,7 +201,7 @@ class Product(models.Model):
 
 
     def manufacturer_name(self):
-        return self.manufacturer.name
+        return self.manufacturer.label
 
     def save(self, *args, **kwargs):
         if self.material:

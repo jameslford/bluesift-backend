@@ -9,7 +9,7 @@ class ManufacturerSerializer(serializers.ModelSerializer):
     enabled = serializers.BooleanField(default=False)
     class Meta:
         model = Manufacturer
-        fields = ('id', 'name', 'products', 'count', 'enabled')
+        fields = ('id', 'label', 'products', 'count', 'enabled')
 
 class ImageSerializer(serializers.ModelSerializer):
 
