@@ -75,11 +75,11 @@ def product_list(request):
 
     app_queries = [q.strip(app+'-') for q in queries if app in q]
     avail_queries = [q.strip(avail+'-') for q in queries if avail in q]
-    build_queries = [q.strip(build+'-') for q in queries if build in q]
-    mat_queries = [q.strip(mat+'-') for q in queries if mat in q]
-    cat_queries = [q.strip(cat+'-') for q in queries if cat in q]
-    manu_queries = [q.strip(manu+'-') for q in queries if manu in q]
-    fin_queries = [q.strip(fin+'-') for q in queries if fin in q]
+    build_queries = [int(q.strip(build+'-')) for q in queries if build in q]
+    mat_queries = [int(q.strip(mat+'-')) for q in queries if mat in q]
+    cat_queries = [int(q.strip(cat+'-')) for q in queries if cat in q]
+    manu_queries = [int(q.strip(manu+'-')) for q in queries if manu in q]
+    fin_queries = [int(q.strip(fin+'-')) for q in queries if fin in q]
     thk_queries = [Decimal(q.strip(thk+'-')) for q in queries if thk in q]
     page = [q.strip('page-') for q in queries if 'page-' in q]
 
@@ -103,7 +103,7 @@ def product_list(request):
     avai_facets = bool_facet(pthk_prods, avail, avai_terms, avail_queries)
     app_facets = bool_facet(pthk_prods, app, app_terms, app_queries)
 
-    cat_set = pbuild_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods).select_related('build__category')
+    cat_set = pbuild_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_cats = Category.objects.all()
     cat_facets = facet(cat_set, all_cats, 'build__category__id', cat, cat_queries)
 
