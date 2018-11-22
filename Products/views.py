@@ -125,14 +125,21 @@ def product_list(request):
 
     # thk_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods)
 
+    paginator = PageNumberPagination()
+    paginator.page_size = 12
+    products_response = paginator.paginate_queryset(product_final, request)
+#     serialized_products = ProductSerializer(products_response, many=True)
+    product_count = product_final.count()
+    page_count = math.ceil(product_count/paginator.page_size)
+    load_more = True
+    if page:
+        page_number = int(page[0])
+    else:
+        page_number = 1
+    if page_number == page_count:
+        load_more = False
 
-
-
-    serialized_products = ProductSerializer(product_final, many=True)
-
-
-    return Response({
-        'filter': [
+    facet_list = [
             avai_facets,
             app_facets,
             cat_facets,
@@ -140,7 +147,16 @@ def product_list(request):
             mat_facets,
             manu_facets,
             fin_facets
-        ],
+        ]
+    serialized_products = ProductSerializer(products_response, many=True)
+
+
+    return Response({
+        'product_count': product_count,
+        'query' : request_url,
+        'load_more': load_more,
+        'current_page': page,
+        'filter': facet_list,
         'products': serialized_products.data
         })
 
