@@ -49,6 +49,7 @@ def facet(products, facet_list, filter_term, name, queries):
     for item in facet_list:
         value = {
             'label': item.label,
+            'term': {filter_term: item.id},
             'count': products.filter(**{filter_term: item.id}).count(),
             'enabled': item.id in queries,
             'value': item.id}
