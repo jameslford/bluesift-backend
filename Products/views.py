@@ -78,9 +78,9 @@ def product_list(request):
     mat = 'material'
 
     request_url = request.GET.urlencode().split('&')
-    request_url = ['&&'+query for query in request_url]
     request_url = [query for query in request_url if 'page' not in query]
     queries = request.GET.getlist('quer')
+    page =  request.GET.get('page', 1)
 
     app_queries = [q.replace(app+'-', '') for q in queries if app in q]
     avail_queries = [q.replace(avail+'-', '') for q in queries if avail in q]
@@ -90,7 +90,6 @@ def product_list(request):
     manu_queries = [int(q.strip(manu+'-')) for q in queries if manu in q]
     fin_queries = [int(q.strip(fin+'-')) for q in queries if fin in q]
     thk_queries = [Decimal(q.strip(thk+'-')) for q in queries if thk in q]
-    page = [q.strip('page-') for q in queries if 'page-' in q]
 
     products = Product.objects.all()
     arg_list = []
