@@ -48,7 +48,7 @@ def facet(products, facet_list, filter_term, name, queries):
     _products = products
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
-        search = {filter_term: str(item.id)}
+        search = {filter_term: item.label}
         value = {
             'total_prods': products.count(),
             'label': item.label,
@@ -109,23 +109,23 @@ def product_list(request):
 
     cat_set = pbuild_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_cats = Category.objects.all()
-    cat_facets = facet(cat_set, all_cats, 'build__category', cat, cat_queries)
+    cat_facets = facet(cat_set, all_cats, 'build__category__label', cat, cat_queries)
 
     build_set = pcat_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_builds = Build.objects.all()
-    build_facets = facet(build_set, all_builds, 'build', build, build_queries)
+    build_facets = facet(build_set, all_builds, 'build__label', build, build_queries)
 
     mat_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_mats = Material.objects.all()
-    mat_facets = facet(mat_set, all_mats, 'material', mat, mat_queries)
+    mat_facets = facet(mat_set, all_mats, 'material__label', mat, mat_queries)
 
     manu_set = pcat_prods.intersection(pbuild_prods, pmat_prods, pfin_prods, pthk_prods)
     all_manu = Manufacturer.objects.all()
-    manu_facets = facet(manu_set, all_manu, 'manufacturer', manu, manu_queries)
+    manu_facets = facet(manu_set, all_manu, 'manufacturer__label', manu, manu_queries)
 
     fin_set = pcat_prods.intersection(pbuild_prods, pmat_prods, pmanu_prods, pthk_prods)
     all_fin = Finish.objects.all()
-    fin_facets = facet(fin_set, all_fin, 'finish', fin, fin_queries)
+    fin_facets = facet(fin_set, all_fin, 'finish__label', fin, fin_queries)
 
     # thk_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods)
 
