@@ -45,6 +45,7 @@ def bool_facet(products, name, facet_list, queries):
     return facet_dict
 
 def facet(products, facet_list, filter_term, name, queries):
+    _products = products
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
         search = {filter_term: item.id}
@@ -52,7 +53,7 @@ def facet(products, facet_list, filter_term, name, queries):
             'total_prods': products.count(),
             'label': item.label,
             'term': {filter_term: item.id},
-            'count': products.filter(**search).values_list('name', flat=True),
+            'count': _products.filter(**search).count(),
             'enabled': item.id in queries,
             'value': item.id}
         facet_dict['values'].append(value)
@@ -112,7 +113,7 @@ def product_list(request):
 
     build_set = pcat_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_builds = Build.objects.all()
-    build_facets = facet(build_set, all_builds, 'build', build, build_queries)
+    build_facets = facet(build_set, all_builds, 'build__id', build, build_queries)
 
     mat_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_mats = Material.objects.all()
