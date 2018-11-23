@@ -48,7 +48,7 @@ def facet(products, facet_list, filter_term, name, queries):
     _products = products
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
-        search = {filter_term: item.id}
+        search = {filter_term: str(item.id)}
         value = {
             'total_prods': products.count(),
             'label': item.label,
@@ -113,7 +113,7 @@ def product_list(request):
 
     build_set = pcat_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_builds = Build.objects.all()
-    build_facets = facet(build_set, all_builds, 'build__id', build, build_queries)
+    build_facets = facet(build_set, all_builds, 'build', build, build_queries)
 
     mat_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_mats = Material.objects.all()
