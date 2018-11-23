@@ -78,6 +78,7 @@ def product_list(request):
     queries = request.GET.getlist('quer')
 
     app_queries = [q.strip(app+'-') for q in queries if app in q]
+    app_queries = [q.strip('"') for q in queries if app in q]
     avail_queries = [q.strip(avail+'-') for q in queries if avail in q]
     build_queries = [int(q.strip(build+'-')) for q in queries if build in q]
     mat_queries = [int(q.strip(mat+'-')) for q in queries if mat in q]
@@ -104,8 +105,8 @@ def product_list(request):
     avai_terms = ['for_sale_online', 'for_sale_in_store']
     app_terms = ['walls', 'countertops', 'floors', 'cabinet_fronts', 'shower_floors', 'shower_walls', 'exterior', 'covered', 'pool_linings' ]
 
-    avai_facets = bool_facet(pthk_prods, avail, avai_terms, avail_queries)
-    app_facets = bool_facet(pthk_prods, app, app_terms, app_queries)
+    avai_facets = bool_facet(product_final, avail, avai_terms, avail_queries)
+    app_facets = bool_facet(product_final, app, app_terms, app_queries)
 
     cat_set = pbuild_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_cats = Category.objects.all()
