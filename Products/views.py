@@ -1,7 +1,6 @@
 ''' Products.views.py '''
 import math
 from decimal import Decimal
-from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -35,11 +34,12 @@ def or_list_query(products, args, term):
 
 def bool_facet(qlist, name, facet_list, queries):
     all_prods = Product.objects.all()
+    new_list = [q for q in qlist if q]
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
         search = {item: True}
         item_prods = all_prods.filter(**search)
-        new_prods = item_prods.intersection(*qlist)
+        new_prods = item_prods.intersection(*new_list)
         value = {
             'label': item,
             'count': new_prods.count(),
@@ -50,11 +50,12 @@ def bool_facet(qlist, name, facet_list, queries):
 
 def facet(qlist, facet_list, filter_term, name, queries):
     all_prods = Product.objects.all()
+    new_list = [q for q in qlist if q]
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
         search = {filter_term: item.label}
         item_prods = all_prods.filter(**search)
-        new_prods = item_prods.intersection(*qlist)
+        new_prods = item_prods.intersection(*new_list)
         value = {
             'listcount': len(qlist),
             'label': item.label,
@@ -98,12 +99,12 @@ def product_list(request):
         arg_list.append(arg)
         products = products.filter(**arg)
 
-    pcat_prods = or_list_query(products, cat_queries, 'build__category')
-    pbuild_prods = or_list_query(products, build_queries, 'build')
-    pmat_prods = or_list_query(products, mat_queries, 'material')
-    pmanu_prods = or_list_query(products, manu_queries, 'manufacturer')
-    pfin_prods = or_list_query(products, fin_queries, 'finish')
-    pthk_prods = or_list_query(products, thk_queries, 'thickness')
+    pcat_prods = or_list_query(products, cat_queries, 'build__category') if cat_queries else None
+    pbuild_prods = or_list_query(products, build_queries, 'build') if build_queries else None
+    pmat_prods = or_list_query(products, mat_queries, 'material') if mat_queries else None
+    pmanu_prods = or_list_query(products, manu_queries, 'manufacturer') if manu_queries else None
+    pfin_prods = or_list_query(products, fin_queries, 'finish') if fin_queries else None
+    pthk_prods = or_list_query(products, thk_queries, 'thickness') if thk_queries else None
     
     prod_sets = [
         pcat_prods,
@@ -135,7 +136,9 @@ def product_list(request):
     all_fin = Finish.objects.all()
     fin_facets = facet([pcat_prods, pbuild_prods, pmanu_prods, pmat_prods, pthk_prods], all_fin, 'finish__label', fin, fin_queries)
 
-    product_final = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods, pthk_prods)
+    final_list = [q for q in prod_sets if q]
+    product_final = final_list[0].intersection(*final_list[1:]) if final_list else products
+    # product_final = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods, pthk_prods)
 
     paginator = PageNumberPagination()
     paginator.page_size = 12
@@ -144,7 +147,7 @@ def product_list(request):
     page_count = math.ceil(product_count/paginator.page_size)
     load_more = True
     if page:
-        page_number = int(page[0])
+        page_number = int(page)
     else:
         page_number = 1
     if page_number == page_count:
