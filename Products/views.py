@@ -47,11 +47,12 @@ def bool_facet(products, name, facet_list, queries):
 def facet(products, facet_list, filter_term, name, queries):
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
+        search = {filter_term: item.id}
         value = {
             'total_prods': products.count(),
             'label': item.label,
             'term': {filter_term: item.id},
-            'count': products.filter(**{filter_term: item.id}).count(),
+            'count': products.filter(**search).values_list('build__label', flat=True),
             'enabled': item.id in queries,
             'value': item.id}
         facet_dict['values'].append(value)
