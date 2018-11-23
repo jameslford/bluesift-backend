@@ -5,7 +5,7 @@ DEBUG = True
 
 STATIC_URL = '/static/'
 
-DATA_PATH = os.getcwd() + '\\config\\management\\data\\*.csv'
+DATA_PATH = os.getcwd() + '\\config\\management\\data\\*.txt'
 
 ALLOWED_HOSTS = []
 

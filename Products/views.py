@@ -26,34 +26,39 @@ def or_list_query(products, args, term):
     _products = products
     if args:
         first_search = {term: args[0]}
-        _products = products.filter(**first_search)
+        new_prods = products.filter(**first_search)
         for arg in args[1:]:
             next_search = {term: arg}
-            _products = _products | products.filter(**next_search)
-        return _products
+            new_prods = new_prods | products.filter(**next_search)
+        return new_prods
     return _products
 
-def bool_facet(products, name, facet_list, queries):
+def bool_facet(qlist, name, facet_list, queries):
+    all_prods = Product.objects.all()
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
+        search = {item: True}
+        item_prods = all_prods.filter(**search)
+        new_prods = item_prods.intersection(*qlist)
         value = {
             'label': item,
-            'count': products.filter(**{item: True}).count(),
+            'count': new_prods.count(),
             'enabled': item in queries,
             'value': item}
         facet_dict['values'].append(value)
     return facet_dict
 
-def facet(products, facet_list, filter_term, name, queries):
-    _products = products
+def facet(qlist, facet_list, filter_term, name, queries):
+    all_prods = Product.objects.all()
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
         search = {filter_term: item.label}
-        new_products = _products.filter(**search)
+        item_prods = all_prods.filter(**search)
+        new_prods = item_prods.intersection(*qlist)
         value = {
-            'total_prods': products.count(),
+            'listcount': len(qlist),
             'label': item.label,
-            'count': new_products.count(),
+            'count': new_prods.count(),
             'enabled': item.id in queries,
             'value': item.id}
         facet_dict['values'].append(value)
@@ -78,7 +83,7 @@ def product_list(request):
     queries = request.GET.getlist('quer')
 
     app_queries = [q.strip(app+'-') for q in queries if app in q]
-    app_queries = [q.strip('"') for q in app_queries if app in q]
+    # app_queries = [q.strip('"') for q in app_queries if app in q]
     avail_queries = [q.strip(avail+'-') for q in queries if avail in q]
     build_queries = [int(q.strip(build+'-')) for q in queries if build in q]
     mat_queries = [int(q.strip(mat+'-')) for q in queries if mat in q]
@@ -89,8 +94,10 @@ def product_list(request):
     page = [q.strip('page-') for q in queries if 'page-' in q]
 
     products = Product.objects.all()
+    arg_list = []
     for application in app_queries + avail_queries:
         arg = {application: True}
+        arg_list.append(arg)
         products = products.filter(**arg)
 
     pcat_prods = or_list_query(products, cat_queries, 'build__category')
@@ -100,40 +107,41 @@ def product_list(request):
     pfin_prods = or_list_query(products, fin_queries, 'finish')
     pthk_prods = or_list_query(products, thk_queries, 'thickness')
     
-    product_final = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods, pthk_prods)
+    prod_sets = [
+        pcat_prods,
+        pbuild_prods,
+        pmat_prods,
+        pmanu_prods,
+        pfin_prods,
+        pthk_prods
+    ]
 
     avai_terms = ['for_sale_online', 'for_sale_in_store']
     app_terms = ['walls', 'countertops', 'floors', 'cabinet_fronts', 'shower_floors', 'shower_walls', 'exterior', 'covered', 'pool_linings' ]
 
-    avai_facets = bool_facet(product_final, avail, avai_terms, avail_queries)
-    app_facets = bool_facet(product_final, app, app_terms, app_queries)
+    avai_facets = bool_facet(prod_sets, avail, avai_terms, avail_queries)
+    app_facets = bool_facet(prod_sets, app, app_terms, app_queries)
 
-    cat_set = pbuild_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_cats = Category.objects.all()
-    cat_facets = facet(cat_set, all_cats, 'build__category__label', cat, cat_queries)
+    cat_facets = facet([pbuild_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_cats, 'build__category__label', cat, cat_queries)
 
-    build_set = pcat_prods.intersection(pmat_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_builds = Build.objects.all()
-    build_facets = facet(build_set, all_builds, 'build__label', build, build_queries)
+    build_facets = facet([pcat_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_builds, 'build__label', build, build_queries)
 
-    mat_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pfin_prods, pthk_prods)
     all_mats = Material.objects.all()
-    mat_facets = facet(mat_set, all_mats, 'material__label', mat, mat_queries)
+    mat_facets = facet([pcat_prods, pbuild_prods, pmanu_prods, pfin_prods, pthk_prods], all_mats, 'material__label', mat, mat_queries)
 
-    manu_set = pcat_prods.intersection(pbuild_prods, pmat_prods, pfin_prods, pthk_prods)
     all_manu = Manufacturer.objects.all()
-    manu_facets = facet(manu_set, all_manu, 'manufacturer__label', manu, manu_queries)
+    manu_facets = facet([pcat_prods, pbuild_prods, pmat_prods, pfin_prods, pthk_prods], all_manu, 'manufacturer__label', manu, manu_queries)
 
-    fin_set = pcat_prods.intersection(pbuild_prods, pmat_prods, pmanu_prods, pthk_prods)
     all_fin = Finish.objects.all()
-    fin_facets = facet(fin_set, all_fin, 'finish__label', fin, fin_queries)
+    fin_facets = facet([pcat_prods, pbuild_prods, pmanu_prods, pmat_prods, pthk_prods], all_fin, 'finish__label', fin, fin_queries)
 
-    # thk_set = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods)
+    product_final = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods, pthk_prods)
 
     paginator = PageNumberPagination()
     paginator.page_size = 12
     products_response = paginator.paginate_queryset(product_final, request)
-#     serialized_products = ProductSerializer(products_response, many=True)
     product_count = product_final.count()
     page_count = math.ceil(product_count/paginator.page_size)
     load_more = True
@@ -153,8 +161,8 @@ def product_list(request):
         manu_facets,
         fin_facets
         ]
-    serialized_products = ProductSerializer(products_response, many=True)
 
+    serialized_products = ProductSerializer(products_response, many=True)
 
     return Response({
         'product_count': product_count,
