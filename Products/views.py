@@ -82,9 +82,8 @@ def product_list(request):
     request_url = [query for query in request_url if 'page' not in query]
     queries = request.GET.getlist('quer')
 
-    app_queries = [q.strip(app+'-') for q in queries if app in q]
-    # app_queries = [q.strip('"') for q in app_queries if app in q]
-    avail_queries = [q.strip(avail+'-') for q in queries if avail in q]
+    app_queries = [q.replace(app+'-', '') for q in queries if app in q]
+    avail_queries = [q.replace(avail+'-', '') for q in queries if avail in q]
     build_queries = [int(q.strip(build+'-')) for q in queries if build in q]
     mat_queries = [int(q.strip(mat+'-')) for q in queries if mat in q]
     cat_queries = [int(q.strip(cat+'-')) for q in queries if cat in q]
@@ -117,7 +116,7 @@ def product_list(request):
     ]
 
     avai_terms = ['for_sale_online', 'for_sale_in_store']
-    app_terms = ['walls', 'countertops', 'floors', 'cabinet_fronts', 'shower_floors', 'shower_walls', 'exterior', 'covered', 'pool_linings' ]
+    app_terms = ['walls', 'countertops', 'floors', 'cabinet_fronts', 'shower_floors', 'shower_walls', 'exterior', 'covered', 'pool_linings']
 
     avai_facets = bool_facet(prod_sets, avail, avai_terms, avail_queries)
     app_facets = bool_facet(prod_sets, app, app_terms, app_queries)
