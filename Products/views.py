@@ -107,6 +107,7 @@ def product_list(request):
     pthk_prods = or_list_query(products, thk_queries, 'thickness') if thk_queries else None
     
     prod_sets = [
+        products,
         pcat_prods,
         pbuild_prods,
         pmat_prods,
