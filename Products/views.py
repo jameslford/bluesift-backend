@@ -49,11 +49,11 @@ def facet(products, facet_list, filter_term, name, queries):
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
         search = {filter_term: item.label}
+        new_products = _products.filter(**search)
         value = {
             'total_prods': products.count(),
             'label': item.label,
-            'term': {filter_term: item.id},
-            'count': _products.filter(**search).count(),
+            'count': new_products.count(),
             'enabled': item.id in queries,
             'value': item.id}
         facet_dict['values'].append(value)
