@@ -52,7 +52,7 @@ def facet(products, facet_list, filter_term, name, queries):
             'total_prods': products.count(),
             'label': item.label,
             'term': {filter_term: item.id},
-            'count': products.filter(**search).values_list('build__label', flat=True),
+            'count': products.filter(**search).values_list('name', flat=True),
             'enabled': item.id in queries,
             'value': item.id}
         facet_dict['values'].append(value)
