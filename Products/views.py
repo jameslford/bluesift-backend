@@ -78,7 +78,7 @@ def product_list(request):
     queries = request.GET.getlist('quer')
 
     app_queries = [q.strip(app+'-') for q in queries if app in q]
-    app_queries = [q.strip('"') for q in queries if app in q]
+    app_queries = [q.strip('"') for q in app_queries if app in q]
     avail_queries = [q.strip(avail+'-') for q in queries if avail in q]
     build_queries = [int(q.strip(build+'-')) for q in queries if build in q]
     mat_queries = [int(q.strip(mat+'-')) for q in queries if mat in q]
