@@ -32,13 +32,13 @@ def or_list_query(products, args, term):
         return new_prods
     return _products
 
-def bool_facet(qlist, name, facet_list, queries):
-    all_prods = Product.objects.all()
+def bool_facet(products, qlist, name, facet_list, queries):
+    # all_prods = Product.objects.all()
     new_list = [q for q in qlist if q]
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
         search = {item: True}
-        item_prods = all_prods.filter(**search)
+        item_prods = products.filter(**search)
         new_prods = item_prods.intersection(*new_list)
         value = {
             'label': item,
@@ -48,13 +48,13 @@ def bool_facet(qlist, name, facet_list, queries):
         facet_dict['values'].append(value)
     return facet_dict
 
-def facet(qlist, facet_list, filter_term, name, queries):
-    all_prods = Product.objects.all()
+def facet(products, qlist, facet_list, filter_term, name, queries):
+
     new_list = [q for q in qlist if q]
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
         search = {filter_term: item.label}
-        item_prods = all_prods.filter(**search)
+        item_prods = products.filter(**search)
         new_prods = item_prods.intersection(*new_list)
         value = {
             'listcount': len(qlist),
@@ -107,7 +107,6 @@ def product_list(request):
     pthk_prods = or_list_query(products, thk_queries, 'thickness') if thk_queries else None
     
     prod_sets = [
-        products,
         pcat_prods,
         pbuild_prods,
         pmat_prods,
@@ -119,26 +118,26 @@ def product_list(request):
     avai_terms = ['for_sale_online', 'for_sale_in_store']
     app_terms = ['walls', 'countertops', 'floors', 'cabinet_fronts', 'shower_floors', 'shower_walls', 'exterior', 'covered', 'pool_linings']
 
-    avai_facets = bool_facet(prod_sets, avail, avai_terms, avail_queries)
-    app_facets = bool_facet(prod_sets, app, app_terms, app_queries)
+    avai_facets = bool_facet(products, prod_sets, avail, avai_terms, avail_queries)
+    app_facets = bool_facet(products, prod_sets, app, app_terms, app_queries)
 
     all_cats = Category.objects.all()
-    cat_facets = facet([products, pbuild_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_cats, 'build__category__label', cat, cat_queries)
+    cat_facets = facet(products, [pbuild_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_cats, 'build__category__label', cat, cat_queries)
 
     all_builds = Build.objects.all()
-    build_facets = facet([products, pcat_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_builds, 'build__label', build, build_queries)
+    build_facets = facet(products, [pcat_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_builds, 'build__label', build, build_queries)
 
     all_mats = Material.objects.all()
-    mat_facets = facet([products, pcat_prods, pbuild_prods, pmanu_prods, pfin_prods, pthk_prods], all_mats, 'material__label', mat, mat_queries)
+    mat_facets = facet(products, [pcat_prods, pbuild_prods, pmanu_prods, pfin_prods, pthk_prods], all_mats, 'material__label', mat, mat_queries)
 
     all_manu = Manufacturer.objects.all()
-    manu_facets = facet([products, pcat_prods, pbuild_prods, pmat_prods, pfin_prods, pthk_prods], all_manu, 'manufacturer__label', manu, manu_queries)
+    manu_facets = facet(products, [pcat_prods, pbuild_prods, pmat_prods, pfin_prods, pthk_prods], all_manu, 'manufacturer__label', manu, manu_queries)
 
     all_fin = Finish.objects.all()
-    fin_facets = facet([products, pcat_prods, pbuild_prods, pmanu_prods, pmat_prods, pthk_prods], all_fin, 'finish__label', fin, fin_queries)
+    fin_facets = facet(products, [pcat_prods, pbuild_prods, pmanu_prods, pmat_prods, pthk_prods], all_fin, 'finish__label', fin, fin_queries)
 
     final_list = [q for q in prod_sets if q]
-    product_final = final_list[0].intersection(*final_list[1:]) if final_list else products
+    product_final = products.intersection(*final_list) if final_list else products
     # product_final = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods, pthk_prods)
 
     paginator = PageNumberPagination()
