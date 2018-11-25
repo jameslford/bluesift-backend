@@ -77,7 +77,7 @@ def create_user(request):
     if is_supplier:
         # try:
         user.save()
-        company = CompanyAccount.objects.create(
+        CompanyAccount.objects.create(
             name=company_name,
             phone_number=phone_number,
             account_owner=user
@@ -96,7 +96,7 @@ def create_user(request):
             )
         email_obj.send()
 
-        return Response('Created', status=status.HTTP_201_CREATED)
+    return Response('Created', status=status.HTTP_201_CREATED)
 
 
 
