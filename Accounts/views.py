@@ -174,8 +174,7 @@ def activate(request, uidb64, token):
         user.save()
         login(request, user)
         return redirect(settings.REDIRECT_URL)
-    else:
-        return Response('Activation link is invalid!')
+    return HttpResponse('Activation link is invalid!')
 
 @api_view(['POST'])
 def custom_login(request):
