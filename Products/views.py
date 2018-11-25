@@ -53,7 +53,7 @@ def facet(products, qlist, facet_list, filter_term, name, queries):
     new_list = [q for q in qlist if q]
     facet_dict = {'name': name, 'values': []}
     for item in facet_list:
-        search = {filter_term: item.label}
+        search = {filter_term: item.id}
         item_prods = products.filter(**search)
         new_prods = item_prods.intersection(*new_list)
         value = {
@@ -83,21 +83,41 @@ def product_list(request):
     queries = request.GET.getlist('quer')
     page =  request.GET.get('page', 1)
 
-    app_queries = [q.replace(app+'-', '') for q in queries if app in q]
-    avail_queries = [q.replace(avail+'-', '') for q in queries if avail in q]
-    build_queries = [int(q.strip(build+'-')) for q in queries if build in q]
-    mat_queries = [int(q.strip(mat+'-')) for q in queries if mat in q]
-    cat_queries = [int(q.strip(cat+'-')) for q in queries if cat in q]
-    manu_queries = [int(q.strip(manu+'-')) for q in queries if manu in q]
-    fin_queries = [int(q.strip(fin+'-')) for q in queries if fin in q]
-    thk_queries = [Decimal(q.strip(thk+'-')) for q in queries if thk in q]
+    app_queries_raw = [q for q in queries if app in q]
+    app_queries = [q.replace(app+'-', '') for q in app_queries_raw]
+
+    avail_queries_raw = [q for q in queries if avail in q]
+    avail_queries = [q.replace(avail+'-', '') for q in avail_queries_raw if avail in q]
+
+    build_queries_raw = [q for q in queries if build in q]
+    build_queries = [int(q.strip(build+'-')) for q in build_queries_raw if build in q]
+
+    mat_queries_raw = [q for q in queries if mat in q]
+    mat_queries = [int(q.strip(mat+'-')) for q in mat_queries_raw if mat in q]
+
+    cat_queries_raw = [q for q in queries if cat in q]
+    cat_queries = [int(q.strip(cat+'-')) for q in cat_queries_raw if cat in q]
+
+    manu_queries_raw = [q for q in queries if manu in q]
+    manu_queries = [int(q.strip(manu+'-')) for q in manu_queries_raw if manu in q]
+
+    fin_queries_raw = [q for q in queries if fin in q]
+    fin_queries = [int(q.strip(fin+'-')) for q in fin_queries_raw if fin in q]
+
+    thk_queries_raw = [q for q in queries if thk in q]
+    thk_queries = [Decimal(q.strip(thk+'-')) for q in thk_queries_raw if thk in q]
 
     products = Product.objects.all()
+    bool_raw = app_queries_raw + avail_queries_raw
     arg_list = []
     for application in app_queries + avail_queries:
-        arg = {application: True}
-        arg_list.append(arg)
-        products = products.filter(**arg)
+        if hasattr(Product, application):
+            arg = {application: True}
+            arg_list.append(arg)
+            products = products.filter(**arg)
+        else:
+            bool_raw = [q for q in bool_raw if application not in q]
+            
 
     pcat_prods = or_list_query(products, cat_queries, 'build__category') if cat_queries else None
     pbuild_prods = or_list_query(products, build_queries, 'build') if build_queries else None
@@ -105,7 +125,7 @@ def product_list(request):
     pmanu_prods = or_list_query(products, manu_queries, 'manufacturer') if manu_queries else None
     pfin_prods = or_list_query(products, fin_queries, 'finish') if fin_queries else None
     pthk_prods = or_list_query(products, thk_queries, 'thickness') if thk_queries else None
-    
+
     prod_sets = [
         pcat_prods,
         pbuild_prods,
@@ -122,19 +142,19 @@ def product_list(request):
     app_facets = bool_facet(products, prod_sets, app, app_terms, app_queries)
 
     all_cats = Category.objects.all()
-    cat_facets = facet(products, [pbuild_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_cats, 'build__category__label', cat, cat_queries)
+    cat_facets = facet(products, [pbuild_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_cats, 'build__category', cat, cat_queries)
 
     all_builds = Build.objects.all()
-    build_facets = facet(products, [pcat_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_builds, 'build__label', build, build_queries)
+    build_facets = facet(products, [pcat_prods, pmat_prods, pmanu_prods, pfin_prods, pthk_prods], all_builds, 'build', build, build_queries)
 
     all_mats = Material.objects.all()
-    mat_facets = facet(products, [pcat_prods, pbuild_prods, pmanu_prods, pfin_prods, pthk_prods], all_mats, 'material__label', mat, mat_queries)
+    mat_facets = facet(products, [pcat_prods, pbuild_prods, pmanu_prods, pfin_prods, pthk_prods], all_mats, 'material', mat, mat_queries)
 
     all_manu = Manufacturer.objects.all()
-    manu_facets = facet(products, [pcat_prods, pbuild_prods, pmat_prods, pfin_prods, pthk_prods], all_manu, 'manufacturer__label', manu, manu_queries)
+    manu_facets = facet(products, [pcat_prods, pbuild_prods, pmat_prods, pfin_prods, pthk_prods], all_manu, 'manufacturer', manu, manu_queries)
 
     all_fin = Finish.objects.all()
-    fin_facets = facet(products, [pcat_prods, pbuild_prods, pmanu_prods, pmat_prods, pthk_prods], all_fin, 'finish__label', fin, fin_queries)
+    fin_facets = facet(products, [pcat_prods, pbuild_prods, pmanu_prods, pmat_prods, pthk_prods], all_fin, 'finish', fin, fin_queries)
 
     final_list = [q for q in prod_sets if q]
     product_final = products.intersection(*final_list) if final_list else products
@@ -164,10 +184,19 @@ def product_list(request):
         ]
 
     serialized_products = ProductSerializer(products_response, many=True)
-
+    raw_queries = [
+        bool_raw +
+        manu_queries_raw +
+        thk_queries_raw +
+        fin_queries_raw +
+        cat_queries_raw +
+        build_queries_raw +
+        mat_queries_raw
+    ]
+    query_response = ['quer=' + q for q in raw_queries[0]]
     return Response({
         'product_count': product_count,
-        'query' : request_url,
+        'query' : query_response,
         'load_more': load_more,
         'current_page': page,
         'filter': facet_list,

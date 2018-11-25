@@ -50,7 +50,9 @@ class CompanyShippingLocation(models.Model):
         return self.priced_products.count()
 
     def address_string(self):
-        return self.address.address_string()
+        if self.address:
+            return self.address.address_string()
+        return 'No Address'
 
     def company_name(self):
         return self.company_account.name
