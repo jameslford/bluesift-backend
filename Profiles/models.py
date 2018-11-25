@@ -29,8 +29,9 @@ class CompanyShippingLocation(models.Model):
         on_delete=models.CASCADE,
         related_name='shipping_locations'
         )
-    address = models.ForeignKey(Address, on_delete=models.CASCADE)
+    address = models.ForeignKey(Address,null=True, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=120, null=True, blank=True)
+    approved_in_store_seller = models.BooleanField(default=False)
     approved_online_seller = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=10)
     number = models.IntegerField(null=True, blank=True)
@@ -55,6 +56,8 @@ class CompanyShippingLocation(models.Model):
         return self.company_account.name
 
     def save(self, *args, **kwargs):
+        if self.approved_online_seller and not self.address:
+            self.approved_online_seller == False
         if not self.number:
             self.number = self.assign_number()
         if not self.nickname:
