@@ -59,7 +59,7 @@ def create_user(request):
         return Response('Must have email', status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        user = user_model.objects.create(
+        user = user_model(
             full_name=full_name,
             email=email,
             password=password,
@@ -82,11 +82,13 @@ def create_user(request):
     email_obj.send()
 
     if not is_supplier:
+        user.save()
         profile = CustomerProfile.objects.create(user=user)
         CustomerProject.objects.create(owner=profile, nickname='First Project')
         return Response('Created', status=status.HTTP_201_CREATED)
     if is_supplier:
         try:
+            user.save()
             company = CompanyAccount.objects.create(
                 name=company_name,
                 phone_number=phone_number,
