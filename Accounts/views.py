@@ -76,16 +76,16 @@ def create_user(request):
         profile = CustomerProfile.objects.create(user=user)
         CustomerProject.objects.create(owner=profile, nickname='First Project')
     if is_supplier:
-        try:
-            user.save()
-            company = CompanyAccount.objects.create(
-                name=company_name,
-                phone_number=phone_number,
-                account_owner=user
-                )
-        except:
-            user.delete()
-            return Response('Comapny account already exist', status=status.HTTP_400_BAD_REQUEST)
+        # try:
+        user.save()
+        company = CompanyAccount.objects.create(
+            name=company_name,
+            phone_number=phone_number,
+            account_owner=user
+            )
+        # except:
+        #     user.delete()
+        #     return Response('Comapny account already exist', status=status.HTTP_400_BAD_REQUEST)
 
         current_site = get_current_site(request)
         message = get_message(user, current_site)
