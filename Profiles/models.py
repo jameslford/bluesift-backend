@@ -11,11 +11,11 @@ class CompanyAccount(models.Model):
     account_owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        limit_choices_to={'is_supplier' : True},
+        # limit_choices_to={'is_supplier' : True},
         related_name='company_account'
         )
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
-    phone_number = models.IntegerField(null=True, blank=True)
+    phone_number = models.CharField(max_length=True, null=True, blank=True)
 
     def __str__(self):
         if self.name:
@@ -128,7 +128,7 @@ class CustomerProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='user_profile'
         )
-    addresses = models.ManyToManyField(Address, null=True, related_name='addresses')
+    addresses = models.ManyToManyField(Address, related_name='addresses')
     phone_number = models.IntegerField(null=True)
     name = models.CharField(max_length=40, blank=True, null=True)
 
