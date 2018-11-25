@@ -50,8 +50,7 @@ def create_user(request):
     email = request.data.get('email')
     password = request.data.get('password')
     company_name = request.data.get('company_account')['company_name']
-    phone_number_str = request.data.get('company_account')['phone_number']
-    phone_number = int(phone_number_str)
+    phone_number = request.data.get('company_account')['phone_number']
     user_model = get_user_model()
     user = None
 
