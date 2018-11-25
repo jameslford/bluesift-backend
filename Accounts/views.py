@@ -53,6 +53,7 @@ def create_user(request):
     company_name = request.data.get('company_account')['company_name']
     phone_number = request.data.get('company_account')['phone_number']
     user_model = get_user_model()
+    user = None
 
     if not email:
         return Response('Must have email', status=status.HTTP_400_BAD_REQUEST)
@@ -89,7 +90,7 @@ def create_user(request):
             company = CompanyAccount.objects.create(
                 name=company_name,
                 phone_number=phone_number,
-                account_owner=user
+                account_owner=user.id
                 )
             return Response('Created', status=status.HTTP_201_CREATED)
         except IntegrityError as err:
