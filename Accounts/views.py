@@ -122,32 +122,32 @@ def create_user(request):
 
 # @api_view(['POST'])
 # def create_supplier(request):
-    userModel = get_user_model()
-    email = request.POST.get('email')
-    password = request.POST.get('Spassword')
-    first_name = request.POST.get('first_name')
-    last_name = request.POST.get('last_name')
-    company_name = request.POST.get('company_name')
-    phone_number = request.POST.get('phone_number')
-    supplier = userModel.objects.create(
-        email=email,
-        password=password,
-        first_name=first_name,
-        last_name=last_name,
-        is_supplier=True,
-        is_active=False
-        )
-    supplier.date_registered = datetime.datetime.now()
-    mail_subject = 'Activate your Building Book account.'
-    current_site = get_current_site(request)
-    message = get_message(supplier, current_site)
-    to_email = supplier.email
-    email = EmailMessage(mail_subject, message, to=[to_email])
-    email.send()
+    # userModel = get_user_model()
+    # email = request.POST.get('email')
+    # password = request.POST.get('Spassword')
+    # first_name = request.POST.get('first_name')
+    # last_name = request.POST.get('last_name')
+    # company_name = request.POST.get('company_name')
+    # phone_number = request.POST.get('phone_number')
+    # supplier = userModel.objects.create(
+    #     email=email,
+    #     password=password,
+    #     first_name=first_name,
+    #     last_name=last_name,
+    #     is_supplier=True,
+    #     is_active=False
+    #     )
+    # supplier.date_registered = datetime.datetime.now()
+    # mail_subject = 'Activate your Building Book account.'
+    # current_site = get_current_site(request)
+    # message = get_message(supplier, current_site)
+    # to_email = supplier.email
+    # email = EmailMessage(mail_subject, message, to=[to_email])
+    # email.send()
 
-    CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
-    serializer = UserSerializer(supplier)
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+    # CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
+    # serializer = UserSerializer(supplier)
+    # return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 def get_message(user, current_site):
