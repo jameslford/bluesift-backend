@@ -71,21 +71,10 @@ def create_user(request):
             return Response('User already exist', status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    current_site = get_current_site(request)
-    message = get_message(user, current_site)
-    to_email = user.email
-    email_obj = EmailMessage(
-        subject="Activate your Buildbook account",
-        body=message,
-        to=[to_email]
-    )
-    email_obj.send()
-
     if not is_supplier:
         user.save()
         profile = CustomerProfile.objects.create(user=user)
         CustomerProject.objects.create(owner=profile, nickname='First Project')
-        return Response('Created', status=status.HTTP_201_CREATED)
     if is_supplier:
         try:
             user.save()
@@ -94,12 +83,21 @@ def create_user(request):
                 phone_number=phone_number,
                 account_owner=user
                 )
-            return Response('Created', status=status.HTTP_201_CREATED)
-        except IntegrityError as err:
-            if 'unique constraint' in err.args[0]:
-                user.delete()
-                return Response('Comapny account already exist', status=status.HTTP_400_BAD_REQUEST)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except:
+            user.delete()
+            return Response('Comapny account already exist', status=status.HTTP_400_BAD_REQUEST)
+
+        current_site = get_current_site(request)
+        message = get_message(user, current_site)
+        to_email = user.email
+        email_obj = EmailMessage(
+            subject="Activate your Buildbook account",
+            body=message,
+            to=[to_email]
+            )
+        email_obj.send()
+
+        return Response('Created', status=status.HTTP_201_CREATED)
 
 
 
