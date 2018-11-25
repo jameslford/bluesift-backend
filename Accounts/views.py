@@ -90,7 +90,7 @@ def create_user(request):
             company = CompanyAccount.objects.create(
                 name=company_name,
                 phone_number=phone_number,
-                account_owner=user.id
+                account_owner=user
                 )
             return Response('Created', status=status.HTTP_201_CREATED)
         except IntegrityError as err:
