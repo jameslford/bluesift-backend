@@ -15,7 +15,7 @@ class CompanyAccount(models.Model):
         related_name='company_account'
         )
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
-    phone_number = models.CharField(max_length=True, null=True, blank=True)
+    phone_number = models.CharField(max_length=12, null=True, blank=True)
 
     def __str__(self):
         if self.name:
