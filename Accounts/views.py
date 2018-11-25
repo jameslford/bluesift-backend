@@ -44,9 +44,8 @@ from Profiles.serializers import(
 
 @api_view(['POST'])
 def create_user(request):
-    is_supplier = request.data.get('is_supplier', False)
-    if is_supplier == 'true':
-        is_supplier = True
+    supplier_str = request.data.get('is_supplier', False)
+    is_supplier = True if supplier_str == 'true' else False
     full_name = request.data.get('full_name')
     email = request.data.get('email')
     password = request.data.get('password')
