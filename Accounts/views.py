@@ -137,10 +137,10 @@ def custom_login(request):
         user = None
 
     if not user:
-        return Response('Invalid Credentials - no user', status=status.HTTP_404_NOT_FOUND)
+        return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
 
     if not check_password(password, user.password):
-        return Response('Invalid Credentials - bad password' + user.password, status=status.HTTP_404_NOT_FOUND)
+        return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
 
     if not user.is_active:
         return Response(

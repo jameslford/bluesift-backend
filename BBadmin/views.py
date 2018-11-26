@@ -17,13 +17,7 @@ def dashboard(request):
     serialized_user = UserSerializer(users, many=True)
     return Response(serialized_user.data)
 
-# @api_view(['POST'])
-# def admin_login(request):
-#     email = request.data.get('email')
-#     password = request.data.get('password')
-#     user_model = get_user_model()
-
-#     user = user_model.objects.get(email=email)
-#     token = Token.objects.get(user=user)
-#     if user.password == password:
-#         return
+@api_view(['POST'])
+@permission_classes((IsAdminUser,))
+def admin_check(request):
+    return Response({'authorized': True})
