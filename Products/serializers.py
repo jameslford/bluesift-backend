@@ -40,6 +40,7 @@ class ProductSerializer(serializers.ModelSerializer):
             )
 
 class ProductDetailSerializer(serializers.ModelSerializer):
+    image = ImageSerializer()
     class Meta:
         model = Product
         fields = (
