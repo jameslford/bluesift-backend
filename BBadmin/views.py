@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 
-from django.contrib.auth import get_user_model, login, authenticate
+from django.contrib.auth import get_user_model
 
 from Accounts.serializers import UserSerializer
 
@@ -21,3 +21,14 @@ def dashboard(request):
 @permission_classes((IsAdminUser,))
 def admin_check(request):
     return Response({'authorized': True})
+
+@api_view(['POST', 'DELETE'])
+@permission_classes((IsAdminUser,))
+def user_details(request, pk=None):
+    user_model = get_user_model()
+
+    if request.method == 'DELETE':
+        user = user_model.objects.get(id=pk)
+        deleted_user = user.delete()
+        return Response({'deleted': deleted_user}, status=status.HTTP_202_ACCEPTED) 
+

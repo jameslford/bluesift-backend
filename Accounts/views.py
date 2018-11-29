@@ -4,7 +4,7 @@ import datetime
 from django.shortcuts import redirect
 from django.http import HttpResponse
 from django.db import IntegrityError
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMessage
@@ -54,18 +54,21 @@ def create_user(request):
 
     if not email:
         return Response('Must have email', status=status.HTTP_400_BAD_REQUEST)
+    if not password:
+        return Response('Must have password', status=status.HTTP_400_BAD_REQUEST)
+    hashed_password = make_password(password)
     try:
         user = user_model(
             full_name=full_name,
             email=email,
-            password=password,
+            password=hashed_password,
             is_supplier=is_supplier,
             date_registered=datetime.datetime.now()
             )
     except IntegrityError as err:
         if 'unique constraint' in err.args[0]:
             return Response('User already exist', status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response('User exist', status=status.HTTP_400_BAD_REQUEST)
 
     if not is_supplier:
         user.save()
