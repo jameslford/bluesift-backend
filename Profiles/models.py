@@ -109,6 +109,11 @@ class SupplierProduct(models.Model):
     class Meta:
         unique_together = ('product', 'supplier')
 
+    def delete(self, using=None, keep_parents=False):
+        product = self.product
+        super().delete(using=using, keep_parents=keep_parents)
+        product.set_prices()
+
 
 class CustomerProfile(models.Model):
     user = models.OneToOneField(

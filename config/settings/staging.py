@@ -23,7 +23,7 @@ AWS_S3_REGION_NAME = 'us-east-1'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'BBDB',
         'USER': 'postgres',
         'PASSWORD': '',
