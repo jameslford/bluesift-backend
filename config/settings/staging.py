@@ -55,3 +55,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 DATA_PATH = os.getcwd() + '/config/management/data/*.txt'
+
+GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
+GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
