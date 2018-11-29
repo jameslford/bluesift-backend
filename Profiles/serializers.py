@@ -108,7 +108,6 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
             'phone_number'
         )
 
-
     def create(self, validated_data):
         address = validated_data.pop('address')
         address = Address.objects.create(**address)

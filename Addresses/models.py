@@ -1,11 +1,17 @@
 from django.conf import settings
 from django.db import models
+from django.contrib.gis.geos import Point
 import googlemaps
 from .choices import states
 
 class Coordinate(models.Model):
     lat = models.FloatField(null=True, blank=True)
     lng = models.FloatField(null=True, blank=True)
+
+    def get_point(self):
+        if self.lat and self.lng:
+            return Point(self.lat, self.lng)
+
 
 
 

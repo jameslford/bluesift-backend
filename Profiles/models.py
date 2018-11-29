@@ -58,7 +58,7 @@ class CompanyShippingLocation(models.Model):
         return self.company_account.name
 
     def save(self, *args, **kwargs):
-        if self.approved_online_seller and not self.address:
+        if not self.address:
             self.approved_online_seller == False
         if not self.number:
             self.number = self.assign_number()
@@ -105,6 +105,8 @@ class SupplierProduct(models.Model):
             self.for_sale_in_store = False
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
         self.product.set_prices()
+        if self.supplier.address:
+            self.product.set_location()
 
     class Meta:
         unique_together = ('product', 'supplier')

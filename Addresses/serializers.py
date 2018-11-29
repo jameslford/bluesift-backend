@@ -10,7 +10,5 @@ class AddressSerializer(serializers.ModelSerializer):
             'country',
             'state',
             'postal_code',
-            'lat',
-            'lng',
             'address_string'
         )

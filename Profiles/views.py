@@ -216,8 +216,7 @@ def supplier_location(request, pk=None):
         if location:
             serialized = ShippingLocationDetailSerializer(location)
             return Response({'location': serialized.data}, status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT', 'DELETE'])

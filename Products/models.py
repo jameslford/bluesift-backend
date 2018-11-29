@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.gis.db import models as g_models
 from django.db.models import Min
 from Addresses.models import Coordinate
 
@@ -135,7 +136,7 @@ class Product(models.Model):
     lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     for_sale_online = models.BooleanField(default=False)
     for_sale_in_store = models.BooleanField(default=False)
-    locations = models.ManyToManyField(Coordinate)
+    locations = g_models.MultiPointField(null=True)
 
     # location
 
@@ -189,10 +190,17 @@ class Product(models.Model):
         self.save()
         return
 
+    def set_locations(self):
+        self.locations = None
+        in_store_sellers = self.priced.filter(for_sale_in_store=True)
+        if in_store_sellers.count() > 0:
+            coordinates = [q.supplier.address.location.get_point() for q in in_store_sellers]
+            points = tuple(coordinates)
+            self.locations = points
+            self.save()
+
+
     # def set_location(self):
-    #     in_store_sellers = self.priced.filter(for_sale_in_store=True)
-    #     if in_store_sellers.count() > 0:
-    #         coordinates = [q.supplier.address.location for q in in_store_sellers]
     #         for loc in coordinates:
     #             self.locations.add(loc)
 
