@@ -2,7 +2,16 @@
 # Products.serializers.py
 
 from rest_framework import serializers
-from .models import Product, Manufacturer, Image
+from .models import(
+    Product,
+    Manufacturer,
+    Image,
+    Build,
+    Material,
+    Category,
+    Look
+    )
+
 
 class ManufacturerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,9 +35,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'image',
-
             'manufacturer',
-
             'lowest_price',
             )
 

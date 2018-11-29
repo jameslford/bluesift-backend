@@ -6,7 +6,6 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address
         fields = (
             'address_line_1', 
-            # 'address_line_2',
             'city',
             'country',
             'state',
