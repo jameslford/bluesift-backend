@@ -13,7 +13,7 @@ from Accounts.serializers import UserSerializer
 @permission_classes((IsAdminUser,))
 def dashboard(request):
     user_model = get_user_model()
-    users = user_model.objects().all()
+    users = user_model.objects.all()
     serialized_user = UserSerializer(users, many=True)
     return Response({'users': serialized_user.data})
 
