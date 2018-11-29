@@ -39,92 +39,6 @@ class ProductSerializer(serializers.ModelSerializer):
             'lowest_price',
             )
 
-class ProductPricelessSerializer(ProductSerializer):
-    image = ImageSerializer()
-    class Meta:
-        model = Product
-        fields = (
-            'id',
-            'name',
-            'image',
-            'manufacturer',
-            'manufacturer_name',
-            'lowest_price',
-            'units',
-            'manufacturer_url',
-            'manufacturer_sku',
-            'manu_collection',
-            'manufacturer_color',
-
-            'build_label',
-            'material_label',
-            'category_name',
-            'finish_label',
-            'material',
-            'category_id',
-            'look_label',
-
-            'lrv',
-            'cof',
-            'look',
-            'width',
-            'thickness',
-            'length',
-            'residential_warranty',
-            'commercial_warranty',
-            'size'
-        )
-
-class ProductSemiDetailSerializer(serializers.ModelSerializer):
-    image = ImageSerializer()
-    class Meta:
-        model = Product
-        fields = (
-            'id',
-            'name',
-
-            'manufacturer',
-            'manufacturer_name',
-            'manufacturer_url',
-            'manufacturer_sku',
-            'manu_collection',
-            'manufacturer_color',
-
-            'lowest_price',
-            'for_sale_in_store',
-            'for_sale_online',
-            'units',
-
-            'image',
-            'build_label',
-            'material_label',
-            'category_name',
-            'finish_label',
-            'material',
-            'category_id',
-            'look_label',
-
-            'walls',
-            'countertops',
-            'cabinet_fronts',
-            'floors',
-            'shower_floors',
-            'shower_walls',
-            'exterior',
-            'covered',
-            'pool_linings',
-
-            'lrv',
-            'cof',
-            'look',
-            'width',
-            'thickness',
-            'length',
-            'residential_warranty',
-            'commercial_warranty',
-            'size'
-        )
-
 class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
@@ -140,8 +54,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'manufacturer_color',
 
             'lowest_price',
-            'units',
-            'prices',
 
             'image',
             'build_label',
