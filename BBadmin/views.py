@@ -15,7 +15,7 @@ def dashboard(request):
     user_model = get_user_model()
     users = user_model.objects().all()
     serialized_user = UserSerializer(users, many=True)
-    return Response(serialized_user.data)
+    return Response({'users': serialized_user.data})
 
 @api_view(['POST'])
 @permission_classes((IsAdminUser,))
