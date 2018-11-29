@@ -22,10 +22,14 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = (
+            'id',
             'email',
             'get_first_name',
             'password',
             'is_supplier',
+            'staff',
+            'admin',
+            'is_active',
             'auth_token'
         )
 
