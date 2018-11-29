@@ -11,7 +11,7 @@ class CompanyAccount(models.Model):
     account_owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        # limit_choices_to={'is_supplier' : True},
+        limit_choices_to={'is_supplier' : True},
         related_name='company_account'
         )
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
@@ -90,24 +90,6 @@ class SupplierProduct(models.Model):
     def __str__(self):
         return str(self.supplier) + ' ' + str(self.product.name)
 
-    def product_name(self):
-        return self.product.name
-
-    def product_category(self):
-        return self.product.build.category.label
-
-    def product_build(self):
-        return self.product.build.label
-
-    def product_material(self):
-        return self.product.material.label
-
-    def product_image(self):
-        return str(self.product.image.image.url)
-
-    def product_lowest_price(self):
-        return str(self.product.lowest_price)
-
     def set_online_price(self):
         if self.my_price:
             self.online_ppu = Decimal(self.my_price) * Decimal(settings.MARKUP)
@@ -175,30 +157,3 @@ class CustomerProduct(models.Model):
 
     def __str__(self):
         return self.product.name
-
-    def product_id(self):
-        return self.product.id
-
-    def product_name(self):
-        return self.product.name
-
-    def product_category(self):
-        return self.product.build.category.label
-
-    def product_build(self):
-        return self.product.build.label
-
-    def product_material(self):
-        return self.product.material.label
-
-    def product_image(self):
-        return str(self.product.image.image.url)
-
-    def product_lowest_price(self):
-        return str(self.product.lowest_price)
-
-    def product_for_sale(self):
-        return self.product.for_sale
-
-    def product_prices(self):
-        return self.product.prices()

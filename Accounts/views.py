@@ -1,22 +1,20 @@
 # Accounts.views.py
 
 import datetime
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.http import HttpResponse
 from django.db import IntegrityError
 from django.contrib.auth.hashers import check_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth import get_user_model, login, authenticate
+from django.contrib.auth import get_user_model
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
-import json
-
 
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -56,7 +54,6 @@ def create_user(request):
 
     if not email:
         return Response('Must have email', status=status.HTTP_400_BAD_REQUEST)
-
     try:
         user = user_model(
             full_name=full_name,
@@ -75,7 +72,6 @@ def create_user(request):
         profile = CustomerProfile.objects.create(user=user)
         CustomerProject.objects.create(owner=profile, nickname='First Project')
     if is_supplier:
-        # try:
         user.save()
         CompanyAccount.objects.create(
             name=company_name,
@@ -109,17 +105,16 @@ def get_message(user, current_site):
 
 
 def activate(request, uidb64, token):
-    userModel = get_user_model()
+    user_model = get_user_model()
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))
-        user = userModel.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, userModel.DoesNotExist):
+        user = user_model.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, user_model.DoesNotExist):
         user = None
     if user is not None and user == Token.objects.get(user=user).user:
         user.is_active = True
         user.date_confirmed = datetime.datetime.now()
         user.save()
-        login(request, user)
         return redirect(settings.REDIRECT_URL)
     return HttpResponse('Activation link is invalid!')
 
@@ -170,56 +165,3 @@ def user_details(request):
         'account': serialized_account.data
     }
     return Response(context)
-
-
-
-
-
-
-
-
-    # # serializer = CreateUserSerializer(data=request.data)
-    # if serializer.is_valid():
-    #     user = serializer.save()
-    #     user.date_registered = datetime.datetime.now()
-    #     mail_subject = 'Activate your Building Book account.'
-    #     current_site = get_current_site(request)
-    #     message = get_message(user, current_site)
-    #     to_email = user.email 
-    #     email = EmailMessage(mail_subject, message, to=[to_email])
-    #     email.send()
-    #     profile = CustomerProfile.objects.create(user=user)
-    #     CustomerProject.objects.create(owner=profile, nickname='First Project')
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-    # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-# @api_view(['POST'])
-# def create_supplier(request):
-    # userModel = get_user_model()
-    # email = request.POST.get('email')
-    # password = request.POST.get('Spassword')
-    # first_name = request.POST.get('first_name')
-    # last_name = request.POST.get('last_name')
-    # company_name = request.POST.get('company_name')
-    # phone_number = request.POST.get('phone_number')
-    # supplier = userModel.objects.create(
-    #     email=email,
-    #     password=password,
-    #     first_name=first_name,
-    #     last_name=last_name,
-    #     is_supplier=True,
-    #     is_active=False
-    #     )
-    # supplier.date_registered = datetime.datetime.now()
-    # mail_subject = 'Activate your Building Book account.'
-    # current_site = get_current_site(request)
-    # message = get_message(supplier, current_site)
-    # to_email = supplier.email
-    # email = EmailMessage(mail_subject, message, to=[to_email])
-    # email.send()
-
-    # CompanyShippingLocation.objects.create(company_account=company, nickname='Main Location')
-    # serializer = UserSerializer(supplier)
-    # return Response(serializer.data, status=status.HTTP_201_CREATED)

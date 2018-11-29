@@ -31,21 +31,20 @@ class Material(models.Model):
     class Meta:
         unique_together = ('category', 'label')
 
-
     def __str__(self):
         return self.category.label + ' | ' + self.label
 
 
 class Build(models.Model):
-    UNITS = (
-        ('Square Foot', 'Square Foot'),
-        ('Linear Foot', 'Linear Foot'),
-        ('Cubic Foot', 'Cubic Foot'),
-        ('Each', 'Each')
-        )
+    # UNITS = (
+    #     ('Square Foot', 'Square Foot'),
+    #     ('Linear Foot', 'Linear Foot'),
+    #     ('Cubic Foot', 'Cubic Foot'),
+    #     ('Each', 'Each')
+    #     )
+    # unit = models.CharField(max_length=50, choices=UNITS, default='not assigned')
 
     label = models.CharField(max_length=40)
-    unit = models.CharField(max_length=50, choices=UNITS, default='not assigned')
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE,
@@ -93,11 +92,6 @@ class Product(models.Model):
         related_name='products',
         on_delete=models.SET_NULL,
         )
-    
-    lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    for_sale_online = models.BooleanField(default=False)
-    for_sale_in_store = models.BooleanField(default=False)
-
 
     manufacturer_url = models.URLField(null=True, blank=True)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
@@ -138,31 +132,43 @@ class Product(models.Model):
     finish = models.ForeignKey(Finish, null=True, blank=True, on_delete=models.SET_NULL)
     shade_variation = models.ForeignKey(ShadeVariation, null=True, blank=True, on_delete=models.SET_NULL)
     notes = models.TextField(null=True, blank=True)
+    lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    for_sale_online = models.BooleanField(default=False)
+    for_sale_in_store = models.BooleanField(default=False)
+    locations = models.ManyToManyField(Coordinate)
 
     # location
-    locations = models.ManyToManyField(Coordinate)
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if self.material:
+            if self.material.category == self.build.category:
+                super(Product, self).save(*args, **kwargs)
+        super(Product, self).save(*args, **kwargs)
 
-    def units(self):
-        try:
-            return self.build.unit
-        except:
-            return
+    # def units(self):
+    #     try:
+    #         return self.build.unit
+    #     except:
+    #         return
 
-    def in_store_sellers(self):
-        in_store_sellers = self.priced.filter(for_sale_in_store=True)
-        if in_store_sellers:
-            return in_store_sellers
+    # def in_store_sellers(self):
+    #     in_store_sellers = self.priced.filter(for_sale_in_store=True)
+    #     if in_store_sellers:
+    #         return in_store_sellers
 
-    def online_sellers(self):
-        online_sellers = self.priced.filter(for_sale_online=True)
-        if online_sellers:
-            return online_sellers
+    # def online_sellers(self):
+    #     online_sellers = self.priced.filter(for_sale_online=True)
+    #     if online_sellers:
+    #         return online_sellers
         
 
     def set_prices(self):
+        self.for_sale_in_store = False
+        self.for_sale_online = False
+        self.lowest_price = None
         online_sellers = self.priced.filter(for_sale_online=True)
         if online_sellers.count() > 0:
             self.for_sale_online = True
@@ -178,12 +184,12 @@ class Product(models.Model):
             self.lowest_price = price["my_price__min"]
             self.save()
 
-    def set_location(self):
-        in_store_sellers = self.priced.filter(for_sale_in_store=True)
-        if in_store_sellers.count() > 0:
-            coordinates = [q.supplier.address.location for q in in_store_sellers]
-            for loc in coordinates:
-                self.locations.add(loc)
+    # def set_location(self):
+    #     in_store_sellers = self.priced.filter(for_sale_in_store=True)
+    #     if in_store_sellers.count() > 0:
+    #         coordinates = [q.supplier.address.location for q in in_store_sellers]
+    #         for loc in coordinates:
+    #             self.locations.add(loc)
 
 
 
@@ -191,39 +197,34 @@ class Product(models.Model):
 
 
 
-    def prices(self):
-        sellers  = self.priced.filter(for_sale_online=True)
-        sellers = sellers | self.priced.filter(for_sale_in_store=True)
-        if sellers.count() > 0:
-            values = sellers.values(
-                'online_ppu',
-                'my_price',
-                'for_sale_online',
-                'for_sale_in_store',
-                'supplier',
-                'units_available',
-                'units_per_order',
-                'id',
-                'supplier__address__address_line_1',
-                'supplier__address__address_line_2',
-                'supplier__address__city',
-                'supplier__address__state',
-                'supplier__address__postal_code',
-                'supplier__company_account__name'
-                )
-            return values
+    # def prices(self):
+    #     sellers  = self.priced.filter(for_sale_online=True)
+    #     sellers = sellers | self.priced.filter(for_sale_in_store=True)
+    #     if sellers.count() > 0:
+    #         values = sellers.values(
+    #             'online_ppu',
+    #             'my_price',
+    #             'for_sale_online',
+    #             'for_sale_in_store',
+    #             'supplier',
+    #             'units_available',
+    #             'units_per_order',
+    #             'id',
+    #             'supplier__address__address_line_1',
+    #             'supplier__address__address_line_2',
+    #             'supplier__address__city',
+    #             'supplier__address__state',
+    #             'supplier__address__postal_code',
+    #             'supplier__company_account__name'
+    #             )
+    #         return values
 
 
 
     def manufacturer_name(self):
         return self.manufacturer.label
 
-    def save(self, *args, **kwargs):
-        if self.material:
-            if self.material.category == self.build.category:
-                super(Product, self).save(*args, **kwargs)
-        else:
-            super(Product, self).save(*args, **kwargs)
+
 
     def category_name(self):
         return self.build.category.label

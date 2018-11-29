@@ -5,11 +5,9 @@ from rest_framework import serializers
 from .models import Product, Manufacturer, Image
 
 class ManufacturerSerializer(serializers.ModelSerializer):
-    count = serializers.IntegerField(default=0)
-    enabled = serializers.BooleanField(default=False)
     class Meta:
         model = Manufacturer
-        fields = ('id', 'label', 'products', 'count', 'enabled')
+        fields = ('id', 'label')
 
 class ImageSerializer(serializers.ModelSerializer):
 
@@ -21,6 +19,7 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     image = ImageSerializer()
+    manufacturer = ManufacturerSerializer()
     class Meta:
         model = Product
         fields = (
@@ -29,10 +28,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'image',
 
             'manufacturer',
-            'manufacturer_name',
 
             'lowest_price',
-            'units',
             )
 
 class ProductPricelessSerializer(ProductSerializer):

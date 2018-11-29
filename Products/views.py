@@ -23,6 +23,10 @@ from .models import(
     Finish
     )
 
+from Profiles.models import(
+    SupplierProduct
+)
+
 def or_list_query(products, args, term):
     _products = products
     if args:
@@ -115,27 +119,17 @@ def product_list(request):
 
     products = Product.objects.all()
     bool_raw = app_queries_raw + avail_queries_raw
-    arg_list = []
+
     for application in app_queries + avail_queries:
         if hasattr(Product, application):
             arg = {application: True}
-            arg_list.append(arg)
             products = products.filter(**arg)
         else:
             bool_raw = [q for q in bool_raw if application not in q]
 
+
     if loc_queries:
-        key = settings.GMAPS_API_KEY
-        radius = [r for r in loc_queries if 'radius' in r]
-        zipcode = [z for z in loc_queries if 'zipcode' in z]
-        if radius and zipcode:
-            gmaps = googlemaps.Client(key=key)
-            rad = radius[0].replace('radius','')
-            zipc = zipcode[0].replace('zipcode','')
-            loc_coordinates =  gmaps.geocode(zipc)[0].geometry.location
-            lat = loc_coordinates['lat']
-            lng = loc_coordinates['lng']
-            
+        pass
 
     pcat_prods = or_list_query(products, cat_queries, 'build__category') if cat_queries else None
     pbuild_prods = or_list_query(products, build_queries, 'build') if build_queries else None
