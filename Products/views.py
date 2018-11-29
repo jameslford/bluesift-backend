@@ -1,6 +1,8 @@
 ''' Products.views.py '''
 import math
+import googlemaps
 from decimal import Decimal
+from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -71,6 +73,7 @@ def product_list(request):
 
     app = 'application'
     avail = 'availability'
+    loc = 'location'
     manu = 'manufacturer'
     thk = 'thickness'
     fin = 'finish'
@@ -87,25 +90,28 @@ def product_list(request):
     app_queries = [q.replace(app+'-', '') for q in app_queries_raw]
 
     avail_queries_raw = [q for q in queries if avail in q]
-    avail_queries = [q.replace(avail+'-', '') for q in avail_queries_raw if avail in q]
+    avail_queries = [q.replace(avail+'-', '') for q in avail_queries_raw]
+
+    loc_queries_raw = [q for q in queries if loc in q]
+    loc_queries = [q.replace(loc+'-', '') for q in loc_queries_raw]
 
     build_queries_raw = [q for q in queries if build in q]
-    build_queries = [int(q.strip(build+'-')) for q in build_queries_raw if build in q]
+    build_queries = [int(q.strip(build+'-')) for q in build_queries_raw]
 
     mat_queries_raw = [q for q in queries if mat in q]
-    mat_queries = [int(q.strip(mat+'-')) for q in mat_queries_raw if mat in q]
+    mat_queries = [int(q.strip(mat+'-')) for q in mat_queries_raw]
 
     cat_queries_raw = [q for q in queries if cat in q]
-    cat_queries = [int(q.strip(cat+'-')) for q in cat_queries_raw if cat in q]
+    cat_queries = [int(q.strip(cat+'-')) for q in cat_queries_raw]
 
     manu_queries_raw = [q for q in queries if manu in q]
-    manu_queries = [int(q.strip(manu+'-')) for q in manu_queries_raw if manu in q]
+    manu_queries = [int(q.strip(manu+'-')) for q in manu_queries_raw]
 
     fin_queries_raw = [q for q in queries if fin in q]
-    fin_queries = [int(q.strip(fin+'-')) for q in fin_queries_raw if fin in q]
+    fin_queries = [int(q.strip(fin+'-')) for q in fin_queries_raw]
 
     thk_queries_raw = [q for q in queries if thk in q]
-    thk_queries = [Decimal(q.strip(thk+'-')) for q in thk_queries_raw if thk in q]
+    thk_queries = [Decimal(q.strip(thk+'-')) for q in thk_queries_raw]
 
     products = Product.objects.all()
     bool_raw = app_queries_raw + avail_queries_raw
@@ -117,6 +123,18 @@ def product_list(request):
             products = products.filter(**arg)
         else:
             bool_raw = [q for q in bool_raw if application not in q]
+
+    if loc_queries:
+        key = settings.GMAPS_API_KEY
+        radius = [r for r in loc_queries if 'radius' in r]
+        zipcode = [z for z in loc_queries if 'zipcode' in z]
+        if radius and zipcode:
+            gmaps = googlemaps.Client(key=key)
+            rad = radius[0].replace('radius','')
+            zipc = zipcode[0].replace('zipcode','')
+            loc_coordinates =  gmaps.geocode(zipc)[0].geometry.location
+            lat = loc_coordinates['lat']
+            lng = loc_coordinates['lng']
             
 
     pcat_prods = or_list_query(products, cat_queries, 'build__category') if cat_queries else None

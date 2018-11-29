@@ -3,6 +3,11 @@ from django.db import models
 import googlemaps
 from .choices import states
 
+class Coordinate(models.Model):
+    lat = models.FloatField(null=True, blank=True)
+    lng = models.FloatField(null=True, blank=True)
+
+
 
 class Address(models.Model):
     address_line_1 = models.CharField(max_length=120)
@@ -16,14 +21,12 @@ class Address(models.Model):
         )
     state = models.CharField(max_length=120)
     postal_code = models.CharField(max_length=11)
-    lat = models.FloatField(null=True, blank=True)
-    lng = models.FloatField(null=True, blank=True)
+    coordinates = models.ForeignKey(Coordinate, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         if self.address_line_2:
             return '%s, %s, %s, %s, %s' % (self.address_line_1, self.address_line_2, self.city, self.state, self.postal_code)
-        else:
-            return '%s, %s, %s, %s' % (self.address_line_1, self.city, self.state, self.postal_code)
+        return '%s, %s, %s, %s' % (self.address_line_1, self.city, self.state, self.postal_code)
 
     def address_string(self):
         al1 = self.address_line_1
@@ -43,9 +46,9 @@ class Address(models.Model):
 
 
     def save(self, *args, **kwargs):
-        if not self.lat:
+        if not self.coordinates:
             lat_long = self.get_latlng()
             if lat_long:
-                self.lat = lat_long[0]
-                self.lng = lat_long[1]
+                coordinate = Coordinate.objects.create(lat=lat_long[0], lng=lat_long[1])
+                self.coordinates = coordinate
                 super(Address, self).save(*args, **kwargs)

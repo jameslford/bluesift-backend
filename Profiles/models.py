@@ -117,8 +117,10 @@ class SupplierProduct(models.Model):
         if self.units_available <= 0:
             self.for_sale_in_store = False
             self.for_sale_online = False
-        if self.supplier.approved_online_seller is False:
+        if not self.supplier.approved_online_seller:
             self.for_sale_online = False
+        if not self.supplier.approved_in_store_seller:
+            self.for_sale_in_store = False
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
         self.product.set_prices()
 

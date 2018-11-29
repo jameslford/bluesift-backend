@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Min
+from Addresses.models import Coordinate
 
 
 class Manufacturer(models.Model):
@@ -92,7 +93,6 @@ class Product(models.Model):
         related_name='products',
         on_delete=models.SET_NULL,
         )
-
     
     lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     for_sale_online = models.BooleanField(default=False)
@@ -139,6 +139,9 @@ class Product(models.Model):
     shade_variation = models.ForeignKey(ShadeVariation, null=True, blank=True, on_delete=models.SET_NULL)
     notes = models.TextField(null=True, blank=True)
 
+    # location
+    locations = models.ManyToManyField(Coordinate)
+
     def __str__(self):
         return self.name
 
@@ -174,6 +177,18 @@ class Product(models.Model):
             price = all_sellers.aggregate(Min('my_price'))
             self.lowest_price = price["my_price__min"]
             self.save()
+
+    def set_location(self):
+        in_store_sellers = self.priced.filter(for_sale_in_store=True)
+        if in_store_sellers.count() > 0:
+            coordinates = [q.supplier.address.location for q in in_store_sellers]
+            for loc in coordinates:
+                self.locations.add(loc)
+
+
+
+
+
 
 
     def prices(self):
