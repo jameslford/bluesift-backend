@@ -106,7 +106,7 @@ class SupplierProduct(models.Model):
         super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
         self.product.set_prices()
         if self.supplier.address:
-            self.product.set_location()
+            self.product.set_locations()
 
     class Meta:
         unique_together = ('product', 'supplier')
