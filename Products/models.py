@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.gis.db import models as g_models
 from django.db.models import Min
+from django.contrib.gis.geos import MultiPoint
 from Addresses.models import Coordinate
 
 
@@ -195,8 +196,8 @@ class Product(models.Model):
         in_store_sellers = self.priced.filter(for_sale_in_store=True)
         if in_store_sellers.count() > 0:
             coordinates = [q.supplier.address.coordinates.get_point() for q in in_store_sellers]
-            # points = tuple(coordinates)
-            self.locations = coordinates
+            points = MultiPoint(*coordinates)
+            self.locations = points
             self.save()
 
 
