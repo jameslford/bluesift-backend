@@ -112,9 +112,14 @@ class SupplierProduct(models.Model):
         unique_together = ('product', 'supplier')
 
     def delete(self, using=None, keep_parents=False):
+        address = False
+        if self.supplier.address:
+            address = True
         product = self.product
         super().delete(using=using, keep_parents=keep_parents)
         product.set_prices()
+        if address:
+            product.set_locations()
 
 
 class CustomerProfile(models.Model):
