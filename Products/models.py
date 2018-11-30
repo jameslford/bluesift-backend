@@ -194,7 +194,7 @@ class Product(models.Model):
         self.locations = None
         in_store_sellers = self.priced.filter(for_sale_in_store=True)
         if in_store_sellers.count() > 0:
-            coordinates = [q.supplier.address.location.get_point() for q in in_store_sellers]
+            coordinates = [q.supplier.address.coordinates.get_point() for q in in_store_sellers]
             points = tuple(coordinates)
             self.locations = points
             self.save()
