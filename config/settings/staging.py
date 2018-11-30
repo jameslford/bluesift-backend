@@ -23,7 +23,7 @@ AWS_S3_REGION_NAME = 'us-east-1'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'ENGINE': '',
         'NAME': 'BBDB',
         'USER': 'postgres',
         'PASSWORD': '',
@@ -32,6 +32,8 @@ DATABASES = {
 
 
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
+DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+
 
 
 
