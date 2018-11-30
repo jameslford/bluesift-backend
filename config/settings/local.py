@@ -27,8 +27,10 @@ AWS_S3_REGION_NAME = 'us-east-1'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'PixiDesk',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
     }
 }
 
@@ -40,3 +42,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     )
 }
+# "C:\\OSGeo4W\\bin\\gdal202.dll"
+# GDAL_LIBRARY_PATH = "C:\\OSGeo4W64\\bin\\"
+GDAL_LIBRARY_PATH = 'C:\\OSGeo4W64\\bin\\gdal203.dll'
+# GDAL_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\gdal202.dll"
+# GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
+# GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
