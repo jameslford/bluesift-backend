@@ -74,6 +74,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'exterior',
             'covered',
             'pool_linings',
+            'points',
 
             'lrv',
             'cof',

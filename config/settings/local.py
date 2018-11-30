@@ -28,7 +28,7 @@ AWS_S3_REGION_NAME = 'us-east-1'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'PixiDesk',
+        'NAME': 'Buildbook',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
     }
