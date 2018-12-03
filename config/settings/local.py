@@ -28,9 +28,9 @@ AWS_S3_REGION_NAME = 'us-east-1'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'Buildbook',
+        'NAME': 'buildbook',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'PASSWORD': '%&N2aBsub',
     }
 }
 
@@ -42,9 +42,15 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     )
 }
+
+# "C:\Users\james\Documents\Code\BuildingBook\envs\env\GDAL-2.3.2-cp36-cp36m-win_amd64.whl"
+
 # "C:\\OSGeo4W\\bin\\gdal202.dll"
-# GDAL_LIBRARY_PATH = "C:\\OSGeo4W64\\bin\\"
-GDAL_LIBRARY_PATH = 'C:\\OSGeo4W64\\bin\\gdal203.dll'
+# GDAL_LIBRARY_PATH = ";C:\\OSGeo4W64\\bin\\"
+# GDAL_LIBRARY_PATH = "C\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\env\\Lib\\site-packages\\osgeo\\data\\gdal"
+# GEOS_LIBRARY_PATH = 'C:\\OSGeo4W64\\bin\\geos.dll'
+# GDAL_LIBRARY_PATH = "C:\\Program Files\\GDAL\\gdal203.dll"
+# GEOS_LIBRARY_PATH = ";C:\\Program Fi1les\\GDAL\\geos.dll"
 # GDAL_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\gdal202.dll"
-# GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
-# GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
+GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
+GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
