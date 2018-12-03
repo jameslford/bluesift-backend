@@ -1,5 +1,5 @@
-from django.db import models
-from django.contrib.gis.db import models as g_models
+# from django.db import models
+from django.contrib.gis.db import models
 from django.db.models import Min
 from django.contrib.gis.geos import MultiPoint
 from Addresses.models import Coordinate
@@ -137,7 +137,7 @@ class Product(models.Model):
     lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     for_sale_online = models.BooleanField(default=False)
     for_sale_in_store = models.BooleanField(default=False)
-    locations = g_models.MultiPointField(null=True)
+    locations = models.MultiPointField(null=True)
 
     # location
 

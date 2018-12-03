@@ -2,7 +2,10 @@
 import math
 import googlemaps
 from decimal import Decimal
+# from pygeocoder import Geocoder
 from django.conf import settings
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import D
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -129,7 +132,17 @@ def product_list(request):
 
 
     if loc_queries:
-        pass
+        rad_raw = [q for q in loc_queries if 'radius' in q]
+        zip_raw = [q for q in loc_queries if 'zip' in q]
+        radius = D(m=rad_raw.replace('radius-',''))
+        gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
+        lat_lng = gmaps.geocode(zip_raw.replace('zipcode-', ''))[0]['geometry']['location']
+        origin = Point(lat_lng['lat'], lat_lng['lng'])
+        zprods = products.filter(poly_distance_lte=(origin, radius))
+
+
+
+        
 
     pcat_prods = or_list_query(products, cat_queries, 'build__category') if cat_queries else None
     pbuild_prods = or_list_query(products, build_queries, 'build') if build_queries else None

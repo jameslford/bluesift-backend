@@ -12,6 +12,13 @@ class Coordinate(models.Model):
         if self.lat and self.lng:
             return Point(self.lat, self.lng)
 
+class Zipcode(models.Model):
+    code = models.CharField(max_length=5)
+    coordinate = models.ForeignKey(Coordinate, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.code
+
 
 
 
