@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.db import models
+# from django.db import models
+from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 import googlemaps
 from .choices import states

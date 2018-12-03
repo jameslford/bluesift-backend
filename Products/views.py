@@ -222,6 +222,7 @@ def product_list(request):
     return Response({
         'product_count': product_count,
         'query' : query_response,
+        'zprods' : ProductSerializer(zprods, many=True),
         'load_more': load_more,
         'current_page': page,
         'filter': facet_list,
