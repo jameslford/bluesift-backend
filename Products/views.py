@@ -144,9 +144,8 @@ def product_list(request):
         zipcode = zip_raw[0].replace('zipcode-', '')
         lat, lng = lookup.lookup(zipcode)
         origin = Point(float(lat), float(lng))
-        prods = products.filter(locations__distance_lte=(origin, radius))
-        serializered_prods = ProductSerializer(prods, many=True)
-        zprods = serializered_prods.data
+        products = products.filter(locations__distance_lte=(origin, radius))
+
 
 
     location_facet = None
@@ -242,7 +241,6 @@ def product_list(request):
         'product_count': product_count,
         'query' : query_response,
         'zprods' : zprods,
-        'origin':str(origin),
         'radius': radius_raw,
         'load_more': load_more,
         'current_page': page,
