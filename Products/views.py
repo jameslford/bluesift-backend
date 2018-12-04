@@ -155,7 +155,7 @@ def product_list(request):
         for radi in radii:
             value = {
                 'radius': radi,
-                'enabled': True if radi in rad_raw else False
+                'enabled': True if rad_raw and radi in rad_raw else False
             }
             location_facet['values'].append(value)
 
