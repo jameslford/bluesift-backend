@@ -145,16 +145,17 @@ def product_list(request):
         prods = products.filter(locations__distance_lte=(origin, radius))
         serializered_prods =  ProductSerializer(prods, many=True)
         zprods = serializered_prods.data
+        radii = [5, 10, 20, 50, 100, 200]
+        location_facet = {'name': 'Location', 'zip': zipcode , 'values': []}
+        for radi in radii:
+            value = {
+                'radius': radi,
+                'enabled': True if radi in rad_raw else False
+            }
+            location_facet['values'].append(value)
 
 
-    radii = [5, 10, 20, 50, 100, 200]
-    location_facet = {'name': 'Location', 'zip': zipcode , 'values': []}
-    for radi in radii:
-        value = {
-            'radius': radi,
-            'enabled': True if radi in rad_raw else False
-        }
-        location_facet['values'].append(value)
+
 
 
     pcat_prods = or_list_query(products, cat_queries, 'build__category') if cat_queries else None
