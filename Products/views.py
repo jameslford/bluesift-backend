@@ -242,7 +242,7 @@ def product_list(request):
         'product_count': product_count,
         'query' : query_response,
         'zprods' : zprods,
-        'origin': origin,
+        'origin':str(origin),
         'radius': radius_raw,
         'load_more': load_more,
         'current_page': page,
