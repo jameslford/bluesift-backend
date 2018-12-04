@@ -131,10 +131,13 @@ def product_list(request):
             bool_raw = [q for q in bool_raw if application not in q]
 
     zprods = None
+    zipcode = None
+    rad_raw = None
     if loc_queries:
         rad_raw = [q for q in loc_queries if 'radius' in q]
         zip_raw = [q for q in loc_queries if 'zip' in q]
-        radius = D(m=rad_raw[0].replace('radius-',''))
+        radius = D(m=rad_raw[0].replace('radius-', ''))
+        zipcode = zip_raw[0].replace('zipcode-', '')
         gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
         response = gmaps.geocode(zip_raw[0].replace('zipcode-', ''))
         lat_lng = response[0]['geometry']['location']
@@ -144,8 +147,15 @@ def product_list(request):
         zprods = serializered_prods.data
 
 
+    radii = [5, 10, 20, 50, 100, 200]
+    location_facet = {'name': 'Location', 'zip': zipcode , 'values': []}
+    for radi in radii:
+        value = {
+            'radius': radi,
+            'enabled': True if radi in rad_raw else False
+        }
+        location_facet['values'].append(value)
 
-        
 
     pcat_prods = or_list_query(products, cat_queries, 'build__category') if cat_queries else None
     pbuild_prods = or_list_query(products, build_queries, 'build') if build_queries else None
@@ -227,6 +237,7 @@ def product_list(request):
         'zprods' : zprods,
         'load_more': load_more,
         'current_page': page,
+        'location': location_facet,
         'filter': facet_list,
         'products': serialized_products.data
         })
