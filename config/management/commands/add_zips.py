@@ -15,5 +15,12 @@ from Products.models import Manufacturer, Category, Look, Material, Build, Produ
 
 class Command(BaseCommand):
 
-    def handle(self):
-        data = os.getcwd() + '/config/management/zips/zipcodes.csv'
+    def handle(self, *args, **options):
+        path = os.getcwd() + '\\config\\management\\zips\\zipcodes.csv'
+        # print(path)
+        zip_dic = {}
+        with open(path) as readfile:
+            reader = csv.reader(readfile, delimiter=",")
+            for row in reader:
+                zip_dic[row[0]] = [row[1], row[2]]
+        print(zip_dic['30319'])
