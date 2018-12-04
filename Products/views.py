@@ -130,15 +130,18 @@ def product_list(request):
         else:
             bool_raw = [q for q in bool_raw if application not in q]
 
-
+    zprods = None
     if loc_queries:
         rad_raw = [q for q in loc_queries if 'radius' in q]
         zip_raw = [q for q in loc_queries if 'zip' in q]
-        radius = D(m=rad_raw.replace('radius-',''))
+        radius = D(m=rad_raw[0].replace('radius-',''))
         gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
-        lat_lng = gmaps.geocode(zip_raw.replace('zipcode-', ''))[0]['geometry']['location']
+        response = gmaps.geocode(zip_raw[0].replace('zipcode-', ''))
+        lat_lng = response[0]['geometry']['location']
         origin = Point(lat_lng['lat'], lat_lng['lng'])
-        zprods = products.filter(poly_distance_lte=(origin, radius))
+        prods = products.filter(locations__distance_lte=(origin, radius))
+        serializered_prods =  ProductSerializer(prods, many=True)
+        zprods = serializered_prods.data
 
 
 
@@ -183,7 +186,6 @@ def product_list(request):
 
     final_list = [q for q in prod_sets if q]
     product_final = products.intersection(*final_list) if final_list else products
-    # product_final = pcat_prods.intersection(pbuild_prods, pmanu_prods, pmat_prods, pfin_prods, pthk_prods)
 
     paginator = PageNumberPagination()
     paginator.page_size = 12
@@ -222,7 +224,7 @@ def product_list(request):
     return Response({
         'product_count': product_count,
         'query' : query_response,
-        'zprods' : ProductSerializer(zprods, many=True),
+        'zprods' : zprods,
         'load_more': load_more,
         'current_page': page,
         'filter': facet_list,
