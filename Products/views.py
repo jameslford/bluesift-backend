@@ -130,10 +130,7 @@ def product_list(request):
         else:
             bool_raw = [q for q in bool_raw if application not in q]
 
-    zprods = None
-    zipcode = None
-    rad_raw = None
-    location_facet = None
+
     if loc_queries:
         rad_raw = [q for q in loc_queries if 'radius' in q]
         zip_raw = [q for q in loc_queries if 'zip' in q]
@@ -146,6 +143,13 @@ def product_list(request):
         prods = products.filter(locations__distance_lte=(origin, radius))
         serializered_prods =  ProductSerializer(prods, many=True)
         zprods = serializered_prods.data
+
+
+    zprods = None
+    zipcode = None
+    rad_raw = None
+    location_facet = None
+    if avail_queries_raw:
         radii = [5, 10, 20, 50, 100, 200]
         location_facet = {'name': 'Location', 'zip': zipcode , 'values': []}
         for radi in radii:
