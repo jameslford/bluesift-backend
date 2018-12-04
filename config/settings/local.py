@@ -6,6 +6,7 @@ DEBUG = True
 STATIC_URL = '/static/'
 
 DATA_PATH = os.getcwd() + '\\config\\management\\data\\*.txt'
+ZIP_PATH =  os.getcwd() + '\\config\\management\\zips\\zipcodes.csv'
 
 ALLOWED_HOSTS = []
 
