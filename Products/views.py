@@ -140,7 +140,7 @@ def product_list(request):
         rad_raw = [q for q in loc_queries if 'radius' in q]
         zip_raw = [q for q in loc_queries if 'zip' in q]
         radius_raw = int(rad_raw[0].replace('radius-', ''))
-        radius = D(m=radius_raw)
+        radius = D(mi=radius_raw)
         zipcode = zip_raw[0].replace('zipcode-', '')
         lat, lng = lookup.lookup(zipcode)
         origin = Point(float(lat), float(lng))
