@@ -133,6 +133,7 @@ def product_list(request):
     zprods = None
     zipcode = None
     rad_raw = None
+    location_facet = None
     if loc_queries:
         rad_raw = [q for q in loc_queries if 'radius' in q]
         zip_raw = [q for q in loc_queries if 'zip' in q]
