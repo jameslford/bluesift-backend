@@ -15,6 +15,6 @@ class Command(BaseCommand):
             reader = csv.reader(readfile, delimiter=",")
             for row in reader:
                 coord = Coordinate.objects.create(lat=float(row[1]), lng=float(row[2]))
-                Zipcode.objects.create(code=row[0], centroid=coord)
+                Zipcode.objects.create_or_update(code=row[0], centroid=coord)
                 # zip_dic[row[0]] = [row[1], row[2]]
 
