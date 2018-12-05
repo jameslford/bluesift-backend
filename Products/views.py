@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
+from django.contrib.gis.db.models.functions import Distance
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -132,11 +133,11 @@ def product_list(request):
         else:
             bool_raw = [q for q in bool_raw if application not in q]
 
-    zprods = None
     zipcode = None
     rad_raw = None
     radius_raw = None
     coords = None
+    distance = None
     if loc_queries:
         rad_raw = [q for q in loc_queries if 'radius' in q]
         zip_raw = [q for q in loc_queries if 'zip' in q]
@@ -147,6 +148,8 @@ def product_list(request):
         if coords != 'error':
             lat, lng = coords
             origin = Point(float(lat), float(lng), srid=4326)
+            fake_point = Point(33.8742371, -84.3529315, srid=4326)
+            distance = D(m=origin.distance(fake_point))
             products = products.filter(locations__distance_lte=(origin, radius))
         else:
             zipcode = 'error'
@@ -245,7 +248,7 @@ def product_list(request):
     return Response({
         'product_count': product_count,
         'query' : query_response,
-        'origin' : coords,
+        'origin' :str(distance),
         'radius': radius_raw,
         'load_more': load_more,
         'current_page': page,
