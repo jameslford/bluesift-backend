@@ -8,20 +8,24 @@ from .choices import states
 class Coordinate(models.Model):
     lat = models.FloatField(null=True, blank=True)
     lng = models.FloatField(null=True, blank=True)
+    point = models.PointField(null=True)
 
-    def get_point(self):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.lat and self.lng:
-            return Point(self.lat, self.lng)
+            self.point = Point(self.lat, self.lng)
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
+            )
 
 class Zipcode(models.Model):
-    code = models.CharField(max_length=5)
-    coordinate = models.ForeignKey(Coordinate, on_delete=models.CASCADE)
+    code = models.CharField(max_length=5, unique=True)
+    centroid = models.ForeignKey(Coordinate, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.code
-
-
-
 
 class Address(models.Model):
     address_line_1 = models.CharField(max_length=120)

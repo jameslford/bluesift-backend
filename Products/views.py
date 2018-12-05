@@ -16,7 +16,6 @@ import csv
 
 from .serializers import(
     ProductSerializer,
-    ManufacturerSerializer,
     ProductDetailSerializer
     )
 
@@ -29,9 +28,7 @@ from .models import(
     Finish
     )
 
-from Profiles.models import(
-    SupplierProduct
-)
+from Addresses.models import Zipcode
 
 def or_list_query(products, args, term):
     _products = products
@@ -144,13 +141,9 @@ def product_list(request):
         radius_raw = int(rad_raw[0].replace('radius-', ''))
         radius = D(mi=radius_raw)
         zipcode = zip_raw[0].replace('zipcode-', '')
-        coords = lookup.lookup(zipcode)
-        if coords != 'error':
-            lat, lng = coords
-            origin = Point(float(lat), float(lng), srid=4326)
-            fake_point = Point(33.8742371, -84.3529315, srid=4326)
-            distance = D(m=origin.distance(fake_point))
-            products = products.filter(locations__distance_lte=(origin, radius))
+        coords = Zipcode.objects.filter(code=zipcode).first().centroid.point
+        if coords:
+            products = products.filter(locations__distance_lte=(coords, radius))
         else:
             zipcode = 'error'
 
@@ -248,7 +241,7 @@ def product_list(request):
     return Response({
         'product_count': product_count,
         'query' : query_response,
-        'origin' :str(distance),
+        # 'origin' :str(distance.m),
         'radius': radius_raw,
         'load_more': load_more,
         'current_page': page,
