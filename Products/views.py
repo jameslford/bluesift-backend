@@ -142,9 +142,13 @@ def product_list(request):
         radius_raw = int(rad_raw[0].replace('radius-', ''))
         radius = D(mi=radius_raw)
         zipcode = zip_raw[0].replace('zipcode-', '')
-        lat, lng = lookup.lookup(zipcode)
-        origin = Point(float(lat), float(lng))
-        products = products.filter(locations__distance_lte=(origin, radius))
+        coords = lookup.lookup(zipcode)
+        if coords != 'error':
+            lat, lng = coords
+            origin = Point(float(lat), float(lng))
+            products = products.filter(locations__distance_lte=(origin, radius))
+        else:
+            zipcode = 'error'
 
 
 

@@ -9,4 +9,4 @@ def lookup(zipcode):
         reader = csv.reader(readfile, delimiter=",")
         for row in reader:
             zip_dic[row[0]] = [row[1], row[2]]
-    return zip_dic[f'{zipcode}']
+    return zip_dic.get(zipcode, 'error')
