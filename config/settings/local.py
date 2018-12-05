@@ -5,10 +5,12 @@ DEBUG = True
 
 STATIC_URL = '/static/'
 
-DATA_PATH = os.getcwd() + '\\config\\management\\data\\*.txt'
-ZIP_PATH =  os.getcwd() + '\\config\\management\\zips\\zipcodes.csv'
+CORS_ORIGIN_ALLOW_ALL = True
 
-ALLOWED_HOSTS = []
+DATA_PATH = os.getcwd() + '\\config\\management\\data\\*.txt'
+ZIP_PATH = os.getcwd() + '\\config\\management\\zips\\zipcodes.csv'
+
+ALLOWED_HOSTS = ['*']
 
 REDIRECT_URL = 'https://www.google.com/'
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
