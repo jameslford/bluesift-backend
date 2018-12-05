@@ -136,6 +136,7 @@ def product_list(request):
     zipcode = None
     rad_raw = None
     radius_raw = None
+    coords = None
     if loc_queries:
         rad_raw = [q for q in loc_queries if 'radius' in q]
         zip_raw = [q for q in loc_queries if 'zip' in q]
@@ -145,7 +146,7 @@ def product_list(request):
         coords = lookup.lookup(zipcode)
         if coords != 'error':
             lat, lng = coords
-            origin = Point(float(lat), float(lng))
+            origin = Point(float(lat), float(lng), srid=4326)
             products = products.filter(locations__distance_lte=(origin, radius))
         else:
             zipcode = 'error'
@@ -244,7 +245,7 @@ def product_list(request):
     return Response({
         'product_count': product_count,
         'query' : query_response,
-        'zprods' : zprods,
+        'origin' : coords,
         'radius': radius_raw,
         'load_more': load_more,
         'current_page': page,
