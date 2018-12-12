@@ -103,7 +103,11 @@ class Product(models.Model):
 
     # categorized
     build = models.ForeignKey(Build, on_delete=models.CASCADE)
-    material = models.ForeignKey(Material, null=True, on_delete=models.SET_NULL)
+    material = models.ForeignKey(
+        Material,
+        null=True,
+        on_delete=models.SET_NULL
+        )
 
     # application
     walls = models.BooleanField(default=False)
@@ -114,8 +118,10 @@ class Product(models.Model):
     # special area
     shower_floors = models.BooleanField(default=False)
     shower_walls = models.BooleanField(default=False)
-    exterior = models.BooleanField(default=False)
-    covered = models.BooleanField(default=False)
+    exterior_walls = models.BooleanField(default=False)
+    exterior_floors = models.BooleanField(default=False)
+    covered_walls = models.BooleanField(default=False)
+    covered_floors = models.BooleanField(default=False)
     pool_linings = models.BooleanField(default=False)
 
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
