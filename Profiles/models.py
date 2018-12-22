@@ -11,7 +11,7 @@ class CompanyAccount(models.Model):
     account_owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        limit_choices_to={'is_supplier' : True},
+        limit_choices_to={'is_supplier': True},
         related_name='company_account'
         )
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)

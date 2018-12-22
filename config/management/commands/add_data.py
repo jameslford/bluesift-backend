@@ -10,7 +10,16 @@ from django.conf import settings
 from django.core import files
 from django.core.files.temp import NamedTemporaryFile
 from django.core.management.base import BaseCommand
-from Products.models import Manufacturer, Category, Look, Material, Build, Product, Finish, Image
+from Products.models import (
+    Manufacturer,
+    Category,
+    Look,
+    Material,
+    Build,
+    Product,
+    Finish,
+    Image
+    )
 
 
 class Command(BaseCommand):

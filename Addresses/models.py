@@ -20,9 +20,20 @@ class Coordinate(models.Model):
             update_fields=update_fields
             )
 
+
+class CentroidManager(models.Manager):
+    def get_centroid(self, code):
+        coords = self.filter(code=code).first().centroid.point
+        if coords:
+            return coords
+        else:
+            return
+
 class Zipcode(models.Model):
     code = models.CharField(max_length=5, unique=True)
     centroid = models.ForeignKey(Coordinate, on_delete=models.CASCADE)
+
+    objects = CentroidManager()
 
     def __str__(self):
         return self.code

@@ -2,14 +2,10 @@
 # Products.serializers.py
 
 from rest_framework import serializers
-from .models import(
+from .models import (
     Product,
     Manufacturer,
-    Image,
-    Build,
-    Material,
-    Category,
-    Look
+    Image
     )
 
 
@@ -71,7 +67,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'floors',
             'shower_floors',
             'shower_walls',
-            'exterior',
+            'exterior_walls',
+            'exterior_floors'
             'covered',
             'pool_linings',
             'locations',

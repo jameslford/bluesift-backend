@@ -1,7 +1,7 @@
 {
-    "python.linting.pylintEnabled": true,
+    "python.linting.pylintEnabled": false,
     "git.ignoreLimitWarning": true,
-    "window.zoomLevel": 0,
+    "window.zoomLevel": -1,
     "python.linting.flake8CategorySeverity.F": "Warning",
     "python.linting.flake8CategorySeverity.E": "Warning"
 }
