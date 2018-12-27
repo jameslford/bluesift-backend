@@ -23,7 +23,7 @@ class Material(models.Model):
     label = models.CharField(max_length=40, unique=True)
 
     def __str__(self):
-        return self.category.label + ' | ' + self.label
+        return self.label
 
 
 class Finish(models.Model):
@@ -55,6 +55,9 @@ class SurfaceTexture(models.Model):
     class Meta:
         unique_together = (('material', 'label'))
 
+    def __str__(self):
+        return self.label
+
 
 class SubMaterial(models.Model):
     material = models.ForeignKey(
@@ -68,6 +71,9 @@ class SubMaterial(models.Model):
 
     class Meta:
         unique_together = (('material', 'label'))
+
+    def __str__(self):
+        return self.label
 
 
 class SurfaceCoating(models.Model):
@@ -83,9 +89,18 @@ class SurfaceCoating(models.Model):
     class Meta:
         unique_together = (('material', 'label'))
 
+    def __str__(self):
+        return self.label
+
 
 class Look(models.Model):
     label = models.CharField(max_length=40, unique=True)
+
+    def __str__(self):
+        return self.label
+
+class Edge(models.Model):
+    label = models.CharField(max_length=60, unique=True)
 
     def __str__(self):
         return self.label
@@ -120,6 +135,8 @@ class Product(models.Model):
     manufacturer_sku = models.CharField(max_length=50, null=True, blank=True)
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_color = models.CharField(max_length=200, null=True)
+
+    actual_color = models.Charfield(max_length=60, null=True)
 
     swatch_image = models.ForeignKey(
         Image,
@@ -183,14 +200,20 @@ class Product(models.Model):
     length = models.CharField(max_length=20, null=True, blank=True)
     size = models.CharField(max_length=30, null=True)
 
-
     look = models.ForeignKey(Look, null=True, on_delete=models.SET_NULL)
 
     lrv = models.IntegerField(null=True, blank=True)
     cof = models.DecimalField(max_digits=5, decimal_places=2, null=True)
 
-    residential_warranty = models.IntegerField(null=True, blank=True)
-    commercial_warranty = models.IntegerField(null=True, blank=True)
+    residential_warranty = models.CharField(max_length=100, null=True, blank=True)
+    commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
+    light_commercial_warranty = models.CharField(max_length=100, null=True)
+
+    install_type = models.Charfield(max_length=100, null=True)
+    commercial = models.BooleanField(default=False)
+    sqft_per_carton = models.FloatField()
+    slip_resistant = models.BooleanField(default=False)
+    shade = models.CharField(max_length=60, null=True)
 
     shade_variation = models.ForeignKey(
         ShadeVariation,
@@ -198,6 +221,12 @@ class Product(models.Model):
         blank=True,
         on_delete=models.SET_NULL
         )
+
+    edge = models.ForeignKey(
+        Edge,
+        null=True,
+        on_delete=models.SET_NULL
+    )
 
     notes = models.TextField(null=True, blank=True)
 

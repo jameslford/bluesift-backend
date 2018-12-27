@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from Profiles.models import(
+from Profiles.models import (
     CompanyAccount,
     CompanyShippingLocation,
     CustomerProduct,
@@ -19,7 +19,7 @@ from Profiles.models import(
     )
 from Products.models import Product
 
-from .serializers import(
+from .serializers import (
     CustomerProjectSerializer,
     ShippingLocationSerializer,
     ShippingLocationDetailSerializer,

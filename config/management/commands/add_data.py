@@ -6,30 +6,203 @@ import random
 import glob
 
 from io import BytesIO
-from django.conf import settings
+from django.core.files import File
 from django.core import files
 from django.core.files.temp import NamedTemporaryFile
 from django.core.management.base import BaseCommand
 from Products.models import (
-    Manufacturer,
-    Category,
-    Look,
-    Material,
-    Build,
-    Product,
     Finish,
-    Image
+    Image,
+    Look,
+    Edge,
+    Material,
+    Manufacturer,
+    Product,
+    ShadeVariation,
+    SurfaceCoating,
+    SurfaceTexture,
+    SubMaterial
     )
 
 
 class Command(BaseCommand):
 
-    def add_arguments(self, parser):
-        parser.add_argument('extent')
+    # def add_arguments(self, parser):
+    #     parser.add_argument('extent')
 
 
     def handle(self, *args, **options):
-        if not options:
+        data_path = settings.DATA_PATH
+        data_files = glob.glob(data_path)
+        data = max(data_files, key=os.path.getctime)
+        with open(data) as readfile:
+            reader = csv.DictReader(readfile)
+            for row in reader:
+                bbsku = row['bbsku']
+                name = row['name']
+                image_original =  row['image_original']
+                image_local =  row['image_local']
+                image_final = row['image_final']
+                image2_original = row['image2_original']
+                image2_local = row['image2_local']
+                image2_final = row['image2_final']
+                tiling_image = row['tiling_image']
+                tiling_image_local = row['tiling_image_local']
+                tiling_image_final = row['tiling_image_final']
+
+                manufacturer_name = row['manufacturer_name']
+                manufacturer_url = row['manufacturer_url']
+                manufacturer_collection = row['manufacturer_collection']
+                manufacturer_color = row['manufacturer_color']
+                manufacturer_sku = row['manufacturer_sku']
+
+                material_label = row['material_label']
+                sub_material_label = row['sub_material_label']
+                look_label = row['look_label']
+                finish_label = row['finish_label']
+                gloss_level = row['gloss_level']
+                texture_label = row['texture_label']
+
+                form_label = row['form_label']
+                thickness = row['thickness']
+                length = row['length']
+                width = row['width']
+
+                lrv = row['lrv']
+                cof = row['cof']
+                wet_cof = row['wet_cof']
+
+                generic_color = row['generica_color']
+                shade = row['shade']
+                shade_variation = row['shade_variation']
+
+                edge = row['edge']
+                end = row['end']
+
+                rating_value = row['rating_value']
+                rating_count = row['rating_count']
+
+                commercial = row['commercial']
+                residential_warranty = row['residential_warranty']
+                commercial_warranty = row['commercial_warranty']
+                light_commercial_warranty = row['light_commercial_warranty']
+
+                install_type = row['install_type']
+                sqft_per_carton = row['sqft_per_carton']
+                weight_per_carton = row['weight_per_carton']
+                recommended_grout = row['recommended_grout']
+                notes = row['notes']
+
+                slip_resistance = row['slip_resistance']
+
+                walls = row['walls']
+                countertops = row['countertops']
+                floors = row['floors']
+                cabinet_fronts = row['cabinet_fronts']
+                shower_floors = row['shower_floors']
+                shower_walls = row['shower_walls']
+                exterior_walls = row['exterior_walls']
+                exterior_floors = row['exterior_floors']
+                covered_walls = row['covered_walls']
+                covered_floors = row['covered_floors']
+                pool_lining = row['pool_lining']
+
+                product = Product.objects.get_or_create(bb_sku=bbsku)[0]
+                manufacturer = Manufacturer.objects.get_or_create(label=manufacturer_name)[0]
+
+                if not material_label:
+                    print(name)
+                    continue
+                material = Material.objects.get_or_create(label=material_label)[0]
+                product.material = material
+                product.name = name
+                product.manufacturer = manufacturer
+                product.manufacturer_url = manufacturer_url
+                product.manufacturer_sku = manufacturer_sku
+                product.manu_collection = manufacturer_collection
+                product.manufacturer_color = manufacturer_color
+                product.slip_resistant = slip_resistance
+                product.residential_warranty = residential_warranty
+                product.commercial_warranty = commercial_warranty
+                product.light_commercial_warranty = light_commercial_warranty
+                product.install_type = install_type
+                product.commercial = commercial
+                product.sqft_per_carton = float(sqft_per_carton)
+                product.lrv = lrv
+                product.cof = cof
+                product.notes = notes
+                product.shade = shade
+                product.actual_color = generic_color
+
+                if edge:
+                    edge_obj = Edge.objects.get_or_create(label=edge)[0]
+                    product.edge = edge_obj
+                if shade_variation:
+                    shadvar = ShadeVariation.objects.get_or_create(label=shade_variation)[0]
+                    product.shade_variation = shadvar
+                if look_label:
+                    look = Look.objects.get_or_create(label=look_label)[0]
+                    product.look = look
+                if sub_material_label:
+                    sub_material = SubMaterial.objects.get_or_create(label=sub_material_label, material=material)[0]
+                    product.sub_material = sub_material
+                if finish_label:
+                    surface_coating = SurfaceCoating.objects.get_or_create(label=finish_label, material=material)[0]
+                    product.surface_coating = surface_coating
+                if texture_label or gloss_level:
+                    finish_holder = None
+                    if texture_label:
+                        finish_holder = texture_label
+                    if gloss_level:
+                        finish_holder = gloss_level
+                    finish = Finish.objects.get_or_create(label=finish_holder, material=material)[0]
+                    product.finish = finish
+                swatch_image = Image.objects.get_or_create(original_url=image_original)[0]
+                if not swatch_image.image:
+                    with open(image_local, 'r') as f:
+                        image_file = File(f)
+                        swatch_image.image = image_file
+                        swatch_image.save()
+                        product.swatch_image = swatch_image
+                        f.close()
+                if image2_original:
+                    room_scene = Image.objects.get_or_create(original_url=image2_original)[0]
+                    if not room_scene.image:
+                        with open(image2_local) as f2:
+                            image_file2 = File(f2)
+                            room_scene.image = image_file2
+                            room_scene.save()
+                            product.room_scene = room_scene
+                            f2.close()
+
+                product.thickness = thickness
+                product.length = length
+                product.width = width
+
+                product.walls = walls
+                product.floors = floors
+                product.countertops = countertops
+                product.cabinet_fronts = cabinet_fronts
+                product.shower_floors = shower_floors
+                product.shower_walls = shower_walls
+                product.exterior_walls = exterior_walls
+                product.exterior_floors = exterior_floors
+                product.covered_walls = covered_walls
+                product.covered_floors = covered_floors
+                product.pool_linings = pool_lining
+
+
+                
+                
+
+
+
+
+                
+
+
+
+        '''if not options:
             print('No argument specified for data sample: Random or Full')
             return
         data_path = settings.DATA_PATH
@@ -167,4 +340,4 @@ class Command(BaseCommand):
                         # length=length,
                         # look=look,
                         # finish=finish,
-                        # # notes=notes
+                        # # notes=notes '''
