@@ -5,10 +5,10 @@ import os
 import random
 import glob
 
-from io import BytesIO
+# from io import BytesIO
 from django.core.files import File
-from django.core import files
-from django.core.files.temp import NamedTemporaryFile
+# from django.core import files
+# from django.core.files.temp import NamedTemporaryFile
 from django.core.management.base import BaseCommand
 from Products.models import (
     Finish,
@@ -190,15 +190,7 @@ class Command(BaseCommand):
                 product.covered_walls = covered_walls
                 product.covered_floors = covered_floors
                 product.pool_linings = pool_lining
-
-
-                
-                
-
-
-
-
-                
+                product.save()
 
 
 

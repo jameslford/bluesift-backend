@@ -136,7 +136,7 @@ class Product(models.Model):
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_color = models.CharField(max_length=200, null=True)
 
-    actual_color = models.Charfield(max_length=60, null=True)
+    actual_color = models.CharField(max_length=60, null=True)
 
     swatch_image = models.ForeignKey(
         Image,
@@ -209,9 +209,9 @@ class Product(models.Model):
     commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
     light_commercial_warranty = models.CharField(max_length=100, null=True)
 
-    install_type = models.Charfield(max_length=100, null=True)
+    install_type = models.CharField(max_length=100, null=True)
     commercial = models.BooleanField(default=False)
-    sqft_per_carton = models.FloatField()
+    sqft_per_carton = models.FloatField(null=True)
     slip_resistant = models.BooleanField(default=False)
     shade = models.CharField(max_length=60, null=True)
 
