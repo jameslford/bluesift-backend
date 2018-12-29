@@ -4,6 +4,7 @@ import requests
 import os
 import random
 import glob
+from django.conf import settings
 
 # from io import BytesIO
 from django.core.files import File
@@ -27,28 +28,31 @@ from Products.models import (
 
 class Command(BaseCommand):
 
-    # def add_arguments(self, parser):
-    #     parser.add_argument('extent')
+    def add_arguments(self, parser):
+        parser.add_argument('update')
 
 
     def handle(self, *args, **options):
         data_path = settings.DATA_PATH
         data_files = glob.glob(data_path)
         data = max(data_files, key=os.path.getctime)
-        with open(data) as readfile:
+        with open(data, 'r', newline='') as readfile:
             reader = csv.DictReader(readfile)
             for row in reader:
                 bbsku = row['bbsku']
+                product, created = Product.objects.get_or_create(bb_sku=bbsku)
+                if not created and options['update'] == 'add':
+                    continue
                 name = row['name']
-                image_original =  row['image_original']
-                image_local =  row['image_local']
-                image_final = row['image_final']
+                image_original = row['image_original']
+                image_local = row['image_local']
+                # image_final = row['image_final']
                 image2_original = row['image2_original']
                 image2_local = row['image2_local']
-                image2_final = row['image2_final']
+                # image2_final = row['image2_final']
                 tiling_image = row['tiling_image']
                 tiling_image_local = row['tiling_image_local']
-                tiling_image_final = row['tiling_image_final']
+                # tiling_image_final = row['tiling_image_final']
 
                 manufacturer_name = row['manufacturer_name']
                 manufacturer_url = row['manufacturer_url']
@@ -63,8 +67,12 @@ class Command(BaseCommand):
                 gloss_level = row['gloss_level']
                 texture_label = row['texture_label']
 
-                form_label = row['form_label']
+                # form_label = row['form_label']
                 thickness = row['thickness']
+                try:
+                    thickness = decimal.Decimal(thickness)
+                except:
+                    thickness = None
                 length = row['length']
                 width = row['width']
 
@@ -72,7 +80,7 @@ class Command(BaseCommand):
                 cof = row['cof']
                 wet_cof = row['wet_cof']
 
-                generic_color = row['generica_color']
+                generic_color = row['generic_color']
                 shade = row['shade']
                 shade_variation = row['shade_variation']
 
@@ -107,7 +115,6 @@ class Command(BaseCommand):
                 covered_floors = row['covered_floors']
                 pool_lining = row['pool_lining']
 
-                product = Product.objects.get_or_create(bb_sku=bbsku)[0]
                 manufacturer = Manufacturer.objects.get_or_create(label=manufacturer_name)[0]
 
                 if not material_label:
@@ -127,7 +134,7 @@ class Command(BaseCommand):
                 product.light_commercial_warranty = light_commercial_warranty
                 product.install_type = install_type
                 product.commercial = commercial
-                product.sqft_per_carton = float(sqft_per_carton)
+                product.sqft_per_carton = sqft_per_carton
                 product.lrv = lrv
                 product.cof = cof
                 product.notes = notes
@@ -159,7 +166,8 @@ class Command(BaseCommand):
                     product.finish = finish
                 swatch_image = Image.objects.get_or_create(original_url=image_original)[0]
                 if not swatch_image.image:
-                    with open(image_local, 'r') as f:
+                    read_image = image_local.strip('"')
+                    with open(read_image, 'rb') as f:
                         image_file = File(f)
                         swatch_image.image = image_file
                         swatch_image.save()
@@ -168,13 +176,21 @@ class Command(BaseCommand):
                 if image2_original:
                     room_scene = Image.objects.get_or_create(original_url=image2_original)[0]
                     if not room_scene.image:
-                        with open(image2_local) as f2:
+                        with open(image2_local, 'rb') as f2:
                             image_file2 = File(f2)
                             room_scene.image = image_file2
                             room_scene.save()
                             product.room_scene = room_scene
                             f2.close()
-
+                if tiling_image:
+                    tiling = Image.objects.get_or_create(original_url=tiling_image)[0]
+                    if not tiling.image:
+                        with open(tiling_image_local, 'rb') as f3:
+                            tiling_file = File(f3)
+                            tiling.image = tiling_file
+                            tiling.save()
+                            product.tiling_image = tiling
+                            f3.close()
                 product.thickness = thickness
                 product.length = length
                 product.width = width

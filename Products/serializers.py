@@ -23,14 +23,15 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    image = ImageSerializer()
+    swatch_image = ImageSerializer()
     manufacturer = ManufacturerSerializer()
     class Meta:
         model = Product
         fields = (
             'id',
+            'bb_sku',
             'name',
-            'image',
+            'swatch_image',
             'manufacturer',
             'lowest_price',
             )

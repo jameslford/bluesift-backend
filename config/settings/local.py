@@ -58,5 +58,5 @@ REST_FRAMEWORK = {
 GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
 
-DATA_PATH = os.getcwd() + '/config/management/data/*.txt'
-ZIP_PATH =  os.getcwd() + '/config/management/zips/zipcodes.csv'
+DATA_PATH = os.getcwd() + '/config/management/data/*.csv'
+ZIP_PATH = os.getcwd() + '/config/management/zips/zipcodes.csv'

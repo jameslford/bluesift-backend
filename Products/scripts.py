@@ -69,19 +69,19 @@ class FilterSorter:
 
     def __init__(self, query):
         self.query = query
-        self.app_query, self.app_query_raw = self.refine_list(query, self.app)
-        self.avail_query, self.avail_query_raw = self.refine_list(query, self.avail)
-        self.loc_query, self.loc_query_raw = self.refine_list(query, self.loc)
-        self.lk_query, self.lk_query_raw = self.refine_list(query, self.lk)
-        self.manu_query, self.manu_query_raw = self.refine_list(query, self.manu)
-        self.sze_query, self.sze_query_raw = self.refine_list(query, self.sze)
-        self.thk_query, self.thk_query_raw = self.refine_list(query, self.thk)
-        self.mat_query, self.manu_query_raw = self.refine_list(query, self.mat)
-        self.submat_query, self.submat_query_raw = self.refine_list(query, self.submat)
-        self.shdvar_query, self.shdvar_query_raw = self.refine_list(query, self.shdvar)
-        self.fin_query, self.fin_query_raw = self.refine_list(query, self.fin)
-        self.surtex_query, self.surtex_query_raw = self.refine_list(query, self.surtex)
-        self.surcoat_query, self.surcoat_query_raw = self.refine_list(query, self.surcoat)
+        self.app_query, self.app_query_raw = self.refine_list(self.app)
+        self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
+        self.loc_query, self.loc_query_raw = self.refine_list(self.loc)
+        self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
+        self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
+        self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
+        self.thk_query, self.thk_query_raw = self.refine_list(self.thk)
+        self.mat_query, self.manu_query_raw = self.refine_list(self.mat)
+        self.submat_query, self.submat_query_raw = self.refine_list(self.submat)
+        self.shdvar_query, self.shdvar_query_raw = self.refine_list(self.shdvar)
+        self.fin_query, self.fin_query_raw = self.refine_list(self.fin)
+        self.surtex_query, self.surtex_query_raw = self.refine_list(self.surtex)
+        self.surcoat_query, self.surcoat_query_raw = self.refine_list(self.surcoat)
 
         self.bool_raw = self.avail_query_raw + self.app_query_raw
 
@@ -91,36 +91,36 @@ class FilterSorter:
         ]
 
         self.standalones = [
+            [self.shdvar + '__label', self.shdvar_query],
+            [self.lk + '__label', self.lk_query],
             [self.thk, self.thk_query],
-            [self.shdvar, self.shdvar_query],
-            [self.lk_query, self.lk_query],
             [self.sze, self.sze_query]
         ]
         self.manu_subs = [
-            [self.mat_query, self.mat],
-            [self.submat_query, self.submat],
-            [self.shdvar_query, self.shdvar],
-            [self.fin_query, self.fin],
-            [self.surtex_query, self.surtex],
-            [self.surcoat_query, self.surcoat]
-        ]
+            [self.mat + '__label', self.mat_query],
+            [self.submat + '__label', self.submat_query],
+            [self.fin + '__label', self.fin_query],
+            [self.surtex + '__label', self.surtex_query],
+            [self.surcoat + '__label', self.surcoat_query]
+            ]
         self.zipcode = None
         self.radius = None
         self.filter_response = []
 
-    def refine_list(self, query, keyword):
+    def refine_list(self, keyword):
         queries_raw = [q for q in self.query if keyword in q]
         queries = [q.replace(keyword+'-', '') for q in queries_raw]
-        return [queries_raw, queries]
+        return [queries, queries_raw]
 
     def filter_bools(self, products):
+        _products = products
         for application in self.app_query + self.avail_query:
             if hasattr(Product, application):
                 arg = {application: True}
-                products = products.filter(**arg)
+                _products = _products.filter(**arg)
             else:
                 self.bool_raw = [q for q in self.bool_raw if application not in q]
-            return products
+        return _products
 
     def filter_location(self, products):
         if not self.loc_query:
@@ -142,24 +142,25 @@ class FilterSorter:
 
     def or_list_query(self, products, args, term):
         _products = products
-        facet = {'name': term, 'values': []}
+        id_term = term.replace('__label', '')
+        facet = {'name': id_term, 'values': []}
         # gets all possible unique values for that attribute
-        values = Product().objects.values_list(term, flat=True).distinct()
-        for val in values:
+        values = Product.objects.values_list(term, id_term).distinct()
+        for val, idt in values:
             search_term = {term: val}
             value = {
                 'label': str(val),
                 'count': products.filter(**search_term).count(),
                 'enabled': val in args,
-                'value': val
+                'value': idt
             }
             facet['values'].append(value)
         self.filter_response.append(facet)
         if args:
-            first_search = {term: args[0]}
+            first_search = {id_term: args[0]}
             new_prods = products.filter(**first_search)
             for arg in args[1:]:
-                next_search = {term: arg}
+                next_search = {id_term: arg}
                 new_prods = new_prods | products.filter(**next_search)
             return new_prods
         return _products
@@ -176,14 +177,17 @@ class FilterSorter:
 
     def filter_materials_down(self, products):
         _products = products
-        if not self.mat_query:
-            return products
-        material_key = self.mat_query[0]
-        material = Material.objects.filter(id=material_key).first()
-        if not material:
-            return products
-        self.spec_mat_facet = True
-        _products = products.filter(material=material)
+        # if not self.mat_query:
+        #     return products
+        material = None
+        if self.mat_query:
+            material_key = self.mat_query[0]
+            material = Material.objects.filter(id=material_key).first()
+        # if not material:
+        #     return products
+        if material:
+            self.spec_mat_facet = True
+            _products = products.filter(material=material)
         for sub in self.manu_subs:
             _products = self.or_list_query(_products, sub[1], sub[0])
         return _products

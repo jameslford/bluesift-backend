@@ -29,6 +29,9 @@ def facet(products, qlist, facet_list, filter_term, name, queries):
 
 @api_view(['GET'])
 def product_list(request):
+    # products = Product.objects.all()
+    # serialized = ProductSerializer(products, many=True)
+    # return Response(serialized.data)
 
     request_url = request.GET.urlencode().split('&')
     request_url = [query for query in request_url if 'page' not in query]
@@ -42,6 +45,7 @@ def product_list(request):
     products = sorter.filter_location(products)
     # filters manu, size, thickness, and look - and arg between groups, or arg within groups
     products = sorter.filter_attribute(products)
+    products = sorter.filter_materials_down(products)
 
     filter_response = sorter.return_filter(products)
 
@@ -63,12 +67,18 @@ def product_list(request):
     content = {
         'load_more': load_more,
         'product_count': product_count,
+        'avail_quer': sorter.app_query_raw,
         'current_page': page,
         'filter': filter_response,
         'products': serialized_products.data
     }
 
     return Response(content, status=status.HTTP_200_OK)
+
+
+
+
+
 
 
     # if not sorter.mat_queries:

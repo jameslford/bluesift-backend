@@ -148,7 +148,13 @@ class Product(models.Model):
         Image,
         null=True,
         on_delete=models.SET_NULL,
-        related_name='reoom_scenes'
+        related_name='room_scenes'
+        )
+    tiling_image = models.ForeignKey(
+        Image,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='tiling_images'
         )
 
     last_scraped = models.DateTimeField(null=True)
@@ -196,14 +202,14 @@ class Product(models.Model):
     pool_linings = models.BooleanField(default=False)
 
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
-    width = models.CharField(max_length=20, null=True, blank=True)
-    length = models.CharField(max_length=20, null=True, blank=True)
+    width = models.CharField(max_length=50, null=True, blank=True)
+    length = models.CharField(max_length=50, null=True, blank=True)
     size = models.CharField(max_length=30, null=True)
 
     look = models.ForeignKey(Look, null=True, on_delete=models.SET_NULL)
 
-    lrv = models.IntegerField(null=True, blank=True)
-    cof = models.DecimalField(max_digits=5, decimal_places=2, null=True)
+    lrv = models.CharField(max_length=60, null=True, blank=True)
+    cof = models.CharField(max_length=60, null=True)
 
     residential_warranty = models.CharField(max_length=100, null=True, blank=True)
     commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
@@ -211,7 +217,7 @@ class Product(models.Model):
 
     install_type = models.CharField(max_length=100, null=True)
     commercial = models.BooleanField(default=False)
-    sqft_per_carton = models.FloatField(null=True)
+    sqft_per_carton = models.CharField(max_length=70, null=True)
     slip_resistant = models.BooleanField(default=False)
     shade = models.CharField(max_length=60, null=True)
 
@@ -247,16 +253,15 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         material = None
         cats = [
-            self.material,
+            self.sub_material,
             self.finish,
             self.surface_texture,
-            self.SurfaceCoating
+            self.surface_coating
             ]
         for cat in cats:
-            if cat and not material:
-                material = cat.material
-            if cat.material != material:
-                raise Exception('Materials do not match!')
+            if not cat:
+                continue
+            if cat.material != self.material:
                 return
         super(Product, self).save(*args, **kwargs)
 
