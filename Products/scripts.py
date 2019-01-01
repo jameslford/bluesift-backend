@@ -1,6 +1,7 @@
 
 from django.contrib.gis.measure import D
 from django.contrib.gis.geos import Point
+from operator import itemgetter
 
 from Addresses.models import Zipcode
 from Products.models import (
@@ -42,6 +43,7 @@ class FilterSorter:
     manu = 'manufacturer'
     sze = 'size'
     thk = 'thickness'
+    acolor = 'actual_color'
     lk = 'look'
     shdvar = 'shade_variation'
 
@@ -75,6 +77,7 @@ class FilterSorter:
         self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
         self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
         self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
+        self.acolor_query, self.acolor_query_raw = self.refine_list(self.acolor)
         self.thk_query, self.thk_query_raw = self.refine_list(self.thk)
         self.mat_query, self.manu_query_raw = self.refine_list(self.mat)
         self.submat_query, self.submat_query_raw = self.refine_list(self.submat)
@@ -93,6 +96,7 @@ class FilterSorter:
         self.standalones = [
             [self.shdvar + '__label', self.shdvar_query],
             [self.lk + '__label', self.lk_query],
+            [self.acolor, self.acolor_query],
             [self.thk, self.thk_query],
             [self.sze, self.sze_query]
         ]
@@ -105,6 +109,7 @@ class FilterSorter:
             ]
         self.zipcode = None
         self.radius = None
+        self.legit_queries = []
         self.filter_response = []
 
     def refine_list(self, keyword):
@@ -120,6 +125,7 @@ class FilterSorter:
                 _products = _products.filter(**arg)
             else:
                 self.bool_raw = [q for q in self.bool_raw if application not in q]
+        self.legit_queries = self.legit_queries + self.bool_raw
         return _products
 
     def filter_location(self, products):
@@ -142,18 +148,27 @@ class FilterSorter:
 
     def or_list_query(self, products, args, term):
         _products = products
+        print(args)
         id_term = term.replace('__label', '')
         facet = {'name': id_term, 'values': []}
         # gets all possible unique values for that attribute
         values = Product.objects.values_list(term, id_term).distinct()
+        values = [q for q in values if q[0]]
+        # for val in values:
+        #     if not val[0]:
+        #         del val
+        values = sorted(values, key=itemgetter(0))
         for val, idt in values:
             search_term = {term: val}
             value = {
                 'label': str(val),
                 'count': products.filter(**search_term).count(),
-                'enabled': val in args,
+                'enabled': False,
                 'value': idt
             }
+            if str(idt) in args:
+                value['enabled'] = True
+                self.legit_queries.append(f'{id_term}-{idt}')
             facet['values'].append(value)
         self.filter_response.append(facet)
         if args:
@@ -171,9 +186,24 @@ class FilterSorter:
 
     def filter_attribute(self, products):
         _products = products
+        new_products = []
+        material = None
+        if self.mat_query:
+            material_key = self.mat_query[0]
+            material = Material.objects.filter(id=material_key).first()
+        if material:
+            self.spec_mat_facet = True
+            _products = products.filter(material=material)
         for stnd in self.standalones:
-            _products = self.or_list_query(_products, stnd[1], stnd[0])
-        return _products
+            prods = self.or_list_query(_products, stnd[1], stnd[0])
+            new_products.append(prods)
+        return _products.intersection(*new_products)
+
+        # 1st shot
+        # _products = products
+        # for stnd in self.standalones:
+        #     _products = self.or_list_query(_products, stnd[1], stnd[0])
+        # return _products
 
     def filter_materials_down(self, products):
         _products = products
@@ -195,6 +225,7 @@ class FilterSorter:
     def bool_facet(self, products):
         for cat in self.bools:
             queries, name, terms = cat
+            print(queries)
             facet = {'name': name, 'values': []}
             for item in terms:
                 search = {item: True}

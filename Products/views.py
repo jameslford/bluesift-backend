@@ -45,7 +45,7 @@ def product_list(request):
     products = sorter.filter_location(products)
     # filters manu, size, thickness, and look - and arg between groups, or arg within groups
     products = sorter.filter_attribute(products)
-    products = sorter.filter_materials_down(products)
+    # products = sorter.filter_materials_down(products)
 
     filter_response = sorter.return_filter(products)
 
@@ -63,11 +63,12 @@ def product_list(request):
         load_more = False
 
     serialized_products = ProductSerializer(products_response, many=True)
+    legit_queries = ['quer=' + q for q in sorter.legit_queries]
 
     content = {
         'load_more': load_more,
         'product_count': product_count,
-        'avail_quer': sorter.app_query_raw,
+        'query': legit_queries,
         'current_page': page,
         'filter': filter_response,
         'products': serialized_products.data
