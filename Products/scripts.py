@@ -69,8 +69,10 @@ class FilterSorter:
 
     radii = [5, 10, 20, 50, 100, 200]
 
-    def __init__(self, query):
+    def __init__(self, query, request_url):
         self.query = query
+        self.request_url = [q.replace('quer=', '') for q in request_url]
+        self.order = list(reversed(request_url))
         self.app_query, self.app_query_raw = self.refine_list(self.app)
         self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
         self.loc_query, self.loc_query_raw = self.refine_list(self.loc)
@@ -93,20 +95,18 @@ class FilterSorter:
             [self.app_query, self.app, app_terms]
         ]
 
-        self.standalones = [
-            [self.shdvar + '__label', self.shdvar_query],
-            [self.lk + '__label', self.lk_query],
-            [self.acolor, self.acolor_query],
-            [self.thk, self.thk_query],
-            [self.sze, self.sze_query]
-        ]
-        self.manu_subs = [
-            [self.mat + '__label', self.mat_query],
-            [self.submat + '__label', self.submat_query],
-            [self.fin + '__label', self.fin_query],
-            [self.surtex + '__label', self.surtex_query],
-            [self.surcoat + '__label', self.surcoat_query]
-            ]
+        self.standalones = {
+            self.shdvar: [self.shdvar + '__label', self.shdvar_query],
+            self.lk: [self.lk + '__label', self.lk_query],
+            self.acolor: [self.acolor, self.acolor_query],
+            self.thk: [self.thk, self.thk_query],
+            self.sze: [self.sze, self.sze_query],
+            self.manu: [self.manu + '__label', self.manu_query],
+            self.submat: [self.submat + '__label', self.submat_query],
+            self.fin: [self.fin + '__label', self.fin_query],
+            self.surtex: [self.surtex + '__label', self.surtex_query],
+            self.surcoat: [self.surcoat + '__label', self.surcoat_query]
+        }
         self.zipcode = None
         self.radius = None
         self.legit_queries = []
@@ -146,17 +146,15 @@ class FilterSorter:
             self.zipcode = 'error'
             return products
 
-    def or_list_query(self, products, args, term):
+    def or_list_query(self, products, term_list):
         _products = products
-        print(args)
+        term = term_list[0]
+        args = term_list[1]
         id_term = term.replace('__label', '')
         facet = {'name': id_term, 'values': []}
         # gets all possible unique values for that attribute
         values = Product.objects.values_list(term, id_term).distinct()
         values = [q for q in values if q[0]]
-        # for val in values:
-        #     if not val[0]:
-        #         del val
         values = sorted(values, key=itemgetter(0))
         for val, idt in values:
             search_term = {term: val}
@@ -180,41 +178,32 @@ class FilterSorter:
             return new_prods
         return _products
 
-        ''' filters products down more every pass, i.e. does not return a
-        per term filter, so order matters. Should work correctly as only
-        one can come in at a time, but this is where facet divergenge begins'''
+        ''' filters products down more every pass, in reverse order. 
+            so last query user entered is the first evaluated'''
 
     def filter_attribute(self, products):
         _products = products
-        new_products = []
-        material = None
-        if self.mat_query:
-            material_key = self.mat_query[0]
-            material = Material.objects.filter(id=material_key).first()
-        if material:
-            self.spec_mat_facet = True
-            _products = products.filter(material=material)
-        for stnd in self.standalones:
-            prods = self.or_list_query(_products, stnd[1], stnd[0])
-            new_products.append(prods)
-        return _products.intersection(*new_products)
+        ordered_set = []
+        for req in self.request_url:
+            q = req.split('-')
+            if q[0] not in ordered_set:
+                ordered_set.append(q[0])
+        for term in ordered_set:
+            value = self.standalones.get(term, None)
+            if value:
+                _products = self.or_list_query(_products, value)
+                del self.standalones[term]
+        for stnd, values2 in self.standalones.items():
+            _products = self.or_list_query(_products, values2)
+        return _products
 
-        # 1st shot
-        # _products = products
-        # for stnd in self.standalones:
-        #     _products = self.or_list_query(_products, stnd[1], stnd[0])
-        # return _products
 
     def filter_materials_down(self, products):
         _products = products
-        # if not self.mat_query:
-        #     return products
         material = None
         if self.mat_query:
             material_key = self.mat_query[0]
             material = Material.objects.filter(id=material_key).first()
-        # if not material:
-        #     return products
         if material:
             self.spec_mat_facet = True
             _products = products.filter(material=material)

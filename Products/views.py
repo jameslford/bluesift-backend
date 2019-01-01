@@ -11,21 +11,21 @@ from .serializers import ProductSerializer, ProductDetailSerializer
 from .models import Product
 
 
-def facet(products, qlist, facet_list, filter_term, name, queries):
-    new_list = [q for q in qlist if q]
-    facet_dict = {'name': name, 'values': []}
-    for item in facet_list:
-        search = {filter_term: item.id}
-        item_prods = products.filter(**search)
-        new_prods = item_prods.intersection(*new_list)
-        value = {
-            'listcount': len(qlist),
-            'label': item.label,
-            'count': new_prods.count(),
-            'enabled': item.id in queries,
-            'value': item.id}
-        facet_dict['values'].append(value)
-    return facet_dict
+# def facet(products, qlist, facet_list, filter_term, name, queries):
+#     new_list = [q for q in qlist if q]
+#     facet_dict = {'name': name, 'values': []}
+#     for item in facet_list:
+#         search = {filter_term: item.id}
+#         item_prods = products.filter(**search)
+#         new_prods = item_prods.intersection(*new_list)
+#         value = {
+#             'listcount': len(qlist),
+#             'label': item.label,
+#             'count': new_prods.count(),
+#             'enabled': item.id in queries,
+#             'value': item.id}
+#         facet_dict['values'].append(value)
+#     return facet_dict
 
 @api_view(['GET'])
 def product_list(request):
@@ -34,10 +34,11 @@ def product_list(request):
     # return Response(serialized.data)
 
     request_url = request.GET.urlencode().split('&')
+    # print('wonkeyr', request_url)
     request_url = [query for query in request_url if 'page' not in query]
     queries = request.GET.getlist('quer')
     page = request.GET.get('page', 1)
-    sorter = FilterSorter(queries)
+    sorter = FilterSorter(queries, request_url)
 
     products = Product.objects.all()
     # filters applications, availability and location. nothing special
@@ -64,10 +65,12 @@ def product_list(request):
 
     serialized_products = ProductSerializer(products_response, many=True)
     legit_queries = ['quer=' + q for q in sorter.legit_queries]
+    material_selected = sorter.spec_mat_facet
 
     content = {
         'load_more': load_more,
         'product_count': product_count,
+        'material_selected': material_selected,
         'query': legit_queries,
         'current_page': page,
         'filter': filter_response,
