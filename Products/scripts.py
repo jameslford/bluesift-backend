@@ -32,7 +32,10 @@ app_terms = [
     'exterior_floors',
     'covered_walls',
     'covered_floors',
-    'pool_linings'
+    'pool_linings',
+    'bullnose',
+    'covebase',
+    'corner_covebase'
     ]
 
 
@@ -96,16 +99,17 @@ class FilterSorter:
         ]
 
         self.standalones = {
-            self.shdvar: [self.shdvar + '__label', self.shdvar_query],
+            self.mat: [self.mat + '__label', self.mat_query],
             self.lk: [self.lk + '__label', self.lk_query],
-            self.acolor: [self.acolor, self.acolor_query],
-            self.thk: [self.thk, self.thk_query],
-            self.sze: [self.sze, self.sze_query],
             self.manu: [self.manu + '__label', self.manu_query],
-            self.submat: [self.submat + '__label', self.submat_query],
+            self.acolor: [self.acolor, self.acolor_query],
+            self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
-            self.surtex: [self.surtex + '__label', self.surtex_query],
-            self.surcoat: [self.surcoat + '__label', self.surcoat_query]
+            self.thk: [self.thk, self.thk_query],
+            self.shdvar: [self.shdvar + '__label', self.shdvar_query],
+            self.sze: [self.sze, self.sze_query],
+            self.submat: [self.submat + '__label', self.submat_query],
+            self.surtex: [self.surtex + '__label', self.surtex_query]
         }
         self.zipcode = None
         self.radius = None
@@ -147,20 +151,32 @@ class FilterSorter:
             return products
 
     def or_list_query(self, products, term_list):
+
+        '''Products have already been either been filtered to one material or none at all.
+        this function gets a list of all possible values (label - if a field, and id) for the given term list(field)
+        it then filters by id (id_term)'''
+
         _products = products
         term = term_list[0]
         args = term_list[1]
         id_term = term.replace('__label', '')
-        facet = {'name': id_term, 'values': []}
-        # gets all possible unique values for that attribute
+        facet = {
+            'name': id_term,
+            'total_count': 0,
+            'values': []
+            }
         values = Product.objects.values_list(term, id_term).distinct()
         values = [q for q in values if q[0]]
         values = sorted(values, key=itemgetter(0))
         for val, idt in values:
-            search_term = {term: val}
+            search_term = {id_term: idt}
+            count = products.filter(**search_term).count()
+            if count == 0:
+                continue
+            facet['total_count'] += count
             value = {
                 'label': str(val),
-                'count': products.filter(**search_term).count(),
+                'count': count,
                 'enabled': False,
                 'value': idt
             }
@@ -178,12 +194,21 @@ class FilterSorter:
             return new_prods
         return _products
 
-        ''' filters products down more every pass, in reverse order. 
+    def filter_attribute(self, products):
+
+        '''filters products down more every pass, in reverse order.
             so last query user entered is the first evaluated'''
 
-    def filter_attribute(self, products):
         _products = products
         ordered_set = []
+        material = None
+        if self.mat_query:
+            material_key = self.mat_query[0]
+            material = Material.objects.filter(id=material_key).first()
+        if material:
+            self.spec_mat_facet = True
+            _products = products.filter(material=material)
+            self.mat_query = []
         for req in self.request_url:
             q = req.split('-')
             if q[0] not in ordered_set:
@@ -196,7 +221,6 @@ class FilterSorter:
         for stnd, values2 in self.standalones.items():
             _products = self.or_list_query(_products, values2)
         return _products
-
 
     def filter_materials_down(self, products):
         _products = products

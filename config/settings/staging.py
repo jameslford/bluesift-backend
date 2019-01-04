@@ -48,6 +48,11 @@ REST_FRAMEWORK = {
     )
 }
 
+STATICFILES_LOCATION = 'static'
+STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
+
+MEDIAFILES_LOCATION = 'media'
+DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
 
 
 EMAIL_HOST = 'smtp.sendgrid.net'
@@ -61,3 +66,15 @@ ZIP_PATH =  os.getcwd() + '/config/management/zips/zipcodes.csv'
 
 GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
+
+
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # 'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]

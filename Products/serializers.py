@@ -14,6 +14,7 @@ class ManufacturerSerializer(serializers.ModelSerializer):
         model = Manufacturer
         fields = ('id', 'label')
 
+
 class ImageSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -21,10 +22,10 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ('image',)
 
 
-
 class ProductSerializer(serializers.ModelSerializer):
     swatch_image = ImageSerializer()
     manufacturer = ManufacturerSerializer()
+
     class Meta:
         model = Product
         fields = (
@@ -36,8 +37,11 @@ class ProductSerializer(serializers.ModelSerializer):
             'lowest_price',
             )
 
+
 class ProductDetailSerializer(serializers.ModelSerializer):
-    image = ImageSerializer()
+    room_scene = ImageSerializer()
+    swatch_image = ImageSerializer()
+
     class Meta:
         model = Product
         fields = (
@@ -45,7 +49,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'name',
 
             'manufacturer',
-            'manufacturer_name',
             'manufacturer_url',
             'manufacturer_sku',
             'manu_collection',
@@ -53,14 +56,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
             'lowest_price',
 
-            'image',
-            'build_label',
-            'material_label',
-            'category_name',
+            'room_scene',
+            'swatch_image',
             'material',
-            'finish_label',
-            'category_id',
-            'look_label',
 
             'walls',
             'countertops',
@@ -69,8 +67,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'shower_floors',
             'shower_walls',
             'exterior_walls',
-            'exterior_floors'
-            'covered',
+            'exterior_floors',
+            'covered_walls',
+            'covered_floors',
             'pool_linings',
             'locations',
 

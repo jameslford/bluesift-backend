@@ -200,6 +200,9 @@ class Product(models.Model):
     covered_walls = models.BooleanField(default=False)
     covered_floors = models.BooleanField(default=False)
     pool_linings = models.BooleanField(default=False)
+    bullnose = models.BooleanField(default=False)
+    covebase = models.BooleanField(default=False)
+    corner_covebase = models.BooleanField(default=False)
 
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     width = models.CharField(max_length=50, null=True, blank=True)

@@ -41,22 +41,27 @@ DATABASES = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         #'rest_framework.authentication.BasicAuthentication',
-        #'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     )
 }
 
-# "C:\Users\james\Documents\Code\BuildingBook\envs\env\GDAL-2.3.2-cp36-cp36m-win_amd64.whl"
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
-# "C:\\OSGeo4W\\bin\\gdal202.dll"
-# GDAL_LIBRARY_PATH = ";C:\\OSGeo4W64\\bin\\"
-# GDAL_LIBRARY_PATH = "C\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\env\\Lib\\site-packages\\osgeo\\data\\gdal"
-# GEOS_LIBRARY_PATH = 'C:\\OSGeo4W64\\bin\\geos.dll'
-# GDAL_LIBRARY_PATH = "C:\\Program Files\\GDAL\\gdal203.dll"
-# GEOS_LIBRARY_PATH = ";C:\\Program Fi1les\\GDAL\\geos.dll"
-# GDAL_LIBRARY_PATH = "C:\\OSGeo4W\\bin\\gdal202.dll"
+
+
 GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
+
 
 DATA_PATH = os.getcwd() + '/config/management/data/*.csv'
 ZIP_PATH = os.getcwd() + '/config/management/zips/zipcodes.csv'
