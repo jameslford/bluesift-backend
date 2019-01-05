@@ -25,6 +25,7 @@ from Products.models import (
     SubMaterial
     )
 
+BASE_PATH = os.getcwd()
 
 class Command(BaseCommand):
 

@@ -32,6 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id',
             'bb_sku',
             'name',
+            'actual_color',
             'swatch_image',
             'manufacturer',
             'lowest_price',
