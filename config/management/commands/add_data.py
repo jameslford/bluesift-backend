@@ -4,6 +4,7 @@ import requests
 import os
 import random
 import glob
+import io
 from django.conf import settings
 
 # from io import BytesIO
@@ -169,8 +170,9 @@ class Command(BaseCommand):
                 if not swatch_image.image:
                     read_image = image_local.strip('"')
                     with open(read_image, 'rb') as f:
-                        image_file = File(f)
-                        swatch_image.image = image_file
+                        # image_file = File(f)
+                        image_name = f.name.split('/')[-1]
+                        swatch_image.image.save(image_name, f)
                         swatch_image.save()
                         product.swatch_image = swatch_image
                         f.close()

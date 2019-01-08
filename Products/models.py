@@ -2,8 +2,8 @@
 from django.contrib.gis.db import models
 from django.db.models import Min
 from django.contrib.gis.geos import MultiPoint
-from Addresses.models import Coordinate
-
+import io
+from PIL import Image as pimage, ImageFilter, ImageEnhance
 
 class Manufacturer(models.Model):
     label = models.CharField(max_length=200)
@@ -254,7 +254,6 @@ class Product(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        material = None
         cats = [
             self.sub_material,
             self.finish,
@@ -266,6 +265,7 @@ class Product(models.Model):
                 continue
             if cat.material != self.material:
                 return
+        # self.resize_image()
         super(Product, self).save(*args, **kwargs)
 
     def set_prices(self):
@@ -289,6 +289,7 @@ class Product(models.Model):
             self.lowest_price = price["my_price__min"]
             self.save()
             return
+        # self.resize_image()
         self.save()
         return
 
@@ -300,6 +301,52 @@ class Product(models.Model):
             points = MultiPoint(*coordinates)
             self.locations = points
             self.save()
+
+    def resize_image(self):
+        from django.conf import settings
+        desired_size = settings.DESIRED_IMAGE_SIZE
+        if not self.swatch_image:
+            self.delete()
+            print('wtf')
+            return
+        image = self.swatch_image.image
+        image = pimage.open(image)
+        buffer = io.BytesIO()
+        print('hello')
+        # w, h = image.size
+        # if w == desired_size and h <= desired_size:
+        #     return
+        # w_ratio = desired_size/w
+        # height_adjust = int(round(h * w_ratio))
+        # image = image.resize((desired_size, height_adjust))
+        # if image.size[1] > desired_size:
+        #     image = image.crop((
+        #         0,
+        #         0,
+        #         desired_size,
+        #         desired_size
+        #         ))
+        # image.save(buffer, 'JPEG')
+        # image_name = self.swatch_image.original_url.split('/')[-1] + '.jpg'
+        # self.swatch_image.image.save(image_name, buffer)
+        if self.tiling_image:
+            self.tiling_image.delete()
+        enhancer = ImageEnhance.Color(image)
+        image = enhancer.enhance(0.0)
+        # enhancer = ImageEnhance.Sharpness(image)
+        # image = enhancer.enhance(2.0)
+        # image = image.filter(ImageFilter.SHARPEN)
+        # image = image.filter(ImageFilter.MedianFilter())
+        # image = image.filter(ImageFilter.FIND_EDGES)
+        # image.convert
+        image.save(buffer, 'JPEG')
+        new_name = self.name.replace(' ', '') + '_tiling.jpg'
+        tile_image = Image(original_url=new_name)
+        tile_image.image.save(new_name, buffer)
+        tile_image.save()
+        print(buffer)
+        self.tiling_image = tile_image
+        self.save()
 
     def manufacturer_name(self):
         return self.manufacturer.label

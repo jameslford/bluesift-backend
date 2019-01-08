@@ -5,6 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MARKUP = '1.10'
+DESIRED_IMAGE_SIZE = 350
 
 ALT_SAFE_PATH = 'D:\\BBdata\\product_images'
 

@@ -24,6 +24,7 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     swatch_image = ImageSerializer()
+    tiling_image = ImageSerializer()
     manufacturer = ManufacturerSerializer()
 
     class Meta:
@@ -34,6 +35,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'name',
             'actual_color',
             'swatch_image',
+            'tiling_image',
             'manufacturer',
             'lowest_price',
             )
@@ -42,12 +44,14 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     room_scene = ImageSerializer()
     swatch_image = ImageSerializer()
+    tiling_image = ImageSerializer()
 
     class Meta:
         model = Product
         fields = (
             'id',
             'name',
+            'actual_color',
 
             'manufacturer',
             'manufacturer_url',
@@ -59,6 +63,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
             'room_scene',
             'swatch_image',
+            'tiling_image',
             'material',
 
             'walls',
