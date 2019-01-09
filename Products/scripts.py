@@ -102,7 +102,7 @@ class FilterSorter:
             self.mat: [self.mat + '__label', self.mat_query],
             self.lk: [self.lk + '__label', self.lk_query],
             self.manu: [self.manu + '__label', self.manu_query],
-            self.acolor: [self.acolor, self.acolor_query],
+            self.acolor: [self.acolor + '__label', self.acolor_query],
             self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
             self.thk: [self.thk, self.thk_query],
@@ -239,7 +239,10 @@ class FilterSorter:
         for cat in self.bools:
             queries, name, terms = cat
             print(queries)
-            facet = {'name': name, 'values': []}
+            facet = {
+                'name': name,
+                'total_count': 2,
+                'values': []}
             for item in terms:
                 search = {item: True}
                 value = {

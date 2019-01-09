@@ -2,7 +2,10 @@
 from django.contrib.gis.db import models
 from django.db.models import Min
 from django.contrib.gis.geos import MultiPoint
+from Products.lists import color_list, manhattan
 import io
+import webcolors
+import operator
 from PIL import Image as pimage, ImageFilter, ImageEnhance
 
 class Manufacturer(models.Model):
@@ -121,6 +124,13 @@ class Image(models.Model):
         return self.original_url
 
 
+class ActualColor(models.Model):
+    label = models.CharField(max_length=30, unique=True)
+
+    def __str__(self):
+        return self.label
+
+
 class Product(models.Model):
     name = models.CharField(max_length=300)
     bb_sku = models.CharField(max_length=500, unique=True)
@@ -136,7 +146,7 @@ class Product(models.Model):
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_color = models.CharField(max_length=200, null=True)
 
-    actual_color = models.CharField(max_length=60, null=True)
+    actual_color = models.ForeignKey(ActualColor, null=True, on_delete=models.SET_NULL)
 
     swatch_image = models.ForeignKey(
         Image,
@@ -235,7 +245,7 @@ class Product(models.Model):
         Edge,
         null=True,
         on_delete=models.SET_NULL
-    )
+        )
 
     notes = models.TextField(null=True, blank=True)
 
@@ -265,7 +275,7 @@ class Product(models.Model):
                 continue
             if cat.material != self.material:
                 return
-        # self.resize_image()
+        self.resize_image()
         super(Product, self).save(*args, **kwargs)
 
     def set_prices(self):
@@ -289,7 +299,6 @@ class Product(models.Model):
             self.lowest_price = price["my_price__min"]
             self.save()
             return
-        # self.resize_image()
         self.save()
         return
 
@@ -306,46 +315,27 @@ class Product(models.Model):
         from django.conf import settings
         desired_size = settings.DESIRED_IMAGE_SIZE
         if not self.swatch_image:
-            self.delete()
-            print('wtf')
             return
         image = self.swatch_image.image
         image = pimage.open(image)
         buffer = io.BytesIO()
-        print('hello')
-        # w, h = image.size
-        # if w == desired_size and h <= desired_size:
-        #     return
-        # w_ratio = desired_size/w
-        # height_adjust = int(round(h * w_ratio))
-        # image = image.resize((desired_size, height_adjust))
-        # if image.size[1] > desired_size:
-        #     image = image.crop((
-        #         0,
-        #         0,
-        #         desired_size,
-        #         desired_size
-        #         ))
-        # image.save(buffer, 'JPEG')
-        # image_name = self.swatch_image.original_url.split('/')[-1] + '.jpg'
-        # self.swatch_image.image.save(image_name, buffer)
-        if self.tiling_image:
-            self.tiling_image.delete()
-        enhancer = ImageEnhance.Color(image)
-        image = enhancer.enhance(0.0)
-        # enhancer = ImageEnhance.Sharpness(image)
-        # image = enhancer.enhance(2.0)
-        # image = image.filter(ImageFilter.SHARPEN)
-        # image = image.filter(ImageFilter.MedianFilter())
-        # image = image.filter(ImageFilter.FIND_EDGES)
-        # image.convert
+        w, h = image.size
+        if w == desired_size and h <= desired_size:
+            return
+        w_ratio = desired_size/w
+        height_adjust = int(round(h * w_ratio))
+        image = image.resize((desired_size, height_adjust))
+        if image.size[1] > desired_size:
+            image = image.crop((
+                0,
+                0,
+                desired_size,
+                desired_size
+                ))
         image.save(buffer, 'JPEG')
-        new_name = self.name.replace(' ', '') + '_tiling.jpg'
-        tile_image = Image(original_url=new_name)
-        tile_image.image.save(new_name, buffer)
-        tile_image.save()
-        print(buffer)
-        self.tiling_image = tile_image
+        image_name = self.swatch_image.original_url.split('/')[-1] + '.jpg'
+        self.swatch_image.image.save(image_name, buffer)
+        self.set_actual_color()
         self.save()
 
     def manufacturer_name(self):
@@ -355,5 +345,85 @@ class Product(models.Model):
         if not self.size:
             self.size = self.width + 'x' + self.length
 
-    def actual_image(self):
-        return self.image.image
+    def set_actual_color(self):
+        swatch_image = self.swatch_image
+        if not swatch_image:
+            return
+        image = swatch_image.image
+        if not image:
+            return
+        image = pimage.open(image)
+        w, h = image.size
+        from django.conf import settings
+        if w > settings.DESIRED_IMAGE_SIZE:
+            self.resize_image()
+            return
+        divisor = 4
+        image = image.crop((
+            w/divisor,
+            h/divisor,
+            w - w/divisor,
+            h - h/divisor
+        ))
+        image = image.convert('P', palette=pimage.ADAPTIVE, colors=4)
+        image = image.convert('RGB')
+        # below is temp code
+        buffer = io.BytesIO()
+        image.save(buffer, 'JPEG')
+        if self.tiling_image:
+            print(self.tiling_image.original_url)
+            self.tiling_image.delete()
+        tile_image = Image()
+        image_name = self.name.replace(' ', '') + 'tiling_image.jpg'
+        tile_image.original_url = image_name
+        tile_image.image.save(image_name, buffer)
+        tile_image.save()
+        self.tiling_image = tile_image
+        # above is tmep code
+        colors = image.getcolors()
+        first_percentage, first_color = max(colors, key=operator.itemgetter(0))
+        # distances = {k: manhattan(v, first_color) for k, v in color_list.items()}
+        distances = {k: manhattan(k, first_color) for k in color_list}
+        actual_color = min(distances, key=distances.get)
+        real_color, created = ActualColor.objects.get_or_create(label=webcolors.rgb_to_hex(actual_color))
+        self.actual_color = real_color
+        self.save()
+        # print(actual_color)
+
+        # first_percentage = first_color[0] / (w * h)
+        # colors.remove(first_color)
+        # second_color = max(colors, key=operator.itemgetter(0))
+        # second_percentage = second_color[0] / (w * h)
+
+
+
+        # print(color_set)
+        # buffer = io.BytesIO()
+        # image.save(buffer, 'JPEG')
+        # if self.tiling_image:
+        #     print(self.tiling_image.original_url)
+        #     self.tiling_image.delete()
+        # tile_image = Image()
+        # image_name = self.name.replace(' ', '') + 'tiling_image.jpg'
+        # tile_image.original_url = image_name
+        # tile_image.image.save(image_name, buffer)
+        # tile_image.save()
+        # self.tiling_image = tile_image
+        # self.save()
+
+        # image = image.convert('HSV')
+
+        
+
+
+        # if self.tiling_image:
+        #     self.tiling_image.delete()
+        # enhancer = ImageEnhance.Color(image)
+        # image = enhancer.enhance(0.0)
+        #         image.save(buffer, 'JPEG')
+        # new_name = self.name.replace(' ', '') + '_tiling.jpg'
+        # tile_image = Image(original_url=new_name)
+        # tile_image.image.save(new_name, buffer)
+        # tile_image.save()
+        # print(buffer)
+        # self.tiling_image = tile_image

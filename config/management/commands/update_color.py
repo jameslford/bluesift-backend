@@ -41,15 +41,16 @@ class Command(BaseCommand):
         products = Product.objects.all()
         products.update(actual_color=None)
         for product in products:
-            prod_image = None
-            try:
-                prod_image = product.swatch_image.image
-            except AttributeError:
-                continue
-            image = Image.open(prod_image)
-            color2 = get_color2(image)
-            product.actual_color = color2
-            product.save()
+            product.set_actual_color()
+            # prod_image = None
+            # try:
+            #     prod_image = product.swatch_image.image
+            # except AttributeError:
+            #     continue
+            # image = Image.open(prod_image)
+            # color2 = get_color2(image)
+            # product.actual_color = color2
+            # product.save()
 
 
 # import scipy

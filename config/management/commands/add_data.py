@@ -141,7 +141,6 @@ class Command(BaseCommand):
                 product.cof = cof
                 product.notes = notes
                 product.shade = shade
-                product.actual_color = generic_color
 
                 if edge:
                     edge_obj = Edge.objects.get_or_create(label=edge)[0]
