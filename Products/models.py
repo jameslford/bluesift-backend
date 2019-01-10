@@ -2,7 +2,7 @@
 from django.contrib.gis.db import models
 from django.db.models import Min
 from django.contrib.gis.geos import MultiPoint
-from Products.lists import color_list, manhattan
+from Products import lists
 import io
 import webcolors
 import operator
@@ -124,7 +124,7 @@ class Image(models.Model):
         return self.original_url
 
 
-class ActualColor(models.Model):
+class Color(models.Model):
     label = models.CharField(max_length=30, unique=True)
 
     def __str__(self):
@@ -146,7 +146,18 @@ class Product(models.Model):
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_color = models.CharField(max_length=200, null=True)
 
-    actual_color = models.ForeignKey(ActualColor, null=True, on_delete=models.SET_NULL)
+    actual_color = models.ForeignKey(
+        Color,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='actuals'
+        )
+    label_color = models.ForeignKey(
+        Color,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='labels'
+        )
 
     swatch_image = models.ForeignKey(
         Image,
@@ -365,7 +376,10 @@ class Product(models.Model):
             w - w/divisor,
             h - h/divisor
         ))
-        image = image.convert('P', palette=pimage.ADAPTIVE, colors=4)
+        try:
+            image = image.convert('P', palette=pimage.ADAPTIVE, colors=1)
+        except ValueError:
+            return
         image = image.convert('RGB')
         # below is temp code
         buffer = io.BytesIO()
@@ -373,21 +387,26 @@ class Product(models.Model):
         if self.tiling_image:
             print(self.tiling_image.original_url)
             self.tiling_image.delete()
-        tile_image = Image()
         image_name = self.name.replace(' ', '') + 'tiling_image.jpg'
-        tile_image.original_url = image_name
+        tile_image, created = Image.objects.get_or_create(original_url=image_name)
         tile_image.image.save(image_name, buffer)
         tile_image.save()
         self.tiling_image = tile_image
         # above is tmep code
         colors = image.getcolors()
         first_percentage, first_color = max(colors, key=operator.itemgetter(0))
-        # distances = {k: manhattan(v, first_color) for k, v in color_list.items()}
-        distances = {k: manhattan(k, first_color) for k in color_list}
-        actual_color = min(distances, key=distances.get)
-        real_color, created = ActualColor.objects.get_or_create(label=webcolors.rgb_to_hex(actual_color))
+        # lists.temp_col_repo.append()
+        real_color, created = Color.objects.get_or_create(label=webcolors.rgb_to_hex(first_color))
         self.actual_color = real_color
         self.save()
+
+
+        # distances = {k: manhattan(v, first_color) for k, v in color_list.items()}
+        # color_list = set([v for k, v in lists.color_dic.items()])
+        # distances = {k: lists.manhattan(k, first_color) for k in list(color_list)}
+        # actual_color = min(distances, key=distances.get)
+        # if self.actual_color:
+        #     self.actual_color.delete()
         # print(actual_color)
 
         # first_percentage = first_color[0] / (w * h)

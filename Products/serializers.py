@@ -24,7 +24,7 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     swatch_image = ImageSerializer()
-    tiling_image = ImageSerializer()
+    # tiling_image = ImageSerializer()
     manufacturer = ManufacturerSerializer()
 
     class Meta:
@@ -34,6 +34,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'bb_sku',
             'name',
             'actual_color',
+            # 'label_color',
             'swatch_image',
             'tiling_image',
             'manufacturer',

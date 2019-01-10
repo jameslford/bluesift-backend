@@ -47,6 +47,7 @@ class FilterSorter:
     sze = 'size'
     thk = 'thickness'
     acolor = 'actual_color'
+    lcolor = 'label_color'
     lk = 'look'
     shdvar = 'shade_variation'
 
@@ -82,7 +83,8 @@ class FilterSorter:
         self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
         self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
         self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
-        self.acolor_query, self.acolor_query_raw = self.refine_list(self.acolor)
+        # self.acolor_query, self.acolor_query_raw = self.refine_list(self.acolor)
+        self.lcolor_query, self.lcolor_query_raw = self.refine_list(self.lcolor)
         self.thk_query, self.thk_query_raw = self.refine_list(self.thk)
         self.mat_query, self.manu_query_raw = self.refine_list(self.mat)
         self.submat_query, self.submat_query_raw = self.refine_list(self.submat)
@@ -102,7 +104,7 @@ class FilterSorter:
             self.mat: [self.mat + '__label', self.mat_query],
             self.lk: [self.lk + '__label', self.lk_query],
             self.manu: [self.manu + '__label', self.manu_query],
-            self.acolor: [self.acolor + '__label', self.acolor_query],
+            self.lcolor: [self.lcolor + '__label', self.lcolor_query],
             self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
             self.thk: [self.thk, self.thk_query],
