@@ -18,6 +18,7 @@ from Profiles.models import (
     SupplierProduct
     )
 from Products.models import Product
+from Addresses.models import Address, Zipcode
 
 from .serializers import (
     CustomerProjectSerializer,
@@ -132,6 +133,7 @@ def supplier_short_lib(request):
     response = {'shortLib': full_content}
     return Response(response, status=status.HTTP_200_OK)
 
+
 def get_customer_projects(user):
     profile = CustomerProfile.objects.get_or_create(user=user)[0]
     projects = profile.projects.all()
@@ -205,11 +207,39 @@ def supplier_detail(request, pk):
 def supplier_location(request, pk=None):
 
     if request.method == 'POST':
-        serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
-        if serialized_loc.is_valid():
-            serialized_loc.save()
-            return Response('Done!', status=status.HTTP_201_CREATED)
-        return Response(serialized_loc.errors)
+        data = request.data
+        company_account = data['company_account']
+        loc_name = data['nickname']
+        pn = data['phone_number']
+        address = data['address']
+        line = address['address_line_1']
+        city = address['city']
+        state = address['state']
+        zc = address['postal_code']
+        zip_code = Zipcode.objects.filter(code=zc).first()
+        if not zip_code:
+            return Response('invalid zip')
+        address = Address.objects.create(
+            address_line_1=line,
+            city=city,
+            state=state,
+            postal_code=zip_code
+        )
+        company = CompanyAccount.objects.filter(id=company_account).first()
+        if not company:
+            return Response('invalid company')
+        shipping_location = CompanyShippingLocation.objects.create(
+            company_account=company,
+            nickname=loc_name,
+            phone_number=pn,
+            address=address
+        )
+        return Response('check_it')
+        # serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
+        # if serialized_loc.is_valid():
+        #     serialized_loc.save()
+        #     return Response('Done!', status=status.HTTP_201_CREATED)
+        # return Response(serialized_loc.errors)
 
     if request.method == 'GET':
         location = CompanyShippingLocation.objects.get(id=pk)

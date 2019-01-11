@@ -95,7 +95,6 @@ def create_user(request):
     return Response('Created', status=status.HTTP_201_CREATED)
 
 
-
 def get_message(user, current_site):
     message = render_to_string('acc_activate_email.html', {
         'user': user,
@@ -104,7 +103,6 @@ def get_message(user, current_site):
         'token': Token.objects.create(user=user)
     })
     return message
-
 
 
 def activate(request, uidb64, token):
@@ -120,6 +118,7 @@ def activate(request, uidb64, token):
         user.save()
         return redirect(settings.REDIRECT_URL)
     return HttpResponse('Activation link is invalid!')
+
 
 @api_view(['POST'])
 def custom_login(request):

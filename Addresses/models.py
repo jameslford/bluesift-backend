@@ -49,12 +49,28 @@ class Address(models.Model):
         default='United States of America'
         )
     state = models.CharField(max_length=120)
-    postal_code = models.CharField(max_length=11)
-    coordinates = models.ForeignKey(Coordinate, on_delete=models.SET_NULL, null=True, blank=True)
+    postal_code = models.ForeignKey(
+        Zipcode,
+        on_delete=models.SET_DEFAULT,
+        default=1,
+        related_name='address'
+        )
+    coordinates = models.ForeignKey(
+        Coordinate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+        )
 
     def __str__(self):
         if self.address_line_2:
-            return '%s, %s, %s, %s, %s' % (self.address_line_1, self.address_line_2, self.city, self.state, self.postal_code)
+            return '%s, %s, %s, %s, %s' % (
+                self.address_line_1,
+                self.address_line_2,
+                self.city,
+                self.state,
+                self.postal_code
+                )
         return '%s, %s, %s, %s' % (self.address_line_1, self.city, self.state, self.postal_code)
 
     def address_string(self):

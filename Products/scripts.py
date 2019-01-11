@@ -253,7 +253,9 @@ class FilterSorter:
                     'enabled': item in queries,
                     'value': item}
                 facet['values'].append(value)
-            self.filter_response.append(facet)
+                # facet['values'] = [value] + facet['values']
+            # self.filter_response.append(facet)
+            self.filter_response = [facet] + self.filter_response
 
     def return_filter(self, products):
         self.bool_facet(products)

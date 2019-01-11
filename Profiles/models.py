@@ -29,7 +29,7 @@ class CompanyShippingLocation(models.Model):
         on_delete=models.CASCADE,
         related_name='shipping_locations'
         )
-    address = models.ForeignKey(Address,null=True, on_delete=models.CASCADE)
+    address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=120, null=True, blank=True)
     approved_in_store_seller = models.BooleanField(default=False)
     approved_online_seller = models.BooleanField(default=False)
