@@ -17,5 +17,6 @@ urlpatterns = [
     path('supplierList', supplier_list),
     path('supplierDetails/<int:pk>', supplier_detail),
     path('supplierLocation', supplier_location),
-    path('supplierProduct/<int:pk>/', supplier_product )
+    path('supplierLocation/<int:pk>', supplier_location),
+    path('supplierProduct/<int:pk>/', supplier_product)
 ]

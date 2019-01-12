@@ -14,12 +14,15 @@ from .models import(
 
 class CompanyAccountSerializer(serializers.ModelSerializer):
     address = AddressSerializer(read_only=True)
+
     class Meta:
         model = CompanyAccount
         fields = ('name', 'phone_number', 'address')
 
+
 class CustomerProfileSerializer(serializers.ModelSerializer):
     addresses = AddressSerializer(read_only=True, many=True)
+
     class Meta:
         model = CustomerProfile
         fields = ('phone_number', 'addresses')
@@ -27,6 +30,7 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
 class CustomerProductSerializer(serializers.ModelSerializer):
     product = ProductDetailSerializer()
+
     class Meta:
         model = CustomerProduct
         fields = (
@@ -35,8 +39,10 @@ class CustomerProductSerializer(serializers.ModelSerializer):
             'use',
             )
 
+
 class CustomerProjectSerializer(serializers.ModelSerializer):
     products = CustomerProductSerializer(many=True)
+
     class Meta:
         model = CustomerProject
         fields = (
@@ -47,8 +53,10 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
             'products'
             )
 
+
 class SupplierProductSerializer(serializers.ModelSerializer):
     product = ProductDetailSerializer(read_only=True)
+
     class Meta:
         model = SupplierProduct
         fields = (
@@ -62,9 +70,11 @@ class SupplierProductSerializer(serializers.ModelSerializer):
             'product'
         )
 
+
 class ShippingLocationDetailSerializer(serializers.ModelSerializer):
     priced_products = serializers.SerializerMethodField()
     address = AddressSerializer(read_only=True)
+
     class Meta:
         model = CompanyShippingLocation
         fields = (
@@ -79,12 +89,15 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
             'priced_products',
             'image'
             )
+
     def get_priced_products(self, instance):
         prods = instance.priced_products.all().order_by('id')
         return SupplierProductSerializer(prods, many=True).data
 
+
 class ShippingLocationSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()    
+    address = AddressSerializer()
+
     class Meta:
         model = CompanyShippingLocation
         fields = (
@@ -92,8 +105,11 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
             'company_account',
             'company_name',
             'address',
+            'phone_number',
             'nickname',
             'address_string',
+            'product_count',
+            'image'
             )
 
 

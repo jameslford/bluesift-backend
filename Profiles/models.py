@@ -59,13 +59,12 @@ class CompanyShippingLocation(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.address:
-            self.approved_online_seller == False
+            self.approved_online_seller = False
         if not self.number:
             self.number = self.assign_number()
         if not self.nickname:
             self.nickname = self.company_account.name + ' ' + str(self.number)
         super(CompanyShippingLocation, self).save(*args, **kwargs)
-
 
 
 class SupplierProduct(models.Model):

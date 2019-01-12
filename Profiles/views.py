@@ -22,22 +22,12 @@ from Addresses.models import Address, Zipcode
 
 from .serializers import (
     CustomerProjectSerializer,
+    CompanyAccountSerializer,
     ShippingLocationSerializer,
     ShippingLocationDetailSerializer,
     ShippingLocationUpdateSerializer,
     SupplierProductUpdateSerializer
     )
-
-
-
-
-def get_company_shipping_locations(user):
-    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    locations = account.shipping_locations.all()
-    if locations:
-        return locations
-    CompanyShippingLocation.objects.create(company_account=account)
-    return CompanyShippingLocation.objects.filter(company_account=account)
 
 
 def customer_library_append(request):
@@ -56,6 +46,7 @@ def customer_library_append(request):
         CustomerProduct.objects.create(project=project, product=product)
         return Response(status=status.HTTP_201_CREATED)
     return Response(status=status.HTTP_412_PRECONDITION_FAILED)
+
 
 def supplier_library_append(request):
     user = request.user
@@ -79,13 +70,15 @@ def supplier_library_append(request):
 def customer_short_lib(request):
     user = request.user
     proj_id = request.GET.get('proj_id')
-    projects = get_customer_projects(user)
-    project = projects.first()
+    projects = CustomerProject.objects.filter(owner=user.profile)
+    project = projects.fist()
+    if not project:
+        project = CustomerProject.objects.create(owner=user.profile)
     projects_list = []
     product_ids = []
     if proj_id:
-        project = projects.get(id=proj_id)
-    selected_project = {'id':project.id, 'nickname': project.nickname}
+        project = projects.filter(id=proj_id).first()
+    selected_project = {'id': project.id, 'nickname': project.nickname}
     for proj in projects:
         content = {}
         content['nickname'] = proj.nickname
@@ -134,31 +127,13 @@ def supplier_short_lib(request):
     return Response(response, status=status.HTTP_200_OK)
 
 
-def get_customer_projects(user):
-    profile = CustomerProfile.objects.get_or_create(user=user)[0]
-    projects = profile.projects.all()
-    if projects:
-        return projects
-    CustomerProject.objects.create(owner=profile)
-    return CustomerProject.objects.filter(owner=profile)
-
-def customer_library(request):
-    user = request.user
-    projects = get_customer_projects(user)
-    serialized_projs = CustomerProjectSerializer(projects, many=True)
-    return Response({'projects': serialized_projs.data}, status=status.HTTP_200_OK)
-    # return Response(serialized_projs.errors)
-
-
-def supplier_library(request):
-    user = request.user
-    locations = get_company_shipping_locations(user)
-    serialized_locs = ShippingLocationDetailSerializer(locations, many=True)
-    markup = settings.MARKUP
-    return Response({
-        'markup': markup,
-        'locations': serialized_locs.data
-    }, status=status.HTTP_200_OK)
+def get_company_shipping_locations(user):
+    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
+    locations = account.shipping_locations.all()
+    if locations:
+        return locations
+    CompanyShippingLocation.objects.create(company_account=account)
+    return CompanyShippingLocation.objects.filter(company_account=account)
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
@@ -185,6 +160,38 @@ def get_lib(request):
     if user.is_supplier:
         return supplier_library(request)
     return customer_library(request)
+
+
+def supplier_library(request):
+    user = request.user
+    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
+    locations = account.shipping_locations.all()
+    if not locations:
+        locations = CompanyShippingLocation.objects.create(company_account=account)
+
+    markup = settings.MARKUP
+    count = locations.count()
+    account = CompanyAccountSerializer(account)
+    locations = ShippingLocationSerializer(locations, many=True)
+
+    return Response({
+        'markup': markup,
+        'location_count': count,
+        'account': account.data,
+        'locations': locations.data
+    }, status=status.HTTP_200_OK)
+
+
+def customer_library(request):
+    user = request.user
+    profile = CustomerProfile.objects.get_or_create(user=user)[0]
+    projects = profile.projects.all()
+    if not projects:
+            projects = CustomerProject.objects.create(owner=profile)
+    serialized_projs = CustomerProjectSerializer(projects, many=True)
+    return Response({
+        'projects': serialized_projs.data
+        }, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -228,18 +235,13 @@ def supplier_location(request, pk=None):
         company = CompanyAccount.objects.filter(id=company_account).first()
         if not company:
             return Response('invalid company')
-        shipping_location = CompanyShippingLocation.objects.create(
+        CompanyShippingLocation.objects.create(
             company_account=company,
             nickname=loc_name,
             phone_number=pn,
             address=address
         )
         return Response('check_it')
-        # serialized_loc = ShippingLocationUpdateSerializer(data=request.data)
-        # if serialized_loc.is_valid():
-        #     serialized_loc.save()
-        #     return Response('Done!', status=status.HTTP_201_CREATED)
-        # return Response(serialized_loc.errors)
 
     if request.method == 'GET':
         location = CompanyShippingLocation.objects.get(id=pk)
