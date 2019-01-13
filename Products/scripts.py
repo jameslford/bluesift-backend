@@ -1,6 +1,6 @@
-
+import decimal
 from django.contrib.gis.measure import D
-from django.contrib.gis.geos import Point
+# from django.contrib.gis.geos import Point
 from operator import itemgetter
 
 from Addresses.models import Zipcode
@@ -43,6 +43,7 @@ class FilterSorter:
     app = 'application'
     avail = 'availability'
     loc = 'location'
+    price = 'lowest_price'
     manu = 'manufacturer'
     sze = 'size'
     thk = 'thickness'
@@ -79,6 +80,7 @@ class FilterSorter:
         self.order = list(reversed(request_url))
         self.app_query, self.app_query_raw = self.refine_list(self.app)
         self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
+        self.price_query, self.price_query_raw = self.refine_list(self.price)
         self.loc_query, self.loc_query_raw = self.refine_list(self.loc)
         self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
         self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
@@ -115,6 +117,8 @@ class FilterSorter:
         }
         self.zipcode = None
         self.radius = None
+        self.min_price = None
+        self.max_price = None
         self.legit_queries = []
         self.filter_response = []
 
@@ -135,7 +139,7 @@ class FilterSorter:
         return _products
 
     def filter_location(self, products):
-        if not self.loc_query:
+        if not self.loc_query and not self.avail_query:
             return products
         rad_raw = [q for q in self.loc_query if 'radius' in q]
         zip_raw = [q for q in self.loc_query if 'zip' in q]
@@ -151,6 +155,22 @@ class FilterSorter:
         else:
             self.zipcode = 'error'
             return products
+
+    def filter_price(self, products):
+        _products = products
+        if not self.price_query:
+            return _products
+        min_price = [q.replace('min-', '') for q in self.price_query if 'min' in q]
+        max_price = [q.replace('max-', '') for q in self.price_query if 'max' in q]
+        if min_price:
+            min_price = decimal.Decimal(min_price)
+            self.min_price = min_price
+            _products = _products.filter(lowest_price__gte=min_price)
+        if max_price:
+            max_price = decimal.Decimal(max_price)
+            self.max_price = max_price
+            _products = _products.filter(lowest_price__lte=max_price)
+        return _products
 
     def or_list_query(self, products, term_list):
 

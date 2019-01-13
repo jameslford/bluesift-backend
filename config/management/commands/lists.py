@@ -1,38 +1,3 @@
-colorse = {
-    'Black': (0, 0, 0),
-    'White': (255, 255, 255),
-    'Red': (255, 0, 0),
-    'Lime': (0, 255, 0),
-    'Blue': (0, 0, 255),
-    'Yellow': (255, 255, 0),
-    'Cyan': (0, 255, 255),
-    'Magenta': (255, 0, 255),
-    'Silver': (192, 192, 192),
-    'Gray': (128, 128, 128),
-    'Maroon': (128, 0, 0),
-    'Orange': (255, 165, 0),
-    'Olive': (128, 128, 0),
-    'Green': (0, 128, 0),
-    'Purple': (128, 0, 128),
-    'Teal': (0, 128, 128),
-    'Navy': (0, 0, 128),
-    'cornsilk': (255, 248, 220),
-    'blanchedalmond': (255, 235, 205),
-    'bisque': (255, 228, 196),
-    'navajowhite': (255, 222, 173),
-    'wheat': (245, 222, 179),
-    'burlywood': (222, 184, 135),
-    'tan': (210, 180, 140),
-    'rosybrown': (188, 143, 143),
-    'sandybrown': (244, 164, 96),
-    'goldenrod': (218, 165, 32),
-    'peru': (205, 133, 63),
-    'chocolate': (210, 105, 30),
-    'saddlebrown': (139, 69, 19),
-    'sienna': (160, 82, 45),
-    'brown': (165, 42, 42),
-    'maroon': (128, 0, 0)
-}
 
 colors = {
     'maroon': (128, 0, 0),
@@ -175,3 +140,52 @@ colors = {
     'white_smoke': (245, 245, 245),
     'white': (255, 255, 255)
 }
+
+
+
+
+users = [
+    ['jondoe@gmail.com', 0],
+    ['janedoes@gmail.com', 1],
+    ['burtchrysler@gmail.com', 2]
+]
+
+comp_accounts = [
+    'john does tiles',
+    'janes flooring',
+    'burts finishes'
+]
+
+locations = [
+    [
+        ['johns of lithia', '4044335741', '1211 Thornton Rd', 'Lithia Springs', 'GA', '30122'],
+    ],
+    [
+        ['janes of braselton', '4044335741', '1477 Kilchis Falls Way', 'Braselton', 'GA', '30517'],
+    ],
+    [
+        ['burts of newnan', '4044335741',  '958 Thomas Powers Rd', 'Newnan', 'GA', '30263'],
+    ]
+]
+
+
+def create_user_data(q):
+    email = q[0]
+    index = q[1]
+    loc_dict = {
+        'email': email,
+        'password': 'tomatoes',
+        'ca_name': comp_accounts[index],
+        'locations': []
+        }
+    for loc in locations[index]:
+        location = {
+            'nickname': loc[0],
+            'number': loc[1],
+            'address_line': loc[2],
+            'city': loc[3],
+            'state': loc[4],
+            'zip': loc[5]
+        }
+        loc_dict['locations'].append(location)
+    return loc_dict

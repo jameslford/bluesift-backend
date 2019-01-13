@@ -11,22 +11,6 @@ from .serializers import ProductSerializer, ProductDetailSerializer
 from .models import Product
 
 
-# def facet(products, qlist, facet_list, filter_term, name, queries):
-#     new_list = [q for q in qlist if q]
-#     facet_dict = {'name': name, 'values': []}
-#     for item in facet_list:
-#         search = {filter_term: item.id}
-#         item_prods = products.filter(**search)
-#         new_prods = item_prods.intersection(*new_list)
-#         value = {
-#             'listcount': len(qlist),
-#             'label': item.label,
-#             'count': new_prods.count(),
-#             'enabled': item.id in queries,
-#             'value': item.id}
-#         facet_dict['values'].append(value)
-#     return facet_dict
-
 @api_view(['GET'])
 def product_list(request):
     # products = Product.objects.all()
@@ -44,6 +28,7 @@ def product_list(request):
     # filters applications, availability and location. nothing special
     products = sorter.filter_bools(products)
     products = sorter.filter_location(products)
+    products = sorter.filter_price(products)
     # filters manu, size, thickness, and look - and arg between groups, or arg within groups
     products = sorter.filter_attribute(products)
     # products = sorter.filter_materials_down(products)
