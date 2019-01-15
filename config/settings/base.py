@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'Addresses',
     'Carts',
     'Cards',
+    'CustomerProfiles',
     'config',
     'Orders',
     'Plans',
@@ -37,8 +38,6 @@ INSTALLED_APPS = [
     'Profiles',
 
 ]
-
-
 
 
 ROOT_URLCONF = 'config.urls'

@@ -12,16 +12,12 @@ from rest_framework import status
 from Profiles.models import (
     CompanyAccount,
     CompanyShippingLocation,
-    CustomerProduct,
-    CustomerProfile,
-    CustomerProject,
     SupplierProduct
     )
 from Products.models import Product
 from Addresses.models import Address, Zipcode
 
 from .serializers import (
-    CustomerProjectSerializer,
     CompanyAccountSerializer,
     ShippingLocationSerializer,
     ShippingLocationDetailSerializer,
@@ -30,22 +26,13 @@ from .serializers import (
     )
 
 
-def customer_library_append(request):
-    user = request.user
-    projects = get_customer_projects(user)
-    prod_id = request.POST.get('prod_id')
-    project_id = request.POST.get('proj_id', 0)
-    product = Product.objects.get(id=prod_id)
-    project_count = projects.count()
-    if project_id != 0:
-        project = projects.get(id=project_id)
-        CustomerProduct.objects.create(project=project, product=product)
-        return Response(status=status.HTTP_201_CREATED)
-    elif project_count == 1:
-        project = projects.first()
-        CustomerProduct.objects.create(project=project, product=product)
-        return Response(status=status.HTTP_201_CREATED)
-    return Response(status=status.HTTP_412_PRECONDITION_FAILED)
+def get_company_shipping_locations(user):
+    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
+    locations = account.shipping_locations.all()
+    if locations:
+        return locations
+    CompanyShippingLocation.objects.create(company_account=account)
+    return CompanyShippingLocation.objects.filter(company_account=account)
 
 
 def supplier_library_append(request):
@@ -65,36 +52,6 @@ def supplier_library_append(request):
         return Response(status=status.HTTP_201_CREATED)
     else:
         return Response(status=status.HTTP_412_PRECONDITION_FAILED)
-
-
-def customer_short_lib(request):
-    user = request.user
-    proj_id = request.GET.get('proj_id')
-    projects = CustomerProject.objects.filter(owner=user.profile)
-    project = projects.fist()
-    if not project:
-        project = CustomerProject.objects.create(owner=user.profile)
-    projects_list = []
-    product_ids = []
-    if proj_id:
-        project = projects.filter(id=proj_id).first()
-    selected_project = {'id': project.id, 'nickname': project.nickname}
-    for proj in projects:
-        content = {}
-        content['nickname'] = proj.nickname
-        content['id'] = proj.id
-        projects_list.append(content)
-    products = project.products.all()
-    for prod in products:
-        product_ids.append(prod.product.id)
-    full_content = {
-        'list': projects_list,
-        'count': projects.count(),
-        'selected_location': selected_project,
-        'product_ids': product_ids
-    }
-    response = {'shortLib': full_content}
-    return Response(response, status=status.HTTP_200_OK)
 
 
 def supplier_short_lib(request):
@@ -127,48 +84,12 @@ def supplier_short_lib(request):
     return Response(response, status=status.HTTP_200_OK)
 
 
-def get_company_shipping_locations(user):
-    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    locations = account.shipping_locations.all()
-    if locations:
-        return locations
-    CompanyShippingLocation.objects.create(company_account=account)
-    return CompanyShippingLocation.objects.filter(company_account=account)
-
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-def append_lib(request):
-    user = request.user
-    if user.is_supplier:
-        return supplier_library_append(request)
-    return customer_library_append(request)
-
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def get_short_lib(request):
-    user = request.user
-    if user.is_supplier:
-        return supplier_short_lib(request)
-    return customer_short_lib(request)
-
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def get_lib(request):
-    user = request.user
-    if user.is_supplier:
-        return supplier_library(request)
-    return customer_library(request)
-
-
 def supplier_library(request):
     user = request.user
     account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
     locations = account.shipping_locations.all()
     if not locations:
         locations = CompanyShippingLocation.objects.create(company_account=account)
-
     markup = settings.MARKUP
     count = locations.count()
     account = CompanyAccountSerializer(account)
@@ -182,23 +103,12 @@ def supplier_library(request):
     }, status=status.HTTP_200_OK)
 
 
-def customer_library(request):
-    user = request.user
-    profile = CustomerProfile.objects.get_or_create(user=user)[0]
-    projects = profile.projects.all()
-    if not projects:
-            projects = CustomerProject.objects.create(owner=profile)
-    serialized_projs = CustomerProjectSerializer(projects, many=True)
-    return Response({
-        'projects': serialized_projs.data
-        }, status=status.HTTP_200_OK)
-
-
 @api_view(['GET'])
 def supplier_list(request):
     suppliers = CompanyShippingLocation.objects.all()
     serialized_suppliers = ShippingLocationSerializer(suppliers, many=True)
     return Response({'suppliers': serialized_suppliers.data})
+
 
 @api_view(['GET'])
 def supplier_detail(request, pk):
@@ -209,10 +119,10 @@ def supplier_detail(request, pk):
         return Response({'location': serialized.data}, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['POST', 'GET'])
 @permission_classes((IsAuthenticated,))
 def supplier_location(request, pk=None):
-
     if request.method == 'POST':
         data = request.data
         company_account = data['company_account']
@@ -244,11 +154,18 @@ def supplier_location(request, pk=None):
         return Response('check_it')
 
     if request.method == 'GET':
-        location = CompanyShippingLocation.objects.get(id=pk)
-        if location:
-            serialized = ShippingLocationDetailSerializer(location)
-            return Response({'location': serialized.data}, status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        location = CompanyShippingLocation.objects.filter(id=pk).first()
+        user = request.user
+        if not location:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if location.company_account.account_owner != user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        serialized = ShippingLocationDetailSerializer(location)
+        markup = settings.MARKUP
+        return Response({
+            'markup': markup,
+            'location': serialized.data
+            }, status=status.HTTP_200_OK)
 
 
 @api_view(['PUT', 'DELETE'])

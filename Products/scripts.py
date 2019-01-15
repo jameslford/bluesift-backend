@@ -98,8 +98,8 @@ class FilterSorter:
         self.bool_raw = self.avail_query_raw + self.app_query_raw
 
         self.bools = [
-            [self.avail_query, self.avail, avai_terms],
-            [self.app_query, self.app, app_terms]
+            [self.app_query, self.app, app_terms],
+            [self.avail_query, self.avail, avai_terms]
         ]
 
         self.standalones = {
@@ -119,6 +119,8 @@ class FilterSorter:
         self.radius = None
         self.min_price = None
         self.max_price = None
+        # self.location_respone = None
+        # self.price_response = None
         self.legit_queries = []
         self.filter_response = []
 
@@ -139,7 +141,7 @@ class FilterSorter:
         return _products
 
     def filter_location(self, products):
-        if not self.loc_query and not self.avail_query:
+        if not self.loc_query:
             return products
         rad_raw = [q for q in self.loc_query if 'radius' in q]
         zip_raw = [q for q in self.loc_query if 'zip' in q]
@@ -154,7 +156,7 @@ class FilterSorter:
             return products
         else:
             self.zipcode = 'error'
-            return products
+        return products
 
     def filter_price(self, products):
         _products = products
@@ -273,9 +275,19 @@ class FilterSorter:
                     'enabled': item in queries,
                     'value': item}
                 facet['values'].append(value)
-                # facet['values'] = [value] + facet['values']
-            # self.filter_response.append(facet)
             self.filter_response = [facet] + self.filter_response
+        if self.avail_query:
+            loc_facet = {
+                'name': 'location',
+                'radius': self.radius,
+                'zipcode': self.zipcode, 
+            }
+            price_facet = {
+                'name': 'price',
+                'min': self.min_price,
+                'max': self.max_price
+            }
+            self.filter_response = [loc_facet, price_facet] + self.filter_response
 
     def return_filter(self, products):
         self.bool_facet(products)

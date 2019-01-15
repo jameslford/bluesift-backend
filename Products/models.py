@@ -350,7 +350,8 @@ class Product(models.Model):
         self.save()
 
     def manufacturer_name(self):
-        return self.manufacturer.label
+        if self.manufacturer:
+            return self.manufacturer.label
 
     def set_size(self):
         if not self.size:

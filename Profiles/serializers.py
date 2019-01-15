@@ -1,14 +1,11 @@
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
-from Products.serializers import ProductDetailSerializer
-from .models import(
+from Products.serializers import ProductDetailSerializer, ProductSerializerforSupplier
+from .models import (
     CompanyAccount,
     CompanyShippingLocation,
     SupplierProduct,
-    CustomerProfile,
-    CustomerProject,
-    CustomerProduct
     )
 
 
@@ -20,42 +17,8 @@ class CompanyAccountSerializer(serializers.ModelSerializer):
         fields = ('name', 'phone_number', 'address')
 
 
-class CustomerProfileSerializer(serializers.ModelSerializer):
-    addresses = AddressSerializer(read_only=True, many=True)
-
-    class Meta:
-        model = CustomerProfile
-        fields = ('phone_number', 'addresses')
-
-
-class CustomerProductSerializer(serializers.ModelSerializer):
-    product = ProductDetailSerializer()
-
-    class Meta:
-        model = CustomerProduct
-        fields = (
-            'id',
-            'product',
-            'use',
-            )
-
-
-class CustomerProjectSerializer(serializers.ModelSerializer):
-    products = CustomerProductSerializer(many=True)
-
-    class Meta:
-        model = CustomerProject
-        fields = (
-            'owner',
-            'address',
-            'nickname',
-            'id',
-            'products'
-            )
-
-
-class SupplierProductSerializer(serializers.ModelSerializer):
-    product = ProductDetailSerializer(read_only=True)
+class SVSupplierProductSerializer(serializers.ModelSerializer):
+    product = ProductSerializerforSupplier(read_only=True)
 
     class Meta:
         model = SupplierProduct
@@ -71,7 +34,7 @@ class SupplierProductSerializer(serializers.ModelSerializer):
         )
 
 
-class ShippingLocationDetailSerializer(serializers.ModelSerializer):
+class SVShippingLocationSerializer(serializers.ModelSerializer):
     priced_products = serializers.SerializerMethodField()
     address = AddressSerializer(read_only=True)
 
@@ -90,12 +53,12 @@ class ShippingLocationDetailSerializer(serializers.ModelSerializer):
             'image'
             )
 
-    def get_priced_products(self, instance):
-        prods = instance.priced_products.all().order_by('id')
-        return SupplierProductSerializer(prods, many=True).data
+    def get_priced_products(self, instance, order='id'):
+        prods = instance.priced_products.all().order_by(order)
+        return SVSupplierProductSerializer(prods, many=True).data
 
 
-class ShippingLocationSerializer(serializers.ModelSerializer):
+class ShippingLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
 
     class Meta:
@@ -115,6 +78,7 @@ class ShippingLocationSerializer(serializers.ModelSerializer):
 
 class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
+
     class Meta:
         model = CompanyShippingLocation
         fields = (
@@ -129,7 +93,9 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
         address = Address.objects.create(**address)
         return CompanyShippingLocation.objects.create(address=address, **validated_data)
 
+
 class SupplierProductUpdateSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = SupplierProduct
         fields = (

@@ -5,6 +5,7 @@ from rest_framework import serializers
 from .models import (
     Product,
     Manufacturer,
+    Material,
     Image
     )
 
@@ -12,6 +13,13 @@ from .models import (
 class ManufacturerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manufacturer
+        fields = ('id', 'label')
+
+
+class MaterialSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Material
         fields = ('id', 'label')
 
 
@@ -40,6 +48,26 @@ class ProductSerializer(serializers.ModelSerializer):
             # 'label_color',
             'swatch_image',
             # 'tiling_image',
+            'manufacturer',
+            'lowest_price',
+            )
+
+
+class ProductSerializerforSupplier(serializers.ModelSerializer):
+    swatch_image = ImageSerializer()
+    manufacturer = ManufacturerSerializer()
+    material = MaterialSerializer()
+
+    class Meta:
+        model = Product
+        fields = (
+            'id',
+            'manufacturer_color',
+            'manu_collection',
+            'material',
+            'size',
+            'name',
+            'swatch_image',
             'manufacturer',
             'lowest_price',
             )
