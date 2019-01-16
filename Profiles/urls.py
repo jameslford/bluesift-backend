@@ -1,9 +1,7 @@
 ''' profiles.urls.py '''
 from django.urls import path
-from .views import(
-    get_lib,
-    get_short_lib,
-    append_lib,
+from .views import (
+    supplier_library,
     supplier_list,
     supplier_detail,
     supplier_location,
@@ -11,12 +9,10 @@ from .views import(
     )
 
 urlpatterns = [
-    path('getLib', get_lib),
-    path('getShortLib', get_short_lib),
-    path('appendLib', append_lib),
-    path('supplierList', supplier_list),
-    path('supplierDetails/<int:pk>', supplier_detail),
-    path('supplierLocation', supplier_location),
-    path('supplierLocation/<int:pk>', supplier_location),
-    path('supplierProduct/<int:pk>/', supplier_product)
+    path('supplier-library', supplier_library),
+    path('supplier-list', supplier_list),
+    path('cv-supplier-location/<int:pk>', supplier_detail),
+    path('sv-supplier-location', supplier_location),
+    path('sv-supplier-location/<int:pk>', supplier_location),
+    path('supplier-product/<int:pk>', supplier_product)
 ]

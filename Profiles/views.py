@@ -26,64 +26,8 @@ from .serializers import (
     )
 
 
-def get_company_shipping_locations(user):
-    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    locations = account.shipping_locations.all()
-    if locations:
-        return locations
-    CompanyShippingLocation.objects.create(company_account=account)
-    return CompanyShippingLocation.objects.filter(company_account=account)
-
-
-def supplier_library_append(request):
-    user = request.user
-    locations = get_company_shipping_locations(user)
-    prod_id = request.POST.get('prod_id')
-    location_id = request.POST.get('proj_id', 0)
-    product = Product.objects.get(id=prod_id)
-    count = locations.count()
-    if location_id != 0:
-        location = locations.get(id=location_id)
-        SupplierProduct.objects.create(product=product, supplier=location)
-        return Response(status=status.HTTP_201_CREATED)
-    elif count == 1:
-        location = locations.first()
-        SupplierProduct.objects.create(product=product, supplier=location)
-        return Response(status=status.HTTP_201_CREATED)
-    else:
-        return Response(status=status.HTTP_412_PRECONDITION_FAILED)
-
-
-def supplier_short_lib(request):
-    user = request.user
-    location_id = request.GET.get('proj_id')
-    locations = get_company_shipping_locations(user)
-    location = locations.first()
-    locations_list = []
-    product_ids = []
-    if location_id:
-        location = locations.get(id=location_id)
-    for local in locations:
-        content = {}
-        content['nickname'] = local.nickname
-        content['id'] = local.id
-        locations_list.append(content)
-    products = location.priced_products.all()
-    for prod in products:
-        product_ids.append(prod.product.id)
-    full_content = {
-        'list': locations_list,
-        'count': locations.count(),
-        'selected_location': {
-            'nickname': location.nickname,
-            'id': location.id
-        },
-        'product_ids': product_ids
-    }
-    response = {'shortLib': full_content}
-    return Response(response, status=status.HTTP_200_OK)
-
-
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
 def supplier_library(request):
     user = request.user
     account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
@@ -188,3 +132,61 @@ def supplier_product(request, pk):
 
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+def get_company_shipping_locations(user):
+    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
+    locations = account.shipping_locations.all()
+    if locations:
+        return locations
+    CompanyShippingLocation.objects.create(company_account=account)
+    return CompanyShippingLocation.objects.filter(company_account=account)
+
+
+def supplier_library_append(request):
+    user = request.user
+    locations = get_company_shipping_locations(user)
+    prod_id = request.POST.get('prod_id')
+    location_id = request.POST.get('proj_id', 0)
+    product = Product.objects.get(id=prod_id)
+    count = locations.count()
+    if location_id != 0:
+        location = locations.get(id=location_id)
+        SupplierProduct.objects.create(product=product, supplier=location)
+        return Response(status=status.HTTP_201_CREATED)
+    elif count == 1:
+        location = locations.first()
+        SupplierProduct.objects.create(product=product, supplier=location)
+        return Response(status=status.HTTP_201_CREATED)
+    else:
+        return Response(status=status.HTTP_412_PRECONDITION_FAILED)
+
+
+def supplier_short_lib(request):
+    user = request.user
+    location_id = request.GET.get('proj_id')
+    locations = get_company_shipping_locations(user)
+    location = locations.first()
+    locations_list = []
+    product_ids = []
+    if location_id:
+        location = locations.get(id=location_id)
+    for local in locations:
+        content = {}
+        content['nickname'] = local.nickname
+        content['id'] = local.id
+        locations_list.append(content)
+    products = location.priced_products.all()
+    for prod in products:
+        product_ids.append(prod.product.id)
+    full_content = {
+        'list': locations_list,
+        'count': locations.count(),
+        'selected_location': {
+            'nickname': location.nickname,
+            'id': location.id
+        },
+        'product_ids': product_ids
+    }
+    response = {'shortLib': full_content}
+    return Response(response, status=status.HTTP_200_OK)
