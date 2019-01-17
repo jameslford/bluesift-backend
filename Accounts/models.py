@@ -2,13 +2,10 @@
 
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from Plans.models import Plan
-
-
 
 
 class UserManager(BaseUserManager):
-     
+
     def create_user(
             self,
             email,
@@ -17,7 +14,6 @@ class UserManager(BaseUserManager):
             is_active=True,
             is_staff=False,
             is_admin=False,
-            plan=None,
             is_supplier=False
             ):
         if not email:
@@ -36,7 +32,6 @@ class UserManager(BaseUserManager):
         user_obj.admin = is_admin
         user_obj.is_active = is_active
         user_obj.is_supplier = is_supplier
-        user_obj.plan = plan
         user_obj.save(using=self.db)
         return user_obj
 
@@ -64,12 +59,10 @@ class UserManager(BaseUserManager):
         return user
 
 
-
 class User(AbstractBaseUser):
 
     email = models.EmailField(max_length=200, unique=True)
     full_name = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
-    plan = models.ForeignKey(Plan, null=True, blank=True, on_delete=models.SET_NULL)
     is_supplier = models.BooleanField(default=False)
     date_registered = models.DateTimeField(auto_now_add=True, null=True)
     date_confirmed = models.DateTimeField(auto_now_add=True, null=True)
@@ -106,7 +99,6 @@ class User(AbstractBaseUser):
     @property
     def is_admin(self):
         return self.admin
-
 
     def has_perm(self, perm, obj=None):
         return True

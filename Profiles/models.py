@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
+from Plans.models import SupplierPlan
 
 
 class CompanyAccount(models.Model):
@@ -15,6 +16,7 @@ class CompanyAccount(models.Model):
         )
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
+    plan = models.ForeignKey(SupplierPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
 
     def __str__(self):
         if self.name:

@@ -1,4 +1,4 @@
-''' views for returning customer and supplier projects/locations and 
+''' views for returning customer and supplier projects/locations and
     accompanying products. supporting functions first, actual views at bottom '''
 
 from django.conf import settings
@@ -18,12 +18,13 @@ from Products.models import Product
 from Addresses.models import Address, Zipcode
 
 from .serializers import (
-    CompanyAccountSerializer,
-    ShippingLocationSerializer,
-    ShippingLocationDetailSerializer,
-    ShippingLocationUpdateSerializer,
+    CompanyAccountDetailSerializer,
+    SVLocationSerializer,
+    ShippingLocationListSerializer,
     SupplierProductUpdateSerializer
     )
+
+''' supplier side views  '''
 
 
 @api_view(['GET'])
@@ -31,42 +32,25 @@ from .serializers import (
 def supplier_library(request):
     user = request.user
     account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    locations = account.shipping_locations.all()
-    if not locations:
-        locations = CompanyShippingLocation.objects.create(company_account=account)
+    # locations = account.shipping_locations.all()
+    # if not locations:
+    #     locations = CompanyShippingLocation.objects.create(company_account=account)
+    # locations = ShippingLocationSerializer(locations, many=True)
+    # count = locations.count()
     markup = settings.MARKUP
-    count = locations.count()
-    account = CompanyAccountSerializer(account)
-    locations = ShippingLocationSerializer(locations, many=True)
+    account = CompanyAccountDetailSerializer(account)
 
     return Response({
         'markup': markup,
-        'location_count': count,
+        # 'location_count': count,
         'account': account.data,
-        'locations': locations.data
+        # 'locations': locations.data
     }, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def supplier_list(request):
-    suppliers = CompanyShippingLocation.objects.all()
-    serialized_suppliers = ShippingLocationSerializer(suppliers, many=True)
-    return Response({'suppliers': serialized_suppliers.data})
-
-
-@api_view(['GET'])
-def supplier_detail(request, pk):
-    # s_id = request.GET.get('id')
-    supplier = CompanyShippingLocation.objects.get(id=pk)
-    if supplier:
-        serialized = ShippingLocationDetailSerializer(supplier)
-        return Response({'location': serialized.data}, status=status.HTTP_200_OK)
-    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST', 'GET'])
 @permission_classes((IsAuthenticated,))
-def supplier_location(request, pk=None):
+def sv_supplier_location(request, pk=None):
     if request.method == 'POST':
         data = request.data
         company_account = data['company_account']
@@ -104,7 +88,7 @@ def supplier_location(request, pk=None):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if location.company_account.account_owner != user:
             return Response(status=status.HTTP_403_FORBIDDEN)
-        serialized = ShippingLocationDetailSerializer(location)
+        serialized = SVLocationSerializer(location)
         markup = settings.MARKUP
         return Response({
             'markup': markup,
@@ -117,7 +101,8 @@ def supplier_location(request, pk=None):
 def supplier_product(request, pk):
     user = request.user
     product = SupplierProduct.objects.get(id=pk)
-    if product.supplier.company_account.account_owner == user:
+    if product.supplier.company_account.account_owner != user:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
         if request.method == 'DELETE':
             product.delete()
@@ -129,9 +114,6 @@ def supplier_product(request, pk):
                 serialized_prod.update(instance=product, validated_data=request.data)
                 return Response(status=status.HTTP_202_ACCEPTED)
             return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
-
-    else:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_company_shipping_locations(user):
@@ -190,3 +172,23 @@ def supplier_short_lib(request):
     }
     response = {'shortLib': full_content}
     return Response(response, status=status.HTTP_200_OK)
+
+
+''' customer side views '''
+
+
+@api_view(['GET'])
+def supplier_list(request):
+    suppliers = CompanyShippingLocation.objects.all()
+    serialized_suppliers = ShippingLocationListSerializer(suppliers, many=True)
+    return Response({'suppliers': serialized_suppliers.data})
+
+
+@api_view(['GET'])
+def cv_supplier_location(request, pk):
+    # s_id = request.GET.get('id')
+    supplier = CompanyShippingLocation.objects.get(id=pk)
+    if supplier:
+        serialized = SVLocationSerializer(supplier)
+        return Response({'location': serialized.data}, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_400_BAD_REQUEST)

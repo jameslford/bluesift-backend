@@ -19,25 +19,15 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from .serializers import(
-    CreateSupplierSerializer,
-    CreateUserSerializer,
+from .serializers import (
     UserSerializer,
     UserResponseSerializer,
-    LoginSerializer
     )
 
-from Profiles.models import(
-    CompanyAccount,
-    CompanyShippingLocation,
-    CustomerProfile,
-    CustomerProject
-    )
-
-from Profiles.serializers import(
-    CompanyAccountSerializer,
-    CustomerProfileSerializer
-)
+from Profiles.models import CompanyAccount
+from Profiles.serializers import CompanyAccountSerializer
+from CustomerProfiles.models import CustomerProfile, CustomerProject
+from CustomerProfiles.serializers import CustomerProfileSerializer
 
 
 @api_view(['POST'])
@@ -70,12 +60,11 @@ def create_user(request):
             return Response('User already exist', status=status.HTTP_400_BAD_REQUEST)
         return Response('User exist', status=status.HTTP_400_BAD_REQUEST)
 
+    user.save()
     if not is_supplier:
-        user.save()
         profile = CustomerProfile.objects.create(user=user)
         CustomerProject.objects.create(owner=profile, nickname='First Project')
-    if is_supplier:
-        user.save()
+    else:
         CompanyAccount.objects.create(
             name=company_name,
             phone_number=phone_number,
@@ -147,7 +136,6 @@ def custom_login(request):
 
     serialized_user = UserResponseSerializer(user)
     return Response(serialized_user.data, status=status.HTTP_200_OK)
-
 
 
 @api_view(['GET'])

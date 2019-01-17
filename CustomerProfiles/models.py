@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
+from Plans.models import CustomerPlan
 
 
 class CustomerProfile(models.Model):
@@ -14,6 +15,7 @@ class CustomerProfile(models.Model):
     addresses = models.ManyToManyField(Address, related_name='addresses')
     phone_number = models.IntegerField(null=True)
     name = models.CharField(max_length=40, blank=True, null=True)
+    plan = models.ForeignKey(CustomerPlan, null=True, on_delete=models.SET_NULL, related_name='customers')
 
     def __str__(self):
         return self.user.get_first_name() + "'s library"

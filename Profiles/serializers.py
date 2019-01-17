@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
-from Products.serializers import ProductDetailSerializer, ProductSerializerforSupplier
+from Products.serializers import ProductSerializerforSupplier
 from .models import (
     CompanyAccount,
     CompanyShippingLocation,
@@ -17,7 +17,31 @@ class CompanyAccountSerializer(serializers.ModelSerializer):
         fields = ('name', 'phone_number', 'address')
 
 
-class SVSupplierProductSerializer(serializers.ModelSerializer):
+class CompanyAccountDetailSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+    locations = serializers.SerializerMethodField()
+    count = None
+
+    class Meta:
+        model = CompanyAccount
+        fields = (
+            'address',
+            'phone_number',
+            'name',
+            'count'
+            'plan',
+            'locations'
+        )
+
+    def get_locations(self, instance):
+        locations = instance.shipping_locations.all()
+        if not locations:
+            locations = CompanyShippingLocation.objects.create(company_account=instance)
+        self.count = locations.count()
+        return ShippingLocationListSerializer(locations, many=True).data
+
+
+class SupplierProductSerializer(serializers.ModelSerializer):
     product = ProductSerializerforSupplier(read_only=True)
 
     class Meta:
@@ -34,7 +58,7 @@ class SVSupplierProductSerializer(serializers.ModelSerializer):
         )
 
 
-class SVShippingLocationSerializer(serializers.ModelSerializer):
+class SVLocationSerializer(serializers.ModelSerializer):
     priced_products = serializers.SerializerMethodField()
     address = AddressSerializer(read_only=True)
 
@@ -44,6 +68,7 @@ class SVShippingLocationSerializer(serializers.ModelSerializer):
             'company_account',
             'company_name',
             'approved_online_seller',
+            'approved_in_store_seller',
             'nickname',
             'product_count',
             'address',
@@ -55,7 +80,7 @@ class SVShippingLocationSerializer(serializers.ModelSerializer):
 
     def get_priced_products(self, instance, order='id'):
         prods = instance.priced_products.all().order_by(order)
-        return SVSupplierProductSerializer(prods, many=True).data
+        return SupplierProductSerializer(prods, many=True).data
 
 
 class ShippingLocationListSerializer(serializers.ModelSerializer):
@@ -115,6 +140,3 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)
         instance.save()
         return instance
-
-
-
