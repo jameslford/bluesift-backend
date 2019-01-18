@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
@@ -8,20 +9,50 @@ from Plans.models import SupplierPlan
 
 class CompanyAccount(models.Model):
     name = models.CharField(max_length=120, unique=True)
-    account_owner = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        limit_choices_to={'is_supplier': True},
-        related_name='company_account'
-        )
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
     plan = models.ForeignKey(SupplierPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
 
     def __str__(self):
-        if self.name:
-            return self.name
-        return self.account_owner.get_first_name() + "'s Company"
+        return self.name
+
+    def get_employees(self):
+        return self.employees
+
+
+class EmployeeProfile(models.Model):
+    # each user can only have one employee profile
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        limit_choices_to={'is_supplier': True},
+        related_name='employee_profile'
+    )
+    company_account = models.ForeignKey(
+        CompanyAccount,
+        on_delete=models.CASCADE,
+        related_name='employees'
+        )
+    company_account_owner = models.BooleanField(default=False)
+    company_account_admin = models.BooleanField(default=False)
+    title = models.CharField(max_length=100, null=True)
+
+    def clean(self):
+        # makes sure company owners/admins do not exceed quota
+        # hardcoding quota for now, but leaves door open
+        company_owners_allowed = 1
+        company_admins_allowed = 1
+        if self.company_account_admin:
+            existing_admins = self.company_account.employees.filter(company_account_admin=True).count()
+            if existing_admins >= company_admins_allowed:
+                raise ValidationError('Maximum admins, ' + str(company_admins_allowed) +' already exist')
+                return
+        if self.company_account_owner:
+            existing_owners = self.company_account.employees.filter(company_account_owner=True).count()
+            if existing_owners >= company_owners_allowed:
+                raise ValidationError('Maximum owners, ' + str(company_owners_allowed) +' already exist')
+                return
+        return super().clean()
 
 
 class CompanyShippingLocation(models.Model):
@@ -30,11 +61,17 @@ class CompanyShippingLocation(models.Model):
         on_delete=models.CASCADE,
         related_name='shipping_locations'
         )
+    local_admin = models.ForeignKey(
+        EmployeeProfile,
+        null=True,
+        on_delete=models.SET_NULL,
+        )
     address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=120, null=True, blank=True)
     approved_in_store_seller = models.BooleanField(default=False)
     approved_online_seller = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=10)
+    email = models.EmailField(null=True)
     number = models.IntegerField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True)
 
@@ -42,10 +79,15 @@ class CompanyShippingLocation(models.Model):
         return str(self.company_account) + ' ' + str(self.number)
 
     def assign_number(self):
-        account = self.company_account
-        count = account.shipping_locations.all().count()
-        number = count + 1
-        return number
+        num_list = []
+        all_locations = self.company_account.shipping_locations.all()
+        for loc in all_locations:
+            if loc.number:
+                num_list.append(loc.number)
+            else:
+                num_list.append(0)
+        num = max(set(num_list)) + 1
+        return num
 
     def product_count(self):
         return self.priced_products.count()
@@ -58,6 +100,15 @@ class CompanyShippingLocation(models.Model):
     def company_name(self):
         return self.company_account.name
 
+    def clean(self):
+        # makes sure employee assigned to local_admin is a company employee
+        if not self.local_admin:
+            return super().clean()
+        if self.local_admin.company_account == self.company_account:
+            return super().clean()
+        else:
+            raise ValidationError('Employee not a company employee')
+
     def save(self, *args, **kwargs):
         if not self.address:
             self.approved_online_seller = False
@@ -65,6 +116,7 @@ class CompanyShippingLocation(models.Model):
             self.number = self.assign_number()
         if not self.nickname:
             self.nickname = self.company_account.name + ' ' + str(self.number)
+        self.full_clean()
         super(CompanyShippingLocation, self).save(*args, **kwargs)
 
 
@@ -120,6 +172,3 @@ class SupplierProduct(models.Model):
         product.set_prices()
         if address:
             product.set_locations()
-
-
-

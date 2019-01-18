@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from Profiles.models import (
+    EmployeeProfile,
     CompanyAccount,
     CompanyShippingLocation,
     SupplierProduct
@@ -27,33 +28,55 @@ from .serializers import (
 ''' supplier side views  '''
 
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated,))
-def supplier_library(request):
+def company_account(request):
     user = request.user
-    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    # locations = account.shipping_locations.all()
-    # if not locations:
-    #     locations = CompanyShippingLocation.objects.create(company_account=account)
-    # locations = ShippingLocationSerializer(locations, many=True)
-    # count = locations.count()
-    markup = settings.MARKUP
-    account = CompanyAccountDetailSerializer(account)
+    employee = EmployeeProfile.objects.filter(user=user).first()
+    # only account employees can view this information
+    if not employee:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    account = employee.company
 
-    return Response({
-        'markup': markup,
-        # 'location_count': count,
-        'account': account.data,
-        # 'locations': locations.data
-    }, status=status.HTTP_200_OK)
+    if request.method == 'GET':
+        markup = settings.MARKUP
+        account = CompanyAccountDetailSerializer(account)
+        return Response({
+            'markup': markup,
+            'account': account.data,
+        }, status=status.HTTP_200_OK)
+
+    if request.method == 'DELETE':
+        # only account owner can delete company account
+        if not employee.company_account_owner:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        account.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    if request.method == 'PUT':
+        # only account owner and sys_admin can update company account
+        if not (employee.company_account_owner or
+                employee.company_account_admin):
+                return Response(status=status.HTTP_403_FORBIDDEN)
+        return Response('need to finish this')
 
 
-@api_view(['POST', 'GET'])
+@api_view(['POST', 'GET', 'PUT', 'DELETE'])
 @permission_classes((IsAuthenticated,))
 def sv_supplier_location(request, pk=None):
+    user = request.user
+    employee = EmployeeProfile.objects.filter(user=user).first()
+    # only employees can access these views
+    if not employee:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+    account = employee.company
+
     if request.method == 'POST':
+        # only account owner or sys_admin can create locations
+        if not (employee.company_account_owner or
+                employee.company_account_admin):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         data = request.data
-        company_account = data['company_account']
         loc_name = data['nickname']
         pn = data['phone_number']
         address = data['address']
@@ -69,25 +92,20 @@ def sv_supplier_location(request, pk=None):
             city=city,
             state=state,
             postal_code=zip_code
-        )
-        company = CompanyAccount.objects.filter(id=company_account).first()
-        if not company:
-            return Response('invalid company')
+            )
+
         CompanyShippingLocation.objects.create(
-            company_account=company,
+            company_account=account,
             nickname=loc_name,
             phone_number=pn,
             address=address
-        )
+            )
         return Response('check_it')
 
     if request.method == 'GET':
-        location = CompanyShippingLocation.objects.filter(id=pk).first()
-        user = request.user
+        location = account.shipping_locations.filter(id=pk).first()
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        if location.company_account.account_owner != user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
         serialized = SVLocationSerializer(location)
         markup = settings.MARKUP
         return Response({
@@ -95,14 +113,45 @@ def sv_supplier_location(request, pk=None):
             'location': serialized.data
             }, status=status.HTTP_200_OK)
 
+    if request.method == 'DELETE':
+        # only account owner or sys_admin can delete locations
+        if not (employee.company_account_owner or
+                employee.company_account_admin):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        location = account.shipping_locations.filter(id=pk).first()
+        if not location:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        location.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    if request.method == 'PUT':
+        location = account.shipping_locations.filter(id=pk).first()
+        if not location:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if not (employee.company_account_owner or
+                employee.comapny_account_admin or
+                employee == location.local_admin):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        return Response('need to finish')            
+
 
 @api_view(['PUT', 'DELETE'])
 @permission_classes((IsAuthenticated,))
 def supplier_product(request, pk):
     user = request.user
+    employee = EmployeeProfile.objects.filter(user=user).first()
+    # only employees can access these views
+    if not employee:
+            return Response(status=status.HTTP_403_FORBIDDEN)
     product = SupplierProduct.objects.get(id=pk)
-    if product.supplier.company_account.account_owner != user:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+    # makes sure product is part of companies
+    if product.supplier.company_account != employee.company_account:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    if not (employee.company_account_owner or
+            employee.company_account_admin or
+            employee == product.supplier.local_admin):
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
         if request.method == 'DELETE':
             product.delete()
