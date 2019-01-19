@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import render
 from Profiles.views import (
-    supplier_library_append,
+    supplier_product,
     supplier_short_lib,
 )
 from CustomerProfiles.views import (
@@ -18,12 +18,10 @@ def landing(request):
     return render(request, 'index.html')
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def append_lib(request):
     user = request.user
     if user.is_supplier:
-        return supplier_library_append(request)
+        return supplier_product(request)
     return customer_library_append(request)
 
 

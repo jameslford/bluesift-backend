@@ -11,7 +11,6 @@ from rest_framework import status
 
 from Profiles.models import (
     EmployeeProfile,
-    CompanyAccount,
     CompanyShippingLocation,
     SupplierProduct
     )
@@ -21,6 +20,7 @@ from Addresses.models import Address, Zipcode
 from .serializers import (
     CompanyAccountDetailSerializer,
     SVLocationSerializer,
+    EmployeeProfileSerializer,
     ShippingLocationListSerializer,
     SupplierProductUpdateSerializer
     )
@@ -132,84 +132,159 @@ def sv_supplier_location(request, pk=None):
                 employee.comapny_account_admin or
                 employee == location.local_admin):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        return Response('need to finish')            
+        return Response('need to finish')
 
 
-@api_view(['PUT', 'DELETE'])
+@api_view(['PUT', 'DELETE', 'POST'])
 @permission_classes((IsAuthenticated,))
-def supplier_product(request, pk):
+def supplier_product(request, pk=None):
     user = request.user
     employee = EmployeeProfile.objects.filter(user=user).first()
     # only employees can access these views
     if not employee:
             return Response(status=status.HTTP_403_FORBIDDEN)
-    product = SupplierProduct.objects.get(id=pk)
-    # makes sure product is part of companies
-    if product.supplier.company_account != employee.company_account:
-        return Response(status=status.HTTP_403_FORBIDDEN)
 
-    if not (employee.company_account_owner or
-            employee.company_account_admin or
-            employee == product.supplier.local_admin):
-        return Response(status=status.HTTP_403_FORBIDDEN)
+    sup_prod = None
+    if pk:
+        sup_prod = SupplierProduct.objects.filter(id=pk).first()
+        if not sup_prod:
+            return Response('invalid supplier product')
+        if sup_prod.supplier.company_account != employee.company_account:
+            return Response('invalid supplier product - account')
+        if not (employee.company_account_owner or
+                employee.company_account_admin or
+                employee == sup_prod.supplier.local_admin):
+            return Response(
+                'You are not authorized to modify products for this store location',
+                status=status.HTTP_403_FORBIDDEN
+                    )
 
-        if request.method == 'DELETE':
-            product.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+    if request.method == 'DELETE':
+        sup_prod.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if request.method == 'PUT':
-            serialized_prod = SupplierProductUpdateSerializer(data=request.data)
-            if serialized_prod.is_valid():
-                serialized_prod.update(instance=product, validated_data=request.data)
-                return Response(status=status.HTTP_202_ACCEPTED)
-            return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+    if request.method == 'PUT':
+        data = request.data
+        serialized_prod = SupplierProductUpdateSerializer(data=data)
+        if serialized_prod.is_valid():
+            serialized_prod.update(instance=sup_prod, validated_data=data)
+            return Response(status=status.HTTP_202_ACCEPTED)
+        return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+    if request.method == 'POST':
+        locations = employee.company_account.shipping_locations.all()
+        if not locations:
+            return Response('No locations for this account', status=status.HTTP_400_BAD_REQUEST)
+
+        location = None
+        location_id = request.POST.get('proj_id', None)
+        if location_id:
+            location = locations.filter(id=location_id).first()
+        elif locations.count() == 1:
+            location = locations.first()
+        if not location:
+            return Response('Invalid Location', status=status.HTTP_400_BAD_REQUEST)
+
+        product = None
+        prod_id = request.POST.get('prod_id', None)
+        if not prod_id:
+            return Response('No product selected', status=status.HTTP_400_BAD_REQUEST)
+        product = Product.objects.filter(id=prod_id).first()
+        if not product:
+            return Response('Invalid product', status=status.HTTP_400_BAD_REQUEST)
+
+        if not (employee.company_account_owner or
+                employee.company_account_admin or
+                employee == location.local_admin):
+            return Response(
+                'You are not authorized to modify products for this store location',
+                status=status.HTTP_403_FORBIDDEN
+                    )
+
+        SupplierProduct.objects.create(product=product, supplier=location)
+        return Response(status=status.HTTP_201_CREATED)
 
 
-def get_company_shipping_locations(user):
-    account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
-    locations = account.shipping_locations.all()
-    if locations:
-        return locations
-    CompanyShippingLocation.objects.create(company_account=account)
-    return CompanyShippingLocation.objects.filter(company_account=account)
-
-
-def supplier_library_append(request):
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def employee_list(request):
     user = request.user
-    locations = get_company_shipping_locations(user)
-    prod_id = request.POST.get('prod_id')
-    location_id = request.POST.get('proj_id', 0)
-    product = Product.objects.get(id=prod_id)
-    count = locations.count()
-    if location_id != 0:
-        location = locations.get(id=location_id)
-        SupplierProduct.objects.create(product=product, supplier=location)
-        return Response(status=status.HTTP_201_CREATED)
-    elif count == 1:
-        location = locations.first()
-        SupplierProduct.objects.create(product=product, supplier=location)
-        return Response(status=status.HTTP_201_CREATED)
-    else:
-        return Response(status=status.HTTP_412_PRECONDITION_FAILED)
+    user_emp_profile = EmployeeProfile.objects.filter(user=user).first()
+    if not user_emp_profile:
+        return Response('You must be an employee to view this info', status=status.HTTP_403_FORBIDDEN)
+    company = user_emp_profile.company_account
+    employees = company.employees.all()
+    serialized_emps = EmployeeProfileSerializer(employees, many=True)
+    return Response({'employess': serialized_emps.data})
+
+
+@api_view(['GET', 'PUT', 'DELETE', 'POST'])
+@permission_classes((IsAuthenticated,))
+def employee_detail(request, pk=None):
+    user = request.user
+    employee_prof = EmployeeProfile.objects.filter(user=user).first()
+    if not (employee_prof or
+            employee_prof.company_account_owner or
+            employee_prof.company_account_admin):
+        return Response('You must be an employee to view this info', status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'POST':
+        email = request.data.get('email', None)
+        if not (email or
+                '@' in email):
+            return Response('Valid email required', status=status.HTTP_400_BAD_REQUEST)
+        return Response('need to finish')
+
+    if not pk:
+        return Response('no employee specified')
+    employee_account = employee_prof.company_account
+    target_employee = employee_account.employees.filter(id=pk).first()
+    if not target_employee:
+        return Response('invalid employee', status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'GET':
+        serialized_employee = EmployeeProfileSerializer(target_employee)
+        return Response({'employee': serialized_employee.data}, status=status.HTTP_200_OK)
+
+    if request.method == 'DELETE':
+        target_employee.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    if request.method == 'PUT':
+        return Response('need to finish')
 
 
 def supplier_short_lib(request):
     user = request.user
-    location_id = request.GET.get('proj_id')
-    locations = get_company_shipping_locations(user)
-    location = locations.first()
-    locations_list = []
-    product_ids = []
+    employee = EmployeeProfile.objects.filter(user=user).first()
+    if not employee:
+        return Response('not an employee', status=status.HTTP_400_BAD_REQUEST)
+
+    locations = employee.company_account.supplier_locations.all()
+    if not locations:
+        return Response('no locations', status=status.HTTP_400_BAD_REQUEST)
+
+    locations = None
+    location_id = request.GET.get('proj_id', None)
     if location_id:
-        location = locations.get(id=location_id)
+        location = locations.filter(id=location_id).first()
+    elif locations.count() > 0:
+        location = locations.first()
+    else:
+        return Response('Invalid Location', status=status.HTTP_400_BAD_REQUEST)
+
+    locations_list = []
     for local in locations:
         content = {}
         content['nickname'] = local.nickname
         content['id'] = local.id
         locations_list.append(content)
+
+    product_ids = []
     products = location.priced_products.all()
     for prod in products:
         product_ids.append(prod.product.id)
+
     full_content = {
         'list': locations_list,
         'count': locations.count(),
@@ -241,3 +316,31 @@ def cv_supplier_location(request, pk):
         serialized = SVLocationSerializer(supplier)
         return Response({'location': serialized.data}, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+# def get_company_shipping_locations(user):
+#     account = CompanyAccount.objects.get_or_create(account_owner=user)[0]
+#     locations = account.shipping_locations.all()
+#     if locations:
+#         return locations
+#     CompanyShippingLocation.objects.create(company_account=account)
+#     return CompanyShippingLocation.objects.filter(company_account=account)
+
+
+# def supplier_library_append(request):
+#     user = request.user
+#     locations = get_company_shipping_locations(user)
+#     prod_id = request.POST.get('prod_id')
+#     location_id = request.POST.get('proj_id', 0)
+#     product = Product.objects.get(id=prod_id)
+#     count = locations.count()
+#     if location_id != 0:
+#         location = locations.get(id=location_id)
+#         SupplierProduct.objects.create(product=product, supplier=location)
+#         return Response(status=status.HTTP_201_CREATED)
+#     elif count == 1:
+#         location = locations.first()
+#         SupplierProduct.objects.create(product=product, supplier=location)
+#         return Response(status=status.HTTP_201_CREATED)
+#     else:
+#         return Response(status=status.HTTP_412_PRECONDITION_FAILED)

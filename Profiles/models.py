@@ -45,15 +45,22 @@ class EmployeeProfile(models.Model):
         if self.company_account_admin:
             existing_admins = self.company_account.employees.filter(company_account_admin=True).count()
             if existing_admins >= company_admins_allowed:
-                raise ValidationError('Maximum admins, ' + str(company_admins_allowed) +' already exist')
-                return
+                raise ValidationError('Maximum admins, ' + str(company_admins_allowed) + ' already exist')
         if self.company_account_owner:
             existing_owners = self.company_account.employees.filter(company_account_owner=True).count()
             if existing_owners >= company_owners_allowed:
                 raise ValidationError('Maximum owners, ' + str(company_owners_allowed) +' already exist')
-                return
         return super().clean()
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super(CompanyShippingLocation, self).save(*args, **kwargs)
+    
+    def name(self):
+        return self.user.get_first_name()
+    
+    def email(self):
+        return self.user.email
 
 class CompanyShippingLocation(models.Model):
     company_account = models.ForeignKey(

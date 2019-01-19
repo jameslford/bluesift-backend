@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from Addresses.models import Address
 from Products.models import Product
 from Plans.models import CustomerPlan
@@ -44,6 +45,18 @@ class CustomerProject(models.Model):
         if self.nickname:
             return self.nickname
         return self.owner.user.get_first_name()
+
+    def clean(self):
+        projects_allowed = self.owner.plan.project_theshhold
+        existing_projects = self.owner.projects.all()
+        if existing_projects < projects_allowed:
+            return super().clean()
+        else:
+            raise ValidationError("Already at plan's project quota")
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.full_clean()
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 class CustomerProduct(models.Model):

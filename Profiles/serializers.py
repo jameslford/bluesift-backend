@@ -5,6 +5,7 @@ from Products.serializers import ProductSerializerforSupplier
 from .models import (
     CompanyAccount,
     CompanyShippingLocation,
+    EmployeeProfile,
     SupplierProduct,
     )
 
@@ -41,21 +42,20 @@ class CompanyAccountDetailSerializer(serializers.ModelSerializer):
         return ShippingLocationListSerializer(locations, many=True).data
 
 
-class SupplierProductSerializer(serializers.ModelSerializer):
-    product = ProductSerializerforSupplier(read_only=True)
+class EmployeeProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = SupplierProduct
+        model = EmployeeProfile
         fields = (
             'id',
-            'my_price',
-            'online_ppu',
-            'units_available',
-            'units_per_order',
-            'for_sale_online',
-            'for_sale_in_store',
-            'product'
+            'title',
+            'name',
+            'email',
+            'company_account_owner',
+            'company_account_admin',
         )
+
+
 
 
 class SVLocationSerializer(serializers.ModelSerializer):
@@ -85,6 +85,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
 
 class ShippingLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
+    local_admin = EmployeeProfileSerializer()
 
     class Meta:
         model = CompanyShippingLocation
@@ -94,6 +95,7 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
             'company_name',
             'address',
             'phone_number',
+            'local_admin',
             'nickname',
             'address_string',
             'product_count',
@@ -113,10 +115,31 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
             'phone_number'
         )
 
-    def create(self, validated_data):
+    def create(self, account, validated_data):
         address = validated_data.pop('address')
         address = Address.objects.create(**address)
-        return CompanyShippingLocation.objects.create(address=address, **validated_data)
+        return CompanyShippingLocation.objects.create(
+            address=address,
+            company_account=account,
+            **validated_data
+            )
+
+
+class SupplierProductSerializer(serializers.ModelSerializer):
+    product = ProductSerializerforSupplier(read_only=True)
+
+    class Meta:
+        model = SupplierProduct
+        fields = (
+            'id',
+            'my_price',
+            'online_ppu',
+            'units_available',
+            'units_per_order',
+            'for_sale_online',
+            'for_sale_in_store',
+            'product'
+        )
 
 
 class SupplierProductUpdateSerializer(serializers.ModelSerializer):
