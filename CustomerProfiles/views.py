@@ -17,18 +17,46 @@ from CustomerProfiles.serializers import (
 from Products.models import Product
 from Addresses.models import Address, Zipcode
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes((IsAuthenticated,))
-def customer_library(request):
+def customer_library(request, pk=None):
     user = request.user
     profile = CustomerProfile.objects.get_or_create(user=user)[0]
     projects = profile.projects.all()
     if not projects:
             projects = CustomerProject.objects.create(owner=profile)
-    serialized_projs = CustomerProjectSerializer(projects, many=True)
-    return Response({
-        'projects': serialized_projs.data
-        }, status=status.HTTP_200_OK)
+
+    if request.method == 'GET':
+        selected_project = None
+        if pk:
+            selected_project = projects.filter(id=pk).first()
+        else:
+            selected_project = projects.first()
+        if not selected_project:
+            return Response('invalid project selection', status=status.HTTP_400_BAD_REQUEST)
+
+        serialized_profile = CustomerProfileSerializer(profile)
+        count = projects.count()
+        serialized_projs = CustomerProjectSerializer(projects, many=True)
+        return Response({
+            'profile': serialized_profile.data,
+            'project_count': count,
+            'selected_project': selected_project.id,
+            'projects': serialized_projs.data
+            }, status=status.HTTP_200_OK)
+
+    if request.method == 'DELETE':
+        profile.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def customer_project(request, pk=None):
+    user = request.user
+    profile = CustomerProfile.objects.filter(user=user).first()
+    pass
+
+
+
 
 
 def customer_library_append(request):

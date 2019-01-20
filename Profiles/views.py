@@ -15,13 +15,14 @@ from Profiles.models import (
     SupplierProduct
     )
 from Products.models import Product
-from Addresses.models import Address, Zipcode
+# from Addresses.models import Address, Zipcode
 
 from .serializers import (
     CompanyAccountDetailSerializer,
     SVLocationSerializer,
     EmployeeProfileSerializer,
     ShippingLocationListSerializer,
+    ShippingLocationUpdateSerializer,
     SupplierProductUpdateSerializer
     )
 
@@ -77,30 +78,11 @@ def sv_supplier_location(request, pk=None):
                 employee.company_account_admin):
             return Response(status=status.HTTP_403_FORBIDDEN)
         data = request.data
-        loc_name = data['nickname']
-        pn = data['phone_number']
-        address = data['address']
-        line = address['address_line_1']
-        city = address['city']
-        state = address['state']
-        zc = address['postal_code']
-        zip_code = Zipcode.objects.filter(code=zc).first()
-        if not zip_code:
-            return Response('invalid zip')
-        address = Address.objects.create(
-            address_line_1=line,
-            city=city,
-            state=state,
-            postal_code=zip_code
-            )
-
-        CompanyShippingLocation.objects.create(
-            company_account=account,
-            nickname=loc_name,
-            phone_number=pn,
-            address=address
-            )
-        return Response('check_it')
+        serialized_loc = ShippingLocationUpdateSerializer(data=data)
+        if not serialized_loc.is_valid():
+            return Response(serialized_loc.errors, status=status.HTTP_400_BAD_REQUEST)
+        serialized_loc.create(data)
+        return Response('Accepted', status=status.HTTP_201_CREATED)
 
     if request.method == 'GET':
         location = account.shipping_locations.filter(id=pk).first()
@@ -132,7 +114,13 @@ def sv_supplier_location(request, pk=None):
                 employee.comapny_account_admin or
                 employee == location.local_admin):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        return Response('need to finish')
+        data = request.data
+        serialized_loc = ShippingLocationUpdateSerializer(data)
+        if not serialized_loc.is_valid():
+            return Response(serialized_loc.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serialized_loc.update(instance=location, validated_data=data)
+        return Response('Accepted', status=status.HTTP_202_ACCEPTED)
 
 
 @api_view(['PUT', 'DELETE', 'POST'])
@@ -316,6 +304,31 @@ def cv_supplier_location(request, pk):
         serialized = SVLocationSerializer(supplier)
         return Response({'location': serialized.data}, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
+
+# loc_name = data['nickname']
+# pn = data['phone_number']
+# address = data['address']
+# line = address['address_line_1']
+# city = address['city']
+# state = address['state']
+# zc = address['postal_code']
+# zip_code = Zipcode.objects.filter(code=zc).first()
+# if not zip_code:
+#     return Response('invalid zip')
+# address = Address.objects.create(
+#     address_line_1=line,
+#     city=city,
+#     state=state,
+#     postal_code=zip_code
+#     )
+
+# CompanyShippingLocation.objects.create(
+#     company_account=account,
+#     nickname=loc_name,
+#     phone_number=pn,
+#     address=address
+#     )
+# return Response('check_it')
 
 
 # def get_company_shipping_locations(user):

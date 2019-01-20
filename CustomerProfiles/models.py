@@ -11,7 +11,7 @@ class CustomerProfile(models.Model):
         settings.AUTH_USER_MODEL,
         null=True,
         on_delete=models.CASCADE,
-        related_name='user_profile'
+        related_name='customer_profile'
         )
     addresses = models.ManyToManyField(Address, related_name='addresses')
     phone_number = models.IntegerField(null=True)

@@ -12,6 +12,7 @@ class CompanyAccount(models.Model):
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
     plan = models.ForeignKey(SupplierPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
+    email_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -53,14 +54,17 @@ class EmployeeProfile(models.Model):
         return super().clean()
 
     def save(self, *args, **kwargs):
+        # calling full_clean() which executes clean() above
+        # among 2 other default methods
         self.full_clean()
         super(CompanyShippingLocation, self).save(*args, **kwargs)
-    
+
     def name(self):
         return self.user.get_first_name()
-    
+
     def email(self):
         return self.user.email
+
 
 class CompanyShippingLocation(models.Model):
     company_account = models.ForeignKey(

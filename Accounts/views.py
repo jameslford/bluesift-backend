@@ -24,7 +24,7 @@ from .serializers import (
     UserResponseSerializer,
     )
 
-from Profiles.models import CompanyAccount
+from Profiles.models import CompanyAccount, EmployeeProfile
 from Profiles.serializers import CompanyAccountSerializer
 from CustomerProfiles.models import CustomerProfile, CustomerProject
 from CustomerProfiles.serializers import CustomerProfileSerializer
@@ -34,21 +34,23 @@ from CustomerProfiles.serializers import CustomerProfileSerializer
 def create_user(request):
     supplier_str = request.data.get('is_supplier', False)
     is_supplier = True if supplier_str == 'true' else False
-    full_name = request.data.get('full_name')
-    email = request.data.get('email')
-    password = request.data.get('password')
-    company_name = request.data.get('company_account')['company_name']
-    phone_number = request.data.get('company_account')['phone_number']
+    full_name = request.data.get('full_name', None)
+    email = request.data.get('email', None)
+    password = request.data.get('password', None)
+    company_account_dict = request.data.get('company_account', None)
+    company_name = None
+    company_phone = None
+    if company_account_dict:
+        company_name = company_account_dict.get('company_name', None)
+        company_phone = company_account_dict.get('phone_number', None)
     user_model = get_user_model()
     user = None
-
-    if not email:
-        return Response('Must have email', status=status.HTTP_400_BAD_REQUEST)
-    if not password:
-        return Response('Must have password', status=status.HTTP_400_BAD_REQUEST)
+    if not email or not password:
+        return Response('Email and password required!', status=status.HTTP_400_BAD_REQUEST)
     hashed_password = make_password(password)
+
     try:
-        user = user_model(
+        user = user_model.create(
             full_name=full_name,
             email=email,
             password=hashed_password,
@@ -60,16 +62,24 @@ def create_user(request):
             return Response('User already exist', status=status.HTTP_400_BAD_REQUEST)
         return Response('User exist', status=status.HTTP_400_BAD_REQUEST)
 
-    user.save()
-    if not is_supplier:
+    if not user:
+        return Response('No user created', status=status.HTTP_400_BAD_REQUEST)
+
+    if user.is_supplier:
+        company, created = CompanyAccount.objects.get_or_create(name=company_name)
+        if not created:
+            return Response(
+                    'Company Account already exist. Please contact administrator for access',
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        company.phone_number = company_phone
+        company.save()
+
+        EmployeeProfile.objects.create(user=user, company_account=company)
+
+    else:
         profile = CustomerProfile.objects.create(user=user)
         CustomerProject.objects.create(owner=profile, nickname='First Project')
-    else:
-        CompanyAccount.objects.create(
-            name=company_name,
-            phone_number=phone_number,
-            account_owner=user
-            )
 
         current_site = get_current_site(request)
         message = get_message(user, current_site)
@@ -94,7 +104,7 @@ def get_message(user, current_site):
     return message
 
 
-def activate(request, uidb64, token):
+def activate(request, uidb64):
     user_model = get_user_model()
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))
@@ -105,6 +115,15 @@ def activate(request, uidb64, token):
         user.is_active = True
         user.date_confirmed = datetime.datetime.now()
         user.save()
+        if user.is_supplier:
+            user_company = user.employee_profile.company_account
+
+            user_company.email_verified = True
+            user_company.save()
+
+            user.employee_profile.company_account_owner = True
+            user.employee_profile.save()
+
         return redirect(settings.REDIRECT_URL)
     return HttpResponse('Activation link is invalid!')
 

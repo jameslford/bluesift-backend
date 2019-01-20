@@ -10,7 +10,11 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomerProfile
-        fields = ('phone_number', 'addresses')
+        fields = (
+            'phone_number',
+            'addresses',
+            'plan'
+            )
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
@@ -26,6 +30,17 @@ class CustomerProductSerializer(serializers.ModelSerializer):
 
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
+    products = CustomerProductSerializer(many=True)
+
+    class Meta:
+        model = CustomerProject
+        fields = (
+            'address',
+            'nickname',
+            'id',
+            )
+
+class CustomerProjectDetailSerializer(serializers.ModelSerializer):
     products = CustomerProductSerializer(many=True)
 
     class Meta:

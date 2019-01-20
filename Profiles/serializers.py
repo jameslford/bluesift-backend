@@ -124,6 +124,21 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
             **validated_data
             )
 
+    def update(self, instance, validated_data):
+        instance_address = instance.address
+        data_add = validated_data.get('address', None)
+        if data_add:
+            instance_address.address_line_1 = data_add.get('address_line_1', instance_address.address_line_1)
+            instance_address.city = data_add.get('city', instance_address.city)
+            instance_address.state = data_add.get('state', instance_address.state)
+            instance_address.postal_code = data_add.get('postal_code', instance_address.postal_code)
+            instance_address.save()
+        instance.nickname = validated_data.get('nickname', instance.nickname)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.save()
+
+
+
 
 class SupplierProductSerializer(serializers.ModelSerializer):
     product = ProductSerializerforSupplier(read_only=True)
