@@ -57,7 +57,7 @@ class EmployeeProfile(models.Model):
         # calling full_clean() which executes clean() above
         # among 2 other default methods
         self.full_clean()
-        super(CompanyShippingLocation, self).save(*args, **kwargs)
+        super(EmployeeProfile, self).save(*args, **kwargs)
 
     def name(self):
         return self.user.get_first_name()
@@ -75,6 +75,7 @@ class CompanyShippingLocation(models.Model):
     local_admin = models.ForeignKey(
         EmployeeProfile,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         )
     address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
@@ -82,7 +83,7 @@ class CompanyShippingLocation(models.Model):
     approved_in_store_seller = models.BooleanField(default=False)
     approved_online_seller = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=10)
-    email = models.EmailField(null=True)
+    email = models.EmailField(null=True, blank=True)
     number = models.IntegerField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True)
 
@@ -91,13 +92,17 @@ class CompanyShippingLocation(models.Model):
 
     def assign_number(self):
         num_list = []
+        num = None
         all_locations = self.company_account.shipping_locations.all()
         for loc in all_locations:
             if loc.number:
                 num_list.append(loc.number)
             else:
                 num_list.append(0)
-        num = max(set(num_list)) + 1
+        if num_list:
+            num = max(set(num_list)) + 1
+        else:
+            num = 1
         return num
 
     def product_count(self):
@@ -149,6 +154,7 @@ class SupplierProduct(models.Model):
     units_per_order = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     for_sale_in_store = models.BooleanField(default=False)
     for_sale_online = models.BooleanField(default=False)
+    offer_installation = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.supplier) + ' ' + str(self.product.name)
@@ -166,7 +172,7 @@ class SupplierProduct(models.Model):
             self.for_sale_online = False
         if not self.supplier.approved_in_store_seller:
             self.for_sale_in_store = False
-        super(SupplierProduct, self).save(*args, **kwargs) # Call the real save() method
+        super(SupplierProduct, self).save(*args, **kwargs)  # Call the real save() method
         self.product.set_prices()
         if self.supplier.address:
             self.product.set_locations()

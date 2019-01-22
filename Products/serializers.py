@@ -4,6 +4,7 @@
 from rest_framework import serializers
 from .models import (
     Product,
+    Color,
     Manufacturer,
     Material,
     Image
@@ -30,9 +31,17 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ('image',)
 
 
+class ColorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Color
+        fields = ('label')
+
+
 class ProductSerializer(serializers.ModelSerializer):
     swatch_image = ImageSerializer()
-    # tiling_image = ImageSerializer()
+    tiling_image = ImageSerializer()
+    # label_color = ColorSerializer()
     manufacturer = ManufacturerSerializer()
 
     class Meta:
@@ -42,12 +51,14 @@ class ProductSerializer(serializers.ModelSerializer):
             'bb_sku',
             'manufacturer_color',
             'manu_collection',
+            'for_sale_online',
+            'for_sale_in_store',
             'size',
             # 'name',
             # 'actual_color',
             # 'label_color',
             'swatch_image',
-            # 'tiling_image',
+            'tiling_image',
             'manufacturer',
             'lowest_price',
             )

@@ -280,7 +280,7 @@ class FilterSorter:
             loc_facet = {
                 'name': 'location',
                 'radius': self.radius,
-                'zipcode': self.zipcode, 
+                'zipcode': self.zipcode,
             }
             price_facet = {
                 'name': 'price',

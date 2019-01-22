@@ -2,11 +2,11 @@
 from django.contrib.gis.db import models
 from django.db.models import Min
 from django.contrib.gis.geos import MultiPoint
-from Products import lists
 import io
 import webcolors
 import operator
-from PIL import Image as pimage, ImageFilter, ImageEnhance
+from PIL import Image as pimage
+
 
 class Manufacturer(models.Model):
     label = models.CharField(max_length=200)
@@ -102,6 +102,7 @@ class Look(models.Model):
     def __str__(self):
         return self.label
 
+
 class Edge(models.Model):
     label = models.CharField(max_length=60, unique=True)
 
@@ -192,7 +193,7 @@ class Product(models.Model):
         SubMaterial,
         null=True,
         on_delete=models.SET_NULL
-        )   
+        )
     finish = models.ForeignKey(
         Finish,
         null=True,
@@ -286,7 +287,6 @@ class Product(models.Model):
                 continue
             if cat.material != self.material:
                 return
-        self.resize_image()
         super(Product, self).save(*args, **kwargs)
 
     def set_prices(self):
@@ -317,7 +317,7 @@ class Product(models.Model):
         self.locations = None
         in_store_sellers = self.priced.filter(for_sale_in_store=True)
         if in_store_sellers.count() > 0:
-            coordinates = [q.supplier.address.coordinates.get_point() for q in in_store_sellers]
+            coordinates = [q.supplier.address.coordinates.point for q in in_store_sellers]
             points = MultiPoint(*coordinates)
             self.locations = points
             self.save()
@@ -328,7 +328,12 @@ class Product(models.Model):
         if not self.swatch_image:
             return
         image = self.swatch_image.image
-        image = pimage.open(image)
+        try:
+            image = pimage.open(image)
+        except OSError:
+            print('deleting ' + self.name)
+            self.delete()
+            return
         buffer = io.BytesIO()
         w, h = image.size
         if w == desired_size and h <= desired_size:
@@ -343,11 +348,15 @@ class Product(models.Model):
                 desired_size,
                 desired_size
                 ))
-        image.save(buffer, 'JPEG')
+        try:
+            image.save(buffer, 'JPEG')
+        except IOError:
+            print('unable io error')
+            return
         image_name = self.swatch_image.original_url.split('/')[-1] + '.jpg'
         self.swatch_image.image.save(image_name, buffer)
-        self.set_actual_color()
         self.save()
+        # self.set_actual_color()
 
     def manufacturer_name(self):
         if self.manufacturer:
@@ -364,11 +373,16 @@ class Product(models.Model):
         image = swatch_image.image
         if not image:
             return
-        image = pimage.open(image)
+        try:
+            image = pimage.open(image)
+        except OSError:
+            print('deleting ' + self.name + 'from set_actual_color')
+            self.delete()
+            return
         w, h = image.size
         from django.conf import settings
         if w > settings.DESIRED_IMAGE_SIZE:
-            self.resize_image()
+            # self.resize_image()
             return
         divisor = 4
         image = image.crop((
@@ -380,27 +394,31 @@ class Product(models.Model):
         try:
             image = image.convert('P', palette=pimage.ADAPTIVE, colors=1)
         except ValueError:
+            print('unable')
             return
         image = image.convert('RGB')
-        # below is temp code
-        buffer = io.BytesIO()
-        image.save(buffer, 'JPEG')
-        if self.tiling_image:
-            print(self.tiling_image.original_url)
-            self.tiling_image.delete()
-        image_name = self.name.replace(' ', '') + 'tiling_image.jpg'
-        tile_image, created = Image.objects.get_or_create(original_url=image_name)
-        tile_image.image.save(image_name, buffer)
-        tile_image.save()
-        self.tiling_image = tile_image
-        # above is tmep code
+
         colors = image.getcolors()
         first_percentage, first_color = max(colors, key=operator.itemgetter(0))
-        # lists.temp_col_repo.append()
         real_color, created = Color.objects.get_or_create(label=webcolors.rgb_to_hex(first_color))
+        print(real_color.label)
         self.actual_color = real_color
         self.save()
 
+        # below is temp code
+        # buffer = io.BytesIO()
+        # image.save(buffer, 'JPEG')
+        # if self.tiling_image:
+        #     print(self.tiling_image.original_url)
+        #     self.tiling_image.delete()
+        # image_name = self.name.replace(' ', '') + 'tiling_image.jpg'
+        # tile_image, created = Image.objects.get_or_create(original_url=image_name)
+        # tile_image.image.save(image_name, buffer)
+        # tile_image.save()
+        # self.tiling_image = tile_image
+        # above is tmep code
+
+        # lists.temp_col_repo.append()
 
         # distances = {k: manhattan(v, first_color) for k, v in color_list.items()}
         # color_list = set([v for k, v in lists.color_dic.items()])
@@ -414,8 +432,6 @@ class Product(models.Model):
         # colors.remove(first_color)
         # second_color = max(colors, key=operator.itemgetter(0))
         # second_percentage = second_color[0] / (w * h)
-
-
 
         # print(color_set)
         # buffer = io.BytesIO()
@@ -432,9 +448,6 @@ class Product(models.Model):
         # self.save()
 
         # image = image.convert('HSV')
-
-        
-
 
         # if self.tiling_image:
         #     self.tiling_image.delete()

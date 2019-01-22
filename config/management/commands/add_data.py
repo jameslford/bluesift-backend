@@ -1,14 +1,15 @@
 import decimal
 import csv
-import requests
 import os
-import random
 import glob
-import io
+import sys
 from django.conf import settings
-
-# from io import BytesIO
 from django.core.files import File
+
+# import requests
+# import io
+# import random
+# from io import BytesIO
 # from django.core import files
 # from django.core.files.temp import NamedTemporaryFile
 from django.core.management.base import BaseCommand
@@ -22,22 +23,28 @@ from Products.models import (
     Product,
     ShadeVariation,
     SurfaceCoating,
-    SurfaceTexture,
     SubMaterial
     )
 
 BASE_PATH = os.getcwd()
+
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('update')
 
-
     def handle(self, *args, **options):
+        current_line = 0
+        line_total = None
         data_path = settings.DATA_PATH
         data_files = glob.glob(data_path)
         data = max(data_files, key=os.path.getctime)
+
+        with open(data) as f:
+            line_total = sum(1 for rq in f)
+            f.close()
+
         with open(data, 'r', newline='') as readfile:
             reader = csv.DictReader(readfile)
             for row in reader:
@@ -80,17 +87,17 @@ class Command(BaseCommand):
 
                 lrv = row['lrv']
                 cof = row['cof']
-                wet_cof = row['wet_cof']
+                # wet_cof = row['wet_cof']
 
-                generic_color = row['generic_color']
+                # generic_color = row['generic_color']
                 shade = row['shade']
                 shade_variation = row['shade_variation']
 
                 edge = row['edge']
-                end = row['end']
+                # end = row['end']
 
-                rating_value = row['rating_value']
-                rating_count = row['rating_count']
+                # rating_value = row['rating_value']
+                # rating_count = row['rating_count']
 
                 commercial = row['commercial']
                 residential_warranty = row['residential_warranty']
@@ -99,8 +106,8 @@ class Command(BaseCommand):
 
                 install_type = row['install_type']
                 sqft_per_carton = row['sqft_per_carton']
-                weight_per_carton = row['weight_per_carton']
-                recommended_grout = row['recommended_grout']
+                # weight_per_carton = row['weight_per_carton']
+                # recommended_grout = row['recommended_grout']
                 notes = row['notes']
 
                 slip_resistance = row['slip_resistance']
@@ -168,22 +175,28 @@ class Command(BaseCommand):
                 swatch_image = Image.objects.get_or_create(original_url=image_original)[0]
                 if not swatch_image.image:
                     read_image = image_local.strip('"')
-                    with open(read_image, 'rb') as f:
-                        # image_file = File(f)
-                        image_name = f.name.split('/')[-1]
-                        swatch_image.image.save(image_name, f)
-                        swatch_image.save()
-                        product.swatch_image = swatch_image
-                        f.close()
+                    try:
+                        with open(read_image, 'rb') as f:
+                            # image_file = File(f)
+                            image_name = f.name.split('/')[-1]
+                            swatch_image.image.save(image_name, f)
+                            swatch_image.save()
+                            product.swatch_image = swatch_image
+                            f.close()
+                    except FileNotFoundError:
+                        continue
                 if image2_original:
                     room_scene = Image.objects.get_or_create(original_url=image2_original)[0]
                     if not room_scene.image:
-                        with open(image2_local, 'rb') as f2:
-                            image_file2 = File(f2)
-                            room_scene.image = image_file2
-                            room_scene.save()
-                            product.room_scene = room_scene
-                            f2.close()
+                        try:
+                            with open(image2_local, 'rb') as f2:
+                                image_file2 = File(f2)
+                                room_scene.image = image_file2
+                                room_scene.save()
+                                product.room_scene = room_scene
+                                f2.close()
+                        except FileNotFoundError:
+                            pass
                 if tiling_image:
                     tiling = Image.objects.get_or_create(original_url=tiling_image)[0]
                     if not tiling.image:
@@ -209,8 +222,13 @@ class Command(BaseCommand):
                 product.covered_floors = covered_floors
                 product.pool_linings = pool_lining
                 product.save()
+                current_line += 1
+                percentage_complete = round((current_line/line_total) * 100, 3)
+                percentage_complete = str(percentage_complete) + '%'
+                sys.stdout.write('\r')
+                sys.stdout.write(percentage_complete)
+                sys.stdout.flush()
 
-        assign_color()
 
 def assign_color():
     products = Product.objects.all()

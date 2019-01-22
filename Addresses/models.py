@@ -5,6 +5,7 @@ from django.contrib.gis.geos import Point
 import googlemaps
 from .choices import states
 
+
 class Coordinate(models.Model):
     lat = models.FloatField(null=True, blank=True)
     lng = models.FloatField(null=True, blank=True)
@@ -29,6 +30,7 @@ class CentroidManager(models.Manager):
         else:
             return
 
+
 class Zipcode(models.Model):
     code = models.CharField(max_length=5, unique=True)
     centroid = models.ForeignKey(Coordinate, on_delete=models.CASCADE)
@@ -37,6 +39,7 @@ class Zipcode(models.Model):
 
     def __str__(self):
         return self.code
+
 
 class Address(models.Model):
     address_line_1 = models.CharField(max_length=120)
