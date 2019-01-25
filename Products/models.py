@@ -296,20 +296,14 @@ class Product(models.Model):
         online_sellers = self.priced.filter(for_sale_online=True)
         if online_sellers.count() > 0:
             self.for_sale_online = True
-            self.save()
-            return
         in_store_sellers = self.priced.filter(for_sale_in_store=True)
         if in_store_sellers.count() > 0:
             self.for_sale_in_store = True
-            self.save()
-            return
         all_sellers = online_sellers | in_store_sellers
         all_sellers = all_sellers.distinct()
         if all_sellers.count() > 0:
             price = all_sellers.aggregate(Min('my_price'))
             self.lowest_price = price["my_price__min"]
-            self.save()
-            return
         self.save()
         return
 

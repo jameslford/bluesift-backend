@@ -7,9 +7,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         accounts = CompanyAccount.objects.all()
-        for comp in accounts:
-            if '_test' in comp.name:
-                comp.delete()
+        accounts.delete()
         user_model = get_user_model()
         users = user_model.objects.all()
         for user in users:

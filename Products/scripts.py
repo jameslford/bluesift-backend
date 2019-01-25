@@ -2,6 +2,7 @@ import decimal
 from django.contrib.gis.measure import D
 # from django.contrib.gis.geos import Point
 from operator import itemgetter
+from django.db.models import Min, Max
 
 from Addresses.models import Zipcode
 from Products.models import (
@@ -145,32 +146,47 @@ class FilterSorter:
             return products
         rad_raw = [q for q in self.loc_query if 'radius' in q]
         zip_raw = [q for q in self.loc_query if 'zip' in q]
-        radius_raw = int(rad_raw[0].replace('radius-', ''))
+        if not (rad_raw and zip_raw):
+            return products
+        radius_raw = int(rad_raw[-1].replace('radius-', ''))
         radius = D(mi=radius_raw)
-        zipcode = zip_raw[0].replace('zipcode-', '')
+        zipcode = zip_raw[-1].replace('zipcode-', '')
         coords = Zipcode.objects.filter(code=zipcode).first().centroid.point
         self.radius = radius
         if coords:
+            rad_query = 'location-radius-' + str(radius)
+            zip_query = 'location-zip-' + str(zipcode)
+            self.legit_queries = self.legit_queries + [rad_query, zip_query]
             self.zipcode = zipcode
             products = products.filter(locations__distance_lte=(coords, radius))
             return products
         else:
-            self.zipcode = 'error'
+            self.zipcode = 'invalid zipcode'
         return products
 
     def filter_price(self, products):
+        price_agg = products.aggregate(Min('lowest_price'), Max('lowest_price'))
+        total_min_price = price_agg['lowest_price__min']
+        total_max_price = price_agg['lowest_price__max']
+        self.min_price = total_min_price
+        self.max_price = total_max_price
+        self.total_price_range = [total_min_price, total_max_price]
         _products = products
         if not self.price_query:
             return _products
         min_price = [q.replace('min-', '') for q in self.price_query if 'min' in q]
         max_price = [q.replace('max-', '') for q in self.price_query if 'max' in q]
         if min_price:
-            min_price = decimal.Decimal(min_price)
+            min_price = decimal.Decimal(min_price[-1])
             self.min_price = min_price
+            min_quer_string = 'lowest_price-min-' + str(min_price)
+            self.legit_queries.append(min_quer_string)
             _products = _products.filter(lowest_price__gte=min_price)
         if max_price:
-            max_price = decimal.Decimal(max_price)
+            max_price = decimal.Decimal(max_price[-1])
             self.max_price = max_price
+            max_quer_string = 'lowest_price-max-' + str(max_price)
+            self.legit_queries.append(max_quer_string)
             _products = _products.filter(lowest_price__lte=max_price)
         return _products
 
@@ -277,17 +293,23 @@ class FilterSorter:
                 facet['values'].append(value)
             self.filter_response = [facet] + self.filter_response
         if self.avail_query:
+            rad_values = []
+            for rad in self.radii:
+                enabled = True if rad == self.radius else False
+                rad_dic = {'radius': rad, 'enabled': enabled}
+                rad_values.append(rad_dic)
             loc_facet = {
                 'name': 'location',
-                'radius': self.radius,
+                'values': rad_values,
                 'zipcode': self.zipcode,
             }
             price_facet = {
                 'name': 'price',
-                'min': self.min_price,
-                'max': self.max_price
+                'range_values': [self.min_price, self.max_price]
             }
-            self.filter_response = [loc_facet, price_facet] + self.filter_response
+            # self.filter_response = [loc_facet, price_facet] + self.filter_response
+            self.filter_response.insert(1, loc_facet)
+            self.filter_response.insert(2, price_facet)
 
     def return_filter(self, products):
         self.bool_facet(products)

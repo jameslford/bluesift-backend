@@ -37,7 +37,7 @@ def company_account(request):
     # only account employees can view this information
     if not employee:
         return Response(status=status.HTTP_403_FORBIDDEN)
-    account = employee.company
+    account = employee.company_account
 
     if request.method == 'GET':
         markup = settings.MARKUP
@@ -70,7 +70,7 @@ def sv_supplier_location(request, pk=None):
     # only employees can access these views
     if not employee:
             return Response(status=status.HTTP_403_FORBIDDEN)
-    account = employee.company
+    account = employee.company_account
 
     if request.method == 'POST':
         # only account owner or sys_admin can create locations
@@ -85,10 +85,15 @@ def sv_supplier_location(request, pk=None):
         return Response('Accepted', status=status.HTTP_201_CREATED)
 
     if request.method == 'GET':
+        data = request.data
+        order_by = request.GET.get('order_by', 'id')
         location = account.shipping_locations.filter(id=pk).first()
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        serialized = SVLocationSerializer(location)
+        serialized = SVLocationSerializer(
+            location,
+            context={'order_by': order_by}
+            )
         markup = settings.MARKUP
         return Response({
             'markup': markup,
@@ -248,11 +253,11 @@ def supplier_short_lib(request):
     if not employee:
         return Response('not an employee', status=status.HTTP_400_BAD_REQUEST)
 
-    locations = employee.company_account.supplier_locations.all()
+    locations = employee.company_account.shipping_locations.all()
     if not locations:
         return Response('no locations', status=status.HTTP_400_BAD_REQUEST)
 
-    locations = None
+    location = None
     location_id = request.GET.get('proj_id', None)
     if location_id:
         location = locations.filter(id=location_id).first()

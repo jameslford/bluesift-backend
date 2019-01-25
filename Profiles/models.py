@@ -20,6 +20,13 @@ class CompanyAccount(models.Model):
     def get_employees(self):
         return self.employees
 
+    def shipping_location_count(self):
+        try:
+            count = self.shipping_locations.count()
+            return count
+        except:
+            return 0
+
 
 class EmployeeProfile(models.Model):
     # each user can only have one employee profile

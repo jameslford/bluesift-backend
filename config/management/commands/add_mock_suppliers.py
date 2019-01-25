@@ -21,7 +21,8 @@ class Command(BaseCommand):
         product_ids = Product.objects.all().values_list('id', flat=True)
         for email, address, comp_name in zip(lists.emails, lists.addresses, lists.company_names):
             user_model = get_user_model()
-            password = make_password('tomatoes')
+            # password = make_password('tomatoes')
+            password = 'tomatoes'
             user = user_model.objects.create_user(email=email, is_supplier=True, password=password)
             Token.objects.create(user=user)
             zipcode = Zipcode.objects.get(code=address[3])
@@ -49,14 +50,15 @@ class Command(BaseCommand):
                 approved_online_seller=True,
                 approved_in_store_seller=True
             )
-            for x in range(4):
-                price = random.uniform(4, 10)
+            for x in range(8):
+                price = random.uniform(1, 10)
                 price = round(float(price), 2)
                 price = decimal.Decimal(price)
                 units_available = random.randint(10, 60)
                 units_per_order = decimal.Decimal(3.5)
                 product = random.choice(product_ids)
                 product = Product.objects.get(pk=product)
+                available_online = random.choice([True, False])
                 SupplierProduct.objects.create(
                     product=product,
                     my_price=price,
@@ -64,7 +66,7 @@ class Command(BaseCommand):
                     units_available=units_available,
                     units_per_order=units_per_order,
                     for_sale_in_store=True,
-                    for_sale_online=True,
+                    for_sale_online=available_online,
                     offer_installation=True
                 )
 

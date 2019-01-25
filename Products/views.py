@@ -13,25 +13,33 @@ from .models import Product
 
 @api_view(['GET'])
 def product_list(request):
-    # products = Product.objects.all()
-    # serialized = ProductSerializer(products, many=True)
-    # return Response(serialized.data)
 
     request_url = request.GET.urlencode().split('&')
-    # print('wonkeyr', request_url)
     request_url = [query for query in request_url if 'page' not in query]
     queries = request.GET.getlist('quer')
     page = request.GET.get('page', 1)
     sorter = FilterSorter(queries, request_url)
+    message = None
+    return_products = True
 
     products = Product.objects.all()
-    # filters applications, availability and location. nothing special
+
+    loc_filtered = sorter.filter_location(products)
+    if loc_filtered:
+        products = loc_filtered
+    else:
+        message = 'No results'
+        return_products = False
+
+    price_filtered = sorter.filter_price(products)
+    if price_filtered:
+        products = price_filtered
+    else:
+        message = 'No Results'
+        return_products = False
+
     products = sorter.filter_bools(products)
-    products = sorter.filter_location(products)
-    products = sorter.filter_price(products)
-    # filters manu, size, thickness, and look - and arg between groups, or arg within groups
     products = sorter.filter_attribute(products)
-    # products = sorter.filter_materials_down(products)
 
     filter_response = sorter.return_filter(products)
 
@@ -45,7 +53,7 @@ def product_list(request):
         page_number = int(page)
     else:
         page_number = 1
-    if page_number == page_count:
+    if page_number == page_count or not return_products:
         load_more = False
 
     serialized_products = ProductSerializer(products_response, many=True)
@@ -54,12 +62,16 @@ def product_list(request):
 
     content = {
         'load_more': load_more,
+        'price_quer': sorter.price_query,
+        'page_count': page_count,
         'product_count': product_count,
+        'full_price_range': sorter.total_price_range,
         'material_selected': material_selected,
         'query': legit_queries,
         'current_page': page,
+        'message': message,
         'filter': filter_response,
-        'products': serialized_products.data
+        'products': serialized_products.data if return_products else []
     }
 
     return Response(content, status=status.HTTP_200_OK)

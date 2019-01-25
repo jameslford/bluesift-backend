@@ -19,17 +19,16 @@ class CompanyAccountSerializer(serializers.ModelSerializer):
 
 
 class CompanyAccountDetailSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()
+    headquarters = AddressSerializer()
     locations = serializers.SerializerMethodField()
-    count = None
 
     class Meta:
         model = CompanyAccount
         fields = (
-            'address',
+            'headquarters',
             'phone_number',
             'name',
-            'count'
+            'shipping_location_count',
             'plan',
             'locations'
         )
@@ -38,7 +37,6 @@ class CompanyAccountDetailSerializer(serializers.ModelSerializer):
         locations = instance.shipping_locations.all()
         if not locations:
             locations = CompanyShippingLocation.objects.create(company_account=instance)
-        self.count = locations.count()
         return ShippingLocationListSerializer(locations, many=True).data
 
 
@@ -78,7 +76,8 @@ class SVLocationSerializer(serializers.ModelSerializer):
             'image'
             )
 
-    def get_priced_products(self, instance, order='id'):
+    def get_priced_products(self, instance):
+        order = self.context.get('order_by', 'id')
         prods = instance.priced_products.all().order_by(order)
         return SupplierProductSerializer(prods, many=True).data
 
