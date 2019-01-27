@@ -50,7 +50,8 @@ class Command(BaseCommand):
                 approved_online_seller=True,
                 approved_in_store_seller=True
             )
-            for x in range(8):
+            rang_int = random.randint(20, 200)
+            for x in range(rang_int):
                 price = random.uniform(1, 10)
                 price = round(float(price), 2)
                 price = decimal.Decimal(price)

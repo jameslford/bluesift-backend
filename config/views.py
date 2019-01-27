@@ -2,7 +2,10 @@ from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from rest_framework import status
+from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
 from django.shortcuts import render
 from Profiles.views import (
     supplier_product,
@@ -18,9 +21,12 @@ def landing(request):
     return render(request, 'index.html')
 
 
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
 def append_lib(request):
     user = request.user
     if user.is_supplier:
+        # return redirect('profiles')
         return supplier_product(request)
     return customer_library_append(request)
 

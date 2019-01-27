@@ -43,6 +43,7 @@ def product_list(request):
 
     filter_response = sorter.return_filter(products)
 
+    legit_queries = ['quer=' + q for q in sorter.legit_queries]
     paginator = PageNumberPagination()
     paginator.page_size = 12
     products_response = paginator.paginate_queryset(products, request)
@@ -51,13 +52,14 @@ def product_list(request):
     load_more = True
     if page:
         page_number = int(page)
+        pg_str = 'page=' + str(page_number)
+        sorter.legit_queries.append(pg_str)
     else:
         page_number = 1
     if page_number == page_count or not return_products:
         load_more = False
 
     serialized_products = ProductSerializer(products_response, many=True)
-    legit_queries = ['quer=' + q for q in sorter.legit_queries]
     material_selected = sorter.spec_mat_facet
 
     content = {

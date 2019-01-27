@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
-from Products.serializers import ProductSerializerforSupplier
+from Products.serializers import ProductSerializerforSupplier, ProductDetailSerializer
 from .models import (
     CompanyAccount,
     CompanyShippingLocation,
@@ -82,6 +82,33 @@ class SVLocationSerializer(serializers.ModelSerializer):
         return SupplierProductSerializer(prods, many=True).data
 
 
+class CVLocationSerializer(serializers.ModelSerializer):
+    priced_products = serializers.SerializerMethodField()
+    address = AddressSerializer(read_only=True)
+
+    class Meta:
+        model = CompanyShippingLocation
+        fields = (
+            'company_account',
+            'company_name',
+            'approved_online_seller',
+            'approved_in_store_seller',
+            'nickname',
+            'product_count',
+            'address',
+            'phone_number',
+            'id',
+            'priced_products',
+            'image'
+            )
+
+    def get_priced_products(self, instance):
+        order = self.context.get('order_by', 'id')
+        prods = instance.priced_products.filter(for_sale_in_store=True).order_by(order)
+        return CVSupplierProductSerializer(prods, many=True).data
+
+
+
 class ShippingLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     local_admin = EmployeeProfileSerializer()
@@ -137,8 +164,6 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
 
-
-
 class SupplierProductSerializer(serializers.ModelSerializer):
     product = ProductSerializerforSupplier(read_only=True)
 
@@ -177,3 +202,19 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)
         instance.save()
         return instance
+
+class CVSupplierProductSerializer(serializers.ModelSerializer):
+    product = ProductDetailSerializer(read_only=True)
+
+    class Meta:
+        model = SupplierProduct
+        fields = (
+            'id',
+            'my_price',
+            'online_ppu',
+            'units_available',
+            'units_per_order',
+            'for_sale_online',
+            'for_sale_in_store',
+            'product'
+        )

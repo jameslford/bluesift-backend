@@ -5,6 +5,7 @@ from rest_framework import serializers
 from .models import (
     Product,
     Color,
+    Finish,
     Manufacturer,
     Material,
     Image
@@ -21,6 +22,12 @@ class MaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Material
+        fields = ('id', 'label')
+
+class FinishSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Finish
         fields = ('id', 'label')
 
 
@@ -88,6 +95,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     room_scene = ImageSerializer()
     swatch_image = ImageSerializer()
     tiling_image = ImageSerializer()
+    finish = FinishSerializer()
+    material = MaterialSerializer()
 
     class Meta:
         model = Product
@@ -101,6 +110,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'manufacturer_sku',
             'manu_collection',
             'manufacturer_color',
+            'manufacturer_name',
+            'finish',
 
             'lowest_price',
 

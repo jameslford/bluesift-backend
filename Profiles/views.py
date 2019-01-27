@@ -2,11 +2,10 @@
     accompanying products. supporting functions first, actual views at bottom '''
 
 from django.conf import settings
-
-
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from rest_framework import status
 
 from Profiles.models import (
@@ -20,6 +19,7 @@ from Products.models import Product
 from .serializers import (
     CompanyAccountDetailSerializer,
     SVLocationSerializer,
+    CVLocationSerializer,
     EmployeeProfileSerializer,
     ShippingLocationListSerializer,
     ShippingLocationUpdateSerializer,
@@ -126,7 +126,6 @@ def sv_supplier_location(request, pk=None):
 
         serialized_loc.update(instance=location, validated_data=data)
         return Response('Accepted', status=status.HTTP_202_ACCEPTED)
-
 
 @api_view(['PUT', 'DELETE', 'POST'])
 @permission_classes((IsAuthenticated,))
@@ -306,7 +305,7 @@ def cv_supplier_location(request, pk):
     # s_id = request.GET.get('id')
     supplier = CompanyShippingLocation.objects.get(id=pk)
     if supplier:
-        serialized = SVLocationSerializer(supplier)
+        serialized = CVLocationSerializer(supplier)
         return Response({'location': serialized.data}, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
