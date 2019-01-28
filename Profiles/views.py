@@ -28,6 +28,12 @@ from .serializers import (
 
 ''' supplier side views  '''
 
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def location_product_search(request):
+    pass
+
+
 
 @api_view(['GET', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated,))
@@ -87,12 +93,16 @@ def sv_supplier_location(request, pk=None):
     if request.method == 'GET':
         data = request.data
         order_by = request.GET.get('order_by', 'id')
+        search_request = request.GET.getlist('search', None)
         location = account.shipping_locations.filter(id=pk).first()
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         serialized = SVLocationSerializer(
             location,
-            context={'order_by': order_by}
+            context={
+                'order_by': order_by,
+                'search': search_request
+                }
             )
         markup = settings.MARKUP
         return Response({

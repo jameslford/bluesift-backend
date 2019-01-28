@@ -5,6 +5,7 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib.postgres.search import SearchVector
 from rest_framework.pagination import PageNumberPagination
 from .scripts import FilterSorter
 from .serializers import ProductSerializer, ProductDetailSerializer
@@ -17,6 +18,7 @@ def product_list(request):
     request_url = request.GET.urlencode().split('&')
     request_url = [query for query in request_url if 'page' not in query]
     queries = request.GET.getlist('quer')
+    search_terms = request.GET.getlist('search', None)
     page = request.GET.get('page', 1)
     sorter = FilterSorter(queries, request_url)
     message = None
@@ -38,6 +40,13 @@ def product_list(request):
         message = 'No Results'
         return_products = False
 
+    thk_filtered = sorter.filter_thickness(products)
+    if thk_filtered:
+        products = thk_filtered
+    else:
+        message = 'No Results'
+        return_products = False
+
     products = sorter.filter_bools(products)
     products = sorter.filter_attribute(products)
 
@@ -46,6 +55,25 @@ def product_list(request):
     legit_queries = ['quer=' + q for q in sorter.legit_queries]
     paginator = PageNumberPagination()
     paginator.page_size = 12
+
+    if search_terms:
+        searched_prods = products
+        for term in search_terms:
+            searched_prods = searched_prods.annotate(
+                    search=SearchVector(
+                        'name',
+                        'manufacturer__label',
+                        'manufacturer_color',
+                        'manu_collection',
+                        'material__label'
+                    )
+            ).filter(search=term)
+        if searched_prods:
+            products = searched_prods
+        else:
+            message = 'No Results'
+            return_products = False
+
     products_response = paginator.paginate_queryset(products, request)
     product_count = products.count() if products else 0
     page_count = math.ceil(product_count/paginator.page_size)
@@ -64,7 +92,6 @@ def product_list(request):
 
     content = {
         'load_more': load_more,
-        'price_quer': sorter.price_query,
         'page_count': page_count,
         'product_count': product_count,
         'full_price_range': sorter.total_price_range,

@@ -110,7 +110,7 @@ class FilterSorter:
             self.lcolor: [self.lcolor + '__label', self.lcolor_query],
             self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
-            self.thk: [self.thk, self.thk_query],
+            # self.thk: [self.thk, self.thk_query],
             self.shdvar: [self.shdvar + '__label', self.shdvar_query],
             self.sze: [self.sze, self.sze_query],
             self.submat: [self.submat + '__label', self.submat_query],
@@ -118,10 +118,13 @@ class FilterSorter:
         }
         self.zipcode = None
         self.radius = None
+
         self.min_price = None
         self.max_price = None
-        # self.location_respone = None
-        # self.price_response = None
+
+        self.min_thick = None
+        self.max_thick = None
+
         self.legit_queries = []
         self.filter_response = []
 
@@ -166,11 +169,9 @@ class FilterSorter:
 
     def filter_price(self, products):
         price_agg = products.aggregate(Min('lowest_price'), Max('lowest_price'))
-        total_min_price = price_agg['lowest_price__min']
-        total_max_price = price_agg['lowest_price__max']
-        self.min_price = total_min_price
-        self.max_price = total_max_price
-        self.total_price_range = [total_min_price, total_max_price]
+        self.min_price = price_agg['lowest_price__min']
+        self.max_price = price_agg['lowest_price__max']
+        self.total_price_range = [self.min_price, self.max_price]
         _products = products
         if not self.price_query:
             return _products
@@ -207,6 +208,7 @@ class FilterSorter:
             }
         values = Product.objects.values_list(term, id_term).distinct()
         values = [q for q in values if q[0]]
+        # sorts values for for each attribute(term), by label so that they are consistent
         values = sorted(values, key=itemgetter(0))
         for val, idt in values:
             search_term = {id_term: idt}
@@ -218,9 +220,13 @@ class FilterSorter:
                 'label': str(val),
                 'count': count,
                 'enabled': False,
-                'value': idt
+                'value': idt,
             }
-            if str(idt) in args:
+            # now convert list value to string and see if it was in the query to determine if enabled
+            enabled_test = str(idt)
+            if term == self.thk:
+                enabled_test = enabled_test.rstrip('0')
+            if enabled_test in args:
                 value['enabled'] = True
                 self.legit_queries.append(f'{id_term}-{idt}')
             facet['values'].append(value)
@@ -253,32 +259,20 @@ class FilterSorter:
             q = req.split('-')
             if q[0] not in ordered_set:
                 ordered_set.append(q[0])
+        # filters in reverse order first
         for term in ordered_set:
             value = self.standalones.get(term, None)
             if value:
                 _products = self.or_list_query(_products, value)
                 del self.standalones[term]
+        # then filters the remainder
         for stnd, values2 in self.standalones.items():
             _products = self.or_list_query(_products, values2)
-        return _products
-
-    def filter_materials_down(self, products):
-        _products = products
-        material = None
-        if self.mat_query:
-            material_key = self.mat_query[0]
-            material = Material.objects.filter(id=material_key).first()
-        if material:
-            self.spec_mat_facet = True
-            _products = products.filter(material=material)
-        for sub in self.manu_subs:
-            _products = self.or_list_query(_products, sub[1], sub[0])
         return _products
 
     def bool_facet(self, products):
         for cat in self.bools:
             queries, name, terms = cat
-            print(queries)
             facet = {
                 'name': name,
                 'total_count': 2,
@@ -305,12 +299,56 @@ class FilterSorter:
             }
             price_facet = {
                 'name': 'price',
-                'range_values': [self.min_price, self.max_price]
+                'min': self.min_price,
+                'max': self.max_price,
+                'range_values': self.total_price_range
             }
             # self.filter_response = [loc_facet, price_facet] + self.filter_response
             self.filter_response.insert(1, loc_facet)
             self.filter_response.insert(2, price_facet)
 
+    def filter_thickness(self, products):
+        _products = products
+        thick_vals = products.aggregate(Min('thickness'), Max('thickness'))
+        min_thick = thick_vals['thickness__min']
+        max_thick = thick_vals['thickness__max']
+        thk_facet = {
+            'name': 'thickness',
+            'min': min_thick,
+            'max': max_thick,
+            'range_values': [min_thick, max_thick]
+        }
+        self.filter_response.append(thk_facet)
+        if not self.thk_query:
+            return _products
+        min_thk_query = [q.replace('min-', '') for q in self.thk_query if 'min' in q]
+        max_thk_query = [q.replace('max-', '') for q in self.thk_query if 'max' in q]
+        if min_thk_query:
+            min_thick = decimal.Decimal(min_thk_query[-1])
+            thk_facet['min'] = min_thick
+            self.legit_queries.append('thickness-min-' + min_thk_query)
+            _products = _products.filter(thickness__gte=min_thick)
+        if max_thk_query:
+            max_thick = decimal.Decimal(max_thk_query[-1])
+            thk_facet['max'] = max_thick
+            self.legit_queries.append('thickness-max-' + max_thk_query)
+            _products = _products.filter(thickness__lte=max_thick)
+        return _products
+
     def return_filter(self, products):
         self.bool_facet(products)
         return self.filter_response
+
+
+    # def filter_materials_down(self, products):
+    #     _products = products
+    #     material = None
+    #     if self.mat_query:
+    #         material_key = self.mat_query[0]
+    #         material = Material.objects.filter(id=material_key).first()
+    #     if material:
+    #         self.spec_mat_facet = True
+    #         _products = products.filter(material=material)
+    #     for sub in self.manu_subs:
+    #         _products = self.or_list_query(_products, sub[1], sub[0])
+    #     return _products

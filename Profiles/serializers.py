@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
+from django.contrib.postgres.search import SearchVector
 from Products.serializers import ProductSerializerforSupplier, ProductDetailSerializer
 from .models import (
     CompanyAccount,
@@ -54,8 +55,6 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
         )
 
 
-
-
 class SVLocationSerializer(serializers.ModelSerializer):
     priced_products = serializers.SerializerMethodField()
     address = AddressSerializer(read_only=True)
@@ -78,7 +77,21 @@ class SVLocationSerializer(serializers.ModelSerializer):
 
     def get_priced_products(self, instance):
         order = self.context.get('order_by', 'id')
-        prods = instance.priced_products.all().order_by(order)
+        search_terms = self.context.get('search', None)
+        prods = instance.priced_products.all()
+        if search_terms:
+            for term in search_terms:
+                prods = prods.annotate(
+                    search=SearchVector(
+                        'product__name',
+                        'product__manufacturer__label',
+                        'product__manufacturer_color',
+                        'product__manu_collection',
+                        'product__material__label'
+                    )
+            ).filter(search=term)
+        else:
+            prods = instance.priced_products.all().order_by(order)
         return SupplierProductSerializer(prods, many=True).data
 
 
