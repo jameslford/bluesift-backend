@@ -314,9 +314,9 @@ class FilterSorter:
         max_thick = thick_vals['thickness__max']
         thk_facet = {
             'name': 'thickness',
-            'min': min_thick,
-            'max': max_thick,
-            'range_values': [min_thick, max_thick]
+            'min': float(min_thick),
+            'max': float(max_thick),
+            'range_values': [float(min_thick), float(max_thick)]
         }
         self.filter_response.append(thk_facet)
         if not self.thk_query:
@@ -325,13 +325,13 @@ class FilterSorter:
         max_thk_query = [q.replace('max-', '') for q in self.thk_query if 'max' in q]
         if min_thk_query:
             min_thick = decimal.Decimal(min_thk_query[-1])
-            thk_facet['min'] = min_thick
-            self.legit_queries.append('thickness-min-' + min_thk_query)
+            thk_facet['min'] = float(min_thick)
+            self.legit_queries.append('thickness-min-' + str(min_thick))
             _products = _products.filter(thickness__gte=min_thick)
         if max_thk_query:
             max_thick = decimal.Decimal(max_thk_query[-1])
-            thk_facet['max'] = max_thick
-            self.legit_queries.append('thickness-max-' + max_thk_query)
+            thk_facet['max'] = float(max_thick)
+            self.legit_queries.append('thickness-max-' + str(max_thick))
             _products = _products.filter(thickness__lte=max_thick)
         return _products
 

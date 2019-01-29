@@ -121,7 +121,6 @@ class CVLocationSerializer(serializers.ModelSerializer):
         return CVSupplierProductSerializer(prods, many=True).data
 
 
-
 class ShippingLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     local_admin = EmployeeProfileSerializer()
@@ -230,4 +229,20 @@ class CVSupplierProductSerializer(serializers.ModelSerializer):
             'for_sale_online',
             'for_sale_in_store',
             'product'
+        )
+
+
+class SupplierProductMiniSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SupplierProduct
+        fields = (
+            'id',
+            'my_price',
+            'online_ppu',
+            'units_available',
+            'units_per_order',
+            'location_address',
+            'company_name',
+            'coordinates'
         )

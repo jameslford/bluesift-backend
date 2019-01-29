@@ -289,6 +289,12 @@ class Product(models.Model):
                 return
         super(Product, self).save(*args, **kwargs)
 
+    def online_priced(self):
+        return self.priced.filter(for_sale_online=True)
+
+    def in_store_priced(self):
+        return self.priced.filter(for_sale_in_store=True)
+
     def set_prices(self):
         self.for_sale_in_store = False
         self.for_sale_online = False

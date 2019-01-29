@@ -10,6 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 from .scripts import FilterSorter
 from .serializers import ProductSerializer, ProductDetailSerializer
 from .models import Product
+from Profiles.serializers import SupplierProductMiniSerializer
 
 
 @api_view(['GET'])
@@ -104,6 +105,27 @@ def product_list(request):
     }
 
     return Response(content, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_product(request, pk):
+    product = Product.objects.filter(pk=pk).first()
+    if not product:
+        return Response('Invalid PK', status=status.HTTP_400_BAD_REQUEST)
+    online_priced = product.online_priced()
+    online_priced = SupplierProductMiniSerializer(online_priced, many=True).data if online_priced else None
+    in_store_priced = product.in_store_priced()
+    in_store_priced = SupplierProductMiniSerializer(in_store_priced, many=True).data if in_store_priced else None
+    serialized_product = ProductDetailSerializer(product)
+    return Response(
+        {
+            'product': serialized_product.data,
+            'in_store_priced': in_store_priced,
+            'online_priced': online_priced
+        }
+        )
+
+
 
 
 
@@ -207,10 +229,3 @@ def product_list(request):
     #     'filter': facet_list,
     #     'products': serialized_products.data
     #     })
-
-
-@api_view(['GET'])
-def get_product(request, pk):
-    product = Product.objects.get(id=pk)
-    serialized_product = ProductDetailSerializer(product)
-    return Response({'product': serialized_product.data})

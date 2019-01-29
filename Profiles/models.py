@@ -163,8 +163,21 @@ class SupplierProduct(models.Model):
     for_sale_online = models.BooleanField(default=False)
     offer_installation = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ('product', 'supplier')
+
     def __str__(self):
         return str(self.supplier) + ' ' + str(self.product.name)
+
+    def location_address(self):
+        return self.supplier.address_string()
+
+    def company_name(self):
+        return self.supplier.company_account.name
+
+    def coordinates(self):
+        coordinates = self.supplier.address.coordinates
+        return [coordinates.lat, coordinates.lng]
 
     def set_online_price(self):
         if self.my_price:
@@ -184,8 +197,7 @@ class SupplierProduct(models.Model):
         if self.supplier.address:
             self.product.set_locations()
 
-    class Meta:
-        unique_together = ('product', 'supplier')
+
 
     def delete(self, using=None, keep_parents=False):
         address = False
