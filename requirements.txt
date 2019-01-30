@@ -14,6 +14,8 @@ django-money==0.14
 django-storages==1.6.6
 djangorestframework==3.8.2
 docutils==0.14
+flake8==3.6.0
+GDAL==2.3.2
 googlemaps==3.0.2
 gunicorn==19.8.1
 html5lib==1.0.1
@@ -23,9 +25,13 @@ jmespath==0.9.3
 lazy-object-proxy==1.3.1
 lxml==4.2.3
 mccabe==0.6.1
+numpy==1.15.4
 Pillow==5.1.0
 psycopg2==2.7.5
 py-moneyed==0.7.0
+pycodestyle==2.4.0
+pyflakes==2.0.0
+pygeocoder==1.2.5
 pylint==1.9.2
 pylint-django==0.11.1
 pylint-plugin-utils==0.2.6
@@ -33,9 +39,11 @@ python-dateutil==2.7.3
 pytz==2018.4
 requests==2.19.1
 s3transfer==0.1.13
+scipy==1.2.0
 selenium==3.13.0
 six==1.11.0
 urllib3==1.23
+webcolors==1.8.1
 webencodings==0.5.1
 whitenoise==3.3.1
 wrapt==1.10.11
