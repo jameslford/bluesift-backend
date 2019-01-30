@@ -85,4 +85,3 @@ MIDDLEWARE = [
 
 # 'GDAL_LIBRAY_PATH' '/app/.heroku/vendor/lib/libgdal.so'
 # 'GEOS_LIBRARY_PATH' '/app/.heroku/vendor/lib/libgeos_c.so'
-# wtf
