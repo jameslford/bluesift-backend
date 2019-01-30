@@ -123,7 +123,7 @@ class CVLocationSerializer(serializers.ModelSerializer):
 
 class ShippingLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
-    local_admin = EmployeeProfileSerializer()
+    # local_admin = EmployeeProfileSerializer()
 
     class Meta:
         model = CompanyShippingLocation
@@ -133,7 +133,7 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
             'company_name',
             'address',
             'phone_number',
-            'local_admin',
+            # 'local_admin',
             'nickname',
             'address_string',
             'product_count',
@@ -243,6 +243,7 @@ class SupplierProductMiniSerializer(serializers.ModelSerializer):
             'units_available',
             'units_per_order',
             'location_address',
+            'location_id',
             'company_name',
             'coordinates'
         )

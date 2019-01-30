@@ -61,7 +61,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'for_sale_online',
             'for_sale_in_store',
             'size',
-            # 'name',
+            'name',
             # 'actual_color',
             # 'label_color',
             'swatch_image',

@@ -172,6 +172,9 @@ class SupplierProduct(models.Model):
     def location_address(self):
         return self.supplier.address_string()
 
+    def location_id(self):
+        return self.supplier.id
+
     def company_name(self):
         return self.supplier.company_account.name
 
