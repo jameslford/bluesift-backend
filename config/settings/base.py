@@ -8,6 +8,7 @@ MARKUP = '1.10'
 DESIRED_IMAGE_SIZE = 350
 
 ALT_SAFE_PATH = 'D:\\BBdata\\product_images'
+PRODUCTION_DATA_WRITE_PATH = os.getcwd() + '/config/management/data/production_data.csv'
 
 # password is robertmurray
 INSTALLED_APPS = [
