@@ -178,14 +178,10 @@ class Command(BaseCommand):
                     continue
                 swatch_image = Image.objects.get_or_create(original_url=image_original)[0]
                 if 'http' in image_local:
-                    image_name = image_local.replace('https://','')
+                    image_name = image_local.replace('https://', '')
                     image_name = image_name.replace('/', '_')
-                    try:
-                        im = urllib.request.urlretrieve(image_local)
-                        swatch_image.image.save(image_name, File(open(im[0])))
-                    except:
-                        print('url - unable to save swatch_image')
-                        continue
+                    im = urllib.request.urlretrieve(image_local)
+                    swatch_image.image.save(image_name, File(open(im[0])))
                 else:
                     read_image = image_local.strip('"')
                     try:
