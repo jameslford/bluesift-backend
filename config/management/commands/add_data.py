@@ -181,9 +181,10 @@ class Command(BaseCommand):
                     image_name = image_local.replace('https://', '')
                     image_name = image_name.replace('/', '_')
                     im = urllib.request.urlretrieve(image_local)
-                    print(im[1])
                     im = File(open(im[0], 'rb'))
                     swatch_image.image.save(image_name, im)
+                    swatch_image.save()
+                    product.swatch_image = swatch_image
                 else:
                     read_image = image_local.strip('"')
                     try:
@@ -197,27 +198,27 @@ class Command(BaseCommand):
                     except FileNotFoundError:
                         print('local - unable to save swatch_image')
                         continue
-                if image2_original:
-                    room_scene = Image.objects.get_or_create(original_url=image2_original)[0]
-                    if not room_scene.image:
-                        try:
-                            with open(image2_local, 'rb') as f2:
-                                image_file2 = File(f2)
-                                room_scene.image = image_file2
-                                room_scene.save()
-                                product.room_scene = room_scene
-                                f2.close()
-                        except FileNotFoundError:
-                            pass
-                if tiling_image:
-                    tiling = Image.objects.get_or_create(original_url=tiling_image)[0]
-                    if not tiling.image:
-                        with open(tiling_image_local, 'rb') as f3:
-                            tiling_file = File(f3)
-                            tiling.image = tiling_file
-                            tiling.save()
-                            product.tiling_image = tiling
-                            f3.close()
+                # if image2_original:
+                #     room_scene = Image.objects.get_or_create(original_url=image2_original)[0]
+                #     if not room_scene.image:
+                #         try:
+                #             with open(image2_local, 'rb') as f2:
+                #                 image_file2 = File(f2)
+                #                 room_scene.image = image_file2
+                #                 room_scene.save()
+                #                 product.room_scene = room_scene
+                #                 f2.close()
+                #         except FileNotFoundError:
+                #             pass
+                # if tiling_image:
+                #     tiling = Image.objects.get_or_create(original_url=tiling_image)[0]
+                #     if not tiling.image:
+                #         with open(tiling_image_local, 'rb') as f3:
+                #             tiling_file = File(f3)
+                #             tiling.image = tiling_file
+                #             tiling.save()
+                #             product.tiling_image = tiling
+                #             f3.close()
                 product.thickness = thickness
                 product.length = length
                 product.width = width
