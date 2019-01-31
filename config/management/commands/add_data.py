@@ -181,7 +181,9 @@ class Command(BaseCommand):
                     image_name = image_local.replace('https://', '')
                     image_name = image_name.replace('/', '_')
                     im = urllib.request.urlretrieve(image_local)
-                    swatch_image.image.save(image_name, File(open(im[0])))
+                    print(im[1])
+                    im = File(open(im[0], 'rb'))
+                    swatch_image.image.save(image_name, im)
                 else:
                     read_image = image_local.strip('"')
                     try:
