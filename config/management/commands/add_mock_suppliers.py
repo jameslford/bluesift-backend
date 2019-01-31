@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 approved_in_store_seller=True
             )
             rang_int = random.randint(20, 200)
-            location_prod_ids = product_ids
+            location_prod_ids = list(product_ids)
             for x in range(rang_int):
                 price = random.uniform(1, 10)
                 price = round(float(price), 2)
