@@ -51,14 +51,16 @@ class Command(BaseCommand):
                 approved_in_store_seller=True
             )
             rang_int = random.randint(20, 200)
+            location_prod_ids = product_ids
             for x in range(rang_int):
                 price = random.uniform(1, 10)
                 price = round(float(price), 2)
                 price = decimal.Decimal(price)
                 units_available = random.randint(10, 60)
                 units_per_order = decimal.Decimal(3.5)
-                product = random.choice(product_ids)
-                product = Product.objects.get(pk=product)
+                select_id = random.choice(location_prod_ids)
+                location_prod_ids.remove(select_id)
+                product = Product.objects.get(pk=select_id)
                 available_online = random.choice([True, False])
                 SupplierProduct.objects.create(
                     product=product,
