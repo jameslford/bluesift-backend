@@ -1,8 +1,10 @@
 import decimal
 import csv
 import os
+import urllib
 import glob
 import sys
+from django.core.files.temp import NamedTemporaryFile
 from django.conf import settings
 from django.core.files import File
 
@@ -172,8 +174,19 @@ class Command(BaseCommand):
                         finish_holder = gloss_level
                     finish = Finish.objects.get_or_create(label=finish_holder, material=material)[0]
                     product.finish = finish
+                if not image_local:
+                    continue
                 swatch_image = Image.objects.get_or_create(original_url=image_original)[0]
-                if not swatch_image.image:
+                if 'http' in image_local:
+                    image_name = image_local.replace('https://','')
+                    image_name = image_name.replace('/', '_')
+                    try:
+                        im = urllib.request.urlretrieve(image_local)
+                        swatch_image.image.save(image_name, File(open(im[0])))
+                    except:
+                        print('url - unable to save swatch_image')
+                        continue
+                else:
                     read_image = image_local.strip('"')
                     try:
                         with open(read_image, 'rb') as f:
@@ -184,6 +197,7 @@ class Command(BaseCommand):
                             product.swatch_image = swatch_image
                             f.close()
                     except FileNotFoundError:
+                        print('local - unable to save swatch_image')
                         continue
                 if image2_original:
                     room_scene = Image.objects.get_or_create(original_url=image2_original)[0]
