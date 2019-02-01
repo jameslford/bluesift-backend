@@ -70,6 +70,14 @@ GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 # GEOS_LIBRARY_PATH = '/app/.heroku/vendor/lib/libgeos_c.so'
 # GDAL_LIBRARY_PATH = '/app/.heroku/vendor/lib/libgdal.so'
 
+def show_toolbar(request):
+    return request.user.is_staff
+
+DEBUG_TOOLBAR_CONFIG = {
+    # ...
+    'SHOW_TOOLBAR_CALLBACK': True,
+}
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
