@@ -12,6 +12,7 @@ PRODUCTION_DATA_WRITE_PATH = os.getcwd() + '/config/management/data/production_d
 
 # password is robertmurray
 INSTALLED_APPS = [
+    'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -94,6 +95,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+INTERNAL_IPS = [
+    '127.0.0.1'
+]
 
 AUTH_USER_MODEL = 'Accounts.User'
 

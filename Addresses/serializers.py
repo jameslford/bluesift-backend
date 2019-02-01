@@ -9,12 +9,27 @@ class CoordinateSerializer(serializers.ModelSerializer):
             'lng'
         )
 
-class AddressSerializer(serializers.ModelSerializer):
-    coordinates = CoordinateSerializer()
+
+class AddressUpdateSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Address
         fields = (
-            'address_line_1', 
+            'address_line_1',
+            'city',
+            'country',
+            'state',
+            'postal_code',
+        )
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    coordinates = CoordinateSerializer()
+
+    class Meta:
+        model = Address
+        fields = (
+            'address_line_1',
             'city',
             'country',
             'state',

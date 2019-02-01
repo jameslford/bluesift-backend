@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from Addresses.serializers import AddressSerializer
-from Addresses.models import Address
+from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
+from Addresses.models import Address, Zipcode
 from django.contrib.postgres.search import SearchVector
 from Products.serializers import ProductSerializerforSupplier, ProductDetailSerializer
 from .models import (
@@ -26,6 +26,7 @@ class CompanyAccountDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyAccount
         fields = (
+            'id',
             'headquarters',
             'phone_number',
             'name',
@@ -142,12 +143,11 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
 
 
 class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()
+    address = AddressUpdateSerializer()
 
     class Meta:
         model = CompanyShippingLocation
         fields = (
-            'company_account',
             'address',
             'nickname',
             'phone_number'
@@ -155,7 +155,11 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
 
     def create(self, account, validated_data):
         address = validated_data.pop('address')
-        address = Address.objects.create(**address)
+        zipcode = address.pop('postal_code')
+        zipcode = Zipcode.objects.filter(code=zipcode).first()
+        if not zipcode:
+            return 'Invalid Zip'
+        address = Address.objects.create(postal_code=zipcode, **address)
         return CompanyShippingLocation.objects.create(
             address=address,
             company_account=account,
@@ -214,6 +218,7 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)
         instance.save()
         return instance
+
 
 class CVSupplierProductSerializer(serializers.ModelSerializer):
     product = ProductDetailSerializer(read_only=True)

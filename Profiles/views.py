@@ -87,7 +87,7 @@ def sv_supplier_location(request, pk=None):
         serialized_loc = ShippingLocationUpdateSerializer(data=data)
         if not serialized_loc.is_valid():
             return Response(serialized_loc.errors, status=status.HTTP_400_BAD_REQUEST)
-        serialized_loc.create(data)
+        serialized_loc.create(account, data)
         return Response('Accepted', status=status.HTTP_201_CREATED)
 
     if request.method == 'GET':

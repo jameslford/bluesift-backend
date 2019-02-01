@@ -45,6 +45,9 @@ class EmployeeProfile(models.Model):
     company_account_admin = models.BooleanField(default=False)
     title = models.CharField(max_length=100, null=True)
 
+    def __str__(self):
+        return self.user.email
+
     def clean(self):
         # makes sure company owners/admins do not exceed quota
         # hardcoding quota for now, but leaves door open

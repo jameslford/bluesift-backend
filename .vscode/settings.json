@@ -1,7 +1,14 @@
 {
-    "python.linting.pylintEnabled": false,
+    "python.linting.pylintEnabled": true,
     "git.ignoreLimitWarning": true,
     "window.zoomLevel": 0,
     "python.linting.flake8CategorySeverity.F": "Warning",
-    "python.linting.flake8CategorySeverity.E": "Warning"
+    "python.linting.flake8CategorySeverity.E": "Warning",
+    "python.linting.pylintArgs": [
+        "--load-plugins", "pylint_django"
+    ],
+    "python.linting.flake8Enabled": false,
+    "python.linting.enabled": true,
+    // "python.pythonPath": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\env\\Scripts\\python.exe",
+    "python.pythonPath": "C:/Users/james/Documents/Code/BuildingBook/envs/env/Scripts/python.exe"
 }
