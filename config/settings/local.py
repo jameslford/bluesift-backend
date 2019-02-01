@@ -34,6 +34,14 @@ AWS_STATIC_BUCKET_NAME = 'pixidesk-development'
 AWS_MEDIA_BUCKET_NAME = 'pixidesk-development-media'
 AWS_S3_REGION_NAME = 'us-east-1'
 
+def show_toolbar(request):
+    return request.user.is_staff
+
+DEBUG_TOOLBAR_CONFIG = {
+    # ...
+    'SHOW_TOOLBAR_CALLBACK': True,
+}
+
 
 DATABASES = {
     'default': {
