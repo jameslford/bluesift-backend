@@ -71,11 +71,12 @@ GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 # GDAL_LIBRARY_PATH = '/app/.heroku/vendor/lib/libgdal.so'
 
 def show_toolbar(request):
-    return request.user.is_staff
+    # return request.user.is_staff
+    return True
 
 DEBUG_TOOLBAR_CONFIG = {
     # ...
-    'SHOW_TOOLBAR_CALLBACK': True,
+    'SHOW_TOOLBAR_CALLBACK': show_toolbar(),
 }
 
 
