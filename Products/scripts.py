@@ -84,7 +84,7 @@ class FilterSorter:
         self.loc_query, self.loc_query_raw = self.refine_list(self.loc)
         self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
         self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
-        self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
+        # self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
         # self.acolor_query, self.acolor_query_raw = self.refine_list(self.acolor)
         self.lcolor_query, self.lcolor_query_raw = self.refine_list(self.lcolor)
         self.thk_query, self.thk_query_raw = self.refine_list(self.thk)
@@ -92,7 +92,7 @@ class FilterSorter:
         self.submat_query, self.submat_query_raw = self.refine_list(self.submat)
         self.shdvar_query, self.shdvar_query_raw = self.refine_list(self.shdvar)
         self.fin_query, self.fin_query_raw = self.refine_list(self.fin)
-        self.surtex_query, self.surtex_query_raw = self.refine_list(self.surtex)
+        # self.surtex_query, self.surtex_query_raw = self.refine_list(self.surtex)
         self.surcoat_query, self.surcoat_query_raw = self.refine_list(self.surcoat)
 
         self.bool_raw = self.avail_query_raw + self.app_query_raw
