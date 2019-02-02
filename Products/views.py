@@ -33,29 +33,11 @@ def product_list(request):
         'label_color',
         'surface_coating',
         'sub_material',
-        'swatch_image'
     )
 
-    loc_filtered = sorter.filter_location(products)
-    if loc_filtered:
-        products = loc_filtered
-    else:
-        message = 'No results'
-        return_products = False
-
-    price_filtered = sorter.filter_price(products)
-    if price_filtered:
-        products = price_filtered
-    else:
-        message = 'No Results'
-        return_products = False
-
-    thk_filtered = sorter.filter_thickness(products)
-    if thk_filtered:
-        products = thk_filtered
-    else:
-        message = 'No Results'
-        return_products = False
+    products = sorter.filter_location(products)
+    products = sorter.filter_price(products)
+    products = sorter.filter_thickness(products)
 
     products = sorter.filter_bools(products)
     products = sorter.filter_attribute(products)
