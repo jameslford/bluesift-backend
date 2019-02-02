@@ -77,7 +77,7 @@ class FilterSorter:
     def __init__(self, query, request_url):
         self.query = query
         self.request_url = [q.replace('quer=', '') for q in request_url]
-        self.order = list(reversed(request_url))
+        # self.order = list(reversed(request_url))
         self.app_query, self.app_query_raw = self.refine_list(self.app)
         self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
         self.price_query, self.price_query_raw = self.refine_list(self.price)
@@ -135,16 +135,6 @@ class FilterSorter:
         queries = [q.replace(keyword+'-', '') for q in queries_raw]
         return [queries, queries_raw]
 
-    def filter_bools(self, products):
-        _products = products
-        for application in self.app_query + self.avail_query:
-            if hasattr(Product, application):
-                arg = {application: True}
-                _products = _products.filter(**arg)
-            else:
-                self.bool_raw = [q for q in self.bool_raw if application not in q]
-        self.legit_queries = self.legit_queries + self.bool_raw
-        return _products
 
     def filter_location(self, products):
         if not self.loc_query:
@@ -199,6 +189,17 @@ class FilterSorter:
             self.message = 'No results'
             self.return_products = False
             return products
+        return _products
+
+    def filter_bools(self, products):
+        _products = products
+        for application in self.app_query + self.avail_query:
+            if hasattr(Product, application):
+                arg = {application: True}
+                _products = _products.filter(**arg)
+            else:
+                self.bool_raw = [q for q in self.bool_raw if application not in q]
+        self.legit_queries = self.legit_queries + self.bool_raw
         return _products
 
     def or_list_query(self, products, term_list):
@@ -256,19 +257,24 @@ class FilterSorter:
             so last query user entered is the first evaluated'''
 
         _products = products
-        ordered_set = []
+        # ordered_set = []
         material = None
         if self.mat_query:
             material_key = self.mat_query[0]
             material = Material.objects.filter(id=material_key).first()
-        if material:
             self.spec_mat_facet = True
             _products = products.filter(material=material)
             self.mat_query = []
-        for req in self.request_url:
-            q = req.split('-')
-            if q[0] not in ordered_set:
-                ordered_set.append(q[0])
+        else:
+            del self.standalones[self.fin]
+            del self.standalones[self.submat]
+            del self.standalones[self.surcoat]
+        ordered_set = [q.split('-')[0] for q in self.request_url]
+        ordered_set = set(ordered_set)
+        # for req in self.request_url:
+        #     q = req.split('-')
+        #     if q[0] not in ordered_set:
+        #         ordered_set.append(q[0])
         # filters in reverse order first
         for term in ordered_set:
             value = self.standalones.get(term, None)
