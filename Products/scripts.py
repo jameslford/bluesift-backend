@@ -52,7 +52,6 @@ class FilterSorter:
     lcolor = 'label_color'
     lk = 'look'
     shdvar = 'shade_variation'
-
     mat = 'material'
     submat = 'sub_material'
     fin = 'finish'
@@ -62,16 +61,16 @@ class FilterSorter:
     # determines whether or not to return material specific facets
     spec_mat_facet = False
 
-    thicknesses = Product.objects.all().values_list('thickness')
-    shade_varations = ShadeVariation.objects.all()
-    looks = Look.objects.all()
-    manufacturers = Manufacturer.objects.all()
+    # thicknesses = Product.objects.all().values_list('thickness')
+    # shade_varations = ShadeVariation.objects.all()
+    # looks = Look.objects.all()
+    # manufacturers = Manufacturer.objects.all()
 
-    materials = Material.objects.all()
-    finishes = Finish.objects.all()
-    surface_textures = SurfaceTexture.objects.all()
-    surface_coatings = SurfaceCoating.objects.all()
-    sub_materials = SubMaterial.objects.all()
+    # materials = Material.objects.all()
+    # finishes = Finish.objects.all()
+    # surface_textures = SurfaceTexture.objects.all()
+    # surface_coatings = SurfaceCoating.objects.all()
+    # sub_materials = SubMaterial.objects.all()
 
     radii = [5, 10, 20, 50, 100, 200]
 
