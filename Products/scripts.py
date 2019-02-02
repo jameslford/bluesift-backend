@@ -257,14 +257,14 @@ class FilterSorter:
         '''filters products down more every pass, in reverse order.
             so last query user entered is the first evaluated'''
 
-        _products = products
+        # _products = products
         # ordered_set = []
         material = None
         if self.mat_query:
             self.mat_query = self.mat_query[-1]
             material = Material.objects.filter(id=self.mat_query).first()
             self.spec_mat_facet = True
-            _products = products.filter(material=material)
+            products = products.filter(material=material)
             self.mat_query = []
         else:
             del self.standalones[self.fin]
@@ -280,12 +280,12 @@ class FilterSorter:
         for term in ordered_set:
             value = self.standalones.get(term, None)
             if value:
-                _products = self.or_list_query(_products, value)
+                products = self.or_list_query(products, value)
                 del self.standalones[term]
         # then filters the remainder
         for stnd, values2 in self.standalones.items():
-            _products = self.or_list_query(_products, values2)
-        return _products
+            products = self.or_list_query(products, values2)
+        return products
 
     def bool_facet(self, products):
         for cat in self.bools:
