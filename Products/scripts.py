@@ -2,7 +2,9 @@ import decimal
 from django.contrib.gis.measure import D
 # from django.contrib.gis.geos import Point
 from operator import itemgetter
-from django.db.models import Min, Max, Q
+from django.db.models import Min, Max, Q, Count
+from django.contrib.postgres.search import SearchVector
+
 
 from Addresses.models import Zipcode
 from Products.models import (
@@ -74,26 +76,27 @@ class FilterSorter:
 
     radii = [5, 10, 20, 50, 100, 200]
 
-    def __init__(self, query, request_url):
+    def __init__(self, query, search_terms, request_url):
         self.query = query
+        self.search_terms = search_terms
         self.request_url = [q.replace('quer=', '') for q in request_url]
-        # self.order = list(reversed(request_url))
         self.app_query, self.app_query_raw = self.refine_list(self.app)
         self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
         self.price_query, self.price_query_raw = self.refine_list(self.price)
         self.loc_query, self.loc_query_raw = self.refine_list(self.loc)
         self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
         self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
-        # self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
-        # self.acolor_query, self.acolor_query_raw = self.refine_list(self.acolor)
         self.lcolor_query, self.lcolor_query_raw = self.refine_list(self.lcolor)
         self.thk_query, self.thk_query_raw = self.refine_list(self.thk)
         self.mat_query, self.manu_query_raw = self.refine_list(self.mat)
         self.submat_query, self.submat_query_raw = self.refine_list(self.submat)
-        self.shdvar_query, self.shdvar_query_raw = self.refine_list(self.shdvar)
         self.fin_query, self.fin_query_raw = self.refine_list(self.fin)
-        # self.surtex_query, self.surtex_query_raw = self.refine_list(self.surtex)
         self.surcoat_query, self.surcoat_query_raw = self.refine_list(self.surcoat)
+        # self.order = list(reversed(request_url))
+        # self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
+        # self.acolor_query, self.acolor_query_raw = self.refine_list(self.acolor)
+        # self.shdvar_query, self.shdvar_query_raw = self.refine_list(self.shdvar)
+        # self.surtex_query, self.surtex_query_raw = self.refine_list(self.surtex)
 
         self.bool_raw = self.avail_query_raw + self.app_query_raw
 
@@ -109,10 +112,10 @@ class FilterSorter:
             self.lcolor: [self.lcolor + '__label', self.lcolor_query],
             self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
+            self.submat: [self.submat + '__label', self.submat_query],
             # self.thk: [self.thk, self.thk_query],
             # self.shdvar: [self.shdvar + '__label', self.shdvar_query],
             # self.sze: [self.sze, self.sze_query],
-            self.submat: [self.submat + '__label', self.submat_query],
             # self.surtex: [self.surtex + '__label', self.surtex_query]
         }
         self.zipcode = None
@@ -134,7 +137,6 @@ class FilterSorter:
         queries_raw = [q for q in self.query if keyword in q]
         queries = [q.replace(keyword+'-', '') for q in queries_raw]
         return [queries, queries_raw]
-
 
     def filter_location(self, products):
         if not self.loc_query:
@@ -365,16 +367,22 @@ class FilterSorter:
         self.bool_facet(products)
         return self.filter_response
 
+    def filter_search(self, products):
+        if not self.search_terms:
+            return products
+        for term in self.search_terms:
+            searched_prods = products.annotate(
+                    search=SearchVector(
+                        'name',
+                        'manufacturer__label',
+                        'manufacturer_color',
+                        'manu_collection',
+                        'material__label'
+                    )
+            ).filter(search=term)
+        if not searched_prods:
+            self.message = 'No results'
+            self.return_products = False
+            return []
+        return searched_prods
 
-    # def filter_materials_down(self, products):
-    #     _products = products
-    #     material = None
-    #     if self.mat_query:
-    #         material_key = self.mat_query[0]
-    #         material = Material.objects.filter(id=material_key).first()
-    #     if material:
-    #         self.spec_mat_facet = True
-    #         _products = products.filter(material=material)
-    #     for sub in self.manu_subs:
-    #         _products = self.or_list_query(_products, sub[1], sub[0])
-    #     return _products

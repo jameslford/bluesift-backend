@@ -5,7 +5,6 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.postgres.search import SearchVector
 from rest_framework.pagination import PageNumberPagination
 from .scripts import FilterSorter
 from .serializers import ProductSerializer, ProductDetailSerializer, SerpyProduct
@@ -21,7 +20,7 @@ def product_list(request):
     queries = request.GET.getlist('quer')
     search_terms = request.GET.getlist('search', None)
     page = request.GET.get('page', 1)
-    sorter = FilterSorter(queries, request_url)
+    sorter = FilterSorter(queries, search_terms, request_url)
     message = None
     return_products = True
 
@@ -40,23 +39,7 @@ def product_list(request):
     paginator = PageNumberPagination()
     paginator.page_size = 12
 
-    if search_terms:
-        searched_prods = products
-        for term in search_terms:
-            searched_prods = searched_prods.annotate(
-                    search=SearchVector(
-                        'name',
-                        'manufacturer__label',
-                        'manufacturer_color',
-                        'manu_collection',
-                        'material__label'
-                    )
-            ).filter(search=term)
-        if searched_prods:
-            products = searched_prods
-        else:
-            message = 'No Results'
-            return_products = False
+    products = sorter.filter_search(products)
 
     products_response = paginator.paginate_queryset(products, request)
     product_count = products.count() if products else 0
@@ -78,7 +61,6 @@ def product_list(request):
         'load_more': load_more,
         'page_count': page_count,
         'product_count': product_count,
-        'full_price_range': sorter.total_price_range,
         'material_selected': material_selected,
         'query': legit_queries,
         'current_page': page,
