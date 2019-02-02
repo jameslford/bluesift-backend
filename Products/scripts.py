@@ -2,7 +2,7 @@ import decimal
 from django.contrib.gis.measure import D
 # from django.contrib.gis.geos import Point
 from operator import itemgetter
-from django.db.models import Min, Max
+from django.db.models import Min, Max, Q
 
 from Addresses.models import Zipcode
 from Products.models import (
@@ -244,12 +244,17 @@ class FilterSorter:
             facet['values'].append(value)
         self.filter_response.append(facet)
         if args:
-            first_search = {id_term: args[0]}
-            new_prods = products.filter(**first_search)
-            for arg in args[1:]:
-                next_search = {id_term: arg}
-                new_prods = new_prods | products.filter(**next_search)
+            q_objects = Q()
+            for arg in args:
+                q_objects |= Q(**{id_term:arg})
+            new_prods = products.filter(q_objects)
             return new_prods
+            # first_search = {id_term: args[0]}
+            # new_prods = products.filter(**first_search)
+            # for arg in args[1:]:
+            #     next_search = {id_term: arg}
+            #     new_prods = new_prods | products.filter(**next_search)
+            # return new_prods
         return products
 
     def filter_attribute(self, products):
