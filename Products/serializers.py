@@ -1,6 +1,6 @@
-
 # Products.serializers.py
 
+import serpy
 from rest_framework import serializers
 from .models import (
     Product,
@@ -17,6 +17,11 @@ class ManufacturerSerializer(serializers.ModelSerializer):
         model = Manufacturer
         fields = ('id', 'label')
 
+class SerpyManufacturer(serpy.Serializer):
+    pk = serpy.Field('id')
+    label = serpy.Field()
+
+
 
 class MaterialSerializer(serializers.ModelSerializer):
 
@@ -24,11 +29,20 @@ class MaterialSerializer(serializers.ModelSerializer):
         model = Material
         fields = ('id', 'label')
 
+class SerpyMasterial(serpy.Serializer):
+    pk = serpy.Field('id')
+    label = serpy.Field()
+    
+
 class FinishSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Finish
         fields = ('id', 'label')
+
+class SerpyFinish(serpy.Serializer):
+    pk = serpy.Field('id')
+    label = serpy.Field()
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -37,12 +51,19 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields = ('image',)
 
+class SerpyImage(serpy.Serializer):
+    pk = serpy.Field('id')
+    image = serpy.Field()
+
 
 class ColorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Color
         fields = ('label')
+
+class SerpyColor(serpy.Serializer):
+    label = serpy.Field()
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -69,6 +90,23 @@ class ProductSerializer(serializers.ModelSerializer):
             'manufacturer',
             'lowest_price',
             )
+
+class SerpyProduct(serpy.Serializer):
+    pk = serpy.Field('id')
+    bb_sku = serpy.Field()
+    manufacturer_color = serpy.Field()
+    manu_collection = serpy.Field()
+    for_sale_online = serpy.Field()
+    for_sale_in_store = serpy.Field()
+    name = serpy.Field()
+    swatch_image = serpy.MethodField()
+    manufacturer = SerpyManufacturer()
+    lowest_price = serpy.Field()
+
+    def get_swatch_image(self, prod_obj):
+        return prod_obj.swatch_image.image.url
+        
+
 
 
 class ProductSerializerforSupplier(serializers.ModelSerializer):

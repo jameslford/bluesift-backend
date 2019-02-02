@@ -8,7 +8,7 @@ from rest_framework import status
 from django.contrib.postgres.search import SearchVector
 from rest_framework.pagination import PageNumberPagination
 from .scripts import FilterSorter
-from .serializers import ProductSerializer, ProductDetailSerializer
+from .serializers import ProductSerializer, ProductDetailSerializer, SerpyProduct
 from .models import Product
 from Profiles.serializers import SupplierProductMiniSerializer
 
@@ -88,7 +88,7 @@ def product_list(request):
     if page_number == page_count or not return_products:
         load_more = False
 
-    serialized_products = ProductSerializer(products_response, many=True)
+    serialized_products = SerpyProduct(products_response, many=True)
     material_selected = sorter.spec_mat_facet
 
     content = {
