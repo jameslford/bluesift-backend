@@ -25,14 +25,15 @@ def product_list(request):
     message = None
     return_products = True
 
-    products = Product.objects.prefetch_related(
+    products = Product.objects.all().prefetch_related(
         'material',
         'manufacturer',
         'finish',
         'look',
         'label_color',
         'surface_coating',
-        'sub_material'
+        'sub_material',
+        'swatch_image'
     )
 
     loc_filtered = sorter.filter_location(products)
