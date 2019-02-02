@@ -103,14 +103,14 @@ class FilterSorter:
         ]
 
         self.standalones = {
-            # self.mat: [self.mat + '__label', self.mat_query],
+            self.mat: [self.mat + '__label', self.mat_query],
             self.lk: [self.lk + '__label', self.lk_query],
             self.manu: [self.manu + '__label', self.manu_query],
             self.lcolor: [self.lcolor + '__label', self.lcolor_query],
             self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
             # self.thk: [self.thk, self.thk_query],
-            self.shdvar: [self.shdvar + '__label', self.shdvar_query],
+            # self.shdvar: [self.shdvar + '__label', self.shdvar_query],
             # self.sze: [self.sze, self.sze_query],
             self.submat: [self.submat + '__label', self.submat_query],
             # self.surtex: [self.surtex + '__label', self.surtex_query]
@@ -260,8 +260,8 @@ class FilterSorter:
         # ordered_set = []
         material = None
         if self.mat_query:
-            material_key = self.mat_query[0]
-            material = Material.objects.filter(id=material_key).first()
+            self.mat_query = self.mat_query[-1]
+            material = Material.objects.filter(id=self.mat_query).first()
             self.spec_mat_facet = True
             _products = products.filter(material=material)
             self.mat_query = []
