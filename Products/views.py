@@ -41,7 +41,7 @@ def product_list(request):
 
     products = sorter.filter_search(products)
 
-    products_response = paginator.paginate_queryset(products, request)
+    products_response = paginator.paginate_queryset(products.prefetch_related('swatch_image'), request)
     product_count = products.count() if products else 0
     page_count = math.ceil(product_count/paginator.page_size)
     load_more = True
@@ -54,7 +54,7 @@ def product_list(request):
     if page_number == page_count or not return_products:
         load_more = False
 
-    serialized_products = SerpyProduct(products_response.prefetch_related('swatch_image'), many=True)
+    serialized_products = SerpyProduct(products_response, many=True)
     # serialized_products = ProductSerializer(products_response.prefetch_related('swatch_image'), many=True)
     material_selected = sorter.spec_mat_facet
 
