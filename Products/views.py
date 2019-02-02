@@ -54,7 +54,9 @@ def product_list(request):
     if page_number == page_count or not return_products:
         load_more = False
 
-    serialized_products = SerpyProduct(products_response, many=True)
+    # serialized_products = SerpyProduct(products_response, many=True)
+    serialized_products = ProductSerializer(
+        products_response.prefetch_related('swatch_image'), many=True)
     material_selected = sorter.spec_mat_facet
 
     content = {

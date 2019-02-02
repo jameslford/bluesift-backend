@@ -68,7 +68,7 @@ class SerpyColor(serpy.Serializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     swatch_image = ImageSerializer()
-    tiling_image = ImageSerializer()
+    # tiling_image = ImageSerializer()
     # label_color = ColorSerializer()
     manufacturer = ManufacturerSerializer()
 
@@ -76,17 +76,17 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = (
             'id',
-            'bb_sku',
-            'manufacturer_color',
-            'manu_collection',
-            'for_sale_online',
-            'for_sale_in_store',
-            'size',
+            # 'bb_sku',
+            # 'manufacturer_color',
+            # 'manu_collection',
+            # 'for_sale_online',
+            # 'for_sale_in_store',
+            # 'size',
             'name',
             # 'actual_color',
             # 'label_color',
             'swatch_image',
-            'tiling_image',
+            # 'tiling_image',
             'manufacturer',
             'lowest_price',
             )
