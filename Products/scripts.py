@@ -212,7 +212,7 @@ class FilterSorter:
         args = term_list[1]
         id_term = term.replace('__label', '')
         products = products.prefetch_related(id_term)
-        _products = products
+        # _products = products
         facet = {
             'name': id_term,
             'total_count': 0,
