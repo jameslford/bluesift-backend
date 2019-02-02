@@ -25,15 +25,7 @@ def product_list(request):
     message = None
     return_products = True
 
-    products = Product.objects.all().prefetch_related(
-        'material',
-        'manufacturer',
-        'finish',
-        'look',
-        'label_color',
-        'surface_coating',
-        'sub_material',
-    )
+    products = Product.objects.all()
 
     products = sorter.filter_location(products)
     products = sorter.filter_price(products)

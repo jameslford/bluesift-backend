@@ -208,10 +208,11 @@ class FilterSorter:
         this function gets a list of all possible values (label - if a field, and id) for the given term list(field)
         it then filters by id (id_term)'''
 
-        _products = products
         term = term_list[0]
         args = term_list[1]
         id_term = term.replace('__label', '')
+        products = products.prefetch_related(id_term)
+        _products = products
         facet = {
             'name': id_term,
             'total_count': 0,
@@ -234,10 +235,10 @@ class FilterSorter:
                 'value': idt,
             }
             # now convert list value to string and see if it was in the query to determine if enabled
-            enabled_test = str(idt)
-            if term == self.thk:
-                enabled_test = enabled_test.rstrip('0')
-            if enabled_test in args:
+            # enabled_test = str(idt)
+            # if term == self.thk:
+            #     enabled_test = enabled_test.rstrip('0')
+            if str(idt) in args:
                 value['enabled'] = True
                 self.legit_queries.append(f'{id_term}-{idt}')
             facet['values'].append(value)
@@ -249,7 +250,7 @@ class FilterSorter:
                 next_search = {id_term: arg}
                 new_prods = new_prods | products.filter(**next_search)
             return new_prods
-        return _products
+        return products
 
     def filter_attribute(self, products):
 
