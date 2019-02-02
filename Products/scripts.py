@@ -103,7 +103,7 @@ class FilterSorter:
         ]
 
         self.standalones = {
-            self.mat: [self.mat + '__label', self.mat_query],
+            # self.mat: [self.mat + '__label', self.mat_query],
             self.lk: [self.lk + '__label', self.lk_query],
             self.manu: [self.manu + '__label', self.manu_query],
             self.lcolor: [self.lcolor + '__label', self.lcolor_query],
