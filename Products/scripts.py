@@ -111,9 +111,9 @@ class FilterSorter:
             self.fin: [self.fin + '__label', self.fin_query],
             # self.thk: [self.thk, self.thk_query],
             self.shdvar: [self.shdvar + '__label', self.shdvar_query],
-            self.sze: [self.sze, self.sze_query],
+            # self.sze: [self.sze, self.sze_query],
             self.submat: [self.submat + '__label', self.submat_query],
-            self.surtex: [self.surtex + '__label', self.surtex_query]
+            # self.surtex: [self.surtex + '__label', self.surtex_query]
         }
         self.zipcode = None
         self.radius = None
