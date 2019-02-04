@@ -353,13 +353,13 @@ class FilterSorter:
             thk_facet['min'] = float(min_thick)
             self.legit_queries.append('thickness-min-' + str(min_thick))
             _products = _products.filter(thickness__gte=min_thick)
-            thk_facet['values'].append({'label': 'min_thickness ' + str(min_thick)}, {'enabled': True} )
+            thk_facet['values'] + [{'label': 'min_thickness ' + str(min_thick)}, {'enabled': True}]
         if max_thk_query:
             max_thick = decimal.Decimal(max_thk_query[-1])
             thk_facet['max'] = float(max_thick)
             self.legit_queries.append('thickness-max-' + str(max_thick))
             _products = _products.filter(thickness__lte=max_thick)
-            thk_facet['values'].append({'label': 'max_thickness ' + str(max_thick)}, {'enabled': True} )
+            thk_facet['values'] + [{'label': 'max_thickness ' + str(max_thick)}, {'enabled': True}]
         if not _products:
             self.message = 'No results'
             self.return_products = False
