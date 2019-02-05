@@ -153,7 +153,7 @@ class FilterSorter:
         if not coords:
             self.zipcode = 'invalid zipcode'
             return products
-        rad_query = 'location-radius-' + str(radius)
+        rad_query = 'location-radius-' + str(radius_raw)
         zip_query = 'location-zip-' + str(zipcode)
         self.legit_queries = self.legit_queries + [rad_query, zip_query]
         self.zipcode = zipcode
