@@ -79,7 +79,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
     def get_priced_products(self, instance):
         order = self.context.get('order_by', 'id')
         search_terms = self.context.get('search', None)
-        prods = SupplierProduct.objects.filter(supplier=instance)
+        prods = SupplierProduct.objects.filter(supplier=instance).prefetch_related('product', 'product__swatch_image')
         if search_terms:
             for term in search_terms:
                 prods = prods.annotate(
