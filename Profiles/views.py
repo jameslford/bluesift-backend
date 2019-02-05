@@ -309,6 +309,7 @@ def supplier_list(request):
     search_string = request.GET.get('search', None)
     suppliers = CompanyShippingLocation.objects.all()
     if search_string:
+        search_string = search_string.split(' ')
         for term in search_string:
             suppliers = suppliers.annotate(
                     search=SearchVector(
