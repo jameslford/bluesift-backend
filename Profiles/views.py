@@ -4,6 +4,7 @@
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.postgres.search import SearchVector
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from rest_framework import status
@@ -305,7 +306,19 @@ def supplier_short_lib(request):
 
 @api_view(['GET'])
 def supplier_list(request):
+    search_string = request.GET.get('search', None)
     suppliers = CompanyShippingLocation.objects.all()
+    if search_string:
+        for term in search_string:
+            suppliers = suppliers.annotate(
+                    search=SearchVector(
+                        'company_account__name',
+                        'nickname',
+                        'address__address_line_1',
+                        'address__city',
+                        'address__zipcode__code'
+                    )
+            ).filter(search=term)
     serialized_suppliers = ShippingLocationListSerializer(suppliers, many=True)
     return Response({'suppliers': serialized_suppliers.data})
 

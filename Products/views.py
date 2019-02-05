@@ -37,7 +37,7 @@ def product_list(request):
 
     legit_queries = ['quer=' + q for q in sorter.legit_queries]
     paginator = PageNumberPagination()
-    paginator.page_size = 12
+    paginator.page_size = 24
 
     products = sorter.filter_search(products)
 
