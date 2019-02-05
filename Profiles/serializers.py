@@ -79,7 +79,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
     def get_priced_products(self, instance):
         order = self.context.get('order_by', 'id')
         search_terms = self.context.get('search', None)
-        prods = instance.priced_products.all()
+        prods = SupplierProduct.objects.filter(supplier=instance)
         if search_terms:
             for term in search_terms:
                 prods = prods.annotate(
@@ -92,7 +92,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
                     )
                 ).filter(search=term)
         else:
-            prods = instance.priced_products.all().order_by(order)
+            prods = prods.order_by(order)
         return SupplierProductSerializer(prods, many=True).data
 
 

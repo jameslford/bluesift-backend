@@ -100,7 +100,7 @@ def sv_supplier_location(request, pk=None):
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         serialized = SVLocationSerializer(
-            location.prefetch_related_objects('priced_products'),
+            location,
             context={
                 'order_by': order_by,
                 'search': search_request
