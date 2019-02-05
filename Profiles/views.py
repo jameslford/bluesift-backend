@@ -316,7 +316,7 @@ def supplier_list(request):
                         'nickname',
                         'address__address_line_1',
                         'address__city',
-                        'address__zipcode__code'
+                        'address__postal_code__code'
                     )
             ).filter(search=term)
     serialized_suppliers = ShippingLocationListSerializer(suppliers, many=True)
