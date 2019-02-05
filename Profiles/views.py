@@ -96,7 +96,7 @@ def sv_supplier_location(request, pk=None):
         data = request.data
         order_by = request.GET.get('order_by', 'id')
         search_request = request.GET.getlist('search', None)
-        location = account.shipping_locations.filter(id=pk).first().select_related('address', 'company_account')
+        location = account.shipping_locations.filter(id=pk).select_related('address', 'company_account').first()
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         serialized = SVLocationSerializer(
