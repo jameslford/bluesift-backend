@@ -7,7 +7,7 @@
     "python.linting.pylintArgs": [
         "--load-plugins=pylint_django"
     ],
-    "python.linting.flake8Enabled": false,
+    "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
     // "python.pythonPath": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\env\\Scripts\\python.exe",
     "python.pythonPath": "C:/Users/james/Documents/Code/BuildingBook/envs/env/Scripts/python.exe"

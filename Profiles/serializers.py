@@ -90,7 +90,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
                         'product__manu_collection',
                         'product__material__label'
                     )
-            ).filter(search=term)
+                ).filter(search=term)
         else:
             prods = instance.priced_products.all().order_by(order)
         return SupplierProductSerializer(prods, many=True).data

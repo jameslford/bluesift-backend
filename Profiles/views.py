@@ -4,6 +4,7 @@
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.contrib.postgres.search import SearchVector
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
@@ -99,7 +100,7 @@ def sv_supplier_location(request, pk=None):
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         serialized = SVLocationSerializer(
-            location,
+            location.prefetch_related('priced_products'),
             context={
                 'order_by': order_by,
                 'search': search_request
