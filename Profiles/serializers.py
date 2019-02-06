@@ -123,8 +123,27 @@ class CVLocationSerializer(serializers.ModelSerializer):
 
     def get_priced_products(self, instance):
         order = self.context.get('order_by', 'id')
-        prods = instance.priced_products.filter(for_sale_in_store=True).order_by(order)
-        return CVSupplierProductSerializer(prods, many=True).data
+        search_terms = self.context.get('search', None)
+        prods = SupplierProduct.objects.filter(supplier=instance).prefetch_related(
+            'product',
+            'product__swatch_image',
+            'product__manufacturer',
+            'product__material'
+            )
+        if search_terms:
+            for term in search_terms:
+                prods = prods.annotate(
+                    search=SearchVector(
+                        'product__name',
+                        'product__manufacturer__label',
+                        'product__manufacturer_color',
+                        'product__manu_collection',
+                        'product__material__label'
+                    )
+                ).filter(search=term)
+        else:
+            prods = prods.order_by(order)
+        return SupplierProductSerializer(prods, many=True).data
 
 
 class ShippingLocationListSerializer(serializers.ModelSerializer):

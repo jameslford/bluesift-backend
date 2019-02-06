@@ -333,11 +333,18 @@ def supplier_list(request):
 @api_view(['GET'])
 def cv_supplier_location(request, pk):
     # s_id = request.GET.get('id')
-    supplier = CompanyShippingLocation.objects.get(id=pk)
-    if supplier:
-        serialized = CVLocationSerializer(supplier)
-        return Response({'location': serialized.data}, status=status.HTTP_200_OK)
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+    supplier = CompanyShippingLocation.objects.filter(id=pk).select_related(
+        'address',
+        'address__postal_code',
+        'address__coordinates',
+        'company_account',
+        'priced_products',
+        'priced_products__products'
+    )
+    if not supplier:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    serialized = CVLocationSerializer(supplier)
+    return Response({'location': serialized.data}, status=status.HTTP_200_OK)
 
 # loc_name = data['nickname']
 # pn = data['phone_number']
