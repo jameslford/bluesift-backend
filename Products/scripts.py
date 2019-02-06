@@ -220,7 +220,7 @@ class FilterSorter:
             'total_count': 0,
             'values': []
             }
-        values = products.values_list(term, id_term).distinct()
+        values = Product.objects.values_list(term, id_term).distinct()
         values = [q for q in values if q[0]]
         # sorts values for for each attribute(term), by label so that they are consistent
         values = sorted(values, key=itemgetter(0))
@@ -236,28 +236,30 @@ class FilterSorter:
                 'enabled': False,
                 'value': idt,
             }
-            # now convert list value to string and see if it was in the query to determine if enabled
-            # enabled_test = str(idt)
-            # if term == self.thk:
-            #     enabled_test = enabled_test.rstrip('0')
             if str(idt) in args:
                 value['enabled'] = True
                 self.legit_queries.append(f'{id_term}-{idt}')
             facet['values'].append(value)
         self.filter_response.append(facet)
-        if args:
-            q_objects = Q()
-            for arg in args:
-                q_objects |= Q(**{id_term: arg})
-            new_prods = products.filter(q_objects)
-            return new_prods
+        if not args:
+            return products
+        q_objects = Q()
+        for arg in args:
+            q_objects |= Q(**{id_term: arg})
+        new_prods = products.filter(q_objects)
+        return new_prods
+
+            # now convert list value to string and see if it was in the query to determine if enabled
+            # enabled_test = str(idt)
+            # if term == self.thk:
+            #     enabled_test = enabled_test.rstrip('0')
             # first_search = {id_term: args[0]}
             # new_prods = products.filter(**first_search)
             # for arg in args[1:]:
             #     next_search = {id_term: arg}
             #     new_prods = new_prods | products.filter(**next_search)
             # return new_prods
-        return products
+        # return products
 
     def filter_attribute(self, products):
 
