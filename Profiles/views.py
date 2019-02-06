@@ -338,8 +338,6 @@ def cv_supplier_location(request, pk):
         'address__postal_code',
         'address__coordinates',
         'company_account',
-        'priced_products',
-        'priced_products__products'
     )
     if not supplier:
         return Response(status=status.HTTP_400_BAD_REQUEST)
