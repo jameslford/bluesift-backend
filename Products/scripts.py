@@ -220,7 +220,7 @@ class FilterSorter:
             'total_count': 0,
             'values': []
             }
-        values = Product.objects.values_list(term, id_term).distinct()
+        values = products.values_list(term, id_term).distinct()
         values = [q for q in values if q[0]]
         # sorts values for for each attribute(term), by label so that they are consistent
         values = sorted(values, key=itemgetter(0))
