@@ -213,7 +213,7 @@ class FilterSorter:
         term = term_list[0]
         args = term_list[1]
         id_term = term.replace('__label', '')
-        products = products.prefetch_related(id_term)
+        products = products.select_related(id_term)
         # _products = products
         facet = {
             'name': id_term,
@@ -248,7 +248,7 @@ class FilterSorter:
         if args:
             q_objects = Q()
             for arg in args:
-                q_objects |= Q(**{id_term:arg})
+                q_objects |= Q(**{id_term: arg})
             new_prods = products.filter(q_objects)
             return new_prods
             # first_search = {id_term: args[0]}
