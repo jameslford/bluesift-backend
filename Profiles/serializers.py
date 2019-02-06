@@ -116,7 +116,7 @@ class CVLocationSerializer(serializers.ModelSerializer):
             'product_count',
             'address',
             'phone_number',
-            'id',
+            'pk',
             'priced_products',
             'image'
             )
@@ -140,7 +140,7 @@ class CVLocationSerializer(serializers.ModelSerializer):
                         'product__manu_collection',
                         'product__material__label'
                     )
-                ).filter(search=term)
+                ).filter(search=term).order_by(order)
         else:
             prods = prods.order_by(order)
         return SupplierProductSerializer(prods, many=True).data
