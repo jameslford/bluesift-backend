@@ -100,6 +100,15 @@ class CompanyShippingLocation(models.Model):
     def __str__(self):
         return str(self.company_account) + ' ' + str(self.number)
 
+    def location_manager(self):
+        if self.local_admin:
+            return [self.local_admin.id, self.local_admin.user.get_first_name()]
+        sys_admin = self.company_account.employees.filter(company_account_admin=True).first()
+        if sys_admin:
+            return [sys_admin.id, sys_admin.user.get_first_name()]
+        owner = self.company_account.employees.filter(company_account_owner=True).first()
+        return [owner.id, owner.user.get_first_name()]
+
     def assign_number(self):
         num_list = []
         num = None

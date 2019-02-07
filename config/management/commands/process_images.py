@@ -21,8 +21,12 @@ class Command(BaseCommand):
         Color.objects.all().delete()
         products = Product.objects.all()
         for product in products:
+            if not product.swatch_image:
+                product.delete()
+                continue
             if not product.swatch_image.image:
                 product.delete()
+                continue
             product.resize_image()
             product.set_actual_color()
         products = Product.objects.all()

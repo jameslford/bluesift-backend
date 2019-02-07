@@ -158,7 +158,7 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
             'company_name',
             'address',
             'phone_number',
-            # 'local_admin',
+            'location_manager',
             'nickname',
             'address_string',
             'product_count',
