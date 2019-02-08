@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Address, Coordinate
+from .models import Address, Coordinate, Zipcode
+
 
 class CoordinateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,6 +9,18 @@ class CoordinateSerializer(serializers.ModelSerializer):
             'lat',
             'lng'
         )
+
+
+class ZipcodeSerializer(serializers.ModelSerializer):
+    # centroid = CoordinateSerializer()
+
+    class Meta:
+        model = Zipcode
+        fields = (
+            'id',
+            'code',
+            # 'centroid'
+            )
 
 
 class AddressUpdateSerializer(serializers.ModelSerializer):
@@ -25,6 +38,8 @@ class AddressUpdateSerializer(serializers.ModelSerializer):
 
 class AddressSerializer(serializers.ModelSerializer):
     coordinates = CoordinateSerializer()
+    postal_code = ZipcodeSerializer()
+
 
     class Meta:
         model = Address

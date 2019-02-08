@@ -17,10 +17,10 @@ class ManufacturerSerializer(serializers.ModelSerializer):
         model = Manufacturer
         fields = ('id', 'label')
 
+
 class SerpyManufacturer(serpy.Serializer):
     pk = serpy.Field('id')
     label = serpy.Field()
-
 
 
 class MaterialSerializer(serializers.ModelSerializer):
@@ -29,16 +29,18 @@ class MaterialSerializer(serializers.ModelSerializer):
         model = Material
         fields = ('id', 'label')
 
+
 class SerpyMasterial(serpy.Serializer):
     pk = serpy.Field('id')
     label = serpy.Field()
-    
+
 
 class FinishSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Finish
         fields = ('id', 'label')
+
 
 class SerpyFinish(serpy.Serializer):
     pk = serpy.Field('id')
@@ -51,6 +53,7 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields = ('image',)
 
+
 class SerpyImage(serpy.Serializer):
     pk = serpy.Field('id')
     image = serpy.Field()
@@ -61,6 +64,7 @@ class ColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Color
         fields = ('label')
+
 
 class SerpyColor(serpy.Serializer):
     label = serpy.Field()
@@ -91,6 +95,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'lowest_price',
             )
 
+
 class SerpyProduct(serpy.Serializer):
     pk = serpy.Field('id')
     bb_sku = serpy.Field()
@@ -105,8 +110,6 @@ class SerpyProduct(serpy.Serializer):
 
     def get_swatch_image(self, prod_obj):
         return prod_obj.swatch_image.image.url
-        
-
 
 
 class ProductSerializerforSupplier(serializers.ModelSerializer):

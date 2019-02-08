@@ -49,7 +49,7 @@ def company_account(request):
 
     if request.method == 'GET':
         markup = settings.MARKUP
-        account = CompanyAccountDetailSerializer(account)
+        account = CompanyAccountDetailSerializer(account, context={'employee': employee})
         return Response({
             'markup': markup,
             'account': account.data,
@@ -137,7 +137,7 @@ def sv_supplier_location(request, pk=None):
                 employee == location.local_admin):
             return Response(status=status.HTTP_403_FORBIDDEN)
         data = request.data
-        serialized_loc = ShippingLocationUpdateSerializer(data)
+        serialized_loc = ShippingLocationUpdateSerializer(data=data)
         if not serialized_loc.is_valid():
             return Response(serialized_loc.errors, status=status.HTTP_400_BAD_REQUEST)
 

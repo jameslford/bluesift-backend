@@ -22,6 +22,7 @@ class CompanyAccountSerializer(serializers.ModelSerializer):
 class CompanyAccountDetailSerializer(serializers.ModelSerializer):
     headquarters = AddressSerializer()
     locations = serializers.SerializerMethodField()
+    employees = serializers.SerializerMethodField()
 
     class Meta:
         model = CompanyAccount
@@ -32,14 +33,30 @@ class CompanyAccountDetailSerializer(serializers.ModelSerializer):
             'name',
             'shipping_location_count',
             'plan',
+            'employees',
             'locations'
         )
 
     def get_locations(self, instance):
-        locations = instance.shipping_locations.all()
+        response_list = []
+        employee = self.context.get('employee')
+        locations = CompanyShippingLocation.objects.select_related(
+            'local_admin',
+            'company_account',
+            'address',
+            'address__postal_code',
+            'address__coordinates'
+             ).filter(company_account=instance)
         if not locations:
             locations = CompanyShippingLocation.objects.create(company_account=instance)
-        return ShippingLocationListSerializer(locations, many=True).data
+        for location in locations:
+            response_list.append(ShippingLocationListSerializer(location, context={'employee': employee}).data)
+        return response_list
+
+    def get_employees(self, instance):
+        employees = instance.employees.all()
+        return EmployeeProfileSerializer(employees, many=True).data
+        # return ShippingLocationListSerializer(locations, many=True, context={'user': user}).data
 
 
 class EmployeeProfileSerializer(serializers.ModelSerializer):
@@ -148,6 +165,8 @@ class CVLocationSerializer(serializers.ModelSerializer):
 
 class ShippingLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
+    editable = serializers.SerializerMethodField()
+    deletable = serializers.SerializerMethodField()
     # local_admin = EmployeeProfileSerializer()
 
     class Meta:
@@ -158,12 +177,31 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
             'company_name',
             'address',
             'phone_number',
+            'editable',
+            'deletable',
             'location_manager',
             'nickname',
             'address_string',
             'product_count',
             'image'
             )
+
+    def get_editable(self, instance):
+        employee = self.context.get('employee')
+        if (employee.company_account_owner or
+            employee.company_account_admin or
+                employee == instance.local_admin):
+            return True
+        else:
+            return False
+
+    def get_deletable(self, instance):
+        employee = self.context.get('employee')
+        if (employee.company_account_owner or
+                employee.company_account_admin):
+            return True
+        else:
+            return False
 
 
 class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
@@ -191,14 +229,16 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
             )
 
     def update(self, instance, validated_data):
-        instance_address = instance.address
         data_add = validated_data.get('address', None)
         if data_add:
-            instance_address.address_line_1 = data_add.get('address_line_1', instance_address.address_line_1)
-            instance_address.city = data_add.get('city', instance_address.city)
-            instance_address.state = data_add.get('state', instance_address.state)
-            instance_address.postal_code = data_add.get('postal_code', instance_address.postal_code)
-            instance_address.save()
+            instance.address.address_line_1 = data_add.get('address_line_1', instance.address.address_line_1)
+            instance.address.city = data_add.get('city', instance.address.city)
+            instance.address.state = data_add.get('state', instance.address.state)
+            zipcode = data_add.get('postal_code')
+            zipcode = Zipcode.objects.filter(code=zipcode).first()
+            if zipcode:
+                instance.address.postal_code = zipcode
+            instance.address.save()
         instance.nickname = validated_data.get('nickname', instance.nickname)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.save()

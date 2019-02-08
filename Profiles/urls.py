@@ -11,7 +11,7 @@ from .views import (
 urlpatterns = [
     path('company-account', company_account),
     path('sv-supplier-location', sv_supplier_location),
-    path('sv-supplier-location/<int:pk>/', sv_supplier_location),
+    path('sv-supplier-location/<int:pk>', sv_supplier_location),
     path('supplier-product', supplier_product),
     path('supplier-product/<int:pk>', supplier_product),
     path('supplier-list', supplier_list),
