@@ -190,7 +190,9 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
             )
 
     def get_editable(self, instance):
-        employee = self.context.get('employee')
+        employee = self.context.get('employee', None)
+        if not employee:
+            return False
         if (employee.company_account_owner or
             employee.company_account_admin or
                 employee == instance.local_admin):
@@ -199,7 +201,9 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
             return False
 
     def get_deletable(self, instance):
-        employee = self.context.get('employee')
+        employee = self.context.get('employee', None)
+        if not employee:
+            return False
         if (employee.company_account_owner or
                 employee.company_account_admin):
             return True
