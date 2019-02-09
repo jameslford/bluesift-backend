@@ -1,4 +1,7 @@
+import base64
 from rest_framework import serializers
+from django.core.files import File
+from django.core.files.base import ContentFile
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from Addresses.models import Address, Zipcode
 from django.contrib.postgres.search import SearchVector
@@ -240,6 +243,12 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
                 instance.address.postal_code = zipcode
             instance.address.save()
         instance.nickname = validated_data.get('nickname', instance.nickname)
+        image_file = validated_data.get('image', None)
+        if image_file:
+            file_type = image_file['filetype'].split('/')[0]
+            if file_type == 'image':
+                imf = ContentFile(base64.b64decode(image_file['file']))
+                instance.image.save(image_file['filename'],  imf)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.save()
 
