@@ -83,6 +83,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyShippingLocation
         fields = (
+            'pk',
             'company_account',
             'company_name',
             'approved_online_seller',
@@ -91,7 +92,6 @@ class SVLocationSerializer(serializers.ModelSerializer):
             'product_count',
             'address',
             'phone_number',
-            'id',
             'priced_products',
             'image'
             )

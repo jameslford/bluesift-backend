@@ -1,18 +1,27 @@
 ''' Products.views.py '''
 import math
+import os
 from decimal import Decimal
 from django.conf import settings
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from .scripts import FilterSorter
 from .serializers import ProductSerializer, ProductDetailSerializer, SerpyProduct
 from .models import Product
 from Profiles.serializers import SupplierProductMiniSerializer
 
+def set_perm():
+    if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging':
+        return IsAuthenticated
+    else:
+        return AllowAny
+
 
 @api_view(['GET'])
+@permission_classes((set_perm(),))
 def product_list(request):
 
     request_url = request.GET.urlencode().split('&')

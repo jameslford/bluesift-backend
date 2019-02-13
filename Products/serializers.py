@@ -120,7 +120,7 @@ class ProductSerializerforSupplier(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = (
-            'id',
+            'pk',
             'manufacturer_color',
             'manu_collection',
             'material',

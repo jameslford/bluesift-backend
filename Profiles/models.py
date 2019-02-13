@@ -13,6 +13,7 @@ class CompanyAccount(models.Model):
     phone_number = models.CharField(max_length=12, null=True, blank=True)
     plan = models.ForeignKey(SupplierPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
     email_verified = models.BooleanField(default=False)
+    slug = models.SlugField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -96,6 +97,7 @@ class CompanyShippingLocation(models.Model):
     email = models.EmailField(null=True, blank=True)
     number = models.IntegerField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True)
+    slug = models.SlugField(null=True, blank=True)
 
     def __str__(self):
         return str(self.company_account) + ' ' + str(self.number)

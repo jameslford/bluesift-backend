@@ -4,10 +4,10 @@
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
+# from rest_framework.pagination import PageNumberPagination
 from django.contrib.postgres.search import SearchVector
 from rest_framework.response import Response
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
+# from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from rest_framework import status
 
 from Profiles.models import (
@@ -21,7 +21,7 @@ from Products.models import Product
 from .serializers import (
     CompanyAccountDetailSerializer,
     SVLocationSerializer,
-    CVLocationSerializer,
+    # CVLocationSerializer,
     EmployeeProfileSerializer,
     ShippingLocationListSerializer,
     ShippingLocationUpdateSerializer,
@@ -30,11 +30,11 @@ from .serializers import (
 
 ''' supplier side views  '''
 
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def location_product_search(request):
     pass
-
 
 
 @api_view(['GET', 'DELETE', 'PUT'])
@@ -143,6 +143,7 @@ def sv_supplier_location(request, pk=None):
 
         serialized_loc.update(instance=location, validated_data=data)
         return Response('Accepted', status=status.HTTP_202_ACCEPTED)
+
 
 @api_view(['PUT', 'DELETE', 'POST'])
 @permission_classes((IsAuthenticated,))
@@ -341,7 +342,7 @@ def cv_supplier_location(request, pk):
     ).first()
     if not supplier:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    serialized = CVLocationSerializer(supplier)
+    serialized = SVLocationSerializer(supplier)
     return Response({'location': serialized.data}, status=status.HTTP_200_OK)
 
 # loc_name = data['nickname']
