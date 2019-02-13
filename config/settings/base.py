@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'Cards',
     'CustomerProfiles',
     'config',
+    'MailingList',
     'Orders',
     'Plans',
     'Products',
