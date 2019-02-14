@@ -48,7 +48,7 @@ class CustomerProject(models.Model):
 
     def clean(self):
         projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 2
-        existing_projects = self.owner.projects.all()
+        existing_projects = self.owner.projects.all().count()
         if existing_projects <= projects_allowed:
             return super().clean()
         else:
