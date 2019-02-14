@@ -47,9 +47,9 @@ class CustomerProject(models.Model):
         return self.owner.user.get_first_name()
 
     def clean(self):
-        projects_allowed = self.owner.plan.project_theshhold
+        projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 2
         existing_projects = self.owner.projects.all()
-        if existing_projects < projects_allowed:
+        if existing_projects <= projects_allowed:
             return super().clean()
         else:
             raise ValidationError("Already at plan's project quota")
