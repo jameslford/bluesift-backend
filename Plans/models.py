@@ -8,7 +8,7 @@ class CustomerPlan(models.Model):
     duration = models.DurationField()
     billing_recurrence = models.DurationField()
     rate = models.DecimalField(max_digits=7, decimal_places=2)
-    project_threshold = models.IntegerField(null=True, blank=True)
+    project_threshold = models.IntegerField(default=2)
 
     def __str__(self):
         return self.name

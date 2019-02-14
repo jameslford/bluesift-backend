@@ -81,7 +81,7 @@ def customer_short_lib(request):
     user = request.user
     proj_id = request.GET.get('proj_id')
     projects = CustomerProject.objects.filter(owner=user.customer_profile)
-    project = projects.fist()
+    project = projects.first()
     if not project:
         project = CustomerProject.objects.create(owner=user.customer_profile)
     projects_list = []

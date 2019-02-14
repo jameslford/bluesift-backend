@@ -65,6 +65,8 @@ def create_user(request):
     if not user:
         return Response('No user created', status=status.HTTP_400_BAD_REQUEST)
 
+    Token.objects.create(user=user)
+
     if user.is_supplier:
         company, created = CompanyAccount.objects.get_or_create(name=company_name)
         if not created:
