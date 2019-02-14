@@ -36,10 +36,11 @@ class CustomerProject(models.Model):
     address = models.ForeignKey(
         Address,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name='projects'
         )
-    nickname = models.CharField(max_length=50)
+    nickname = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         if self.nickname:

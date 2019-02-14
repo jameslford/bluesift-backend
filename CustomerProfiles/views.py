@@ -83,7 +83,7 @@ def customer_short_lib(request):
     projects = CustomerProject.objects.filter(owner=user.customer_profile)
     project = projects.first()
     if not project:
-        project = CustomerProject.objects.create(owner=user.customer_profile)
+        project = CustomerProject.objects.create(owner=user.customer_profile, nickname='First Project')
     projects_list = []
     product_ids = []
     if proj_id:
