@@ -50,7 +50,7 @@ def create_user(request):
     hashed_password = make_password(password)
 
     try:
-        user = user_model.create(
+        user = user_model.objects.create(
             full_name=full_name,
             email=email,
             password=hashed_password,

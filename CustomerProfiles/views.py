@@ -80,10 +80,10 @@ def customer_library_append(request):
 def customer_short_lib(request):
     user = request.user
     proj_id = request.GET.get('proj_id')
-    projects = CustomerProject.objects.filter(owner=user.profile)
+    projects = CustomerProject.objects.filter(owner=user.customer_profile)
     project = projects.fist()
     if not project:
-        project = CustomerProject.objects.create(owner=user.profile)
+        project = CustomerProject.objects.create(owner=user.customer_profile)
     projects_list = []
     product_ids = []
     if proj_id:
