@@ -13,7 +13,7 @@ from CustomerProfiles.models import (
 from CustomerProfiles.serializers import (
     CustomerLibrarySerializer,
     CustomerProductSerializer,
-    CustomerProfileSerializer, 
+    CustomerProfileSerializer,
     CustomerProjectSerializer
 )
 from Products.models import Product
@@ -29,7 +29,7 @@ def customer_library(request):
     #         projects = CustomerProject.objects.create(owner=profile)
 
     if request.method == 'GET':
-        library = CustomerLibrarySerializer(profile)
+        library = CustomerLibrarySerializer(profile).data
         return Response(library, status=status.HTTP_200_OK)
 
 

@@ -30,7 +30,7 @@ class CustomerLibrarySerializer(serializers.ModelSerializer):
 
     def get_projects(self, instance):
         projects = CustomerProject.objects.select_related('address').filter(owner=instance)
-        return CustomerProjectSerializer(projects, many=True)
+        return CustomerProjectSerializer(projects, many=True).data
 
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
