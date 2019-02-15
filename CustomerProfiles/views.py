@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.conf import settings
+# from django.shortcuts import render
+# from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -12,12 +12,13 @@ from CustomerProfiles.models import (
     )
 from CustomerProfiles.serializers import (
     CustomerLibrarySerializer,
-    CustomerProductSerializer,
-    CustomerProfileSerializer,
-    CustomerProjectSerializer
+    # CustomerProductSerializer,
+    # CustomerProfileSerializer,
+    # CustomerProjectSerializer
 )
 from Products.models import Product
-from Addresses.models import Address, Zipcode
+# from Addresses.models import Address, Zipcode
+
 
 @api_view(['GET', 'DELETE'])
 @permission_classes((IsAuthenticated,))
@@ -32,7 +33,6 @@ def customer_library(request):
         library = CustomerLibrarySerializer(profile).data
         return Response(library, status=status.HTTP_200_OK)
 
-
     if request.method == 'DELETE':
         profile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -44,25 +44,71 @@ def customer_project(request):
     pass
 
 
-
-
-
-def customer_library_append(request):
+@api_view(['DELETE', 'PUT', 'POST'])
+@permission_classes((IsAuthenticated,))
+def customer_product(request, pk=None):
     user = request.user
-    projects = get_customer_projects(user)
-    prod_id = request.POST.get('prod_id')
-    project_id = request.POST.get('proj_id', 0)
-    product = Product.objects.get(id=prod_id)
-    project_count = projects.count()
-    if project_id != 0:
-        project = projects.get(id=project_id)
-        CustomerProduct.objects.create(project=project, product=product)
-        return Response(status=status.HTTP_201_CREATED)
-    elif project_count == 1:
-        project = projects.first()
-        CustomerProduct.objects.create(project=project, product=product)
-        return Response(status=status.HTTP_201_CREATED)
-    return Response(status=status.HTTP_412_PRECONDITION_FAILED)
+    profile = CustomerProfile.objects.filter(user=user).first()
+    if not profile:
+        return Response('User has no profile', status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'POST':
+        prod_id = request.POST.get('prod_id')
+        project_id = request.POST.get('proj_id', None)
+        # projects = CustomerProject.objects.filter(owner=user)
+        projects = profile.customer_projects
+
+        product = Product.objects.filter(id=prod_id).first()
+        if not product:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if projects.count() == 1:
+            project = projects.first()
+            CustomerProduct.objects.create(product=product, project=project)
+            return Response(status=status.HTTP_201_CREATED)
+        if project_id:
+            project = projects.filter(id=project_id).first()
+            if not project:
+                return Response('Invalid project number', status=status.HTTP_400_BAD_REQUEST)
+            CustomerProduct.objects.create(product=product, project=project)
+            return Response(status=status.HTTP_201_CREATED)
+        else:
+            return Response('No project specified', status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'DELETE':
+        if not pk:
+            return Response('No product specified for deletion', status=status.HTTP_400_BAD_REQUEST)
+        product = CustomerProduct.objects.select_related('project', 'project__owner').filter(pk=pk).first()
+        if not product:
+            return Response('Invalid product id', status=status.HTTP_400_BAD_REQUEST)
+        if product.project.owner != profile:
+            return Response('Not your product to delete', status=status.HTTP_400_BAD_REQUEST)
+        product.delete()
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+
+# def customer_library_append(request):
+#     user = request.user
+#     if not user.is_authenticated():
+#         return Response(status=status.HTTP_403_FORBIDDEN)
+#     projects = user.get_locations()
+#     return Response({'projects': projects})
+#     project_count = projects.count()
+
+#     prod_id = request.POST.get('prod_id')
+#     product = Product.objects.get(id=prod_id)
+
+#     project_id = request.POST.get('proj_id', None)
+#     if project_count == 1:
+#         project = projects.first()
+#         CustomerProduct.objects.create(project=project, product=product)
+#         return Response(status=status.HTTP_201_CREATED)
+#     elif project_id:
+#         project = projects.filter(id=project_id).first()
+#         if not project:
+#             return Response(status=status.HTTP_400_BAD_REQUEST)
+#         CustomerProduct.objects.create(project=project, product=product)
+#         return Response(status=status.HTTP_201_CREATED)
+#     return Response(status=status.HTTP_412_PRECONDITION_FAILED)
 
 
 def customer_short_lib(request):
@@ -92,4 +138,4 @@ def customer_short_lib(request):
         'product_ids': product_ids
     }
     response = {'shortLib': full_content}
-    return Response(response, status=status.HTTP_200_OK)
+    return response

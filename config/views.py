@@ -37,4 +37,6 @@ def get_short_lib(request):
     user = request.user
     if user.is_supplier:
         return supplier_short_lib(request)
+        # return Response(sup_lib, status=status.HTTP_200_OK)
     return customer_short_lib(request)
+    # return Response(cus_lib, status=status.HTTP_200_OK)

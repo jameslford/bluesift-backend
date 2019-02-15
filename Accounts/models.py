@@ -2,6 +2,13 @@
 
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from Profiles.models import (
+    CompanyAccount,
+    EmployeeProfile
+)
+from CustomerProfiles.models import (
+    CustomerProfile
+)
 
 
 class UserManager(BaseUserManager):
@@ -89,6 +96,14 @@ class User(AbstractBaseUser):
 
     def get_token(self):
         return self.token
+
+    def get_locations(self):
+        locations = None
+        if not self.is_supplier:
+            locations = self.customer_profile.projects
+        elif self.employee_profile:
+            locations = self.employee_profile.company_account.shipping_locations
+        return locations
 
     @property
     def is_staff(self):
