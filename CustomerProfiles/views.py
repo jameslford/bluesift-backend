@@ -11,48 +11,36 @@ from CustomerProfiles.models import (
     CustomerProduct
     )
 from CustomerProfiles.serializers import (
+    CustomerLibrarySerializer,
     CustomerProductSerializer,
-    CustomerProfileSerializer, CustomerProjectSerializer
+    CustomerProfileSerializer, 
+    CustomerProjectSerializer
 )
 from Products.models import Product
 from Addresses.models import Address, Zipcode
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'DELETE'])
 @permission_classes((IsAuthenticated,))
-def customer_library(request, pk=None):
+def customer_library(request):
     user = request.user
     profile = CustomerProfile.objects.get_or_create(user=user)[0]
-    projects = profile.projects.all()
-    if not projects:
-            projects = CustomerProject.objects.create(owner=profile)
+    # projects = profile.projects.all()
+    # if not projects:
+    #         projects = CustomerProject.objects.create(owner=profile)
 
     if request.method == 'GET':
-        selected_project = None
-        if pk:
-            selected_project = projects.filter(id=pk).first()
-        else:
-            selected_project = projects.first()
-        if not selected_project:
-            return Response('invalid project selection', status=status.HTTP_400_BAD_REQUEST)
+        library = CustomerLibrarySerializer(profile)
+        return Response(library, status=status.HTTP_200_OK)
 
-        serialized_profile = CustomerProfileSerializer(profile)
-        count = projects.count()
-        serialized_projs = CustomerProjectSerializer(projects, many=True)
-        return Response({
-            'profile': serialized_profile.data,
-            'project_count': count,
-            'selected_project': selected_project.id,
-            'projects': serialized_projs.data
-            }, status=status.HTTP_200_OK)
 
     if request.method == 'DELETE':
         profile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def customer_project(request, pk=None):
-    user = request.user
-    profile = CustomerProfile.objects.filter(user=user).first()
+@api_view(['GET', 'DELETE', 'PUT', 'POST'])
+@permission_classes((IsAuthenticated,))
+def customer_project(request):
     pass
 
 

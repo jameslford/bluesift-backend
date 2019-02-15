@@ -57,13 +57,32 @@ class CustomerProject(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.full_clean()
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
+            )
 
 
 class CustomerProduct(models.Model):
-    use = models.CharField(max_length=100, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='customer_products')
     project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, related_name='products')
 
     def __str__(self):
         return self.product.name
+
+    class Meta:
+        unique_together = ('product', 'project')
+
+
+class CustomerProjectApplication(models.Model):
+    label = models.CharField(max_length=100, blank=True, null=True)
+    project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, related_name='applications')
+    products = models.ManyToManyField(CustomerProduct)
+
+    def __str__(self):
+        return self.label
+
+    class Meta:
+        unique_together = ('label', 'project')

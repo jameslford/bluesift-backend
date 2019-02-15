@@ -31,12 +31,6 @@ from .serializers import (
 ''' supplier side views  '''
 
 
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def location_product_search(request):
-    pass
-
-
 @api_view(['GET', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated,))
 def company_account(request):
