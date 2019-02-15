@@ -138,4 +138,4 @@ def customer_short_lib(request):
         'product_ids': product_ids
     }
     response = {'shortLib': full_content}
-    return response
+    return Response(response, status=status.HTTP_200_OK)
