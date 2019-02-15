@@ -34,6 +34,7 @@ def product_list(request):
     message = None
     return_products = True
 
+    # products = Product.objects.select_related(*sorter.standalones.keys()).all()
     products = Product.objects.all()
 
     products = sorter.filter_location(products)

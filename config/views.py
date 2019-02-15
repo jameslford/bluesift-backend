@@ -12,7 +12,7 @@ from Profiles.views import (
     supplier_short_lib,
 )
 from CustomerProfiles.views import (
-    customer_library_append,
+    # customer_library_append,
     customer_short_lib,
 )
 
@@ -21,14 +21,14 @@ def landing(request):
     return render(request, 'index.html')
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-def append_lib(request):
-    user = request.user
-    if user.is_supplier:
-        # return redirect('profiles')
-        return supplier_product(request)
-    return customer_library_append(request)
+# @api_view(['POST'])
+# @permission_classes((IsAuthenticated,))
+# def append_lib(request):
+#     user = request.user
+#     if user.is_supplier:
+#         # return redirect('profiles')
+#         return supplier_product(request)
+#     return customer_library_append(request)
 
 
 @api_view(['GET'])
