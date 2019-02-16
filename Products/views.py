@@ -86,11 +86,6 @@ def product_list(request):
 
 @api_view(['GET'])
 def get_product(request, pk):
-    user = request.user
-    library = None
-    if user.is_authenticated():
-        locations = user.get_locations()
-        loc_dict = [{'nickname': q.nickname, 'pk': q.pk } for q in locations]
     product = Product.objects.filter(pk=pk).first()
     if not product:
         return Response('Invalid PK', status=status.HTTP_400_BAD_REQUEST)
@@ -104,6 +99,5 @@ def get_product(request, pk):
             'product': serialized_product.data,
             'in_store_priced': in_store_priced,
             'online_priced': online_priced,
-            'locations': loc_dict
         }
         )

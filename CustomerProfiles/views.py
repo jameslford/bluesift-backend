@@ -17,7 +17,6 @@ from CustomerProfiles.serializers import (
     # CustomerProjectSerializer
 )
 from Products.models import Product
-# from Addresses.models import Address, Zipcode
 
 
 @api_view(['GET', 'DELETE'])
@@ -25,9 +24,6 @@ from Products.models import Product
 def customer_library(request):
     user = request.user
     profile = CustomerProfile.objects.get_or_create(user=user)[0]
-    # projects = profile.projects.all()
-    # if not projects:
-    #         projects = CustomerProject.objects.create(owner=profile)
 
     if request.method == 'GET':
         library = CustomerLibrarySerializer(profile).data
@@ -50,13 +46,16 @@ def customer_product(request, pk=None):
     user = request.user
     profile = CustomerProfile.objects.filter(user=user).first()
     if not profile:
-        return Response('User has no profile', status=status.HTTP_400_BAD_REQUEST)
+        profile = CustomerProfile.objects.create(user=user)
+        # return Response('User has no profile', status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'POST':
         prod_id = request.POST.get('prod_id')
         project_id = request.POST.get('proj_id', None)
         # projects = CustomerProject.objects.filter(owner=user)
-        projects = profile.customer_projects
+        projects = profile.projects
+        if not projects:
+            CustomerProject.objects.create(owner=profile)
 
         product = Product.objects.filter(id=prod_id).first()
         if not product:
@@ -86,35 +85,11 @@ def customer_product(request, pk=None):
         return Response(status=status.HTTP_202_ACCEPTED)
 
 
-# def customer_library_append(request):
-#     user = request.user
-#     if not user.is_authenticated():
-#         return Response(status=status.HTTP_403_FORBIDDEN)
-#     projects = user.get_locations()
-#     return Response({'projects': projects})
-#     project_count = projects.count()
-
-#     prod_id = request.POST.get('prod_id')
-#     product = Product.objects.get(id=prod_id)
-
-#     project_id = request.POST.get('proj_id', None)
-#     if project_count == 1:
-#         project = projects.first()
-#         CustomerProduct.objects.create(project=project, product=product)
-#         return Response(status=status.HTTP_201_CREATED)
-#     elif project_id:
-#         project = projects.filter(id=project_id).first()
-#         if not project:
-#             return Response(status=status.HTTP_400_BAD_REQUEST)
-#         CustomerProduct.objects.create(project=project, product=product)
-#         return Response(status=status.HTTP_201_CREATED)
-#     return Response(status=status.HTTP_412_PRECONDITION_FAILED)
-
-
 def customer_short_lib(request):
     user = request.user
     proj_id = request.GET.get('proj_id')
-    projects = CustomerProject.objects.filter(owner=user.customer_profile)
+    profile = CustomerProfile.objects.get_or_create(user=user)[0]
+    projects = CustomerProject.objects.filter(owner=profile)
     project = projects.first()
     if not project:
         project = CustomerProject.objects.create(owner=user.customer_profile, nickname='First Project')

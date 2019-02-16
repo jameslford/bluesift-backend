@@ -43,9 +43,7 @@ class CustomerProject(models.Model):
     nickname = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        if self.nickname:
-            return self.nickname
-        return self.owner.user.get_first_name()
+        return self.nickname
 
     def clean(self):
         projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 2
@@ -57,6 +55,9 @@ class CustomerProject(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.full_clean()
+        if not self.nickname:
+            count = self.owner.projects.count() + 1
+            self.nickname = 'Project ' + str(count)
         return super().save(
             force_insert=force_insert,
             force_update=force_update,
