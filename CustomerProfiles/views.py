@@ -14,7 +14,7 @@ from CustomerProfiles.serializers import (
     CustomerLibrarySerializer,
     # CustomerProductSerializer,
     # CustomerProfileSerializer,
-    # CustomerProjectSerializer
+    CustomerProjectSerializer
 )
 from Products.models import Product
 
@@ -36,8 +36,20 @@ def customer_library(request):
 
 @api_view(['GET', 'DELETE', 'PUT', 'POST'])
 @permission_classes((IsAuthenticated,))
-def customer_project(request):
-    pass
+def customer_project(request, pk=None):
+    user = request.user
+    profile = CustomerProfile.objects.filter(user=user).first()
+    if not profile:
+        return Response('Invalid user', status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'POST':
+        serialized_project = CustomerProjectSerializer(data=request.data)
+        if not serialized_project.is_valid():
+            return Response(serialized_project.errors, status=status.HTTP_400_BAD_REQUEST)
+        serialized_project.create(profile, request.data)
+        return Response(status=status.HTTP_201_CREATED)
+
+    # projects = CustomerProject.objects.filter()
 
 
 @api_view(['DELETE', 'PUT', 'POST'])

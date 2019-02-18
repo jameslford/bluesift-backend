@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
+from Addresses.models import Address, Zipcode
 # from Addresses.models import Address
 from .models import CustomerProfile, CustomerProduct, CustomerProject
 from Products.serializers import ProductDetailSerializer
@@ -45,6 +46,22 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
             'nickname',
             'id',
             )
+
+    def create(self, profile, validated_data):
+        address = validated_data.pop('address', None)
+        address_object = None
+        if address:
+            zipcode = address.pop('postal_code', None)
+            zipcode = Zipcode.objects.create(code=zipcode).first()
+            if not zipcode:
+                return 'Invalid Zip'
+            address_object = Address.objects.create(postal_code=zipcode, **address)
+        project = CustomerProject.objects.create(owner=profile, **validated_data)
+        if address_object:
+            project.address = address_object
+            project.save()
+        return project
+
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
