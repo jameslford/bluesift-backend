@@ -46,24 +46,20 @@ class CustomerProject(models.Model):
         return self.nickname
 
     def clean(self):
-        projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 2
+        projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 10
         existing_projects = self.owner.projects.all().count()
         if existing_projects <= projects_allowed:
             return super().clean()
         else:
             raise ValidationError("Already at plan's project quota")
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, **kwargs):
         self.full_clean()
+        super().save()
         if not self.nickname:
             count = self.owner.projects.count() + 1
             self.nickname = 'Project ' + str(count)
-        return super().save(
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields
-            )
+        return super().save(*args, **kwargs)
 
 
 class CustomerProduct(models.Model):

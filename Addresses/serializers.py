@@ -33,6 +33,7 @@ class AddressUpdateSerializer(serializers.ModelSerializer):
             'country',
             'state',
             'postal_code',
+            'address_string'
         )
 
 

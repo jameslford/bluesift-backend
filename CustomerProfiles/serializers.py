@@ -2,7 +2,7 @@ from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address, Zipcode
 # from Addresses.models import Address
-from .models import CustomerProfile, CustomerProduct, CustomerProject
+from .models import CustomerProfile, CustomerProduct, CustomerProject, CustomerProjectApplication
 from Products.serializers import ProductDetailSerializer
 
 
@@ -35,9 +35,7 @@ class CustomerLibrarySerializer(serializers.ModelSerializer):
 
 
 class CustomerProjectSerializer(serializers.ModelSerializer):
-    # products = CustomerProductSerializer(many=True)
-    # address = serializers.SerializerMethodField()
-    address = AddressSerializer()
+    address = AddressSerializer(required=False)
 
     class Meta:
         model = CustomerProject
@@ -56,12 +54,12 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
             if not zipcode:
                 return 'Invalid Zip'
             address_object = Address.objects.create(postal_code=zipcode, **address)
-        project = CustomerProject.objects.create(owner=profile, **validated_data)
+        nickname = validated_data.get('nickname')
+        project = CustomerProject(owner=profile, nickname=nickname)
         if address_object:
             project.address = address_object
-            project.save()
+        project.save()
         return project
-
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
@@ -72,19 +70,30 @@ class CustomerProductSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'product',
-            'use',
             )
+
+
+class CustomerProjectApplicationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomerProjectApplication
+        fields = (
+            'id',
+            'label',
+            'products'
+        )
 
 
 class CustomerProjectDetailSerializer(serializers.ModelSerializer):
     products = CustomerProductSerializer(many=True)
+    applications = CustomerProjectApplicationSerializer(many=True)
 
     class Meta:
         model = CustomerProject
         fields = (
-            'owner',
+            'id',
+            'applications',
             'address',
             'nickname',
-            'id',
             'products'
             )

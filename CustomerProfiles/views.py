@@ -8,13 +8,13 @@ from rest_framework import status
 from CustomerProfiles.models import (
     CustomerProfile,
     CustomerProject,
-    CustomerProduct
+    CustomerProduct,
+    CustomerProjectApplication
     )
 from CustomerProfiles.serializers import (
     CustomerLibrarySerializer,
-    # CustomerProductSerializer,
-    # CustomerProfileSerializer,
-    CustomerProjectSerializer
+    CustomerProjectSerializer,
+    CustomerProjectDetailSerializer
 )
 from Products.models import Product
 
@@ -49,8 +49,52 @@ def customer_project(request, pk=None):
         serialized_project.create(profile, request.data)
         return Response(status=status.HTTP_201_CREATED)
 
-    # projects = CustomerProject.objects.filter()
+    if request.method == 'DELETE':
+        projects = CustomerProject.objects.filter(owner=profile)
+        project = projects.filter(id=pk).first()
+        if not project:
+            return Response('Invalid projects', status=status.HTTP_400_BAD_REQUEST)
+        project.delete()
+        return Response(status=status.HTTP_200_OK)
 
+    if request.method == 'GET':
+        project = CustomerProject.objects.prefetch_related(
+            'products',
+            'applications').filter(id=pk).first()
+        if not project.owner == profile:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        serialized_project = CustomerProjectDetailSerializer(project)
+        return Response(serialized_project.data, status=status.HTTP_200_OK)
+
+    if request.method == 'PUT':
+        pass
+
+@api_view(['POST', 'DELETE'])
+@permission_classes((IsAuthenticated,))
+def customer_project_application(request, pk=None):
+    user = request.user
+
+    if request.method == 'POST':
+        project_id = request.data.get('project', None)
+        label = request.data.get('label', None)
+        if not project_id or not label:
+            return Response('not enough data', status=status.HTTP_400_BAD_REQUEST)
+        project = CustomerProject.objects.filter(id=project_id).first()
+        if not project:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if project.owner.user != user:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        CustomerProjectApplication.objects.create(label=label, project=project)
+        return Response(status=status.HTTP_201_CREATED)
+
+    if request.method == 'DELETE':
+        app = CustomerProjectApplication.objects.filter(id=pk).first()
+        if not app:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if app.project.owner.user != user:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        app.delete()
+        return Response(status=status.HTTP_200_OK)
 
 @api_view(['DELETE', 'PUT', 'POST'])
 @permission_classes((IsAuthenticated,))
@@ -59,7 +103,6 @@ def customer_product(request, pk=None):
     profile = CustomerProfile.objects.filter(user=user).first()
     if not profile:
         profile = CustomerProfile.objects.create(user=user)
-        # return Response('User has no profile', status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'POST':
         prod_id = request.POST.get('prod_id')
