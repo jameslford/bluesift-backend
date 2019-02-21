@@ -133,11 +133,11 @@ class ProductSerializerforSupplier(serializers.ModelSerializer):
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
-    room_scene = ImageSerializer()
+    room_scene = ImageSerializer(required=False)
     swatch_image = ImageSerializer()
-    tiling_image = ImageSerializer()
-    finish = FinishSerializer()
-    material = MaterialSerializer()
+    tiling_image = ImageSerializer(required=False)
+    finish = FinishSerializer(required=False)
+    material = MaterialSerializer(required=False)
 
     class Meta:
         model = Product

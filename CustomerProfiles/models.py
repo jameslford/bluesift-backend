@@ -75,7 +75,7 @@ class CustomerProduct(models.Model):
 
 class CustomerProjectApplication(models.Model):
     label = models.CharField(max_length=100, blank=True, null=True)
-    project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, related_name='applications')
+    project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, blank=True, related_name='applications')
     products = models.ManyToManyField(CustomerProduct)
 
     def __str__(self):

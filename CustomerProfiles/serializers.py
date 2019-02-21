@@ -63,7 +63,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
-    product = ProductDetailSerializer()
+    product = ProductDetailSerializer(required=False)
 
     class Meta:
         model = CustomerProduct
@@ -74,6 +74,7 @@ class CustomerProductSerializer(serializers.ModelSerializer):
 
 
 class CustomerProjectApplicationSerializer(serializers.ModelSerializer):
+    # products = CustomerProductSerializer(many=True)
 
     class Meta:
         model = CustomerProjectApplication
@@ -82,6 +83,21 @@ class CustomerProjectApplicationSerializer(serializers.ModelSerializer):
             'label',
             'products'
         )
+
+    def update(self, instance, validated_data):
+        label = validated_data.pop('label', instance.label)
+        instance.label = label
+
+        products = validated_data.pop('products', instance.products)
+        instance.products.clear()
+        instance.products.add(*products)
+        instance.save()
+        # return instance
+
+
+
+
+
 
 
 class CustomerProjectDetailSerializer(serializers.ModelSerializer):

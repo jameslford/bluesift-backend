@@ -169,12 +169,14 @@ class Product(models.Model):
     room_scene = models.ForeignKey(
         Image,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name='room_scenes'
         )
     tiling_image = models.ForeignKey(
         Image,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name='tiling_images'
         )
