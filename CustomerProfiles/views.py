@@ -70,17 +70,27 @@ def customer_project(request, pk=None):
     if request.method == 'PUT':
         pass
 
-@api_view(['POST', 'PUT', 'DELETE'])
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes((IsAuthenticated,))
 def customer_project_application(request, pk=None):
     user = request.user
+
+    if request.method == 'GET':
+        application = CustomerProjectApplication.objects.select_related('project__owner__user').filter(id=pk).first()
+        if not application:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if application.project.owner.user != user:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        serialized_app = CustomerProjectApplicationSerializer(application)
+        return Response(serialized_app.data, status=status.HTTP_200_OK)
 
     if request.method == 'POST':
         project_id = request.data.get('project', None)
         label = request.data.get('label', None)
         if not project_id or not label:
             return Response('not enough data', status=status.HTTP_400_BAD_REQUEST)
-        project = CustomerProject.objects.filter(id=project_id).first()
+        project = CustomerProject.objects.filter(id=project_id).select_related('project__owner__user').first()
         if not project:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if project.owner.user != user:
@@ -89,7 +99,7 @@ def customer_project_application(request, pk=None):
         return Response(status=status.HTTP_201_CREATED)
 
     if request.method == 'DELETE':
-        app = CustomerProjectApplication.objects.filter(id=pk).first()
+        app = CustomerProjectApplication.objects.select_related('project__owner__user').filter(id=pk).first()
         if not app:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if app.project.owner.user != user:
@@ -105,7 +115,8 @@ def customer_project_application(request, pk=None):
         if not serialized_app.is_valid():
             return Response(serialized_app.errors, status=status.HTTP_400_BAD_REQUEST)
         app_id = data.get('id', None)
-        application = CustomerProjectApplication.objects.select_related('project__owner__user').filter(id=app_id).first()
+        application = CustomerProjectApplication.objects.select_related(
+            'project__owner__user').filter(id=app_id).first()
         if not application or application.project.owner.user != user:
             return Response(status=status.HTTP_403_FORBIDDEN)
         serialized_app.update(application, data)
@@ -122,8 +133,12 @@ def customer_project_application_product(request, pk=None):
         cus_prod_id = request.data.get('customer_product_id', None)
         if not app_id or not cus_prod_id:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-        application = CustomerProjectApplication.objects.select_related('project', 'project__owner__user').filter(id=app_id).first()
-        cus_product = CustomerProduct.objects.select_related('project', 'project__owner__user').filter(id=cus_prod_id).first()
+        application = CustomerProjectApplication.objects.select_related(
+            'project',
+            'project__owner__user').filter(id=app_id).first()
+        cus_product = CustomerProduct.objects.select_related(
+            'project',
+            'project__owner__user').filter(id=cus_prod_id).first()
         if not application or not cus_product:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if (application.project.owner.user != user or
