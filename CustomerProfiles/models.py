@@ -45,6 +45,9 @@ class CustomerProject(models.Model):
     def __str__(self):
         return self.nickname
 
+    def product_count(self):
+        return self.products.count()
+
     def clean(self):
         projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 10
         existing_projects = self.owner.projects.all().count()
@@ -76,7 +79,7 @@ class CustomerProduct(models.Model):
 class CustomerProjectApplication(models.Model):
     label = models.CharField(max_length=100, blank=True, null=True)
     project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, blank=True, related_name='applications')
-    products = models.ManyToManyField(CustomerProduct)
+    products = models.ManyToManyField(CustomerProduct, blank=True)
 
     def __str__(self):
         return self.label

@@ -3,7 +3,8 @@ from Addresses.serializers import AddressSerializer
 from Addresses.models import Address, Zipcode
 # from Addresses.models import Address
 from .models import CustomerProfile, CustomerProduct, CustomerProject, CustomerProjectApplication
-from Products.serializers import ProductDetailSerializer
+from Products.serializers import ProductDetailSerializer, ProductSerializerforSupplier
+from Products.models import Product
 
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
@@ -40,9 +41,10 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerProject
         fields = (
-            'address',
-            'nickname',
             'id',
+            'address',
+            'product_count',
+            'nickname',
             )
 
     def create(self, profile, validated_data):
@@ -63,7 +65,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
-    product = ProductDetailSerializer(required=False)
+    product = ProductSerializerforSupplier(required=False)
 
     class Meta:
         model = CustomerProduct
@@ -95,13 +97,9 @@ class CustomerProjectApplicationSerializer(serializers.ModelSerializer):
         # return instance
 
 
-
-
-
-
-
 class CustomerProjectDetailSerializer(serializers.ModelSerializer):
     products = CustomerProductSerializer(many=True)
+    # products = serializers.SerializerMethodField()
     applications = CustomerProjectApplicationSerializer(many=True)
 
     class Meta:
@@ -113,3 +111,6 @@ class CustomerProjectDetailSerializer(serializers.ModelSerializer):
             'nickname',
             'products'
             )
+
+    # def get_products(self, instance):
+    #     products = Product.objects.select_related('swatch_image', 'material', 'manufacturer').filter()

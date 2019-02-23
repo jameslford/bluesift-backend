@@ -61,7 +61,12 @@ def customer_project(request, pk=None):
     if request.method == 'GET':
         project = CustomerProject.objects.prefetch_related(
             'products',
-            'applications').filter(id=pk).first()
+            'products__product',
+            'products__product__manufacturer',
+            'products__product__swatch_image',
+            'products__product__material',
+            'applications__products',
+            ).filter(id=pk).first()
         if not project.owner == profile:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         serialized_project = CustomerProjectDetailSerializer(project)
