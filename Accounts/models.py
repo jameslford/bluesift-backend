@@ -2,13 +2,6 @@
 
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from Profiles.models import (
-    CompanyAccount,
-    EmployeeProfile
-)
-from CustomerProfiles.models import (
-    CustomerProfile
-)
 
 
 class UserManager(BaseUserManager):

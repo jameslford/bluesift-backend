@@ -32,78 +32,43 @@ from CustomerProfiles.serializers import CustomerProfileSerializer
 
 @api_view(['POST'])
 def create_user(request):
-    supplier_str = request.data.get('is_supplier', False)
-    is_supplier = True if supplier_str == 'true' else False
     full_name = request.data.get('full_name', None)
     email = request.data.get('email', None)
     password = request.data.get('password', None)
-    company_account_dict = request.data.get('company_account', None)
-    company_name = None
-    company_phone = None
-    if company_account_dict:
-        company_name = company_account_dict.get('company_name', None)
-        company_phone = company_account_dict.get('phone_number', None)
     user_model = get_user_model()
     user = None
     if not email or not password:
         return Response('Email and password required!', status=status.HTTP_400_BAD_REQUEST)
     hashed_password = make_password(password)
 
-    try:
-        user = user_model.objects.create(
-            full_name=full_name,
-            email=email,
-            password=hashed_password,
-            is_supplier=is_supplier,
-            date_registered=datetime.datetime.now()
-            )
-    except IntegrityError as err:
-        if 'unique constraint' in err.args[0]:
-            return Response('User already exist', status=status.HTTP_400_BAD_REQUEST)
-        return Response('User exist', status=status.HTTP_400_BAD_REQUEST)
+    user = user_model(
+        full_name=full_name,
+        email=email,
+        password=hashed_password,
+        date_registered=datetime.datetime.now()
+    )
 
     if not user:
         return Response('No user created', status=status.HTTP_400_BAD_REQUEST)
 
-    Token.objects.create(user=user)
+    user.save()
+    token = Token.objects.get_or_create(user=user)
 
-    if user.is_supplier:
-        company, created = CompanyAccount.objects.get_or_create(name=company_name)
-        if not created:
-            return Response(
-                    'Company Account already exist. Please contact administrator for access',
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-        company.phone_number = company_phone
-        company.save()
-
-        EmployeeProfile.objects.create(user=user, company_account=company)
-
-    else:
-        profile = CustomerProfile.objects.create(user=user)
-        CustomerProject.objects.create(owner=profile, nickname='First Project')
-
-        current_site = get_current_site(request)
-        message = get_message(user, current_site)
-        to_email = user.email
-        email_obj = EmailMessage(
-            subject="Activate your Buildbook account",
-            body=message,
-            to=[to_email]
-            )
-        email_obj.send()
-
-    return Response('Created', status=status.HTTP_201_CREATED)
-
-
-def get_message(user, current_site):
     message = render_to_string('acc_activate_email.html', {
         'user': user,
-        'domain': current_site.domain,
+        'domain': get_current_site(request).domain,
         'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
-        'token': Token.objects.create(user=user)
+        'token': token
     })
-    return message
+
+    email_obj = EmailMessage(
+        subject="Activate your Buildbook account",
+        body=message,
+        to=[user.email]
+        )
+    email_obj.send()
+
+    return Response('Created', status=status.HTTP_201_CREATED)
 
 
 def activate(request, uidb64):
