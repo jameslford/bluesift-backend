@@ -25,16 +25,13 @@ def set_perm():
 @permission_classes((set_perm(),))
 def product_list(request):
 
-    request_url = request.GET.urlencode().split('&')
-    request_url = [query for query in request_url if 'page' not in query]
-    queries = request.GET.getlist('quer')
-    search_terms = request.GET.getlist('search', None)
+    sorter = FilterSorter(request)
     page = request.GET.get('page', 1)
-    sorter = FilterSorter(queries, search_terms, request_url)
     message = None
     return_products = True
 
     # products = Product.objects.select_related(*sorter.standalones.keys()).all()
+    # terms = list(sorter.standalones.keys())
     products = Product.objects.all()
 
     products = sorter.filter_location(products)
@@ -52,7 +49,10 @@ def product_list(request):
 
     products = sorter.filter_search(products)
 
-    products_response = paginator.paginate_queryset(products.prefetch_related('swatch_image'), request)
+    products_response = paginator.paginate_queryset(products.select_related(
+        'swatch_image',
+        'label_color'
+        ), request)
     product_count = products.count() if products else 0
     page_count = math.ceil(product_count/paginator.page_size)
     load_more = True
@@ -66,7 +66,6 @@ def product_list(request):
         load_more = False
 
     serialized_products = SerpyProduct(products_response, many=True)
-    # serialized_products = ProductSerializer(products_response.prefetch_related('swatch_image'), many=True)
     material_selected = sorter.spec_mat_facet
 
     content = {

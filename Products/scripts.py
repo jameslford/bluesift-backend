@@ -60,24 +60,17 @@ class FilterSorter:
     surtex = 'surface_texture'
     surcoat = 'surface_coating'
 
-    # determines whether or not to return material specific facets
     spec_mat_facet = False
-
-    # thicknesses = Product.objects.all().values_list('thickness')
-    # shade_varations = ShadeVariation.objects.all()
-    # looks = Look.objects.all()
-    # manufacturers = Manufacturer.objects.all()
-
-    # materials = Material.objects.all()
-    # finishes = Finish.objects.all()
-    # surface_textures = SurfaceTexture.objects.all()
-    # surface_coatings = SurfaceCoating.objects.all()
-    # sub_materials = SubMaterial.objects.all()
 
     radii = [5, 10, 20, 50, 100, 200]
 
-    def __init__(self, query, search_terms, request_url):
-        self.query = query
+    def __init__(self, request):
+        request_url = request.GET.urlencode().split('&')
+        request_url = [query for query in request_url if 'page' not in query]
+        queries = request.GET.getlist('quer')
+        search_terms = request.GET.getlist('search', None)
+
+        self.query = queries
         self.search_terms = search_terms
         self.request_url = [q.replace('quer=', '') for q in request_url]
         self.app_query, self.app_query_raw = self.refine_list(self.app)
@@ -123,6 +116,7 @@ class FilterSorter:
 
         self.min_price = None
         self.max_price = None
+        self.is_priced = False
 
         self.min_thick = None
         self.max_thick = None
@@ -164,7 +158,6 @@ class FilterSorter:
             return products
         return new_products
 
-
     def filter_price(self, products):
         price_agg = products.aggregate(Min('lowest_price'), Max('lowest_price'))
         self.min_price = price_agg['lowest_price__min']
@@ -174,6 +167,7 @@ class FilterSorter:
             return products
         min_price = [q.replace('min-', '') for q in self.price_query if 'min' in q]
         max_price = [q.replace('max-', '') for q in self.price_query if 'max' in q]
+        self.is_priced = True
         _products = products
         if min_price:
             min_price = decimal.Decimal(min_price[-1])
@@ -213,7 +207,7 @@ class FilterSorter:
         term = term_list[0]
         args = term_list[1]
         id_term = term.replace('__label', '')
-        products = products.select_related(id_term)
+        products = products.select_related(id_term).all()
         # _products = products
         facet = {
             'name': id_term,
@@ -222,10 +216,11 @@ class FilterSorter:
             }
         values = Product.objects.values_list(term, id_term).distinct()
         values = [q for q in values if q[0]]
-        # sorts values for for each attribute(term), by label so that they are consistent
+        # sorts values for for each attribute(term), by label so that they are consistents
         values = sorted(values, key=itemgetter(0))
         for val, idt in values:
             search_term = {id_term: idt}
+            # line below is expensive
             count = products.filter(**search_term).count()
             if count == 0:
                 continue
@@ -249,16 +244,16 @@ class FilterSorter:
         new_prods = products.filter(q_objects)
         return new_prods
 
-            # now convert list value to string and see if it was in the query to determine if enabled
-            # enabled_test = str(idt)
-            # if term == self.thk:
-            #     enabled_test = enabled_test.rstrip('0')
-            # first_search = {id_term: args[0]}
-            # new_prods = products.filter(**first_search)
-            # for arg in args[1:]:
-            #     next_search = {id_term: arg}
-            #     new_prods = new_prods | products.filter(**next_search)
-            # return new_prods
+        # now convert list value to string and see if it was in the query to determine if enabled
+        # enabled_test = str(idt)
+        # if term == self.thk:
+        #     enabled_test = enabled_test.rstrip('0')
+        # first_search = {id_term: args[0]}
+        # new_prods = products.filter(**first_search)
+        # for arg in args[1:]:
+        #     next_search = {id_term: arg}
+        #     new_prods = new_prods | products.filter(**next_search)
+        # return new_prods
         # return products
 
     def filter_attribute(self, products):
@@ -313,21 +308,24 @@ class FilterSorter:
                 facet['values'].append(value)
             self.filter_response = [facet] + self.filter_response
         if self.avail_query:
-            rad_values = []
-            for rad in self.radii:
-                enabled = True if rad == self.radius else False
-                rad_dic = {'radius': rad, 'enabled': enabled}
-                rad_values.append(rad_dic)
             loc_facet = {
                 'name': 'location',
-                'values': rad_values,
+                'values': [],
                 'zipcode': self.zipcode,
             }
+            for rad in self.radii:
+                enabled = True if rad == self.radius else False
+                rad_dic = {'radius': rad, 'enabled': enabled, 'label': 'Radius ' + str(rad)}
+                loc_facet['values'].append(rad_dic)
+
             price_facet = {
                 'name': 'price',
                 'min': self.min_price,
                 'max': self.max_price,
-                'range_values': self.total_price_range
+                'range_values': self.total_price_range,
+                'values': [
+                    {'label': 'Price', 'enabled': self.is_priced}
+                ]
             }
             # self.filter_response = [loc_facet, price_facet] + self.filter_response
             self.filter_response.insert(1, loc_facet)
@@ -342,11 +340,15 @@ class FilterSorter:
             'min': float(min_thick),
             'max': float(max_thick),
             'range_values': [float(min_thick), float(max_thick)],
-            'values': []
+            'values': [
+                {'label': 'thickness', 'enabled': False}
+            ]
         }
-        self.filter_response.append(thk_facet)
         if not self.thk_query:
+            self.filter_response.append(thk_facet)
             return products
+        thk_facet['values'][0]['enabled'] = True
+        self.filter_response.append(thk_facet)
         min_thk_query = [q.replace('min-', '') for q in self.thk_query if 'min' in q]
         max_thk_query = [q.replace('max-', '') for q in self.thk_query if 'max' in q]
         _products = products
@@ -390,4 +392,3 @@ class FilterSorter:
             self.return_products = False
             return []
         return searched_prods
-
