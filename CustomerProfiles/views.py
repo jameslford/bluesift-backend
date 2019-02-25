@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from Products.scripts import FilterSorter
 
 from CustomerProfiles.models import (
     CustomerProfile,
@@ -62,15 +63,35 @@ def customer_project(request, pk=None):
         project = CustomerProject.objects.prefetch_related(
             'products',
             'products__product',
+            # 'products__product__pk',
+            # 'products__product__finish',
+            'products__product__label_color',
+            'products__product__look',
             'products__product__manufacturer',
             'products__product__swatch_image',
             'products__product__material',
             'applications__products',
             ).filter(id=pk).first()
+        # product_ids = project.values_list('products__product__pk', flat=True)
         if not project.owner == profile:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+        products = [q.product.pk for q in project.products.all()]
+        products = Product.objects.filter(id__in=products)
+        sorter = FilterSorter([], [], [])
+        # products = sorter.filter_location(products)
+        # products = sorter.filter_price(products)
+        # products = sorter.filter_thickness(products)
+
+        products = sorter.filter_bools(products)
+        products = sorter.filter_attribute(products)
+
+        filter_response = sorter.return_filter(products)
+
         serialized_project = CustomerProjectDetailSerializer(project)
-        return Response(serialized_project.data, status=status.HTTP_200_OK)
+        return Response({
+            'filter': filter_response,
+            'project': serialized_project.data
+            }, status=status.HTTP_200_OK)
 
     if request.method == 'PUT':
         pass
@@ -128,36 +149,36 @@ def customer_project_application(request, pk=None):
         return Response(status=status.HTTP_200_OK)
 
 
-@api_view(['DELETE', 'PUT', 'POST'])
-@permission_classes((IsAuthenticated,))
-def customer_project_application_product(request, pk=None):
-    user = request.user
+# @api_view(['DELETE', 'PUT', 'POST'])
+# @permission_classes((IsAuthenticated,))
+# def customer_project_application_product(request, pk=None):
+#     user = request.user
 
-    if request.method == 'POST':
-        app_id = request.data.get('application_id', None)
-        cus_prod_id = request.data.get('customer_product_id', None)
-        if not app_id or not cus_prod_id:
-            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-        application = CustomerProjectApplication.objects.select_related(
-            'project',
-            'project__owner__user').filter(id=app_id).first()
-        cus_product = CustomerProduct.objects.select_related(
-            'project',
-            'project__owner__user').filter(id=cus_prod_id).first()
-        if not application or not cus_product:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if (application.project.owner.user != user or
-                cus_product.project.owner.user != user or
-                application.project != cus_product.project):
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
-        application.products.add(cus_product)
-        return Response(status=status.HTTP_202_ACCEPTED)
+#     if request.method == 'POST':
+#         app_id = request.data.get('application_id', None)
+#         cus_prod_id = request.data.get('customer_product_id', None)
+#         if not app_id or not cus_prod_id:
+#             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+#         application = CustomerProjectApplication.objects.select_related(
+#             'project',
+#             'project__owner__user').filter(id=app_id).first()
+#         cus_product = CustomerProduct.objects.select_related(
+#             'project',
+#             'project__owner__user').filter(id=cus_prod_id).first()
+#         if not application or not cus_product:
+#             return Response(status=status.HTTP_400_BAD_REQUEST)
+#         if (application.project.owner.user != user or
+#                 cus_product.project.owner.user != user or
+#                 application.project != cus_product.project):
+#                 return Response(status=status.HTTP_401_UNAUTHORIZED)
+#         application.products.add(cus_product)
+#         return Response(status=status.HTTP_202_ACCEPTED)
 
-    if request.method == 'DELETE':
-        pass
+#     if request.method == 'DELETE':
+#         pass
 
 
-@api_view(['DELETE', 'PUT', 'POST'])
+@api_view(['DELETE', 'PUT', 'POST', 'GET'])
 @permission_classes((IsAuthenticated,))
 def customer_product(request, pk=None):
     user = request.user
@@ -199,6 +220,10 @@ def customer_product(request, pk=None):
             return Response('Not your product to delete', status=status.HTTP_400_BAD_REQUEST)
         product.delete()
         return Response(status=status.HTTP_202_ACCEPTED)
+
+    #expierimental
+    if request.method == 'GET':
+        products = Product.objects.filter('priced__')
 
 
 def customer_short_lib(request):

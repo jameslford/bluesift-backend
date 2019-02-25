@@ -327,5 +327,5 @@ class SupplierProductMiniSerializer(serializers.ModelSerializer):
             'location_address',
             'location_id',
             'company_name',
-            'coordinates'
+            # 'coordinates'
         )

@@ -184,7 +184,8 @@ class SupplierProduct(models.Model):
         return str(self.supplier) + ' ' + str(self.product.name)
 
     def location_address(self):
-        return self.supplier.address_string()
+        return self.supplier.address.city_state()
+        # return self.supplier.address_string()
 
     def location_id(self):
         return self.supplier.id
@@ -213,8 +214,6 @@ class SupplierProduct(models.Model):
         self.product.set_prices()
         if self.supplier.address:
             self.product.set_locations()
-
-
 
     def delete(self, using=None, keep_parents=False):
         address = False

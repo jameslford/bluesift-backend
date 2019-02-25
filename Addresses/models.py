@@ -83,6 +83,9 @@ class Address(models.Model):
         state = self.state
         return f'{al1}, {city}, {state}, {self.postal_code}'
 
+    def city_state(self):
+        return f'{self.city}, {self.state}'
+
     def get_latlng(self):
         key = settings.GMAPS_API_KEY
         gmaps = googlemaps.Client(key=key)

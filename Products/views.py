@@ -86,7 +86,13 @@ def product_list(request):
 
 @api_view(['GET'])
 def get_product(request, pk):
-    product = Product.objects.filter(pk=pk).first()
+    product = Product.objects.select_related(
+        'material',
+        'swatch_image',
+        'finish',
+        'manufacturer',
+        'room_scene'
+        ).filter(pk=pk).first()
     if not product:
         return Response('Invalid PK', status=status.HTTP_400_BAD_REQUEST)
     online_priced = product.online_priced()

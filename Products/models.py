@@ -292,10 +292,22 @@ class Product(models.Model):
         super(Product, self).save(*args, **kwargs)
 
     def online_priced(self):
-        return self.priced.filter(for_sale_online=True)
+        return self.priced.select_related(
+            'supplier',
+            'supplier__company_account',
+            'supplier__address',
+            'supplier__address__coordinates',
+            'supplier__address__postal_code'
+            ).filter(for_sale_online=True)
 
     def in_store_priced(self):
-        return self.priced.filter(for_sale_in_store=True)
+        return self.priced.select_related(
+            'supplier',
+            'supplier__company_account',
+            'supplier__address',
+            'supplier__address__coordinates',
+            'supplier__address__postal_code'
+        ).filter(for_sale_in_store=True)
 
     def set_prices(self):
         self.for_sale_in_store = False
@@ -406,59 +418,3 @@ class Product(models.Model):
         print(real_color.label)
         self.actual_color = real_color
         self.save()
-
-        # below is temp code
-        # buffer = io.BytesIO()
-        # image.save(buffer, 'JPEG')
-        # if self.tiling_image:
-        #     print(self.tiling_image.original_url)
-        #     self.tiling_image.delete()
-        # image_name = self.name.replace(' ', '') + 'tiling_image.jpg'
-        # tile_image, created = Image.objects.get_or_create(original_url=image_name)
-        # tile_image.image.save(image_name, buffer)
-        # tile_image.save()
-        # self.tiling_image = tile_image
-        # above is tmep code
-
-        # lists.temp_col_repo.append()
-
-        # distances = {k: manhattan(v, first_color) for k, v in color_list.items()}
-        # color_list = set([v for k, v in lists.color_dic.items()])
-        # distances = {k: lists.manhattan(k, first_color) for k in list(color_list)}
-        # actual_color = min(distances, key=distances.get)
-        # if self.actual_color:
-        #     self.actual_color.delete()
-        # print(actual_color)
-
-        # first_percentage = first_color[0] / (w * h)
-        # colors.remove(first_color)
-        # second_color = max(colors, key=operator.itemgetter(0))
-        # second_percentage = second_color[0] / (w * h)
-
-        # print(color_set)
-        # buffer = io.BytesIO()
-        # image.save(buffer, 'JPEG')
-        # if self.tiling_image:
-        #     print(self.tiling_image.original_url)
-        #     self.tiling_image.delete()
-        # tile_image = Image()
-        # image_name = self.name.replace(' ', '') + 'tiling_image.jpg'
-        # tile_image.original_url = image_name
-        # tile_image.image.save(image_name, buffer)
-        # tile_image.save()
-        # self.tiling_image = tile_image
-        # self.save()
-
-        # image = image.convert('HSV')
-
-        # if self.tiling_image:
-        #     self.tiling_image.delete()
-        # enhancer = ImageEnhance.Color(image)
-        # image = enhancer.enhance(0.0)
-        #         image.save(buffer, 'JPEG')
-        # new_name = self.name.replace(' ', '') + '_tiling.jpg'
-        # tile_image = Image(original_url=new_name)
-        # tile_image.image.save(new_name, buffer)
-        # tile_image.save()
-        # print(buffer)
-        # self.tiling_image = tile_image
