@@ -77,7 +77,7 @@ def customer_project(request, pk=None):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         products = [q.product.pk for q in project.products.all()]
         products = Product.objects.filter(id__in=products)
-        sorter = FilterSorter([], [], [])
+        sorter = FilterSorter(request)
         # products = sorter.filter_location(products)
         # products = sorter.filter_price(products)
         # products = sorter.filter_thickness(products)
