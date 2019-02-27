@@ -63,6 +63,7 @@ def customer_project(request, pk=None):
         project = CustomerProject.objects.prefetch_related(
             'products',
             'products__product',
+            # 'products__product__customer_products',
             # 'products__product__pk',
             # 'products__product__finish',
             'products__product__label_color',
@@ -75,7 +76,8 @@ def customer_project(request, pk=None):
         # product_ids = project.values_list('products__product__pk', flat=True)
         if not project.owner == profile:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        products = [q.product.pk for q in project.products.all()]
+        # products = [q.product.pk for q in project.products.select_related('product').all()]
+        products = project.products.values_list('product__id', flat=True)
         products = Product.objects.filter(id__in=products)
         sorter = FilterSorter(request)
         # products = sorter.filter_location(products)
@@ -84,10 +86,11 @@ def customer_project(request, pk=None):
 
         products = sorter.filter_bools(products)
         products = sorter.filter_attribute(products)
+        product_ids = products.values_list('id', flat=True).distinct()
 
         filter_response = sorter.return_filter(products)
 
-        serialized_project = CustomerProjectDetailSerializer(project)
+        serialized_project = CustomerProjectDetailSerializer(project, context={'product_ids': product_ids})
         return Response({
             'filter': filter_response,
             'project': serialized_project.data
@@ -116,7 +119,7 @@ def customer_project_application(request, pk=None):
         label = request.data.get('label', None)
         if not project_id or not label:
             return Response('not enough data', status=status.HTTP_400_BAD_REQUEST)
-        project = CustomerProject.objects.filter(id=project_id).select_related('project__owner__user').first()
+        project = CustomerProject.objects.filter(id=project_id).select_related('owner__user').first()
         if not project:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if project.owner.user != user:
