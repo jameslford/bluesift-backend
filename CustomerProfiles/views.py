@@ -80,9 +80,9 @@ def customer_project(request, pk=None):
         products = project.products.values_list('product__id', flat=True)
         products = Product.objects.filter(id__in=products)
         sorter = FilterSorter(request)
-        # products = sorter.filter_location(products)
-        # products = sorter.filter_price(products)
-        # products = sorter.filter_thickness(products)
+        products = sorter.filter_location(products)
+        products = sorter.filter_price(products)
+        products = sorter.filter_thickness(products)
 
         products = sorter.filter_bools(products)
         products = sorter.filter_attribute(products)
