@@ -337,7 +337,7 @@ def cv_supplier_location(request, pk):
     ).prefetch_related(
         'priced_products',
         'priced_products__product',
-        'products__product__label_color',
+        'priced_products__product__label_color',
         'priced_products__product__look',
         'priced_products__product__manufacturer',
         'priced_products__product__swatch_image',
