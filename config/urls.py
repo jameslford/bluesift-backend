@@ -17,7 +17,8 @@ urlpatterns = [
     path('customerProfiles/', include('CustomerProfiles.urls'), name='customer_profiles'),
     path('supplierProfiles/', include('Profiles.urls'), name='profiles'),
     path('orders/', include('Orders.urls')),
-    path('bbadmin/', include('BBadmin.urls'))
+    path('bbadmin/', include('BBadmin.urls')),
+    path('mailing-list/', include('MailingList.urls'))
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

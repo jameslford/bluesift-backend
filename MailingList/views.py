@@ -10,7 +10,7 @@ def add_to_mailinglist(request):
     data = request.data
     list_name = data.get('list_name')
     email_address = data.get('email')
-    mailing_list = MailingList.objects.filter(name=list_name).first()
-    email = EmailAddress.objects.get_or_create(email_address=email_address)
+    mailing_list = MailingList.objects.get_or_create(name=list_name)[0]
+    email = EmailAddress.objects.get_or_create(email_address=email_address)[0]
     mailing_list.email_addresses.add(email)
     return Response(status=status.HTTP_201_CREATED)
