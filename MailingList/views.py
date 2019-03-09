@@ -13,6 +13,7 @@ def add_to_mailinglist(request):
         return Response('Email needed!', status=status.HTTP_400_BAD_REQUEST)
     valid = send_mail(
         subject="You're on the list",
+        from_email='noreply@bluesift.com',
         message="Thanks for signing up! We can't wait to share what we've built for you!",
         recipient_list=[email_address]
     )
@@ -23,7 +24,8 @@ def add_to_mailinglist(request):
     mailing_list.email_addresses.add(email)
     send_mail(
         subject='Signup',
-        message= email_address + ' has signed up to be notified',
-        recipient_list=['jford@bluesource.com']
+        message=email_address + ' has signed up to be notified',
+        from_email='noreply@bluesift.com',
+        recipient_list=['jford@bluesift.com']
     )
     return Response(status=status.HTTP_201_CREATED)
