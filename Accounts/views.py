@@ -64,6 +64,7 @@ def create_user(request):
     email_obj = EmailMessage(
         subject="Activate your Buildbook account",
         body=message,
+        from_email='jford@bluesift.com',
         to=[user.email]
         )
     email_obj.send()
@@ -82,15 +83,6 @@ def activate(request, uidb64):
         user.is_active = True
         user.date_confirmed = datetime.datetime.now()
         user.save()
-        if user.is_supplier:
-            user_company = user.employee_profile.company_account
-
-            user_company.email_verified = True
-            user_company.save()
-
-            user.employee_profile.company_account_owner = True
-            user.employee_profile.save()
-
         return redirect(settings.REDIRECT_URL)
     return HttpResponse('Activation link is invalid!')
 
