@@ -2,21 +2,14 @@ import decimal
 from django.contrib.gis.measure import D
 # from django.contrib.gis.geos import Point
 from operator import itemgetter
-from django.db.models import Min, Max, Q, Count
+from django.db.models import Min, Max, Q
 from django.contrib.postgres.search import SearchVector
 
 
 from Addresses.models import Zipcode
 from Products.models import (
     Product,
-    Manufacturer,
-    Look,
     Material,
-    SubMaterial,
-    ShadeVariation,
-    Finish,
-    SurfaceTexture,
-    SurfaceCoating
 )
 
 avai_terms = [

@@ -3,6 +3,7 @@ import dj_database_url
 from .base import *
 
 DEBUG = True
+ENVIRONMENT = 'staging'
 
 
 STATIC_URL = '/static/'
@@ -62,9 +63,6 @@ ZIP_PATH = os.getcwd() + '/config/management/zips/zipcodes.csv'
 
 GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
 GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
-
-# GEOS_LIBRARY_PATH = '/app/.heroku/vendor/lib/libgeos_c.so'
-# GDAL_LIBRARY_PATH = '/app/.heroku/vendor/lib/libgdal.so'
 
 
 def show_toolbar(request):

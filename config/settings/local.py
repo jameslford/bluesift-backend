@@ -2,6 +2,7 @@ from .base import *
 from . passwords import *
 
 DEBUG = True
+ENVIRONMENT = 'local'
 
 STATIC_URL = '/static/'
 

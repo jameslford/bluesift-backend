@@ -3,7 +3,7 @@ import dj_database_url
 from .base import *
 
 DEBUG = False
-
+ENVIRONMENT = 'production'
 
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
@@ -34,7 +34,7 @@ DATABASES = {
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
-#WSGI_APPLICATION = 'config.wsgi.application'
+# WSGI_APPLICATION = 'config.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -90,20 +90,3 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
-
-
-# 'GDAL_LIBRAY_PATH' '/app/.heroku/vendor/lib/libgdal.so'
-# 'GEOS_LIBRARY_PATH' '/app/.heroku/vendor/lib/libgeos_c.so'
-
-
-# AWS_ACCESS_KEY_ID :    AKIAJMXZBZGT7YLT2QCA
-# AWS_SECRET_ACCESS_KEY : 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
-# BUILD_WITH_GEO_LIBRARIES : 1
-# DATABASE_URL : postgres://jhawnscgwbzplm:8229cdbbf4e81a3b3875131f3ca2912b11b441eb90690e357c95f0ed9fb37b56@ec2-54-225-237-84.compute-1.amazonaws.com:5432/de1p8mp8pa6hj5
-# DISABLE_COLLECTSTATIC : 1
-# DJANGO_SETTINGS_MODULE : config.settings.production
-# GDAL_LIBRAY_PATH : /app/.heroku/vendor/lib/libgdal.so
-# GEOS_LIBRARY_PATH : /app/.heroku/vendor/lib/libgeos_c.so
-# SECRET_KEY : 7_gs57^=4i^3l74e=(*ko2m4&-ws82o3akofa6$+26a)sqqxa4
-
-# postgres://mzfomutrqqlhaj:dcef1fb2409b78a68ad4639da3d8be531aa0cc86d151f500ba440bd464fe710e@ec2-54-235-159-101.compute-1.amazonaws.com:5432/dl7aa1f30f3b8

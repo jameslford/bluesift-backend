@@ -3,7 +3,6 @@
 import datetime
 from django.shortcuts import redirect
 from django.http import HttpResponse
-from django.db import IntegrityError
 from django.contrib.auth.hashers import check_password, make_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import get_user_model
@@ -89,8 +88,8 @@ def activate(request, uidb64):
 
 @api_view(['POST'])
 def custom_login(request):
-    email = request.data.get('email')
-    password = request.data.get('password')
+    email = request.data.get('email', None)
+    password = request.data.get('password', None)
     user_model = get_user_model()
 
     if email is None or password is None:
@@ -111,6 +110,9 @@ def custom_login(request):
             'Please check your inbox at ' + email + ' to verify your account',
             status=status.HTTP_400_BAD_REQUEST
             )
+
+    if settings.ENVIRONMENT == 'staging' and not user.is_staff:
+        return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)
 
     serialized_user = UserResponseSerializer(user)
     return Response(serialized_user.data, status=status.HTTP_200_OK)

@@ -1,5 +1,4 @@
 import os
-import decimal
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,7 +38,6 @@ INSTALLED_APPS = [
     'Plans',
     'Products',
     'Profiles',
-
 ]
 
 
@@ -48,7 +46,6 @@ ROOT_URLCONF = 'config.urls'
 SITE_ID = 1
 
 GMAPS_API_KEY = 'AIzaSyD1ehaLv6OBqN3m_qjif2N7Gge0PDP5ams'
-
 
 TEMPLATES = [
     {
@@ -67,8 +64,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -96,7 +91,4 @@ USE_L10N = True
 
 USE_TZ = True
 
-
-
 AUTH_USER_MODEL = 'Accounts.User'
-
