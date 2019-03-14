@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from rest_framework.authtoken.models import Token
 
 
 class UserManager(BaseUserManager):
@@ -33,6 +34,7 @@ class UserManager(BaseUserManager):
         user_obj.is_active = is_active
         user_obj.is_supplier = is_supplier
         user_obj.save(using=self.db)
+        Token.objects.get_or_create(user=user_obj)
         return user_obj
 
     def create_staffuser(self, email, full_name=None, password=None):
