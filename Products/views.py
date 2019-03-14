@@ -1,15 +1,14 @@
 ''' Products.views.py '''
 import math
 import os
-from decimal import Decimal
-from django.conf import settings
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from .scripts import FilterSorter
-from .serializers import ProductSerializer, ProductDetailSerializer, SerpyProduct
+from .serializers import ProductDetailSerializer, SerpyProduct
 from .models import Product
 from Profiles.serializers import SupplierProductMiniSerializer
 
@@ -30,9 +29,9 @@ def product_list(request):
     message = None
     return_products = True
 
-    # products = Product.objects.select_related(*sorter.standalones.keys()).all()
-    # terms = list(sorter.standalones.keys())
     products = Product.objects.all()
+
+    products = sorter.filter_search(products)
 
     products = sorter.filter_location(products)
     products = sorter.filter_price(products)
@@ -46,8 +45,6 @@ def product_list(request):
     legit_queries = ['quer=' + q for q in sorter.legit_queries]
     paginator = PageNumberPagination()
     paginator.page_size = 24
-
-    products = sorter.filter_search(products)
 
     products_response = paginator.paginate_queryset(products.select_related(
         'swatch_image',

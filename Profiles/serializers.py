@@ -1,11 +1,10 @@
 import base64
 from rest_framework import serializers
-from django.core.files import File
 from django.core.files.base import ContentFile
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from Addresses.models import Address, Zipcode
 from django.contrib.postgres.search import SearchVector
-from Products.serializers import ProductSerializerforSupplier, ProductDetailSerializer
+from Products.serializers import ProductSerializerforSupplier
 from .models import (
     CompanyAccount,
     CompanyShippingLocation,
@@ -170,7 +169,6 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     editable = serializers.SerializerMethodField()
     deletable = serializers.SerializerMethodField()
-    # local_admin = EmployeeProfileSerializer()
 
     class Meta:
         model = CompanyShippingLocation
@@ -264,13 +262,16 @@ class SupplierProductSerializer(serializers.ModelSerializer):
         model = SupplierProduct
         fields = (
             'id',
-            'my_price',
-            'online_ppu',
-            'units_available',
+            'in_store_ppu',
+            'units_available_in_store',
             'units_per_order',
-            'for_sale_online',
             'for_sale_in_store',
+            'on_sale',
+            'sale_price',
+            'banner_item',
             'product'
+            # 'online_ppu',
+            # 'for_sale_online',
         )
 
 
@@ -280,16 +281,20 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         model = SupplierProduct
         fields = (
             'id',
-            'my_price',
-            'units_available',
+            'in_store_ppu',
+            'units_available_in_store',
             'units_per_order',
             'for_sale_in_store',
-            'for_sale_online'
+            'sale_price',
+            'on_sale',
+            'banner_item',
+            # 'for_sale_online',
+            # 'online_ppu'
         )
 
     def update(self, instance, validated_data):
-        instance.my_price = validated_data.get('my_price', instance.my_price)
-        instance.units_available = validated_data.get('units_available', instance.units_available)
+        instance.in_store_ppu = validated_data.get('in_store_ppu', instance.in_store_ppu)
+        instance.units_available_in_store = validated_data.get('units_available_in_store', instance.units_available_in_store)
         instance.units_per_order = validated_data.get('units_per_order', instance.units_per_order)
         instance.for_sale_in_store = validated_data.get('for_sale_in_store', instance.for_sale_in_store)
         instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)
@@ -297,21 +302,23 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CVSupplierProductSerializer(serializers.ModelSerializer):
-    product = ProductDetailSerializer(read_only=True)
+# class CVSupplierProductSerializer(serializers.ModelSerializer):
+#     product = ProductDetailSerializer(read_only=True)
 
-    class Meta:
-        model = SupplierProduct
-        fields = (
-            'id',
-            'my_price',
-            'online_ppu',
-            'units_available',
-            'units_per_order',
-            'for_sale_online',
-            'for_sale_in_store',
-            'product'
-        )
+#     class Meta:
+#         model = SupplierProduct
+#         fields = (
+#             'id',
+#             'in_store_ppu',
+#             'units_available_in_store',
+#             'sale_price',
+#             'on_sale',
+#             'units_per_order',
+#             'for_sale_in_store',
+#             'product'
+#             # 'online_ppu',
+#             # 'for_sae_online',
+#         )
 
 
 class SupplierProductMiniSerializer(serializers.ModelSerializer):
@@ -320,12 +327,13 @@ class SupplierProductMiniSerializer(serializers.ModelSerializer):
         model = SupplierProduct
         fields = (
             'id',
-            'my_price',
-            'online_ppu',
-            'units_available',
+            'in_store_ppu',
+            'units_available_in_store',
             'units_per_order',
             'location_address',
             'location_id',
             'company_name',
+            'lead_time_ts'
+            # 'online_ppu',
             # 'coordinates'
         )

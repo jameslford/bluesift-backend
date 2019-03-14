@@ -99,6 +99,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class SerpyProduct(serpy.Serializer):
     pk = serpy.Field('id')
     bb_sku = serpy.Field()
+    unit = serpy.Field()
     manufacturer_color = serpy.Field()
     manu_collection = serpy.Field()
     for_sale_online = serpy.Field()
@@ -121,6 +122,7 @@ class ProductSerializerforSupplier(serializers.ModelSerializer):
         model = Product
         fields = (
             'pk',
+            'unit',
             'manufacturer_color',
             'manu_collection',
             'material',
@@ -144,6 +146,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'unit',
             'actual_color',
 
             'manufacturer',

@@ -13,7 +13,7 @@ from Products.models import (
 )
 
 avai_terms = [
-    'for_sale_online',
+    # 'for_sale_online',
     'for_sale_in_store'
     ]
 
@@ -92,10 +92,10 @@ class FilterSorter:
         ]
 
         self.standalones = {
-            self.mat: [self.mat + '__label', self.mat_query],
-            self.lk: [self.lk + '__label', self.lk_query],
-            self.manu: [self.manu + '__label', self.manu_query],
             self.lcolor: [self.lcolor + '__label', self.lcolor_query],
+            self.lk: [self.lk + '__label', self.lk_query],
+            self.mat: [self.mat + '__label', self.mat_query],
+            self.manu: [self.manu + '__label', self.manu_query],
             self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
             self.submat: [self.submat + '__label', self.submat_query],
@@ -228,7 +228,7 @@ class FilterSorter:
                 value['enabled'] = True
                 self.legit_queries.append(f'{id_term}-{idt}')
             facet['values'].append(value)
-        self.filter_response.append(facet)
+        self.filter_response.insert(0, facet)
         if not args:
             return products
         q_objects = Q()
@@ -338,7 +338,8 @@ class FilterSorter:
             ]
         }
         if not self.thk_query:
-            self.filter_response.append(thk_facet)
+            if min_thick != max_thick:
+                self.filter_response.append(thk_facet)
             return products
         thk_facet['values'][0]['enabled'] = True
         self.filter_response.append(thk_facet)

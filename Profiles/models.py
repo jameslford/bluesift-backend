@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -159,23 +160,36 @@ class CompanyShippingLocation(models.Model):
 
 class SupplierProduct(models.Model):
 
+
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
         related_name='priced'
         )
+
     supplier = models.ForeignKey(
         CompanyShippingLocation,
         on_delete=models.CASCADE,
         related_name='priced_products'
         )
-    my_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    online_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    units_available = models.IntegerField(default=0, null=True)
-    units_per_order = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+
+
+    units_available_in_store = models.IntegerField(default=0, null=True)
+    units_per_order = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+
     for_sale_in_store = models.BooleanField(default=False)
+    in_store_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+
     for_sale_online = models.BooleanField(default=False)
+    online_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+
+    on_sale = models.BooleanField(default=False)
+    sale_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+
+    lead_time_ts = models.DurationField(blank=True, null=True, default=datetime.timedelta(days=0))
     offer_installation = models.BooleanField(default=False)
+    banner_item = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('product', 'supplier')
@@ -185,10 +199,22 @@ class SupplierProduct(models.Model):
 
     def location_address(self):
         return self.supplier.address.city_state()
-        # return self.supplier.address_string()
 
     def location_id(self):
         return self.supplier.id
+
+    def percentage_off(self):
+        if not self.on_sale and self.sale_price and self.in_store_ppu:
+            return
+        return self.sale_price / self.in_store_ppu
+
+    def set_banner(self):
+        if not self.banner_item:
+            return
+        location_banner_item_count = self.supplier.priced_products.filter(banner_item=True).count()
+        if location_banner_item_count >= 3:
+            self.banner_item = False
+            return
 
     def company_name(self):
         return self.supplier.company_account.name
@@ -198,11 +224,14 @@ class SupplierProduct(models.Model):
         return [coordinates.lat, coordinates.lng]
 
     def set_online_price(self):
-        if self.my_price:
-            self.online_ppu = Decimal(self.my_price) * Decimal(settings.MARKUP)
+        if self.in_store_ppu:
+            self.online_ppu = Decimal(self.in_store_ppu) * Decimal(settings.MARKUP)
 
     def save(self, *args, **kwargs):
-        self.set_online_price()
+        # self.set_online_price()
+        self.set_banner()
+        if not self.sale_price or self.sale_price <= 0:
+            self.on_sale = False
         if self.units_available <= 0:
             self.for_sale_in_store = False
             self.for_sale_online = False

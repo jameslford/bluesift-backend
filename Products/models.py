@@ -133,6 +133,19 @@ class Color(models.Model):
 
 
 class Product(models.Model):
+    SF = 'SF'
+    EACH = 'EACH'
+    UNIT_CHOICES = (
+        (SF, 'SF'),
+        (EACH, 'Each')
+    )
+
+    unit = models.CharField(
+        max_length=10,
+        choices=UNIT_CHOICES,
+        default=SF
+       )
+
     name = models.CharField(max_length=300)
     bb_sku = models.CharField(max_length=500, unique=True)
     manufacturer = models.ForeignKey(
