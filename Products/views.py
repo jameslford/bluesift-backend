@@ -41,6 +41,7 @@ def product_list(request):
     products = sorter.filter_attribute(products)
 
     filter_response = sorter.return_filter(products)
+    products = sorter.order(products)
 
     legit_queries = ['quer=' + q for q in sorter.legit_queries]
     paginator = PageNumberPagination()

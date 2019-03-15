@@ -60,11 +60,10 @@ class FilterSorter:
     def __init__(self, request):
         request_url = request.GET.urlencode().split('&')
         request_url = [query for query in request_url if 'page' not in query]
-        queries = request.GET.getlist('quer')
-        search_terms = request.GET.getlist('search', None)
 
-        self.query = queries
-        self.search_terms = search_terms
+        self.ordering_term = request.GET.get('order_term', None)
+        self.query = request.GET.getlist('quer')
+        self.search_terms = request.GET.getlist('search', None)
         self.request_url = [q.replace('quer=', '') for q in request_url]
         self.app_query, self.app_query_raw = self.refine_list(self.app)
         self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
@@ -93,8 +92,8 @@ class FilterSorter:
 
         self.standalones = {
             self.lcolor: [self.lcolor + '__label', self.lcolor_query],
-            self.lk: [self.lk + '__label', self.lk_query],
             self.mat: [self.mat + '__label', self.mat_query],
+            self.lk: [self.lk + '__label', self.lk_query],
             self.manu: [self.manu + '__label', self.manu_query],
             self.surcoat: [self.surcoat + '__label', self.surcoat_query],
             self.fin: [self.fin + '__label', self.fin_query],
@@ -386,3 +385,8 @@ class FilterSorter:
             self.return_products = False
             return []
         return searched_prods
+
+    def order(self, products):
+        if self.ordering_term:
+            return products.order_by(self.ordering_term)
+        return products
