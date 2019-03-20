@@ -36,28 +36,17 @@ app_terms = [
 
 
 class FilterSorter:
-    app = 'application'
     avail = 'availability'
     loc = 'location'
     price = 'lowest_price'
     manu = 'manufacturer'
-    sze = 'size'
-    thk = 'thickness'
-    acolor = 'actual_color'
-    lcolor = 'label_color'
-    lk = 'look'
-    shdvar = 'shade_variation'
-    mat = 'material'
-    submat = 'sub_material'
-    fin = 'finish'
-    surtex = 'surface_texture'
-    surcoat = 'surface_coating'
+
 
     spec_mat_facet = False
 
     radii = [5, 10, 20, 50, 100, 200]
 
-    def __init__(self, request):
+    def __init__(self, request, products):
         request_url = request.GET.urlencode().split('&')
         request_url = [query for query in request_url if 'page' not in query]
 
@@ -65,23 +54,20 @@ class FilterSorter:
         self.query = request.GET.getlist('quer')
         self.search_terms = request.GET.getlist('search', None)
         self.request_url = [q.replace('quer=', '') for q in request_url]
-        self.app_query, self.app_query_raw = self.refine_list(self.app)
+
         self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
         self.price_query, self.price_query_raw = self.refine_list(self.price)
         self.loc_query, self.loc_query_raw = self.refine_list(self.loc)
-        self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
         self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
+
+        self.app_query, self.app_query_raw = self.refine_list(self.app)
+        self.lk_query, self.lk_query_raw = self.refine_list(self.lk)
         self.lcolor_query, self.lcolor_query_raw = self.refine_list(self.lcolor)
         self.thk_query, self.thk_query_raw = self.refine_list(self.thk)
         self.mat_query, self.manu_query_raw = self.refine_list(self.mat)
         self.submat_query, self.submat_query_raw = self.refine_list(self.submat)
         self.fin_query, self.fin_query_raw = self.refine_list(self.fin)
         self.surcoat_query, self.surcoat_query_raw = self.refine_list(self.surcoat)
-        # self.order = list(reversed(request_url))
-        # self.sze_query, self.sze_query_raw = self.refine_list(self.sze)
-        # self.acolor_query, self.acolor_query_raw = self.refine_list(self.acolor)
-        # self.shdvar_query, self.shdvar_query_raw = self.refine_list(self.shdvar)
-        # self.surtex_query, self.surtex_query_raw = self.refine_list(self.surtex)
 
         self.bool_raw = self.avail_query_raw + self.app_query_raw
 
@@ -118,6 +104,15 @@ class FilterSorter:
 
         self.legit_queries = []
         self.filter_response = []
+        _products = products
+        _products = self.filter_search(_products)
+        _products = self.filter_location(_products)
+        _products = self.filter_price(_products)
+        _products = self.filter_thickness(_products)
+        _products = self.filter_bools(_products)
+        _products = self.filter_attribute(_products)
+        self.bool_facet(_products)
+        self._products = self.order(_products)
 
     def refine_list(self, keyword):
         queries_raw = [q for q in self.query if keyword in q]
@@ -236,25 +231,11 @@ class FilterSorter:
         new_prods = products.filter(q_objects)
         return new_prods
 
-        # now convert list value to string and see if it was in the query to determine if enabled
-        # enabled_test = str(idt)
-        # if term == self.thk:
-        #     enabled_test = enabled_test.rstrip('0')
-        # first_search = {id_term: args[0]}
-        # new_prods = products.filter(**first_search)
-        # for arg in args[1:]:
-        #     next_search = {id_term: arg}
-        #     new_prods = new_prods | products.filter(**next_search)
-        # return new_prods
-        # return products
-
     def filter_attribute(self, products):
 
         '''filters products down more every pass, in reverse order.
             so last query user entered is the first evaluated'''
 
-        # _products = products
-        # ordered_set = []
         material = None
         if self.mat_query:
             self.mat_query = self.mat_query[-1]
@@ -268,10 +249,6 @@ class FilterSorter:
             del self.standalones[self.surcoat]
         ordered_set = [q.split('-')[0] for q in self.request_url]
         ordered_set = set(ordered_set)
-        # for req in self.request_url:
-        #     q = req.split('-')
-        #     if q[0] not in ordered_set:
-        #         ordered_set.append(q[0])
         # filters in reverse order first
         for term in ordered_set:
             value = self.standalones.get(term, None)
@@ -319,7 +296,6 @@ class FilterSorter:
                     {'label': 'Price', 'enabled': self.is_priced}
                 ]
             }
-            # self.filter_response = [loc_facet, price_facet] + self.filter_response
             self.filter_response.insert(1, loc_facet)
             self.filter_response.insert(2, price_facet)
 
@@ -363,10 +339,6 @@ class FilterSorter:
             return products
         return _products
 
-    def return_filter(self, products):
-        self.bool_facet(products)
-        return self.filter_response
-
     def filter_search(self, products):
         if not self.search_terms:
             return products
@@ -375,9 +347,8 @@ class FilterSorter:
                     search=SearchVector(
                         'name',
                         'manufacturer__label',
-                        'manufacturer_color',
+                        'manufacturer_style',
                         'manu_collection',
-                        'material__label'
                     )
             ).filter(search=term)
         if not searched_prods:

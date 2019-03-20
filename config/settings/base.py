@@ -33,11 +33,14 @@ INSTALLED_APPS = [
     'Cards',
     'CustomerProfiles',
     'config',
+    'FinishSurfaces',
     'MailingList',
     'Orders',
     'Plans',
     'Products',
+    'ProductRating',
     'Profiles',
+    'SupplierRating'
 ]
 
 

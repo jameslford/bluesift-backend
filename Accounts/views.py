@@ -1,6 +1,7 @@
 # Accounts.views.py
 
 import datetime
+import os
 from django.shortcuts import redirect
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password, make_password
@@ -111,7 +112,7 @@ def custom_login(request):
             status=status.HTTP_400_BAD_REQUEST
             )
 
-    if settings.ENVIRONMENT == 'staging' and not user.is_staff:
+    if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging' and not user.is_staff:
         return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)
 
     serialized_user = UserResponseSerializer(user)

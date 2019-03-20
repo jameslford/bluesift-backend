@@ -24,29 +24,15 @@ def set_perm():
 @permission_classes((set_perm(),))
 def product_list(request):
 
-    sorter = FilterSorter(request)
     page = request.GET.get('page', 1)
     message = None
     return_products = True
-
     products = Product.objects.all()
-
-    products = sorter.filter_search(products)
-
-    products = sorter.filter_location(products)
-    products = sorter.filter_price(products)
-    products = sorter.filter_thickness(products)
-
-    products = sorter.filter_bools(products)
-    products = sorter.filter_attribute(products)
-
-    filter_response = sorter.return_filter(products)
-    products = sorter.order(products)
-
+    sorter = FilterSorter(request, products)
+    filter_response = sorter.filter_response
     legit_queries = ['quer=' + q for q in sorter.legit_queries]
     paginator = PageNumberPagination()
     paginator.page_size = 24
-
     products_response = paginator.paginate_queryset(products.select_related(
         'swatch_image',
         'label_color'
