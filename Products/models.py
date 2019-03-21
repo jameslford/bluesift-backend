@@ -1,7 +1,8 @@
 # from django.db import models
 import io
-
 from PIL import Image as pimage
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db import models
 from django.db.models import Min
 from django.contrib.gis.geos import MultiPoint
@@ -55,6 +56,10 @@ class Product(models.Model):
 
     notes = models.TextField(null=True, blank=True)
 
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     manufacturer = models.ForeignKey(
         Manufacturer,
         null=True,
@@ -81,6 +86,9 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         related_name='tiling_images'
         )
+
+    class Meta:
+        unique_together = ('content_type', 'object_id')
 
     def __str__(self):
         return self.name
@@ -175,3 +183,13 @@ class Product(models.Model):
             self.size = self.width + ' x ' + self.length
 
 
+class ProductSubClass(models.Model):
+
+    _product = GenericRelation(Product)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def product(self):
+        return self._product.all()[0]

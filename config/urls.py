@@ -12,13 +12,14 @@ urlpatterns = [
     path('get_short_lib/', get_short_lib),
     # path('append_lib', append_lib),
     path('accounts/', include('Accounts.urls')),
-    path('carts/', include('Carts.urls')),
-    path('products/', include('Products.urls')),
-    path('customerProfiles/', include('CustomerProfiles.urls'), name='customer_profiles'),
-    path('supplierProfiles/', include('Profiles.urls'), name='profiles'),
-    path('orders/', include('Orders.urls')),
     path('bbadmin/', include('BBadmin.urls')),
-    path('mailing-list/', include('MailingList.urls'))
+    path('carts/', include('Carts.urls')),
+    path('customerProfiles/', include('CustomerProfiles.urls'), name='customer_profiles'),
+    path('finish-surfaces/', include('FinishSurfaces.urls')),
+    path('mailing-list/', include('MailingList.urls')),
+    path('orders/', include('Orders.urls')),
+    path('products/', include('Products.urls')),
+    path('supplierProfiles/', include('Profiles.urls'), name='profiles')
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

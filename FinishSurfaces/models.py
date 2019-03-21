@@ -2,7 +2,7 @@ import webcolors
 import operator
 from PIL import Image as pimage
 from django.db import models
-from Products.models import Product
+from Products.models import ProductSubClass
 from Colors.models import Color
 
 
@@ -101,8 +101,7 @@ class ShadeVariation(models.Model):
         return self.label
 
 
-class FinishSurface(models.Model):
-    product = models.OneToOneField(Product, on_delete=models.CASCADE)
+class FinishSurface(ProductSubClass):
 
     actual_color = models.ForeignKey(
         Color,
@@ -191,7 +190,6 @@ class FinishSurface(models.Model):
     slip_resistant = models.BooleanField(default=False)
     shade = models.CharField(max_length=60, null=True)
 
-
     @staticmethod
     def bool_groups():
         return [
@@ -218,7 +216,10 @@ class FinishSurface(models.Model):
 
     @staticmethod
     def key_term():
-        return 'material'
+        return {
+            'name': 'material',
+            'class': Material
+        }
 
     @staticmethod
     def dependents():
@@ -251,7 +252,7 @@ class FinishSurface(models.Model):
                 continue
             if cat.material != self.material:
                 return
-        super(Product, self).save(*args, **kwargs)
+        super(FinishSurface, self).save(*args, **kwargs)
 
     def set_actual_color(self):
         swatch_image = self.product.swatch_image

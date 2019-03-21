@@ -41,7 +41,6 @@ class FilterSorter:
     price = 'lowest_price'
     manu = 'manufacturer'
 
-
     spec_mat_facet = False
 
     radii = [5, 10, 20, 50, 100, 200]

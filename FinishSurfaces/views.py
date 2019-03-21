@@ -3,9 +3,11 @@ from rest_framework.decorators import (
     # permission_classes
     )
 from .models import FinishSurface
+from .serializers import SerpyFinishSurfaceMini
 from Products.sorter import FilterSorter
 
 
 @api_view(['GET'])
-def products_list(request):
+def fs_products_list(request):
     sorter = FilterSorter(request, FinishSurface)
+
