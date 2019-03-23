@@ -4,20 +4,16 @@ from django.db.models import Min, Max, Q
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from Addresses.models import Zipcode
-from rest_framework.pagination import PageNumberPagination
-
-# from Products.models import Product
-# from django.contrib.gis.geos import Point
 
 
 class FilterSorter:
     avail = 'availability'
-    avai_terms = ['for_sale_in_store']
+    avai_terms = ['product__for_sale_in_store']
     loc = 'location'
     price = 'lowest_price'
     manu = 'manufacturer'
 
-    def __init__(self, request, sub_class, page_size=24):
+    def __init__(self, request, sub_class, serializer, page_size=24):
         request_url = request.GET.urlencode().split('&')
         request_url = [query for query in request_url if 'page' not in query]
         self.ordering_term = request.GET.get('order_term', None)
@@ -27,12 +23,15 @@ class FilterSorter:
         self.page = int(request.GET.get('page', 1))
         self.page_size = page_size
         self.sub_class = sub_class
+        self.serializer = serializer
 
         self.message = None
         self.keyterm_facet = False
         self.return_products = True
         self.legit_queries = []
         self.loaf_more = True
+        self.filter_response = []
+        self.load_more = True
 
         self.zipcode = None
         self.radius = None
@@ -41,47 +40,65 @@ class FilterSorter:
         self.max_price = None
         self.is_priced = False
 
-        self.avail_query, self.avail_query_raw = self.refine_list(self.avail)
-        self.price_query, self.price_query_raw = self.refine_list(self.price)
-        self.loc_query, self.loc_query_raw = self.refine_list(self.loc)
-        self.manu_query, self.manu_query_raw = self.refine_list(self.manu)
+        self.avail_query = self.refine_list(self.avail)
+        self.avail_query_raw = self.refine_list_raw(self.avail) 
+        self.price_query = self.refine_list(self.price)
+        self.price_query_raw = self.refine_list_raw(self.price)
+        self.loc_query = self.refine_list(self.loc)
+        self.loc_query_raw = self.refine_list_raw(self.loc)
+        self.manu_query = self.refine_list(self.manu)
+        self.manu_query_raw = self.refine_list_raw(self.manu)
 
-        self.bool_query, self.bool_query_raw = [self.refine_list(q) for q in sub_class.bool_groups()['name']]
-        self.keyterm_query, self.keyterm_query_raw = self.refine_list(sub_class.key_term())
+        self.bool_query = []
+        self.bool_query_raw = []
+        for q in sub_class.bool_groups():
+            ql = self.refine_list(q['name'])
+            ql_raw = self.refine_list_raw(q['name'])
+            for x in ql:
+                self.bool_query.append(x)
+            for z in ql_raw:
+                self.bool_query_raw.append(z)
+
+        self.keyterm_query = self.refine_list(sub_class.key_term())
+        self.keyterm_query_raw = self.refine_list_raw(sub_class.key_term())
         self.bool_groups = self.form_list()
 
         self.dependents = self.form_dict(self.sub_class.dependents(), '__label')
         self.fk_standalones = self.form_dict(self.sub_class.fk_standalones(), '__label')
         self.standalones = self.form_dict(self.sub_class.standalones())
 
-        _products = sub_class.select_related('product').objects.all()
+        _products = sub_class.objects.select_related(*sub_class.dependents()).all()
         _products = self.filter_search_terms(_products)
         _products = self.filter_location(_products)
         _products = self.filter_price(_products)
         _products = self.filter_bools(_products)
-        _products = self.filter_attribute(_products)
+        _products = self.filter_attributes(_products)
         self.bool_facet(_products)
-        self.product_count = _products.count()
+        self.product_count = _products.count() if _products else 0
         _products = self.order(_products)
         self.products = self.paginate_products(_products)
         self.legit_queries = ['quer=' + q for q in self.legit_queries]
+        self.legit_queries.append(str(self.page))
 
     def refine_list(self, keyword):
         queries = [q.replace(keyword+'-', '') for q in self.query if keyword in q]
+        return queries
+
+    def refine_list_raw(self, keyword):
         queries_raw = [q for q in self.query if keyword in q]
-        return [queries, queries_raw]
+        return queries_raw
 
     def form_dict(self, group, option=''):
         key_dict = {}
         for q in group:
-            query = self.refine_list(q)[0]
+            query = self.refine_list(q)
             key_dict[q] = [q + option, query]
         return key_dict
 
-    def form_list(self, group):
+    def form_list(self):
         bg = []
         for q in self.sub_class.bool_groups():
-            b_query = [self.refine_list(k)[0] for k in q['terms']]
+            b_query = [self.refine_list(k) for k in q['terms']]
             item_list = [b_query, q['name'], q['terms']]
             bg.append(item_list)
         avai_list = [self.avail_query, self.avail, self.avai_terms]
@@ -165,11 +182,12 @@ class FilterSorter:
         return _products
 
     def filter_bools(self, products):
+        # bool_terms = [val for group in self.sub_class.bool_groups() for val in group['terms']]
         _products = products
         search_terms = {}
         for av_term in self.avail_query:
-            search_terms['product__' + av_term] = True
-        for term in self.bool_terms:
+            search_terms[av_term] = True
+        for term in self.bool_query:
             if hasattr(self.sub_class, term):
                 search_terms[term] = True
             else:
@@ -177,7 +195,7 @@ class FilterSorter:
         _products = _products.filter(**search_terms)
         return _products
 
-    def filter__attributes(self, products):
+    def filter_attributes(self, products):
         key_object = None
         keyterm_dict = self.sub_class.key_term()
         if self.keyterm_query:
@@ -189,8 +207,14 @@ class FilterSorter:
             # self.mat_query = []
         else:
             self.dependents_query = {}
-        kt_dict = self.form_dict(keyterm_dict['name'])
-        self.attribute_group = {**self.fk_standalones, **self.dependents, **self.standalones, **kt_dict}
+        kt_dict = self.form_dict([keyterm_dict['name']])
+        # self.attribute_group = {**self.fk_standalones, **self.dependents, **self.standalones, **kt_dict}
+        self.attribute_group = {}
+        self.attribute_group.update(self.fk_standalones)
+        self.attribute_group.update(self.dependents)
+        self.attribute_group.update(self.standalones)
+        self.attribute_group.update(kt_dict)
+
         ordered_set = [q.split('-')[0] for q in self.request_url]
         ordered_set = set(ordered_set)
         for term in ordered_set:
@@ -292,7 +316,6 @@ class FilterSorter:
             return products.order_by(self.ordering_term)
         return products
 
-
     def paginate_products(self, products):
         start_page = self.page - 1
         product_start = start_page * self.page_size
@@ -303,5 +326,16 @@ class FilterSorter:
         else:
             return products[product_start:product_end]
 
-
-
+    def return_content(self):
+        serialized_products = self.serializer(self.products, many=True)
+        return {
+            'load_more': self.load_more,
+            # 'page_count': page_count,
+            'product_count': self.product_count,
+            # 'keyterm_selected': self.keyterm_selected,
+            'query': self.legit_queries,
+            'current_page': self.page,
+            'message': self.message,
+            'filter': self.filter_response,
+            'products': serialized_products.data if self.return_products else []
+        }

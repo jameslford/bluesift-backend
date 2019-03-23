@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
-from .scripts import FilterSorter
+# from .scripts import FilterSorter
 from .serializers import ProductDetailSerializer, SerpyProduct
 from .models import Product
 from Profiles.serializers import SupplierProductMiniSerializer
@@ -20,51 +20,51 @@ def set_perm():
         return AllowAny
 
 
-@api_view(['GET'])
-@permission_classes((set_perm(),))
-def product_list(request):
+# @api_view(['GET'])
+# @permission_classes((set_perm(),))
+# def product_list(request):
 
-    page = request.GET.get('page', 1)
-    message = None
-    return_products = True
-    products = Product.objects.all()
-    sorter = FilterSorter(request, products)
-    filter_response = sorter.filter_response
-    legit_queries = ['quer=' + q for q in sorter.legit_queries]
-    paginator = PageNumberPagination()
-    paginator.page_size = 24
-    products_response = paginator.paginate_queryset(products.select_related(
-        'swatch_image',
-        'label_color'
-        ), request)
-    product_count = products.count() if products else 0
-    page_count = math.ceil(product_count/paginator.page_size)
-    load_more = True
-    if page:
-        page_number = int(page)
-        pg_str = 'page=' + str(page_number)
-        sorter.legit_queries.append(pg_str)
-    else:
-        page_number = 1
-    if page_number == page_count or not return_products:
-        load_more = False
+#     page = request.GET.get('page', 1)
+#     message = None
+#     return_products = True
+#     products = Product.objects.all()
+#     sorter = FilterSorter(request, products)
+#     filter_response = sorter.filter_response
+#     legit_queries = ['quer=' + q for q in sorter.legit_queries]
+#     paginator = PageNumberPagination()
+#     paginator.page_size = 24
+#     products_response = paginator.paginate_queryset(products.select_related(
+#         'swatch_image',
+#         'label_color'
+#         ), request)
+#     product_count = products.count() if products else 0
+#     page_count = math.ceil(product_count/paginator.page_size)
+#     load_more = True
+#     if page:
+#         page_number = int(page)
+#         pg_str = 'page=' + str(page_number)
+#         sorter.legit_queries.append(pg_str)
+#     else:
+#         page_number = 1
+#     if page_number == page_count or not return_products:
+#         load_more = False
 
-    serialized_products = SerpyProduct(products_response, many=True)
-    material_selected = sorter.spec_mat_facet
+#     serialized_products = SerpyProduct(products_response, many=True)
+#     material_selected = sorter.spec_mat_facet
 
-    content = {
-        'load_more': load_more,
-        'page_count': page_count,
-        'product_count': product_count,
-        'material_selected': material_selected,
-        'query': legit_queries,
-        'current_page': page,
-        'message': message,
-        'filter': filter_response,
-        'products': serialized_products.data if return_products else []
-    }
+#     content = {
+#         'load_more': load_more,
+#         'page_count': page_count,
+#         'product_count': product_count,
+#         'material_selected': material_selected,
+#         'query': legit_queries,
+#         'current_page': page,
+#         'message': message,
+#         'filter': filter_response,
+#         'products': serialized_products.data if return_products else []
+#     }
 
-    return Response(content, status=status.HTTP_200_OK)
+#     return Response(content, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

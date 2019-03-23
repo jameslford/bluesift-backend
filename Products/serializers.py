@@ -4,12 +4,10 @@ import serpy
 from rest_framework import serializers
 from .models import (
     Product,
-    Color,
-    Finish,
     Manufacturer,
-    Material,
     Image
     )
+from Colors.models import Color
 
 
 class ManufacturerSerializer(serializers.ModelSerializer):
@@ -23,23 +21,23 @@ class SerpyManufacturer(serpy.Serializer):
     label = serpy.Field()
 
 
-class MaterialSerializer(serializers.ModelSerializer):
+# class MaterialSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Material
-        fields = ('id', 'label')
+#     class Meta:
+#         model = Material
+#         fields = ('id', 'label')
 
 
-class SerpyMasterial(serpy.Serializer):
+class SerpyMaterial(serpy.Serializer):
     pk = serpy.Field('id')
     label = serpy.Field()
 
 
-class FinishSerializer(serializers.ModelSerializer):
+# class FinishSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Finish
-        fields = ('id', 'label')
+#     class Meta:
+#         model = Finish
+#         fields = ('id', 'label')
 
 
 class SerpyFinish(serpy.Serializer):
@@ -97,7 +95,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class SerpyProduct(serpy.Serializer):
-    pk = serpy.Field('id')
+    pk = serpy.Field()
     bb_sku = serpy.Field()
     unit = serpy.Field()
     manufacturer_style = serpy.Field()
@@ -116,7 +114,7 @@ class SerpyProduct(serpy.Serializer):
 class ProductSerializerforSupplier(serializers.ModelSerializer):
     swatch_image = ImageSerializer()
     manufacturer = ManufacturerSerializer()
-    material = MaterialSerializer()
+    # material = MaterialSerializer()
 
     class Meta:
         model = Product
@@ -125,7 +123,7 @@ class ProductSerializerforSupplier(serializers.ModelSerializer):
             'unit',
             'manufacturer_color',
             'manu_collection',
-            'material',
+            # 'material',
             'size',
             'name',
             'swatch_image',
@@ -138,8 +136,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     room_scene = ImageSerializer(required=False)
     swatch_image = ImageSerializer()
     tiling_image = ImageSerializer(required=False)
-    finish = FinishSerializer(required=False)
-    material = MaterialSerializer(required=False)
+    # finish = FinishSerializer(required=False)
+    # material = MaterialSerializer(required=False)
 
     class Meta:
         model = Product
@@ -153,7 +151,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'manufacturer_url',
             'manufacturer_sku',
             'manu_collection',
-            'manufacturer_color',
+            'manufacturer_style',
             'manufacturer_name',
             'finish',
 
@@ -162,28 +160,5 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'room_scene',
             'swatch_image',
             'tiling_image',
-            'material',
 
-            'walls',
-            'countertops',
-            'cabinet_fronts',
-            'floors',
-            'shower_floors',
-            'shower_walls',
-            'exterior_walls',
-            'exterior_floors',
-            'covered_walls',
-            'covered_floors',
-            'pool_linings',
-            'locations',
-
-            'lrv',
-            'cof',
-            'look',
-            'width',
-            'thickness',
-            'length',
-            'residential_warranty',
-            'commercial_warranty',
-            'size'
         )

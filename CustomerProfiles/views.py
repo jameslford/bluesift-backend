@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from Products.scripts import FilterSorter
+# from Products.scripts import FilterSorter
 
 from CustomerProfiles.models import (
     CustomerProfile,
@@ -79,20 +79,20 @@ def customer_project(request, pk=None):
         # products = [q.product.pk for q in project.products.select_related('product').all()]
         products = project.products.values_list('product__id', flat=True)
         products = Product.objects.filter(id__in=products)
-        sorter = FilterSorter(request)
-        products = sorter.filter_location(products)
-        products = sorter.filter_price(products)
-        products = sorter.filter_thickness(products)
+        # sorter = FilterSorter(request)
+        # products = sorter.filter_location(products)
+        # products = sorter.filter_price(products)
+        # products = sorter.filter_thickness(products)
 
-        products = sorter.filter_bools(products)
-        products = sorter.filter_attribute(products)
+        # products = sorter.filter_bools(products)
+        # products = sorter.filter_attribute(products)
         product_ids = products.values_list('id', flat=True).distinct()
 
-        filter_response = sorter.return_filter(products)
+        # filter_response = sorter.return_filter(products)
 
         serialized_project = CustomerProjectDetailSerializer(project, context={'product_ids': product_ids})
         return Response({
-            'filter': filter_response,
+            # 'filter': filter_response,
             'project': serialized_project.data
             }, status=status.HTTP_200_OK)
 
@@ -225,8 +225,8 @@ def customer_product(request, pk=None):
         return Response(status=status.HTTP_202_ACCEPTED)
 
     #expierimental
-    if request.method == 'GET':
-        products = Product.objects.filter('priced__')
+    # if request.method == 'GET':
+    #     products = Product.objects.filter('priced__')
 
 
 def customer_short_lib(request):

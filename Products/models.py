@@ -54,11 +54,17 @@ class Product(models.Model):
     for_sale_in_store = models.BooleanField(default=False)
     locations = models.MultiPointField(null=True)
 
+    residential_warranty = models.CharField(max_length=100, null=True, blank=True)
+    commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
+    light_commercial_warranty = models.CharField(max_length=100, null=True)
+    commercial = models.BooleanField(default=False)
+
     notes = models.TextField(null=True, blank=True)
 
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
+    # content_object = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
+    # content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    # object_id = models.PositiveIntegerField()
+    # content_object = GenericForeignKey('content_type', 'object_id')
 
     manufacturer = models.ForeignKey(
         Manufacturer,
@@ -87,8 +93,8 @@ class Product(models.Model):
         related_name='tiling_images'
         )
 
-    class Meta:
-        unique_together = ('content_type', 'object_id')
+    # class Meta:
+    #     unique_together = ('content_type', 'object_id')
 
     def __str__(self):
         return self.name
@@ -184,12 +190,20 @@ class Product(models.Model):
 
 
 class ProductSubClass(models.Model):
+    product = models.OneToOneField(Product, related_name='content_object', on_delete=models.CASCADE)
 
-    _product = GenericRelation(Product)
 
-    class Meta:
-        abstract = True
+# class ProductSubClass(models.Model):
 
-    @property
-    def product(self):
-        return self._product.all()[0]
+#     _product = GenericRelation(
+#         Product,
+#         content_type_field='content_type',
+#         object_id_field='object_id'
+#         )
+
+#     class Meta:
+#         abstract = True
+
+    # @property
+    # def product(self):
+    #     return self._product.first()

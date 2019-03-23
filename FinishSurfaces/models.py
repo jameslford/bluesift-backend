@@ -2,7 +2,7 @@ import webcolors
 import operator
 from PIL import Image as pimage
 from django.db import models
-from Products.models import ProductSubClass
+from Products.models import ProductSubClass, Product
 from Colors.models import Color
 
 
@@ -180,12 +180,7 @@ class FinishSurface(ProductSubClass):
     lrv = models.CharField(max_length=60, null=True, blank=True)
     cof = models.CharField(max_length=60, null=True)
 
-    residential_warranty = models.CharField(max_length=100, null=True, blank=True)
-    commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
-    light_commercial_warranty = models.CharField(max_length=100, null=True)
-
     install_type = models.CharField(max_length=100, null=True)
-    commercial = models.BooleanField(default=False)
     sqft_per_carton = models.CharField(max_length=70, null=True)
     slip_resistant = models.BooleanField(default=False)
     shade = models.CharField(max_length=60, null=True)
@@ -232,7 +227,7 @@ class FinishSurface(ProductSubClass):
     @staticmethod
     def fk_standalones():
         return [
-            'label_color'
+            'label_color',
             'look'
         ]
 
