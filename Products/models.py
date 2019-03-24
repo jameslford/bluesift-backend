@@ -130,8 +130,8 @@ class Product(models.Model):
         all_sellers = online_sellers | in_store_sellers
         all_sellers = all_sellers.distinct()
         if all_sellers.count() > 0:
-            price = all_sellers.aggregate(Min('my_price'))
-            self.lowest_price = price["my_price__min"]
+            price = all_sellers.aggregate(Min('in_store_ppu'))
+            self.lowest_price = price["in_store_ppu__min"]
         self.save()
         return
 

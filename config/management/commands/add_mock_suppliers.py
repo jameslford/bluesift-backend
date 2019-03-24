@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+import datetime
 from config.management.commands import lists
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
@@ -24,7 +25,7 @@ class Command(BaseCommand):
             # password = make_password('tomatoes')
             password = 'tomatoes'
             user = user_model.objects.create_user(email=email, is_supplier=True, password=password)
-            Token.objects.create(user=user)
+            # Token.objects.create(user=user)
             zipcode = Zipcode.objects.get(code=address[3])
             location_address = Address.objects.create(
                 address_line_1=address[0],
@@ -62,16 +63,19 @@ class Command(BaseCommand):
                 select_id = random.choice(location_prod_ids)
                 location_prod_ids.remove(select_id)
                 product = Product.objects.get(pk=select_id)
-                available_online = random.choice([True, False])
+                # available_online = random.choice([True, False])
+                lead_time = random.randint(1, 14)
+                offer_install = random.choice([True, False])
                 SupplierProduct.objects.create(
                     product=product,
-                    my_price=price,
                     supplier=location,
-                    units_available=units_available,
+                    units_available_in_store=units_available,
                     units_per_order=units_per_order,
                     for_sale_in_store=True,
-                    for_sale_online=available_online,
-                    offer_installation=True
+                    in_store_ppu=price,
+                    # for_sale_online=available_online,
+                    lead_time_ts=datetime.timedelta(days=lead_time),
+                    offer_installation=offer_install
                 )
 
 

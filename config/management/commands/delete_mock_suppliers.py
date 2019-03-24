@@ -12,4 +12,5 @@ class Command(BaseCommand):
         users = user_model.objects.all()
         for user in users:
             if 'hotgmail' in user.email:
+                user.auth_token.delete()
                 user.delete()

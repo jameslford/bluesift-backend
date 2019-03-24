@@ -24,6 +24,7 @@ class FilterSorter:
         self.page_size = page_size
         self.sub_class = sub_class
         self.serializer = serializer
+        self.keyterm_selected = False
 
         self.message = None
         self.keyterm_facet = False
@@ -35,6 +36,7 @@ class FilterSorter:
 
         self.zipcode = None
         self.radius = None
+        self.radii = [5, 15, 25, 50, 100, 200, 500]
 
         self.min_price = None
         self.max_price = None
@@ -59,11 +61,11 @@ class FilterSorter:
             for z in ql_raw:
                 self.bool_query_raw.append(z)
 
-        self.keyterm_query = self.refine_list(sub_class.key_term())
-        self.keyterm_query_raw = self.refine_list_raw(sub_class.key_term())
+        self.keyterm_query = self.refine_list(sub_class.key_term()['name'])
+        self.keyterm_query_raw = self.refine_list_raw(sub_class.key_term()['name'])
         self.bool_groups = self.form_list()
 
-        self.dependents = self.form_dict(self.sub_class.dependents(), '__label')
+        self.dependents = self.form_dict(self.sub_class.dependents(), '__label', 'dependent')
         self.fk_standalones = self.form_dict(self.sub_class.fk_standalones(), '__label')
         self.standalones = self.form_dict(self.sub_class.standalones())
 
@@ -82,23 +84,27 @@ class FilterSorter:
 
     def refine_list(self, keyword):
         queries = [q.replace(keyword+'-', '') for q in self.query if keyword in q]
+        # print(self.query)
         return queries
 
     def refine_list_raw(self, keyword):
         queries_raw = [q for q in self.query if keyword in q]
         return queries_raw
 
-    def form_dict(self, group, option=''):
+    def form_dict(self, group, option='', facet_type='normal'):
         key_dict = {}
         for q in group:
             query = self.refine_list(q)
-            key_dict[q] = [q + option, query]
+            key_dict[q] = [q + option, query, facet_type]
+        # key_dict['facet_type'] = facet_type
         return key_dict
 
     def form_list(self):
         bg = []
         for q in self.sub_class.bool_groups():
-            b_query = [self.refine_list(k) for k in q['terms']]
+            # b_query = [self.refine_list(k) for k in q['name']]
+            b_query = self.refine_list(q['name'])
+            print(b_query)
             item_list = [b_query, q['name'], q['terms']]
             bg.append(item_list)
         avai_list = [self.avail_query, self.avail, self.avai_terms]
@@ -153,9 +159,9 @@ class FilterSorter:
     def filter_price(self, products):
         if not self.avail_query:
             return products
-        price_agg = products.aggregate(Min('lowest_price'), Max('lowest_price'))
-        self.min_price = price_agg['lowest_price__min']
-        self.max_price = price_agg['lowest_price__max']
+        price_agg = products.aggregate(Min('product__lowest_price'), Max('product__lowest_price'))
+        self.min_price = price_agg['product__lowest_price__min']
+        self.max_price = price_agg['product__lowest_price__max']
         self.total_price_range = [self.min_price, self.max_price]
         if not self.price_query:
             return products
@@ -166,13 +172,13 @@ class FilterSorter:
         if min_price:
             min_price = decimal.Decimal(min_price[-1])
             self.min_price = min_price
-            min_quer_string = 'lowest_price-min-' + str(min_price)
+            min_quer_string = 'product__lowest_price-min-' + str(min_price)
             self.legit_queries.append(min_quer_string)
             _products = products.filter(product__lowest_price__gte=min_price)
         if max_price:
             max_price = decimal.Decimal(max_price[-1])
             self.max_price = max_price
-            max_quer_string = 'lowest_price-max-' + str(max_price)
+            max_quer_string = 'product__lowest_price-max-' + str(max_price)
             self.legit_queries.append(max_quer_string)
             _products = _products.filter(product__lowest_price__lte=max_price)
         if not _products:
@@ -204,10 +210,11 @@ class FilterSorter:
             self.keyterm_facet = True
             keyterm_filter_term = {keyterm_dict['name']: key_object}
             products = products.filter(**keyterm_filter_term)
+            self.keyterm_selected = True
             # self.mat_query = []
         else:
             self.dependents_query = {}
-        kt_dict = self.form_dict([keyterm_dict['name']])
+        kt_dict = self.form_dict([keyterm_dict['name']], '__label')
         # self.attribute_group = {**self.fk_standalones, **self.dependents, **self.standalones, **kt_dict}
         self.attribute_group = {}
         self.attribute_group.update(self.fk_standalones)
@@ -234,12 +241,14 @@ class FilterSorter:
 
         term = term_list[0]
         args = term_list[1]
+        facet_type = term_list[2]
         id_term = term.replace('__label', '')
         products = products.select_related(id_term).all()
         # _products = products
         facet = {
             'name': id_term,
             'total_count': 0,
+            'facet_type': facet_type,
             'values': []
             }
         values = self.sub_class.objects.values_list(term, id_term).distinct()
@@ -332,7 +341,7 @@ class FilterSorter:
             'load_more': self.load_more,
             # 'page_count': page_count,
             'product_count': self.product_count,
-            # 'keyterm_selected': self.keyterm_selected,
+            'keyterm_selected': self.keyterm_selected,
             'query': self.legit_queries,
             'current_page': self.page,
             'message': self.message,

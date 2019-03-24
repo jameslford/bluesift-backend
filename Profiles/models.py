@@ -62,7 +62,7 @@ class EmployeeProfile(models.Model):
         if self.company_account_owner:
             existing_owners = self.company_account.employees.filter(company_account_owner=True).count()
             if existing_owners >= company_owners_allowed:
-                raise ValidationError('Maximum owners, ' + str(company_owners_allowed) +' already exist')
+                raise ValidationError('Maximum owners, ' + str(company_owners_allowed) + ' already exist')
         return super().clean()
 
     def save(self, *args, **kwargs):
@@ -160,7 +160,6 @@ class CompanyShippingLocation(models.Model):
 
 class SupplierProduct(models.Model):
 
-
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -172,8 +171,6 @@ class SupplierProduct(models.Model):
         on_delete=models.CASCADE,
         related_name='priced_products'
         )
-
-
 
     units_available_in_store = models.IntegerField(default=0, null=True)
     units_per_order = models.DecimalField(max_digits=10, decimal_places=2, default=1)
@@ -232,7 +229,7 @@ class SupplierProduct(models.Model):
         self.set_banner()
         if not self.sale_price or self.sale_price <= 0:
             self.on_sale = False
-        if self.units_available <= 0:
+        if self.units_available_in_store <= 0:
             self.for_sale_in_store = False
             self.for_sale_online = False
         if not self.supplier.approved_online_seller:
