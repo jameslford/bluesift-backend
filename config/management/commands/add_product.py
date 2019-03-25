@@ -60,5 +60,5 @@ def add_product(row, update):
         if ti_image:
             product.tiling_image = ti_image
 
-    product.save()
+    # product.save()
     return product

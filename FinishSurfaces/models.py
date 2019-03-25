@@ -235,6 +235,18 @@ class FinishSurface(ProductSubClass):
     def standalones():
         return []
 
+    def details(self):
+        return [
+            ['material', self.material.label],
+            ['finish', self.finish.label],
+            ['submaterial', self.sub_material.label],
+            ['surface_coating', self.surface_coating.label],
+            ['thickness', self.thickness],
+            ['width', self.width],
+            ['length', self.length],
+            ['edge', self.edge.label],
+        ]
+
     def save(self, *args, **kwargs):
         cats = [
             self.sub_material,

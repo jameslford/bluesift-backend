@@ -4,26 +4,36 @@ from django.db.models import Min, Max, Q
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from Addresses.models import Zipcode
+from Products.models import ProductSubClass
+from Products.serializers import SubClassSerializer
+from Profiles.serializers import SupplierProductMiniSerializer
+from FinishSurfaces.models import FinishSurface
+from Doors.models import Door
 
 
 class FilterSorter:
+
     avail = 'availability'
     avai_terms = ['product__for_sale_in_store']
     loc = 'location'
     price = 'lowest_price'
     manu = 'manufacturer'
+    class_switcher = {
+        'finish-surface': FinishSurface,
+        'door': Door
+    }
 
-    def __init__(self, request, sub_class, serializer, page_size=24):
+    def __init__(self, request, cat, page_size=24):
         request_url = request.GET.urlencode().split('&')
         request_url = [query for query in request_url if 'page' not in query]
         self.ordering_term = request.GET.get('order_term', None)
+        self.page = int(request.GET.get('page', 1))
         self.query = request.GET.getlist('quer')
         self.search_terms = request.GET.getlist('search', None)
         self.request_url = [q.replace('quer=', '') for q in request_url]
-        self.page = int(request.GET.get('page', 1))
         self.page_size = page_size
-        self.sub_class = sub_class
-        self.serializer = serializer
+        self.sub_class = self.class_switcher.get(cat)
+        self.serializer = SubClassSerializer
         self.keyterm_selected = False
 
         self.message = None
@@ -43,7 +53,7 @@ class FilterSorter:
         self.is_priced = False
 
         self.avail_query = self.refine_list(self.avail)
-        self.avail_query_raw = self.refine_list_raw(self.avail) 
+        self.avail_query_raw = self.refine_list_raw(self.avail)
         self.price_query = self.refine_list(self.price)
         self.price_query_raw = self.refine_list_raw(self.price)
         self.loc_query = self.refine_list(self.loc)
@@ -53,7 +63,7 @@ class FilterSorter:
 
         self.bool_query = []
         self.bool_query_raw = []
-        for q in sub_class.bool_groups():
+        for q in self.sub_class.bool_groups():
             ql = self.refine_list(q['name'])
             ql_raw = self.refine_list_raw(q['name'])
             for x in ql:
@@ -61,15 +71,22 @@ class FilterSorter:
             for z in ql_raw:
                 self.bool_query_raw.append(z)
 
-        self.keyterm_query = self.refine_list(sub_class.key_term()['name'])
-        self.keyterm_query_raw = self.refine_list_raw(sub_class.key_term()['name'])
+        self.keyterm_query = self.refine_list(self.sub_class.key_term()['name'])
+        self.keyterm_query_raw = self.refine_list_raw(self.sub_class.key_term()['name'])
         self.bool_groups = self.form_list()
 
         self.dependents = self.form_dict(self.sub_class.dependents(), '__label', 'dependent')
         self.fk_standalones = self.form_dict(self.sub_class.fk_standalones(), '__label')
         self.standalones = self.form_dict(self.sub_class.standalones())
 
-        _products = sub_class.objects.select_related(*sub_class.dependents()).all()
+        _products = self.sub_class.objects.select_related(
+            *self.sub_class.dependents(),
+            *self.sub_class.fk_standalones(),
+            # sub_class.key_term()['name'],
+            'product',
+            'product__swatch_image',
+            'product__manufacturer'
+            ).all()
         _products = self.filter_search_terms(_products)
         _products = self.filter_location(_products)
         _products = self.filter_price(_products)
@@ -80,7 +97,7 @@ class FilterSorter:
         _products = self.order(_products)
         self.products = self.paginate_products(_products)
         self.legit_queries = ['quer=' + q for q in self.legit_queries]
-        self.legit_queries.append(str(self.page))
+        self.legit_queries.append('page=' + str(self.page))
 
     def refine_list(self, keyword):
         queries = [q.replace(keyword+'-', '') for q in self.query if keyword in q]
@@ -104,7 +121,7 @@ class FilterSorter:
         for q in self.sub_class.bool_groups():
             # b_query = [self.refine_list(k) for k in q['name']]
             b_query = self.refine_list(q['name'])
-            print(b_query)
+            # print(b_query)
             item_list = [b_query, q['name'], q['terms']]
             bg.append(item_list)
         avai_list = [self.avail_query, self.avail, self.avai_terms]
@@ -121,7 +138,6 @@ class FilterSorter:
                         'product__manufacturer__label',
                         'product__manufacturer_style',
                         'product__manu_collection',
-                        'product__manufacturer_search'
                     )
             ).filter(search=term)
         if not searched_prods:
@@ -141,7 +157,7 @@ class FilterSorter:
         radius = D(mi=radius_raw)
         zipcode = zip_raw[-1].replace('zipcode-', '')
         coords = Zipcode.objects.filter(code=zipcode).first().centroid.point
-        self.radius = radius
+        self.radius = radius_raw
         if not coords:
             self.zipcode = 'invalid zipcode'
             return products
@@ -170,13 +186,13 @@ class FilterSorter:
         self.is_priced = True
         _products = products
         if min_price:
-            min_price = decimal.Decimal(min_price[-1])
+            min_price = decimal.Decimal(min_price[-1].replace('product__', ''))
             self.min_price = min_price
             min_quer_string = 'product__lowest_price-min-' + str(min_price)
             self.legit_queries.append(min_quer_string)
             _products = products.filter(product__lowest_price__gte=min_price)
         if max_price:
-            max_price = decimal.Decimal(max_price[-1])
+            max_price = decimal.Decimal(max_price[-1].replace('product__', ''))
             self.max_price = max_price
             max_quer_string = 'product__lowest_price-max-' + str(max_price)
             self.legit_queries.append(max_quer_string)
@@ -199,6 +215,7 @@ class FilterSorter:
             else:
                 self.bool_raw = [q for q in self.bool_raw if term not in q]
         _products = _products.filter(**search_terms)
+        self.legit_queries = self.legit_queries + self.bool_query_raw + self.avail_query_raw
         return _products
 
     def filter_attributes(self, products):
@@ -347,4 +364,72 @@ class FilterSorter:
             'message': self.message,
             'filter': self.filter_response,
             'products': serialized_products.data if self.return_products else []
+        }
+
+
+class DetailSorter:
+    def __init__(self, product):
+        self.product = product
+        self.content_object = ProductSubClass.objects.filter(id=product.content.id).select_subclasses().first()
+
+        self.lists = []
+        self.priced = []
+        self.content = None
+        self.get_content()
+        self.get_bool_groups()
+        self.get_pricing()
+        self.set_content()
+
+    def get_bool_groups(self):
+        for group in self.content_object.bool_groups():
+            bool_dict = {
+                'name': group['name'],
+                'terms': []
+            }
+            for term in group['terms']:
+                value = getattr(self.content_object, term, None)
+                value_dict = {
+                    'term': term,
+                    'value': value
+                }
+                bool_dict['terms'].append(value_dict)
+            self.lists.append(bool_dict)
+
+    def get_content(self):
+        content_list = self.product.details()
+        details_dict = {
+            'name': 'details',
+            'terms': []
+        }
+        for item in content_list:
+            value = {
+                'term': item[0],
+                'values': item[1]
+            }
+            details_dict['terms'].append(value)
+        product_deets = [
+            {'term': 'residential_warranty', 'value': self.product.residential_warranty},
+            {'term': 'commercial_warranty', 'value': self.product.commercial_warranty},
+            {'term': 'light_commercial_warranty', 'value': self.product.light_commercial_warranty},
+            ]
+        details_dict['terms'] + product_deets
+
+        self.lists.append(details_dict)
+
+    def get_pricing(self):
+        in_store_priced = self.product.in_store_priced()
+        self.priced = SupplierProductMiniSerializer(in_store_priced, many=True).data
+
+    def set_content(self):
+        self.content = {
+            'product': {
+                'unit': self.product.unit,
+                'manufacturer': self.product.manufacturer.label,
+                'manufacturer_collection': self.product.manu_collection,
+                'manufacturer_style': self.product.manufacturer_style,
+                'manufacturer_sku': self.product.manufacturer_sku,
+                'manufacturer_url': self.product.manufacturer_url,
+                'priced': self.priced,
+                'lists': self.lists
+            }
         }

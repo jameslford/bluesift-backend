@@ -11,7 +11,7 @@ from FinishSurfaces.models import (
 )
 
 
-def add_finish_surface(row, product):
+def add_finish_surface(row):
     material_label = row['material_label']
     sub_material_label = row['sub_material_label']
     look_label = row['look_label']
@@ -111,7 +111,6 @@ def add_finish_surface(row, product):
             finish_holder = gloss_level
         finish = Finish.objects.get_or_create(label=finish_holder, material=material)[0]
         finish_surface.finish = finish
-
-    finish_surface.product_id = product.id
+    # finish_surface.product = product
     finish_surface.save()
     return finish_surface

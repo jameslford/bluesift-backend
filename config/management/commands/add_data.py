@@ -37,11 +37,13 @@ class Command(BaseCommand):
                     # print('no prod')
                     continue
                 # product = product.save()
-                finish_surface = add_finish_surface(row, product)
+                finish_surface = add_finish_surface(row)
                 if not finish_surface:
                     # print('no fs')
-                    product.delete()
+                    # product.delete()
                     continue
+                product.content = finish_surface
+                product.save()
 
                 current_line += 1
                 percentage_complete = round((current_line/line_total) * 100, 3)

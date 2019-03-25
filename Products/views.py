@@ -1,92 +1,28 @@
 ''' Products.views.py '''
-import math
-import os
+
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.pagination import PageNumberPagination
+# from rest_framework.pagination import PageNumberPagination
 # from .scripts import FilterSorter
-from .serializers import ProductDetailSerializer, SerpyProduct
+# from .serializers import ProductDetailSerializer, SerpyProduct
 from .models import Product
-from Profiles.serializers import SupplierProductMiniSerializer
+from .sorter import DetailSorter, FilterSorter
+# from Profiles.serializers import SupplierProductMiniSerializer
 
-
-def set_perm():
-    if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging':
-        return IsAuthenticated
-    else:
-        return AllowAny
-
-
-# @api_view(['GET'])
-# @permission_classes((set_perm(),))
-# def product_list(request):
-
-#     page = request.GET.get('page', 1)
-#     message = None
-#     return_products = True
-#     products = Product.objects.all()
-#     sorter = FilterSorter(request, products)
-#     filter_response = sorter.filter_response
-#     legit_queries = ['quer=' + q for q in sorter.legit_queries]
-#     paginator = PageNumberPagination()
-#     paginator.page_size = 24
-#     products_response = paginator.paginate_queryset(products.select_related(
-#         'swatch_image',
-#         'label_color'
-#         ), request)
-#     product_count = products.count() if products else 0
-#     page_count = math.ceil(product_count/paginator.page_size)
-#     load_more = True
-#     if page:
-#         page_number = int(page)
-#         pg_str = 'page=' + str(page_number)
-#         sorter.legit_queries.append(pg_str)
-#     else:
-#         page_number = 1
-#     if page_number == page_count or not return_products:
-#         load_more = False
-
-#     serialized_products = SerpyProduct(products_response, many=True)
-#     material_selected = sorter.spec_mat_facet
-
-#     content = {
-#         'load_more': load_more,
-#         'page_count': page_count,
-#         'product_count': product_count,
-#         'material_selected': material_selected,
-#         'query': legit_queries,
-#         'current_page': page,
-#         'message': message,
-#         'filter': filter_response,
-#         'products': serialized_products.data if return_products else []
-#     }
-
-#     return Response(content, status=status.HTTP_200_OK)
+@api_view(['GET'])
+def product_list(request, cat):
+    sorter = FilterSorter(request, cat)
+    content = sorter.return_content()
+    return Response(content, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 def get_product(request, pk):
-    product = Product.objects.select_related(
-        'material',
-        'swatch_image',
-        'finish',
-        'manufacturer',
-        'room_scene'
-        ).filter(pk=pk).first()
+    product = Product.objects.filter(pk=pk).first()
     if not product:
         return Response('Invalid PK', status=status.HTTP_400_BAD_REQUEST)
-    online_priced = product.online_priced()
-    online_priced = SupplierProductMiniSerializer(online_priced, many=True).data if online_priced else None
-    in_store_priced = product.in_store_priced()
-    in_store_priced = SupplierProductMiniSerializer(in_store_priced, many=True).data if in_store_priced else None
-    serialized_product = ProductDetailSerializer(product)
-    return Response(
-        {
-            'product': serialized_product.data,
-            'in_store_priced': in_store_priced,
-            'online_priced': online_priced,
-        }
-        )
+    sorter = DetailSorter(product)
+    return Response(sorter.content, status=status.HTTP_200_OK)

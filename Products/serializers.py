@@ -111,6 +111,10 @@ class SerpyProduct(serpy.Serializer):
         return prod_obj.swatch_image.image.url
 
 
+class SubClassSerializer(serpy.Serializer):
+    product = SerpyProduct()
+
+
 class ProductSerializerforSupplier(serializers.ModelSerializer):
     swatch_image = ImageSerializer()
     manufacturer = ManufacturerSerializer()

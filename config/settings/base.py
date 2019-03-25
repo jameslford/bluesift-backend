@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'Colors',
     'config',
     'CustomerProfiles',
+    'Doors',
     'FinishSurfaces',
     'MailingList',
     'Orders',

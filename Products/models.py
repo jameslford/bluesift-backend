@@ -4,6 +4,7 @@ from PIL import Image as pimage
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db import models
+from model_utils.managers import InheritanceManager
 from django.db.models import Min
 from django.contrib.gis.geos import MultiPoint
 
@@ -28,6 +29,10 @@ class Image(models.Model):
 
     def __str__(self):
         return self.original_url
+
+
+class ProductSubClass(models.Model):
+    objects = InheritanceManager()
 
 
 class Product(models.Model):
@@ -59,6 +64,7 @@ class Product(models.Model):
     light_commercial_warranty = models.CharField(max_length=100, null=True)
     commercial = models.BooleanField(default=False)
 
+    content = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
     notes = models.TextField(null=True, blank=True)
 
     # content_object = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
@@ -189,8 +195,9 @@ class Product(models.Model):
             self.size = self.width + ' x ' + self.length
 
 
-class ProductSubClass(models.Model):
-    product = models.OneToOneField(Product, related_name='content_object', on_delete=models.CASCADE)
+
+
+
 
 
 # class ProductSubClass(models.Model):
