@@ -270,8 +270,6 @@ class SupplierProductSerializer(serializers.ModelSerializer):
             'sale_price',
             'banner_item',
             'product'
-            # 'online_ppu',
-            # 'for_sale_online',
         )
 
 
@@ -288,8 +286,6 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
             'sale_price',
             'on_sale',
             'banner_item',
-            # 'for_sale_online',
-            # 'online_ppu'
         )
 
     def update(self, instance, validated_data):
@@ -300,25 +296,6 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)
         instance.save()
         return instance
-
-
-# class CVSupplierProductSerializer(serializers.ModelSerializer):
-#     product = ProductDetailSerializer(read_only=True)
-
-#     class Meta:
-#         model = SupplierProduct
-#         fields = (
-#             'id',
-#             'in_store_ppu',
-#             'units_available_in_store',
-#             'sale_price',
-#             'on_sale',
-#             'units_per_order',
-#             'for_sale_in_store',
-#             'product'
-#             # 'online_ppu',
-#             # 'for_sae_online',
-#         )
 
 
 class SupplierProductMiniSerializer(serializers.ModelSerializer):
@@ -334,6 +311,4 @@ class SupplierProductMiniSerializer(serializers.ModelSerializer):
             'location_id',
             'company_name',
             'lead_time_ts'
-            # 'online_ppu',
-            # 'coordinates'
         )

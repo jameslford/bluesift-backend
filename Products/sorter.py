@@ -388,6 +388,8 @@ class DetailSorter:
             }
             for term in group['terms']:
                 value = getattr(self.content_object, term, None)
+                if not value:
+                    continue
                 value_dict = {
                     'term': term,
                     'value': value
@@ -396,39 +398,51 @@ class DetailSorter:
             self.lists.append(bool_dict)
 
     def get_content(self):
-        content_list = self.product.details()
         details_dict = {
             'name': 'details',
             'terms': []
         }
-        for item in content_list:
-            value = {
-                'term': item[0],
-                'values': item[1]
-            }
-            details_dict['terms'].append(value)
+
         product_deets = [
+            {'term': 'manufacturer', 'value': self.product.manufacturer.label},
+            {'term': 'manufacturer collection', 'value': self.product.manu_collection},
+            {'term': 'manufacturer style', 'value': self.product.manufacturer_style},
+            {'term': 'manufacturer sku', 'value': self.product.manufacturer_sku},
             {'term': 'residential_warranty', 'value': self.product.residential_warranty},
             {'term': 'commercial_warranty', 'value': self.product.commercial_warranty},
             {'term': 'light_commercial_warranty', 'value': self.product.light_commercial_warranty},
             ]
-        details_dict['terms'] + product_deets
+        for deet in product_deets:
+            deet_val = deet.get('value', None)
+            if not deet_val:
+                continue
+            details_dict['terms'].append(deet)
+
+        content_list = self.content_object.details()
+        for item in content_list:
+            if not item[1]:
+                continue
+            value = {
+                'term': item[0],
+                'value': item[1]
+            }
+            details_dict['terms'].append(value)
 
         self.lists.append(details_dict)
 
     def get_pricing(self):
         in_store_priced = self.product.in_store_priced()
-        self.priced = SupplierProductMiniSerializer(in_store_priced, many=True).data
+        serialized_priced = SupplierProductMiniSerializer(in_store_priced, many=True)
+        self.priced = serialized_priced.data
 
     def set_content(self):
         self.content = {
             'product': {
                 'unit': self.product.unit,
                 'manufacturer': self.product.manufacturer.label,
-                'manufacturer_collection': self.product.manu_collection,
-                'manufacturer_style': self.product.manufacturer_style,
-                'manufacturer_sku': self.product.manufacturer_sku,
                 'manufacturer_url': self.product.manufacturer_url,
+                'swatch_image': self.product.swatch_image.image.url,
+                'room_scene': self.product.room_scene.image.url,
                 'priced': self.priced,
                 'lists': self.lists
             }

@@ -237,14 +237,14 @@ class FinishSurface(ProductSubClass):
 
     def details(self):
         return [
-            ['material', self.material.label],
-            ['finish', self.finish.label],
-            ['submaterial', self.sub_material.label],
-            ['surface_coating', self.surface_coating.label],
-            ['thickness', self.thickness],
-            ['width', self.width],
-            ['length', self.length],
-            ['edge', self.edge.label],
+            ['material', self.material.label if self.material else None],
+            ['finish', self.finish.label if self.finish else None],
+            ['submaterial', self.sub_material.label if self.sub_material else None],
+            ['surface_coating', self.surface_coating.label if self.surface_coating else None],
+            ['thickness', self.thickness if self.thickness else None],
+            ['width', self.width if self.width else None],
+            ['length', self.length if self.length else None],
+            ['edge', self.edge.label if self.edge else None],
         ]
 
     def save(self, *args, **kwargs):

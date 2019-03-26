@@ -99,8 +99,6 @@ class Product(models.Model):
         related_name='tiling_images'
         )
 
-    # class Meta:
-    #     unique_together = ('content_type', 'object_id')
 
     def __str__(self):
         return self.name
