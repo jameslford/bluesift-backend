@@ -41,6 +41,8 @@ class CustomerProject(models.Model):
         related_name='projects'
         )
     nickname = models.CharField(max_length=50, null=True, blank=True)
+    deadline = models.DateTimeField(null=True, blank=True)
+    template = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nickname

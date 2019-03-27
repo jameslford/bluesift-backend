@@ -98,8 +98,8 @@ class CustomerProjectApplicationSerializer(serializers.ModelSerializer):
 
 
 class CustomerProjectDetailSerializer(serializers.ModelSerializer):
-    # products = CustomerProductSerializer(many=True)
-    products = serializers.SerializerMethodField()
+    products = CustomerProductSerializer(many=True)
+    # products = serializers.SerializerMethodField()
     applications = CustomerProjectApplicationSerializer(many=True)
 
     class Meta:
@@ -112,8 +112,8 @@ class CustomerProjectDetailSerializer(serializers.ModelSerializer):
             'products'
             )
 
-    def get_products(self, instance):
-        product_ids = self.context.get('product_ids', None)
-        products = instance.products.filter(product__id__in=list(product_ids))
-        return CustomerProductSerializer(products, many=True).data
+    # def get_products(self, instance):
+    #     product_ids = self.context.get('product_ids', None)
+    #     products = instance.products.filter(product__id__in=list(product_ids))
+    #     return CustomerProductSerializer(products, many=True).data
         # products = Product.objects.select_related('swatch_image', 'material', 'manufacturer').filter()

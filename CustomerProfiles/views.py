@@ -63,36 +63,17 @@ def customer_project(request, pk=None):
         project = CustomerProject.objects.prefetch_related(
             'products',
             'products__product',
-            # 'products__product__customer_products',
-            # 'products__product__pk',
-            # 'products__product__finish',
-            'products__product__label_color',
-            'products__product__look',
             'products__product__manufacturer',
             'products__product__swatch_image',
-            'products__product__material',
             'applications__products',
             ).filter(id=pk).first()
-        # product_ids = project.values_list('products__product__pk', flat=True)
         if not project.owner == profile:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        # products = [q.product.pk for q in project.products.select_related('product').all()]
-        products = project.products.values_list('product__id', flat=True)
+        products = project.products.values_list('product__id', flat=True).distinct()
         products = Product.objects.filter(id__in=products)
-        # sorter = FilterSorter(request)
-        # products = sorter.filter_location(products)
-        # products = sorter.filter_price(products)
-        # products = sorter.filter_thickness(products)
 
-        # products = sorter.filter_bools(products)
-        # products = sorter.filter_attribute(products)
-        product_ids = products.values_list('id', flat=True).distinct()
-
-        # filter_response = sorter.return_filter(products)
-
-        serialized_project = CustomerProjectDetailSerializer(project, context={'product_ids': product_ids})
+        serialized_project = CustomerProjectDetailSerializer(project)
         return Response({
-            # 'filter': filter_response,
             'project': serialized_project.data
             }, status=status.HTTP_200_OK)
 
@@ -231,14 +212,17 @@ def customer_product(request, pk=None):
 
 def customer_short_lib(request):
     user = request.user
-    proj_id = request.GET.get('proj_id')
+    proj_id = request.GET.get('proj_id', None)
+    prod_id = request.GET.get('prod_id', None)
+    if prod_id:
+        prod_id = int(prod_id)
     profile = CustomerProfile.objects.get_or_create(user=user)[0]
     projects = CustomerProject.objects.filter(owner=profile)
     project = projects.first()
     if not project:
         project = CustomerProject.objects.create(owner=user.customer_profile, nickname='First Project')
     projects_list = []
-    product_ids = []
+    # product_ids = []
     if proj_id:
         project = projects.filter(id=proj_id).first()
     selected_project = {'id': project.id, 'nickname': project.nickname}
@@ -246,15 +230,19 @@ def customer_short_lib(request):
         content = {}
         content['nickname'] = proj.nickname
         content['id'] = proj.id
+        content['remove'] = False
+        for k in proj.products.all():
+            if k.product.id == prod_id:
+                content['remove'] = True
+                content['cprod'] = k.id
         projects_list.append(content)
     products = project.products.all()
-    for prod in products:
-        product_ids.append(prod.product.id)
+    selected_product_ids = [q.product.id for q in products]
     full_content = {
         'list': projects_list,
         'count': projects.count(),
         'selected_location': selected_project,
-        'product_ids': product_ids
+        'product_ids': selected_product_ids
     }
     response = {'shortLib': full_content}
     return Response(response, status=status.HTTP_200_OK)

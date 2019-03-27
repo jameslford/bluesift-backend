@@ -11,6 +11,11 @@ PRODUCTION_DATA_WRITE_PATH = os.getcwd() + '/config/management/data/production_d
 
 # password is robertmurray
 INSTALLED_APPS = [
+    'djmoney',
+    'corsheaders',
+    'grappelli',
+    'storages',
+
     'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -19,10 +24,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'djmoney',
-    'storages',
-    'corsheaders',
 
     'rest_framework',
     'rest_framework.authtoken',
