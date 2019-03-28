@@ -125,10 +125,10 @@ class ProductSerializerforSupplier(serializers.ModelSerializer):
         fields = (
             'pk',
             'unit',
-            'manufacturer_color',
-            'manu_collection',
+            # 'manufacturer_color',
+            # 'manu_collection',
             # 'material',
-            'size',
+            # 'size',
             'name',
             'swatch_image',
             'manufacturer',

@@ -18,7 +18,7 @@ from CustomerProfiles.serializers import (
     CustomerProjectDetailSerializer,
     CustomerProjectApplicationSerializer
 )
-from Products.models import Product
+from Products.models import Product, ProductSubClass
 
 
 @api_view(['GET', 'DELETE'])
@@ -71,9 +71,11 @@ def customer_project(request, pk=None):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         products = project.products.values_list('product__id', flat=True).distinct()
         products = Product.objects.filter(id__in=products)
+        cats = [cls.__name__ for cls in ProductSubClass.__subclasses__()]
 
         serialized_project = CustomerProjectDetailSerializer(project)
         return Response({
+            'cats': cats,
             'project': serialized_project.data
             }, status=status.HTTP_200_OK)
 
@@ -205,10 +207,6 @@ def customer_product(request, pk=None):
         product.delete()
         return Response(status=status.HTTP_202_ACCEPTED)
 
-    #expierimental
-    # if request.method == 'GET':
-    #     products = Product.objects.filter('priced__')
-
 
 def customer_short_lib(request):
     user = request.user
@@ -231,7 +229,7 @@ def customer_short_lib(request):
         content['nickname'] = proj.nickname
         content['id'] = proj.id
         content['remove'] = False
-        for k in proj.products.all():
+        for k in proj.products.select_related('product').all():
             if k.product.id == prod_id:
                 content['remove'] = True
                 content['cprod'] = k.id

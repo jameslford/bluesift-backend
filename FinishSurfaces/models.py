@@ -185,6 +185,7 @@ class FinishSurface(ProductSubClass):
     slip_resistant = models.BooleanField(default=False)
     shade = models.CharField(max_length=60, null=True)
 
+
     @staticmethod
     def bool_groups():
         return [
