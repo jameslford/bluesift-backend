@@ -85,7 +85,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
             'pk',
             'company_account',
             'company_name',
-            'approved_online_seller',
+            # 'approved_online_seller',
             'approved_in_store_seller',
             'nickname',
             'product_count',
@@ -102,7 +102,6 @@ class SVLocationSerializer(serializers.ModelSerializer):
             'product',
             'product__swatch_image',
             'product__manufacturer',
-            'product__material'
             )
         if search_terms:
             for term in search_terms:
@@ -110,7 +109,8 @@ class SVLocationSerializer(serializers.ModelSerializer):
                     search=SearchVector(
                         'product__name',
                         'product__manufacturer__label',
-                        'product__manufacturer_color',
+                        'product__manufacturer_style',
+                        'product__manufacturer_sku',
                         'product__manu_collection',
                         'product__material__label'
                     )
@@ -147,7 +147,7 @@ class CVLocationSerializer(serializers.ModelSerializer):
             'product',
             'product__swatch_image',
             'product__manufacturer',
-            'product__material'
+            # 'product__material'
             )
         if search_terms:
             for term in search_terms:
