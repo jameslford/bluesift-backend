@@ -82,6 +82,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'swatch_image',
             'manufacturer',
             'lowest_price',
+            'average_rating'
             # 'bb_sku',
             # 'manufacturer_color',
             # 'manu_collection',
@@ -106,6 +107,8 @@ class SerpyProduct(serpy.Serializer):
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
     lowest_price = serpy.Field()
+    average_rating = serpy.Field(call=True)
+    rating_count = serpy.Field(call=True)
 
     def get_swatch_image(self, prod_obj):
         return prod_obj.swatch_image.image.url

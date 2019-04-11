@@ -9,7 +9,7 @@ from Plans.models import SupplierPlan
 
 
 class CompanyAccount(models.Model):
-    name = models.CharField(max_length=120, unique=True)
+    name = models.CharField(max_length=40, unique=True)
     headquarters = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
     plan = models.ForeignKey(SupplierPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
@@ -102,6 +102,14 @@ class CompanyShippingLocation(models.Model):
 
     def __str__(self):
         return str(self.company_account) + ' ' + str(self.number)
+
+    def average_rating(self):
+        avg_rating = self.ratings.all().aggregate(Avg('rating'))
+        avg_rating = avg_rating.get('rating_avg', None)
+        return avg_rating
+
+    def rating_count(self):
+        return self.ratings.all().count()
 
     def location_manager(self):
         if self.local_admin:

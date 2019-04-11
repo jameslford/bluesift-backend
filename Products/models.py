@@ -1,11 +1,9 @@
 # from django.db import models
 import io
 from PIL import Image as pimage
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.db import models
 from model_utils.managers import InheritanceManager
-from django.db.models import Min
+from django.contrib.gis.db import models
+from django.db.models import Min, Avg
 from django.contrib.gis.geos import MultiPoint
 
 
@@ -99,9 +97,16 @@ class Product(models.Model):
         related_name='tiling_images'
         )
 
-
     def __str__(self):
         return self.name
+
+    def average_rating(self):
+        avg_rating = self.ratings.all().aggregate(Avg('rating'))
+        avg_rating = avg_rating.get('rating_avg', None)
+        return avg_rating
+
+    def rating_count(self):
+        return self.ratings.all().count()
 
     def online_priced(self):
         return self.priced.select_related(

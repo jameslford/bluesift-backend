@@ -8,7 +8,6 @@ from Products.models import ProductSubClass
 from Products.serializers import SubClassSerializer
 from Profiles.serializers import SupplierProductMiniSerializer
 from FinishSurfaces.models import FinishSurface
-from Doors.models import Door
 
 
 class FilterSorter:
@@ -20,7 +19,6 @@ class FilterSorter:
     manu = 'manufacturer'
     class_switcher = {
         'finish-surface': FinishSurface,
-        'door': Door
     }
 
     def __init__(self, request, cat, page_size=24):

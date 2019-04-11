@@ -35,15 +35,13 @@ INSTALLED_APPS = [
     'Colors',
     'config',
     'CustomerProfiles',
-    'Doors',
     'FinishSurfaces',
     'MailingList',
     'Orders',
     'Plans',
     'Products',
-    'ProductRating',
     'Profiles',
-    'SupplierRating'
+    'Ratings'
 ]
 
 
