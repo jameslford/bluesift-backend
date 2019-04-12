@@ -85,10 +85,11 @@ class SVLocationSerializer(serializers.ModelSerializer):
             'pk',
             'company_account',
             'company_name',
-            # 'approved_online_seller',
             'approved_in_store_seller',
             'nickname',
             'product_count',
+            'average_rating',
+            'rating_count',
             'address',
             'phone_number',
             'priced_products',
@@ -290,7 +291,10 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.in_store_ppu = validated_data.get('in_store_ppu', instance.in_store_ppu)
-        instance.units_available_in_store = validated_data.get('units_available_in_store', instance.units_available_in_store)
+        instance.units_available_in_store = validated_data.get(
+            'units_available_in_store',
+            instance.units_available_in_store
+            )
         instance.units_per_order = validated_data.get('units_per_order', instance.units_per_order)
         instance.for_sale_in_store = validated_data.get('for_sale_in_store', instance.for_sale_in_store)
         instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)

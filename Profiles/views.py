@@ -328,7 +328,6 @@ def supplier_list(request):
 
 @api_view(['GET'])
 def cv_supplier_location(request, pk):
-    # s_id = request.GET.get('id')
     supplier = CompanyShippingLocation.objects.select_related(
         'address',
         'address__postal_code',
@@ -337,29 +336,12 @@ def cv_supplier_location(request, pk):
     ).prefetch_related(
         'priced_products',
         'priced_products__product',
-        # 'priced_products__product__label_color',
-        # 'priced_products__product__look',
         'priced_products__product__manufacturer',
         'priced_products__product__swatch_image',
-        # 'priced_products__product__material',
     ).filter(id=pk).first()
     if not supplier:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    # products = supplier.priced_products.values_list('product_id', flat=True)
-    # products = Product.objects.filter(id__in=products)
-    # sorter = FilterSorter(request)
-    # products = sorter.filter_location(products)
-    # products = sorter.filter_price(products)
-    # products = sorter.filter_thickness(products)
-
-    # products = sorter.filter_bools(products)
-    # products = sorter.filter_attribute(products)
-    # product_ids = products.values_list('id', flat=True).distinct()
-
-    # filter_response = sorter.return_filter(products)
     serialized = SVLocationSerializer(supplier)
     return Response({
         'location': serialized.data,
-        # 'filter': filter_response
         }, status=status.HTTP_200_OK)
-

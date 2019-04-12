@@ -107,6 +107,7 @@ class SerpyProduct(serpy.Serializer):
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
     lowest_price = serpy.Field()
+    average_price = serpy.Field()
     average_rating = serpy.Field(call=True)
     rating_count = serpy.Field(call=True)
 
@@ -128,15 +129,13 @@ class ProductSerializerforSupplier(serializers.ModelSerializer):
         fields = (
             'pk',
             'unit',
-            # 'manufacturer_color',
             'manu_collection',
             'manufacturer_sku',
-            # 'material',
-            # 'size',
             'name',
             'swatch_image',
             'manufacturer',
             'lowest_price',
+            'average_price'
             )
 
 

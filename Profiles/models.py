@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 from django.db import models
 from django.core.exceptions import ValidationError
+# from django.db.models import Avg
 from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
@@ -104,7 +105,7 @@ class CompanyShippingLocation(models.Model):
         return str(self.company_account) + ' ' + str(self.number)
 
     def average_rating(self):
-        avg_rating = self.ratings.all().aggregate(Avg('rating'))
+        avg_rating = self.ratings.all().aggregate(models.Avg('rating'))
         avg_rating = avg_rating.get('rating_avg', None)
         return avg_rating
 

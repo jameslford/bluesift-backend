@@ -48,7 +48,9 @@ class Product(models.Model):
     manufacturer_sku = models.CharField(max_length=200, null=True, blank=True)
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_style = models.CharField(max_length=200, null=True, blank=True)
+
     lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True)
+    average_price = models.DecimalField(max_digits=15, decimal_places=2, null=True)
 
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True, blank=True)
@@ -139,8 +141,9 @@ class Product(models.Model):
         all_sellers = online_sellers | in_store_sellers
         all_sellers = all_sellers.distinct()
         if all_sellers.count() > 0:
-            price = all_sellers.aggregate(Min('in_store_ppu'))
+            price = all_sellers.aggregate(Min('in_store_ppu'), Avg('in_store_ppu'))
             self.lowest_price = price["in_store_ppu__min"]
+            self.average_price = price['in_store_ppu__avg']
         self.save()
         return
 
