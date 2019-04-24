@@ -4,7 +4,7 @@ from model_utils import Choices
 from Profiles.models import CompanyShippingLocation
 from Products.models import Product
 
-# Create your models here.
+
 class GenericRating(models.Model):
     RATING = Choices(1, 2, 3, 4, 5)
     rating = models.IntegerField(choices=RATING)

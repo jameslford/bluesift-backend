@@ -193,8 +193,9 @@ class Product(models.Model):
         # self.set_actual_color()
 
     def manufacturer_name(self):
-        if self.manufacturer:
-            return self.manufacturer.label
+        if not self.manufacturer:
+            return None
+        return self.manufacturer.label
 
     def set_size(self):
         if not self.size:

@@ -28,8 +28,8 @@ STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
 MEDIAFILES_LOCATION = 'media'
 DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
 
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'management\\media')
-# MEDIA_URL = 'management/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'management\\media')
+MEDIA_URL = 'management/media/'
 
 AWS_STATIC_BUCKET_NAME = 'pixidesk-development'
 AWS_MEDIA_BUCKET_NAME = 'pixidesk-development-media'
