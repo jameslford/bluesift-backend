@@ -41,7 +41,7 @@ class Product(models.Model):
         (EACH, 'Each')
     )
 
-    name = models.CharField(max_length=300)
+    name = models.CharField(max_length=1200)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF)
     bb_sku = models.CharField(max_length=500, unique=True)
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)

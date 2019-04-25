@@ -16,8 +16,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 REDIRECT_URL = 'https://www.bluesift.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
 
-AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'
-AWS_MEDIA_BUCKET_NAME = "pixidesk-staging-media"
+AWS_STATIC_BUCKET_NAME = 'pixidesk-production'
+AWS_MEDIA_BUCKET_NAME = "pixidesk-production-media"
 AWS_S3_REGION_NAME = 'us-east-1'
 
 

@@ -72,7 +72,7 @@ def sv_supplier_location(request, pk=None):
     employee = EmployeeProfile.objects.filter(user=user).first()
     # only employees can access these views
     if not employee:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+        return Response(status=status.HTTP_403_FORBIDDEN)
     account = employee.company_account
 
     if request.method == 'POST':
@@ -128,7 +128,7 @@ def sv_supplier_location(request, pk=None):
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if not (employee.company_account_owner or
-                employee.comapny_account_admin or
+                employee.company_account_admin or
                 employee == location.local_admin):
             return Response(status=status.HTTP_403_FORBIDDEN)
         data = request.data
