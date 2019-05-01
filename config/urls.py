@@ -20,6 +20,7 @@ urlpatterns = [
     path('mailing-list/', include('MailingList.urls')),
     path('orders/', include('Orders.urls')),
     path('products/', include('Products.urls')),
+    path('scraper/', include('ScraperHook.urls')),
     path('supplierProfiles/', include('Profiles.urls'), name='profiles')
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

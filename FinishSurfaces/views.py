@@ -2,11 +2,11 @@ from rest_framework.decorators import (
     api_view,
     # permission_classes
     )
-from .models import FinishSurface
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import SerpyFinishSurfaceMini, FinishSurfaceMini
 from Products.sorter import FilterSorter, DetailSorter
+from .serializers import SerpyFinishSurfaceMini
+from .models import FinishSurface
 
 
 @api_view(['GET'])
