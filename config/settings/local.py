@@ -1,5 +1,5 @@
 from .base import *
-from . passwords import *
+from .passwords import *
 
 DEBUG = True
 ENVIRONMENT = 'local'

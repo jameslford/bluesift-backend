@@ -171,7 +171,8 @@ class SupplierProduct(models.Model):
 
     product = models.ForeignKey(
         Product,
-        on_delete=models.CASCADE,
+        null=True,
+        on_delete=models.SET_NULL,
         related_name='priced'
         )
 
@@ -186,6 +187,7 @@ class SupplierProduct(models.Model):
 
     for_sale_in_store = models.BooleanField(default=False)
     in_store_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    product_bb_sku = models.CharField(max_length=60, unique=True)
 
     for_sale_online = models.BooleanField(default=False)
     online_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
@@ -233,18 +235,31 @@ class SupplierProduct(models.Model):
         if self.in_store_ppu:
             self.online_ppu = Decimal(self.in_store_ppu) * Decimal(settings.MARKUP)
 
-    def save(self, *args, **kwargs):
-        # self.set_online_price()
-        self.set_banner()
+    def set_self_bb_sku(self):
+        bb_sku = self.product.bb_sku
+        self.product_bb_sku = bb_sku
+
+    def check_on_sale(self):
         if not self.sale_price or self.sale_price <= 0:
             self.on_sale = False
+
+    def check_availability(self):
         if self.units_available_in_store <= 0:
             self.for_sale_in_store = False
             self.for_sale_online = False
+
+    def check_approvals(self):
         if not self.supplier.approved_online_seller:
             self.for_sale_online = False
         if not self.supplier.approved_in_store_seller:
             self.for_sale_in_store = False
+
+    def save(self, *args, **kwargs):
+        self.set_banner()
+        self.set_self_bb_sku()
+        self.check_on_sale()
+        self.check_availability()
+        self.check_approvals()
         super(SupplierProduct, self).save(*args, **kwargs)  # Call the real save() method
         self.product.set_prices()
         if self.supplier.address:

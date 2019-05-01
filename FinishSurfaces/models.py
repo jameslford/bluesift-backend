@@ -175,7 +175,8 @@ class FinishSurface(ProductSubClass):
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     width = models.CharField(max_length=50, null=True, blank=True)
     length = models.CharField(max_length=50, null=True, blank=True)
-    size = models.CharField(max_length=30, null=True)
+    size = models.CharField(max_length=80, null=True, blank=True)
+    shape = models.CharField(max_length=80, null=True, blank=True)
 
     lrv = models.CharField(max_length=60, null=True, blank=True)
     cof = models.CharField(max_length=60, null=True)
@@ -299,3 +300,8 @@ class FinishSurface(ProductSubClass):
         real_color, created = Color.objects.get_or_create(label=webcolors.rgb_to_hex(first_color))
         self.actual_color = real_color
         self.save()
+
+
+    def set_size(self):
+        if not self.size:
+            self.size = self.width + ' x ' + self.length

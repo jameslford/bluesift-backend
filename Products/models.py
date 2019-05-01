@@ -197,9 +197,7 @@ class Product(models.Model):
             return None
         return self.manufacturer.label
 
-    def set_size(self):
-        if not self.size:
-            self.size = self.width + ' x ' + self.length
+
 
 
 
