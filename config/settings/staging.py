@@ -27,14 +27,24 @@ DATABASES = {
         'NAME': 'BBDB',
         'USER': 'postgres',
         'PASSWORD': '',
+    },
+    'production': {
+        'ENGINE': '',
+        'NAME': 'BBDB',
+        'USER': 'postgres',
+        'PASSWORD': '',
     }
 }
 
+PRODUCTION_DB_URL = os.environ['HEROKU_POSTGRESQL_WHITE_URL']
 
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
-#WSGI_APPLICATION = 'config.wsgi.application'
+DATABASES['production'] = dj_database_url.config(default=PRODUCTION_DB_URL)
+DATABASES['production']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+
+# WSGI_APPLICATION = 'config.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -87,4 +97,3 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
-

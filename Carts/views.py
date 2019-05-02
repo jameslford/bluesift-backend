@@ -31,6 +31,7 @@ def new_or_get(request, pk):
         item.save()
     return cart_obj
 
+
 @api_view(['POST'])
 def add_to_cart(request, pk=None):
     supplier_product_id = request.POST.get('supplier_product_id', None)

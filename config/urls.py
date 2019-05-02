@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
@@ -11,7 +10,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('grappelli/', include('grappelli.urls')),
     path('get_short_lib/', get_short_lib),
-    # path('append_lib', append_lib),
     path('accounts/', include('Accounts.urls')),
     path('bbadmin/', include('BBadmin.urls')),
     path('carts/', include('Carts.urls')),

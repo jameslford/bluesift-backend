@@ -1,5 +1,6 @@
 # from django.db import models
 import io
+import uuid
 from PIL import Image as pimage
 from model_utils.managers import InheritanceManager
 from django.contrib.gis.db import models
@@ -43,7 +44,7 @@ class Product(models.Model):
 
     name = models.CharField(max_length=1200)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF)
-    bb_sku = models.CharField(max_length=500, unique=True)
+
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
     manufacturer_sku = models.CharField(max_length=200, null=True, blank=True)
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
@@ -67,11 +68,11 @@ class Product(models.Model):
     content = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
     notes = models.TextField(null=True, blank=True)
 
-    # content_object = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
-    # content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    # object_id = models.PositiveIntegerField()
-    # content_object = GenericForeignKey('content_type', 'object_id')
-
+    bb_sku = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+        )
     manufacturer = models.ForeignKey(
         Manufacturer,
         null=True,
