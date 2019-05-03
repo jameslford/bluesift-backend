@@ -68,8 +68,6 @@ DEFAULT_FROM_EMAIL = 'support@buildbooksite.herokuapp.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-DATA_PATH = PRODUCTION_DATA_WRITE_PATH
-ZIP_PATH = os.getcwd() + '/config/management/zips/zipcodes.csv'
 
 GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
 GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')

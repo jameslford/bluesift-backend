@@ -1,161 +1,20 @@
-import webcolors
-import operator
-from PIL import Image as pimage
 from django.db import models
-from Products.models import ProductSubClass, Product
-from Colors.models import Color
-
-
-class Material(models.Model):
-    label = models.CharField(max_length=40, unique=True)
-
-    def __str__(self):
-        return self.label
-
-
-class Finish(models.Model):
-    material = models.ForeignKey(
-        Material,
-        null=True,
-        related_name='finishes',
-        on_delete=models.SET_NULL,
-        )
-    label = models.CharField(max_length=60)
-
-    class Meta:
-        unique_together = (('material', 'label'))
-
-    def __str__(self):
-        return self.label
-
-
-class SurfaceTexture(models.Model):
-    material = models.ForeignKey(
-        Material,
-        null=True,
-        related_name='textures',
-        on_delete=models.SET_NULL,
-        )
-
-    label = models.CharField(max_length=60)
-
-    class Meta:
-        unique_together = (('material', 'label'))
-
-    def __str__(self):
-        return self.label
-
-
-class SubMaterial(models.Model):
-    material = models.ForeignKey(
-        Material,
-        null=True,
-        related_name='subs',
-        on_delete=models.SET_NULL,
-        )
-
-    label = models.CharField(max_length=60)
-
-    class Meta:
-        unique_together = (('material', 'label'))
-
-    def __str__(self):
-        return self.label
-
-
-class SurfaceCoating(models.Model):
-    material = models.ForeignKey(
-        Material,
-        null=True,
-        related_name='coatings',
-        on_delete=models.SET_NULL,
-        )
-
-    label = models.CharField(max_length=60)
-
-    class Meta:
-        unique_together = (('material', 'label'))
-
-    def __str__(self):
-        return self.label
-
-
-class Look(models.Model):
-    label = models.CharField(max_length=40, unique=True)
-
-    def __str__(self):
-        return self.label
-
-
-class Edge(models.Model):
-    label = models.CharField(max_length=60, unique=True)
-
-    def __str__(self):
-        return self.label
-
-
-class ShadeVariation(models.Model):
-    label = models.CharField(max_length=40, unique=True)
-
-    def __str__(self):
-        return self.label
+from Products.models import ProductSubClass
 
 
 class FinishSurface(ProductSubClass):
 
-    actual_color = models.ForeignKey(
-        Color,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='actuals'
-        )
-    label_color = models.ForeignKey(
-        Color,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='labels'
-        )
-    material = models.ForeignKey(
-        Material,
-        null=True,
-        on_delete=models.SET_NULL
-        )
-    sub_material = models.ForeignKey(
-        SubMaterial,
-        null=True,
-        on_delete=models.SET_NULL
-        )
-    finish = models.ForeignKey(
-        Finish,
-        null=True,
-        on_delete=models.SET_NULL,
-        )
-    surface_texture = models.ForeignKey(
-        SurfaceTexture,
-        null=True,
-        on_delete=models.SET_NULL
-        )
-    surface_coating = models.ForeignKey(
-        SurfaceCoating,
-        null=True,
-        on_delete=models.SET_NULL
-        )
-    look = models.ForeignKey(
-        Look,
-        null=True,
-        on_delete=models.SET_NULL
-        )
-    shade_variation = models.ForeignKey(
-        ShadeVariation,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-        )
-    edge = models.ForeignKey(
-        Edge,
-        null=True,
-        on_delete=models.SET_NULL
-        )
+    label_color = models.CharField(max_length=200, null=True, blank=True)
+
+    material = models.CharField(max_length=200)
+    sub_material = models.CharField(max_length=200, null=True, blank=True)
+
+    finish = models.CharField(max_length=200, null=True, blank=True)
+    surface_texture = models.CharField(max_length=200, null=True, blank=True)
+    surface_coating = models.CharField(max_length=200, null=True, blank=True)
+    look = models.CharField(max_length=200, null=True, blank=True)
+    shade_variation = models.CharField(max_length=200, null=True, blank=True)
+    shade = models.CharField(max_length=60, null=True)
 
     walls = models.BooleanField(default=False)
     countertops = models.BooleanField(default=False)
@@ -175,16 +34,18 @@ class FinishSurface(ProductSubClass):
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     width = models.CharField(max_length=50, null=True, blank=True)
     length = models.CharField(max_length=50, null=True, blank=True)
+    
     size = models.CharField(max_length=80, null=True, blank=True)
     shape = models.CharField(max_length=80, null=True, blank=True)
 
     lrv = models.CharField(max_length=60, null=True, blank=True)
     cof = models.CharField(max_length=60, null=True)
 
+    edge = models.CharField(max_length=200, null=True, blank=True)
     install_type = models.CharField(max_length=100, null=True)
+
     sqft_per_carton = models.CharField(max_length=70, null=True)
     slip_resistant = models.BooleanField(default=False)
-    shade = models.CharField(max_length=60, null=True)
 
 
     @staticmethod
@@ -215,7 +76,7 @@ class FinishSurface(ProductSubClass):
     def key_term():
         return {
             'name': 'material',
-            'class': Material
+            # 'class': Material
         }
 
     @staticmethod
@@ -239,67 +100,15 @@ class FinishSurface(ProductSubClass):
 
     def details(self):
         return [
-            ['material', self.material.label if self.material else None],
-            ['finish', self.finish.label if self.finish else None],
-            ['submaterial', self.sub_material.label if self.sub_material else None],
-            ['surface_coating', self.surface_coating.label if self.surface_coating else None],
+            ['material', self.material if self.material else None],
+            ['finish', self.finish if self.finish else None],
+            ['submaterial', self.sub_material if self.sub_material else None],
+            ['surface_coating', self.surface_coating if self.surface_coating else None],
             ['thickness', self.thickness if self.thickness else None],
             ['width', self.width if self.width else None],
             ['length', self.length if self.length else None],
-            ['edge', self.edge.label if self.edge else None],
+            ['edge', self.edge if self.edge else None],
         ]
-
-    def save(self, *args, **kwargs):
-        cats = [
-            self.sub_material,
-            self.finish,
-            self.surface_texture,
-            self.surface_coating
-            ]
-        for cat in cats:
-            if not cat:
-                continue
-            if cat.material != self.material:
-                return
-        super(FinishSurface, self).save(*args, **kwargs)
-
-    def set_actual_color(self):
-        swatch_image = self.product.swatch_image
-        if not swatch_image:
-            return
-        image = swatch_image.image
-        if not image:
-            return
-        try:
-            image = pimage.open(image)
-        except OSError:
-            print('deleting ' + self.name + 'from set_actual_color')
-            self.delete()
-            return
-        w, h = image.size
-        from django.conf import settings
-        if w > settings.DESIRED_IMAGE_SIZE:
-            # self.resize_image()
-            return
-        divisor = 4
-        image = image.crop((
-            w/divisor,
-            h/divisor,
-            w - w/divisor,
-            h - h/divisor
-        ))
-        try:
-            image = image.convert('P', palette=pimage.ADAPTIVE, colors=1)
-        except ValueError:
-            print('unable')
-            return
-        image = image.convert('RGB')
-
-        colors = image.getcolors()
-        first_percentage, first_color = max(colors, key=operator.itemgetter(0))
-        real_color, created = Color.objects.get_or_create(label=webcolors.rgb_to_hex(first_color))
-        self.actual_color = real_color
-        self.save()
 
 
     def set_size(self):

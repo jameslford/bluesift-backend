@@ -14,7 +14,7 @@ urlpatterns = [
     path('bbadmin/', include('BBadmin.urls')),
     path('carts/', include('Carts.urls')),
     path('customerProfiles/', include('CustomerProfiles.urls'), name='customer_profiles'),
-    path('finish-surfaces/', include('FinishSurfaces.urls')),
+    # path('finish-surfaces/', include('FinishSurfaces.urls')),
     path('mailing-list/', include('MailingList.urls')),
     path('orders/', include('Orders.urls')),
     path('products/', include('Products.urls')),

@@ -58,23 +58,17 @@ DEFAULT_FROM_EMAIL = 'support@Bluesift.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-DATA_PATH = PRODUCTION_DATA_WRITE_PATH
-ZIP_PATH = os.getcwd() + '/config/management/zips/zipcodes.csv'
 
 GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
 GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 
-# GEOS_LIBRARY_PATH = '/app/.heroku/vendor/lib/libgeos_c.so'
-# GDAL_LIBRARY_PATH = '/app/.heroku/vendor/lib/libgdal.so'
-
 
 def show_toolbar(request):
     # return request.user.is_staff
-    return True
+    return False
 
 
 DEBUG_TOOLBAR_CONFIG = {
-    # ...
     'SHOW_TOOLBAR_CALLBACK': 'config.settings.staging.show_toolbar',
 }
 

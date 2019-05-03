@@ -4,12 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MARKUP = '1.10'
-DESIRED_IMAGE_SIZE = 350
 
-ALT_SAFE_PATH = 'D:\\BBdata\\product_images'
-PRODUCTION_DATA_WRITE_PATH = os.getcwd() + '/config/management/data/production_data.csv'
-
-# password is robertmurray
 INSTALLED_APPS = [
     'djmoney',
     'corsheaders',
@@ -32,7 +27,6 @@ INSTALLED_APPS = [
     'Addresses',
     'Carts',
     'Cards',
-    'Colors',
     'config',
     'CustomerProfiles',
     'FinishSurfaces',
@@ -43,7 +37,6 @@ INSTALLED_APPS = [
     'Profiles',
     'Ratings'
 ]
-
 
 ROOT_URLCONF = 'config.urls'
 

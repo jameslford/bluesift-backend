@@ -1,13 +1,6 @@
-# Products.serializers.py
-
 import serpy
 from rest_framework import serializers
-from .models import (
-    Product,
-    Manufacturer,
-    Image
-    )
-from Colors.models import Color
+from .models import Product, Manufacturer
 
 
 class ManufacturerSerializer(serializers.ModelSerializer):
@@ -19,80 +12,6 @@ class ManufacturerSerializer(serializers.ModelSerializer):
 class SerpyManufacturer(serpy.Serializer):
     pk = serpy.Field('id')
     label = serpy.Field()
-
-
-# class MaterialSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Material
-#         fields = ('id', 'label')
-
-
-class SerpyMaterial(serpy.Serializer):
-    pk = serpy.Field('id')
-    label = serpy.Field()
-
-
-# class FinishSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Finish
-#         fields = ('id', 'label')
-
-
-class SerpyFinish(serpy.Serializer):
-    pk = serpy.Field('id')
-    label = serpy.Field()
-
-
-class ImageSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Image
-        fields = ('image',)
-
-
-class SerpyImage(serpy.Serializer):
-    pk = serpy.Field('id')
-    image = serpy.Field()
-
-
-class ColorSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Color
-        fields = ('label')
-
-
-class SerpyColor(serpy.Serializer):
-    label = serpy.Field()
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    swatch_image = ImageSerializer()
-    manufacturer = ManufacturerSerializer()
-    # tiling_image = ImageSerializer()
-    # label_color = ColorSerializer()
-
-    class Meta:
-        model = Product
-        fields = (
-            'id',
-            'name',
-            'swatch_image',
-            'manufacturer',
-            'lowest_price',
-            'average_rating'
-            # 'bb_sku',
-            # 'manufacturer_color',
-            # 'manu_collection',
-            # 'for_sale_online',
-            # 'for_sale_in_store',
-            # 'size',
-            # 'actual_color',
-            # 'label_color',
-            # 'tiling_image',
-            )
 
 
 class SerpyProduct(serpy.Serializer):
@@ -119,10 +38,32 @@ class SubClassSerializer(serpy.Serializer):
     product = SerpyProduct()
 
 
+# class ProductSerializer(serializers.ModelSerializer):
+#     manufacturer = ManufacturerSerializer()
+
+#     class Meta:
+#         model = Product
+#         fields = (
+#             'id',
+#             'name',
+#             'swatch_image',
+#             'manufacturer',
+#             'lowest_price',
+#             'average_rating'
+#             'bb_sku',
+#             'manufacturer_color',
+#             'manu_collection',
+#             'for_sale_online',
+#             'for_sale_in_store',
+#             'size',
+#             'actual_color',
+#             'label_color',
+#             'tiling_image',
+#             )
+
+
+
 class ProductSerializerforSupplier(serializers.ModelSerializer):
-    swatch_image = ImageSerializer()
-    manufacturer = ManufacturerSerializer()
-    # material = MaterialSerializer()
 
     class Meta:
         model = Product
@@ -140,11 +81,6 @@ class ProductSerializerforSupplier(serializers.ModelSerializer):
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
-    room_scene = ImageSerializer(required=False)
-    swatch_image = ImageSerializer()
-    tiling_image = ImageSerializer(required=False)
-    # finish = FinishSerializer(required=False)
-    # material = MaterialSerializer(required=False)
 
     class Meta:
         model = Product
@@ -169,3 +105,55 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'tiling_image',
 
         )
+
+
+
+
+
+# class MaterialSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = Material
+#         fields = ('id', 'label')
+
+
+# class SerpyMaterial(serpy.Serializer):
+#     pk = serpy.Field('id')
+#     label = serpy.Field()
+
+
+# class FinishSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = Finish
+#         fields = ('id', 'label')
+
+
+# class SerpyFinish(serpy.Serializer):
+#     pk = serpy.Field('id')
+#     label = serpy.Field()
+
+
+# class ImageSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = Image
+#         fields = ('image',)
+
+
+# class SerpyImage(serpy.Serializer):
+#     pk = serpy.Field('id')
+#     image = serpy.Field()
+
+
+# class ColorSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = Color
+#         fields = ('label')
+
+
+# class SerpyColor(serpy.Serializer):
+#     label = serpy.Field()
+
+

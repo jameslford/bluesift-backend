@@ -61,7 +61,135 @@
     # return _products
 
 
+#     class Material(models.Model):
+#     label = models.CharField(max_length=40, unique=True)
 
+#     def __str__(self):
+#         return self.label
+
+
+# class Finish(models.Model):
+#     material = models.ForeignKey(
+#         Material,
+#         null=True,
+#         related_name='finishes',
+#         on_delete=models.SET_NULL,
+#         )
+#     label = models.CharField(max_length=60)
+
+#     class Meta:
+#         unique_together = (('material', 'label'))
+
+#     def __str__(self):
+#         return self.label
+
+
+# class SurfaceTexture(models.Model):
+#     material = models.ForeignKey(
+#         Material,
+#         null=True,
+#         related_name='textures',
+#         on_delete=models.SET_NULL,
+#         )
+
+#     label = models.CharField(max_length=60)
+
+#     class Meta:
+#         unique_together = (('material', 'label'))
+
+#     def __str__(self):
+#         return self.label
+
+
+# class SubMaterial(models.Model):
+#     material = models.ForeignKey(
+#         Material,
+#         null=True,
+#         related_name='subs',
+#         on_delete=models.SET_NULL,
+#         )
+
+#     label = models.CharField(max_length=60)
+
+#     class Meta:
+#         unique_together = (('material', 'label'))
+
+#     def __str__(self):
+#         return self.label
+
+
+# class SurfaceCoating(models.Model):
+#     material = models.ForeignKey(
+#         Material,
+#         null=True,
+#         related_name='coatings',
+#         on_delete=models.SET_NULL,
+#         )
+
+#     label = models.CharField(max_length=60)
+
+#     class Meta:
+#         unique_together = (('material', 'label'))
+
+#     def __str__(self):
+#         return self.label
+
+
+# class Look(models.Model):
+#     label = models.CharField(max_length=40, unique=True)
+
+#     def __str__(self):
+#         return self.label
+
+
+# class Edge(models.Model):
+#     label = models.CharField(max_length=60, unique=True)
+
+#     def __str__(self):
+#         return self.label
+
+
+# class ShadeVariation(models.Model):
+#     label = models.CharField(max_length=40, unique=True)
+
+#     def __str__(self):
+#         return self.label
+    
+    # def resize_image(self):
+    #     from django.conf import settings
+    #     desired_size = settings.DESIRED_IMAGE_SIZE
+    #     if not self.swatch_image:
+    #         return
+    #     image = self.swatch_image.image
+    #     try:
+    #         image = pimage.open(image)
+    #     except OSError:
+    #         print('deleting ' + self.name)
+    #         self.delete()
+    #         return
+    #     buffer = io.BytesIO()
+    #     w, h = image.size
+    #     if w == desired_size and h <= desired_size:
+    #         return
+    #     w_ratio = desired_size/w
+    #     height_adjust = int(round(h * w_ratio))
+    #     image = image.resize((desired_size, height_adjust))
+    #     if image.size[1] > desired_size:
+    #         image = image.crop((
+    #             0,
+    #             0,
+    #             desired_size,
+    #             desired_size
+    #             ))
+    #     try:
+    #         image.save(buffer, 'JPEG')
+    #     except IOError:
+    #         print('unable io error')
+    #         return
+    #     image_name = self.swatch_image.original_url.split('/')[-1] + '.jpg'
+    #     self.swatch_image.image.save(image_name, buffer)
+    #     self.save()
+        # self.set_actual_color()
 
 
 # def check_categories(products, categories, materials, builds):

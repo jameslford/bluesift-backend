@@ -1,7 +1,4 @@
-# from django.db import models
-import io
 import uuid
-from PIL import Image as pimage
 from model_utils.managers import InheritanceManager
 from django.contrib.gis.db import models
 from django.db.models import Min, Avg
@@ -22,14 +19,6 @@ class Manufacturer(models.Model):
             return
 
 
-class Image(models.Model):
-    original_url = models.CharField(max_length=300, unique=True)
-    image = models.ImageField(max_length=300, null=True)
-
-    def __str__(self):
-        return self.original_url
-
-
 class ProductSubClass(models.Model):
     objects = InheritanceManager()
 
@@ -43,12 +32,17 @@ class Product(models.Model):
     )
 
     name = models.CharField(max_length=1200)
+    bb_sku = models.CharField(max_length=100, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
     manufacturer_sku = models.CharField(max_length=200, null=True, blank=True)
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_style = models.CharField(max_length=200, null=True, blank=True)
+
+    swatch_image = models.ImageField()
+    room_scene = models.ImageField()
+    tiling_image = models.ImageField()
 
     lowest_price = models.DecimalField(max_digits=15, decimal_places=2, null=True)
     average_price = models.DecimalField(max_digits=15, decimal_places=2, null=True)
@@ -68,37 +62,13 @@ class Product(models.Model):
     content = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
     notes = models.TextField(null=True, blank=True)
 
-    bb_sku = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-        )
     manufacturer = models.ForeignKey(
         Manufacturer,
         null=True,
         related_name='products',
         on_delete=models.SET_NULL,
         )
-    swatch_image = models.ForeignKey(
-        Image,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='swatches'
-        )
-    room_scene = models.ForeignKey(
-        Image,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='room_scenes'
-        )
-    tiling_image = models.ForeignKey(
-        Image,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='tiling_images'
-        )
+
 
     def __str__(self):
         return self.name
@@ -157,41 +127,6 @@ class Product(models.Model):
             self.locations = points
             self.save()
 
-    def resize_image(self):
-        from django.conf import settings
-        desired_size = settings.DESIRED_IMAGE_SIZE
-        if not self.swatch_image:
-            return
-        image = self.swatch_image.image
-        try:
-            image = pimage.open(image)
-        except OSError:
-            print('deleting ' + self.name)
-            self.delete()
-            return
-        buffer = io.BytesIO()
-        w, h = image.size
-        if w == desired_size and h <= desired_size:
-            return
-        w_ratio = desired_size/w
-        height_adjust = int(round(h * w_ratio))
-        image = image.resize((desired_size, height_adjust))
-        if image.size[1] > desired_size:
-            image = image.crop((
-                0,
-                0,
-                desired_size,
-                desired_size
-                ))
-        try:
-            image.save(buffer, 'JPEG')
-        except IOError:
-            print('unable io error')
-            return
-        image_name = self.swatch_image.original_url.split('/')[-1] + '.jpg'
-        self.swatch_image.image.save(image_name, buffer)
-        self.save()
-        # self.set_actual_color()
 
     def manufacturer_name(self):
         if not self.manufacturer:
