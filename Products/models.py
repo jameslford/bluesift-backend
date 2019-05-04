@@ -1,5 +1,6 @@
 import uuid
 from model_utils.managers import InheritanceManager
+from django.contrib.postgres.fields.array import ArrayField
 from django.contrib.gis.db import models
 from django.db.models import Min, Avg
 from django.contrib.gis.geos import MultiPoint
@@ -17,10 +18,6 @@ class Manufacturer(models.Model):
             return products
         except:
             return
-
-
-class ProductSubClass(models.Model):
-    objects = InheritanceManager()
 
 
 class Product(models.Model):
@@ -59,7 +56,7 @@ class Product(models.Model):
     light_commercial_warranty = models.CharField(max_length=100, null=True)
     commercial = models.BooleanField(default=False)
 
-    content = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
+    # content = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
     notes = models.TextField(null=True, blank=True)
 
     manufacturer = models.ForeignKey(
@@ -68,6 +65,8 @@ class Product(models.Model):
         related_name='products',
         on_delete=models.SET_NULL,
         )
+
+    objects = InheritanceManager()
 
 
     def __str__(self):
@@ -127,7 +126,6 @@ class Product(models.Model):
             self.locations = points
             self.save()
 
-
     def manufacturer_name(self):
         if not self.manufacturer:
             return None
@@ -135,10 +133,21 @@ class Product(models.Model):
 
 
 
+class ProductSubClass(Product):
+    class Meta:
+        abstract = True
+
+    @staticmethod
+    def key_term():
+        return {}
+
+# class Filter(models.Model):
+#     bool_groups = ArrayField
 
 
 
-
+# class ProductSubClass(models.Model):
+#     objects = InheritanceManager()
 
 
 # class ProductSubClass(models.Model):

@@ -34,7 +34,7 @@ class FinishSurface(ProductSubClass):
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
     width = models.CharField(max_length=50, null=True, blank=True)
     length = models.CharField(max_length=50, null=True, blank=True)
-    
+
     size = models.CharField(max_length=80, null=True, blank=True)
     shape = models.CharField(max_length=80, null=True, blank=True)
 
