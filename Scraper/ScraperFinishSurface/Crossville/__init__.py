@@ -1,10 +1,9 @@
 import sys
 import importlib
 import requests
-from ScraperBaseProduct.models import AggregateProductRating
-from BSscraper.supers import SubScraperBase
-from BSscraper.utils import clean_value
-from ScraperFinishSurface.models import ScraperFinishSurface
+from config.scripts.measurements import clean_value
+from Scraper.models import SubScraperBase
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 
 class Scraper(SubScraperBase):
     base_url = 'https://www.crossvilleinc.com'

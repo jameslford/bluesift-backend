@@ -1,5 +1,5 @@
-from ScraperFinishSurface.models import ScraperFinishSurface
-from BSscraper.utils import clean_value
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
+from config.scripts.measurements import clean_value
 from bs4 import BeautifulSoup
 
 textile_tags = ['linen', 'tweed']

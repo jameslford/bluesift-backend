@@ -2,10 +2,9 @@ import sys
 import importlib
 import requests
 import json
-from ScraperBaseProduct.models import AggregateProductRating
-from BSscraper.supers import SubScraperBase
-from BSscraper.utils import clean_value
-from ScraperFinishSurface.models import ScraperFinishSurface
+from Scraper.models import ScraperAggregateProductRating, SubScraperBase
+from config.scripts.measurements import clean_value
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 
 class Scraper(SubScraperBase):
     base_url = 'www.floridatile.com'

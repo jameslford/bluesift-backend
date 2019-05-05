@@ -1,5 +1,5 @@
 from ..models import ScraperFinishSurface
-from BSscraper.utils import clean_value
+from config.scripts.measurements import clean_value
 
 def get_special(product: ScraperFinishSurface, item):
     product.floors = True

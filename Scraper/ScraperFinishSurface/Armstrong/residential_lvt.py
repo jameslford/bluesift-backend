@@ -1,5 +1,5 @@
-from BSscraper.utils import clean_value
-from ScraperFinishSurface.models import ScraperFinishSurface
+from config.scripts.measurements import clean_value
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 
 stone_tags = [
     'cinder',

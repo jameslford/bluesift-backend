@@ -4,10 +4,8 @@ import json
 import requests
 import lxml
 from bs4 import BeautifulSoup
-from ScraperBaseProduct.models import AggregateProductRating
-from BSscraper.supers import SubScraperBase
-from BSscraper.utils import clean_value
-from ScraperFinishSurface.models import ScraperFinishSurface
+from Scraper.models import SubScraperBase
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 
 MOHAWK_HEADER = {
     'Host': 'www.mohawkflooring.com',

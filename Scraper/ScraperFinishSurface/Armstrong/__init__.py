@@ -2,10 +2,10 @@ import sys
 import importlib
 import requests
 from bs4 import BeautifulSoup
-from ScraperBaseProduct.models import AggregateProductRating
-from BSscraper.supers import SubScraperBase
-from BSscraper.utils import clean_value
-from ScraperFinishSurface.models import ScraperFinishSurface
+from Scraper.models import ScraperAggregateProductRating
+from ...models import SubScraperBase
+from config.scripts.measurements import clean_value
+from ..models import ScraperFinishSurface
 
 class Scraper(SubScraperBase):
     base_url = 'https://www.armstrongflooring.com'
@@ -40,7 +40,7 @@ class Scraper(SubScraperBase):
                 rating_count = rating.get('count', None)
                 rating_value = rating.get('val', None)
                 if rating_count and rating_value:
-                    new_rating = AggregateProductRating()
+                    new_rating = ScraperAggregateProductRating()
                     new_rating.rating_value = rating_value
                     new_rating.rating_count = rating_count
                     new_rating.product_bbsku = product.bb_sku
@@ -95,4 +95,3 @@ class Scraper(SubScraperBase):
             product.sqft_per_carton = data.get('Square Feet per Box', None)
             product = func(product, data)
         return product
-
