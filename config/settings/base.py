@@ -5,6 +5,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MARKUP = '1.10'
 
+
 INSTALLED_APPS = [
     'djmoney',
     'corsheaders',
@@ -35,10 +36,14 @@ INSTALLED_APPS = [
     'Plans',
     'Products',
     'Profiles',
-    'Ratings'
+    'Ratings',
+    'Scraper',
+    'Scraper.ScraperFinishSurface'
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+DATABASE_ROUTERS = ['config.settings.db_routers.ScraperRouter']
 
 SITE_ID = 1
 

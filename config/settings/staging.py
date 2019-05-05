@@ -5,6 +5,12 @@ from .base import *
 DEBUG = True
 ENVIRONMENT = 'staging'
 
+STATICFILES_LOCATION = 'static'
+STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
+
+MEDIAFILES_LOCATION = 'media'
+DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
+
 
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
@@ -21,25 +27,27 @@ AWS_MEDIA_BUCKET_NAME = "pixidesk-staging-media"
 AWS_S3_REGION_NAME = 'us-east-1'
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': '',
-        'NAME': 'BBDB',
-        'USER': 'postgres',
-        'PASSWORD': '',
-    },
-    'production': {
-        'ENGINE': '',
-        'NAME': 'BBDB',
-        'USER': 'postgres',
-        'PASSWORD': '',
-    }
-}
-
 PRODUCTION_DB_URL = os.environ['HEROKU_POSTGRESQL_WHITE_URL']
+
+DATABASES = {
+    'default': {},
+    'scraper_default': {},
+    'scraper_revised': {},
+    'production': {}
+}
 
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES['default']['OPTIONS'] = {'options': '-c search_path=bluesift_default'}
+
+DATABASES['scraper_default'] = dj_database_url.config(conn_max_age=500)
+DATABASES['scraper_default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES['scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_default'}
+
+DATABASES['scraper_revised'] = dj_database_url.config(conn_max_age=500)
+DATABASES['scraper_revised']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
+
 
 DATABASES['production'] = dj_database_url.config(default=PRODUCTION_DB_URL)
 DATABASES['production']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
@@ -54,11 +62,7 @@ REST_FRAMEWORK = {
     )
 }
 
-STATICFILES_LOCATION = 'static'
-STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
 
-MEDIAFILES_LOCATION = 'media'
-DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
 
 
 EMAIL_HOST = 'smtp.sendgrid.net'

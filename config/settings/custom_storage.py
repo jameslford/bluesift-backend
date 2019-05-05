@@ -10,6 +10,5 @@ class StaticStorage(S3Boto3Storage):
 
 class MediaStorage(S3Boto3Storage):
     location = settings.MEDIAFILES_LOCATION
-    # if settings.AWS_MEDIA_BUCKET_NAME:
     bucket_name = settings.AWS_MEDIA_BUCKET_NAME
     custom_domain = bucket_name + '.s3.amazonaws.com'

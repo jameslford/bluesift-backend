@@ -26,11 +26,33 @@ MEDIA_URL = 'management/media/'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {
+            'options': '-c search_path=bluesift_default'
+        },
         'NAME': 'buildbook',
         'USER': 'postgres',
-        'PASSWORD': '%&N2aBsub',
+        'PASSWORD': LOCAL_DB_PASSWORD,
+    },
+    'scraper_default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'OPTIONS': {
+            'options': '-c search_path=scraper_default'
+            },
+        'NAME': 'buildbook',
+        'USER': 'postgres',
+        'PASSWORD': LOCAL_DB_PASSWORD,
+    },
+    'scraper_revised': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'OPTIONS': {
+            'options': '-c search_path=scraper_revised'
+            },
+        'NAME': 'buildbook',
+        'USER': 'postgres',
+        'PASSWORD': LOCAL_DB_PASSWORD,
     }
 }
+
 
 
 REST_FRAMEWORK = {
