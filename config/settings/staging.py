@@ -5,27 +5,14 @@ from .base import *
 DEBUG = True
 ENVIRONMENT = 'staging'
 
-STATICFILES_LOCATION = 'static'
-STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
-
-MEDIAFILES_LOCATION = 'media'
-DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
-
-
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
-
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
-
-AWS_STATIC_BUCKET_NAME = 'pixidesk-staging'
-AWS_MEDIA_BUCKET_NAME = "pixidesk-staging-media"
-AWS_S3_REGION_NAME = 'us-east-1'
-
 
 PRODUCTION_DB_URL = os.environ['HEROKU_POSTGRESQL_WHITE_URL']
 

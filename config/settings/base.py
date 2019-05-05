@@ -4,6 +4,17 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MARKUP = '1.10'
+DESIRED_IMAGE_SIZE = 350
+
+AWS_STATIC_BUCKET_NAME = 'pixidesk-development'
+AWS_MEDIA_BUCKET_NAME = "pixidesk-development-media"
+AWS_S3_REGION_NAME = 'us-east-1'
+
+STATICFILES_LOCATION = 'static'
+STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
+
+MEDIAFILES_LOCATION = 'media'
+DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
 
 
 INSTALLED_APPS = [

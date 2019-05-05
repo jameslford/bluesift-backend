@@ -98,7 +98,7 @@ class CompanyShippingLocation(models.Model):
     phone_number = models.CharField(max_length=10)
     email = models.EmailField(null=True, blank=True)
     number = models.IntegerField(null=True, blank=True)
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True, upload_to='storefronts/')
     slug = models.SlugField(null=True, blank=True)
 
     def __str__(self):

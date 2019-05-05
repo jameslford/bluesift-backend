@@ -8,23 +8,12 @@ ENVIRONMENT = 'production'
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
 
-STATICFILES_LOCATION = 'static'
-STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
-
-MEDIAFILES_LOCATION = 'media'
-DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
-
-
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 REDIRECT_URL = 'https://www.bluesift.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
-
-AWS_STATIC_BUCKET_NAME = 'pixidesk-production'
-AWS_MEDIA_BUCKET_NAME = "pixidesk-production-media"
-AWS_S3_REGION_NAME = 'us-east-1'
 
 DATABASES = {
     'default': {},
