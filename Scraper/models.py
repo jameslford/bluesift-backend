@@ -66,7 +66,7 @@ class ScraperSubgroup(models.Model):
         return f'{self.manufacturer.name}_{self.category.name}'
 
     def get_module(self):
-        return importlib.import_module(f'.{self.manufacturer.name}', f'{self.category.department.name}')
+        return importlib.import_module(f'Scraper.{self.category.department.name}.{self.manufacturer.name}')
 
     def get_data(self):
         mod = self.get_module()
@@ -283,7 +283,7 @@ class SubScraperBase:
         return func
 
     def get_sub_module(self):
-        current_module = f'{self.subgroup.category.department.name}.{self.subgroup.manufacturer.name}'
+        current_module = f'Scraper.{self.subgroup.category.department.name}.{self.subgroup.manufacturer.name}'
         return importlib.import_module(f'.{self.subgroup.category.name}', current_module)
 
     def get_sub_response(self):
