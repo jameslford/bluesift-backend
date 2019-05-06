@@ -25,15 +25,15 @@ DATABASES = {
 
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-DATABASES['default']['OPTIONS'] = {'options': '-c search_path=bluesift_default'}
+DATABASES['default']['OPTIONS'] = {'options': '-c search_path=bluesift_default,public'}
 
 DATABASES['scraper_default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['scraper_default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-DATABASES['scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_default'}
+DATABASES['scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_default,public'}
 
 DATABASES['scraper_revised'] = dj_database_url.config(conn_max_age=500)
 DATABASES['scraper_revised']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
+DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised,public'}
 
 
 DATABASES['production'] = dj_database_url.config(default=PRODUCTION_DB_URL)
