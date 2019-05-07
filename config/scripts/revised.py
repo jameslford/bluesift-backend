@@ -1,6 +1,10 @@
 from Scraper.models import ScraperBaseProduct, ScraperCategory, ScraperSubgroup, ScraperManufacturer, ScraperDepartment
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
+from .check_settings import exclude_production
+from .colors import assign_label_color
 
 def populate_db():
+    exclude_production()
     departments = ScraperDepartment.objects.all()
     manufacturers = ScraperManufacturer.objects.all()
     categories = ScraperCategory.objects.all()
@@ -19,8 +23,18 @@ def populate_db():
         for product in products:
             product.save(using='scraper_revised', force_insert=True)
 
+def add_to_default():
+    exclude_production()
+    departments = ScraperDepartment.objects.using('scraper_revised').all()
+    for department in departments:
+        department.add_to_default()
+
+def clean():
+    assign_label_color()
+    pass
 
 def delete_all():
+    exclude_production()
     departments = ScraperDepartment.objects.using('scraper_revised').all()
     manufacturers = ScraperManufacturer.objects.using('scraper_revised').all()
     categories = ScraperCategory.objects.using('scraper_revised').all()
@@ -33,6 +47,3 @@ def delete_all():
     departments.delete()
     manufacturers.delete()
 
-
-def clean():
-    pass

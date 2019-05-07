@@ -42,6 +42,7 @@ class FinishSurface(ProductSubClass):
     cof = models.CharField(max_length=60, null=True)
 
     edge = models.CharField(max_length=200, null=True, blank=True)
+    end = models.CharField(max_length=200, null=True, blank=True)
     install_type = models.CharField(max_length=100, null=True)
 
     sqft_per_carton = models.CharField(max_length=70, null=True)

@@ -9,6 +9,9 @@ def clean_value(value):
             value = value.replace(k, '')
     return value.strip()
 
+def char_dec_range_conversion(value):
+    pass
+
 
 def unified_measurement(value):
     # returns a uniform lenght/width/tickness in inches

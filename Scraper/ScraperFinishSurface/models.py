@@ -2,7 +2,7 @@ import operator
 import webcolors
 from PIL import Image as pimage
 from django.db import models
-from ..models import ScraperBaseProduct
+from Scraper.models import ScraperBaseProduct
 
 
 class ScraperFinishSurface(ScraperBaseProduct):

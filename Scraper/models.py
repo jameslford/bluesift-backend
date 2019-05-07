@@ -12,6 +12,7 @@ from model_utils.managers import InheritanceManager
 from PIL import Image as pimage
 from config.settings.local_storage import get_local_storage
 from config.scripts.check_settings import check_local
+from Products.models import Manufacturer, Product
 
 
 LOCAL_STORAGE = get_local_storage()
@@ -29,6 +30,66 @@ class ScraperDepartment(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_module(self):
+        return importlib.import_module(f'Scraper.{self.name}.add_details')
+
+    def get_stripped_name(self):
+        if self.name.startswith('Scraper'):
+            return self.name[7:]
+        return None
+
+    def corresponding_class(self):
+        from config.scripts.globals import PRODUCT_SUBCLASSES
+        stripped_name = self.get_stripped_name()
+        if stripped_name:
+            return PRODUCT_SUBCLASSES.get(stripped_name, None)
+        return None
+
+    def name_check(self):
+        if self.corresponding_class():
+            return True
+        return False
+
+    def revised_products(self):
+        return ScraperBaseProduct.objects.using(
+            'scraper_revised'
+        ).filter(subgroup__category__department=self).select_subclasses()
+
+    def check_sub_classes(self):
+        revised_model = self.get_module().REVISED_MODEL
+        new_model = self.get_module().NEW_MODEL
+        if new_model != self.corresponding_class():
+            raise Exception('wrong class in department submodule or globals for ' + self.name)
+
+
+    def add_to_default(self):
+        self.check_sub_classes()
+        corresponding_class = self.corresponding_class()
+        for revised_product in self.revised_products():
+            bb_sku = str(revised_product.bb_sku)
+            revised_manufacturer_name = revised_product.subgroup.manufacturer.name
+            new_product = corresponding_class.objects.get_or_create(bb_sku=bb_sku)[0]
+            manufacturer = Manufacturer.objects.get_or_create(label=revised_manufacturer_name)[0]
+            new_product.manufacturer = manufacturer
+            new_product.manufacturer_url = revised_product.product_url
+            new_product.manufacturer_sku = revised_product.manufacturer_sku
+            new_product.manu_collection = revised_product.manufacturer_collection
+            new_product.manufacturer_style = revised_product.manufacturer_style
+            new_product.unit = Product.SF
+            new_product.swatch_image = revised_product.swatch_image_final
+            new_product.room_scene = revised_product.room_scene_final
+            new_product.tiling_image = revised_product.tiling_scene_final
+            new_product.commercial_warranty = revised_product.commercial_warranty
+            new_product.residential_warranty = revised_product.residential_warranty
+            new_product.light_commercial_warranty = revised_product.light_commericial_warranty
+            self.get_module().add_details(new_product, revised_product)
+
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if not self.name_check():
+            raise Exception('Department name does not conform to <Scraper<corresponding_class>>')
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 class ScraperCategory(models.Model):
@@ -183,17 +244,17 @@ class ScraperBaseProduct(models.Model):
         respone = requests.get(url, headers=headers)
         if not respone.status_code == 200:
             print('bad request')
-            return
+            return None
         try:
             image: pimage.Image = pimage.open(BytesIO(respone.content))
             image = image.convert('RGB')
         except (OSError, ValueError):
             print('cannot identify image file for ' + self.name)
-            return
+            return None
         image_copy = copy.copy(image)
         if not self.validate_image(image_copy):
             print('not valid image')
-            return
+            return None
         return image
 
     def validate_image(self, image: pimage.Image):
@@ -244,7 +305,7 @@ class ScraperBaseProduct(models.Model):
             print(str(e) + ' for ' + self.name)
             image = None
             self.save()
-            return
+            return None
         width, height = image.size
         if width == desired_size and height <= desired_size:
             return image
@@ -291,3 +352,4 @@ class SubScraperBase:
         sub_mod = self.get_sub_module()
         func = getattr(sub_mod, 'api_response')
         return func(self.subgroup.base_scraping_url)
+
