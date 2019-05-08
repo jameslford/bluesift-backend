@@ -1,3 +1,4 @@
+from django.conf import settings
 from Scraper.models import (
     ScraperBaseProduct,
     ScraperCategory,
@@ -7,7 +8,6 @@ from Scraper.models import (
     ScraperAggregateProductRating
     )
 from Products.models import Product
-from django.conf import settings
 from .lists import MODS
 from .check_settings import exclude_production
 from .colors import assign_label_color

@@ -134,7 +134,7 @@ class Product(models.Model):
 
 
 class ProductSubClass(Product):
-    
+
     class Meta:
         abstract = True
 

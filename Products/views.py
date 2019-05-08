@@ -18,7 +18,7 @@ def product_list(request, cat):
 
 @api_view(['GET'])
 def get_product(request, pk):
-    product = Product.objects.filter(pk=pk).first()
+    product = Product.objects.filter(pk=pk).select_subclasses().first()
     if not product:
         return Response('Invalid PK', status=status.HTTP_400_BAD_REQUEST)
     sorter = DetailSorter(product)

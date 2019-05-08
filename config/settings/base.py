@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'Orders',
     'Plans',
     'Products',
+    'ProductFilter',
     'Profiles',
     'Ratings',
     'Scraper',
