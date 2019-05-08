@@ -68,8 +68,17 @@ class CustomerProject(models.Model):
 
 
 class CustomerProduct(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='customer_products')
-    project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, related_name='products')
+    product = models.ForeignKey(
+        Product,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='customer_products'
+        )
+    project = models.ForeignKey(
+        CustomerProject,
+        on_delete=models.CASCADE,
+        related_name='products'
+        )
 
     def __str__(self):
         return self.product.name

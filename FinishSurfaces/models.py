@@ -1,5 +1,5 @@
 from django.db import models
-from Products.models import ProductSubClass
+from Products.models import Product, ProductSubClass
 
 
 class FinishSurface(ProductSubClass):
@@ -10,11 +10,9 @@ class FinishSurface(ProductSubClass):
     sub_material = models.CharField(max_length=200, null=True, blank=True)
 
     finish = models.CharField(max_length=200, null=True, blank=True)
-    surface_texture = models.CharField(max_length=200, null=True, blank=True)
     surface_coating = models.CharField(max_length=200, null=True, blank=True)
     look = models.CharField(max_length=200, null=True, blank=True)
     shade_variation = models.CharField(max_length=200, null=True, blank=True)
-    shade = models.CharField(max_length=60, null=True)
 
     walls = models.BooleanField(default=False)
     countertops = models.BooleanField(default=False)

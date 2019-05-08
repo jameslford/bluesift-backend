@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 # from rest_framework.authtoken.models import Token
 # from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
-from config.management.commands import lists
+from config.scripts import lists
 from Profiles.models import (
     CompanyAccount,
     CompanyShippingLocation,

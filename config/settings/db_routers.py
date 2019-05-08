@@ -19,4 +19,4 @@ class ScraperRouter:
 
         if 'Scraper' in app_label:
             return bool(db == 'scraper_default' or db == 'scraper_revised')
-        return False
+        return None

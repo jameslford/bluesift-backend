@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
-from Profiles.models import CompanyAccount
 from django.contrib.auth import get_user_model
+from Profiles.models import CompanyAccount
 
 
 class Command(BaseCommand):

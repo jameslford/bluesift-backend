@@ -67,7 +67,7 @@ class ScraperDepartment(models.Model):
         self.check_sub_classes()
         corresponding_class = self.corresponding_class()
         for revised_product in self.revised_products():
-            bb_sku = str(revised_product.bb_sku)
+            bb_sku = revised_product.bb_sku
             revised_manufacturer_name = revised_product.subgroup.manufacturer.name
             new_product = corresponding_class.objects.get_or_create(bb_sku=bb_sku)[0]
             manufacturer = Manufacturer.objects.get_or_create(label=revised_manufacturer_name)[0]
