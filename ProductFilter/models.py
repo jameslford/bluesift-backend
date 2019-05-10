@@ -27,7 +27,7 @@ class Facet:
      """
     name: str
     facet_type: str
-    values: List[str] = []
+    values: List[str] = None
 
 
 class QueryIndex(models.Model):
