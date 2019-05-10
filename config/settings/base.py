@@ -20,7 +20,7 @@ DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
 INSTALLED_APPS = [
     'djmoney',
     'corsheaders',
-    'grappelli',
+    # 'grappelli',
     'storages',
 
     'debug_toolbar',

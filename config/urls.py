@@ -8,7 +8,7 @@ from .views import landing, get_short_lib
 urlpatterns = [
     path('', landing, name='home'),
     path('admin/', admin.site.urls),
-    path('grappelli/', include('grappelli.urls')),
+    # path('grappelli/', include('grappelli.urls')),
     path('get_short_lib/', get_short_lib),
     path('accounts/', include('Accounts.urls')),
     path('bbadmin/', include('BBadmin.urls')),

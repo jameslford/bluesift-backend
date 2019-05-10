@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import List
 from django.db import models
 from django.http import HttpRequest
 from django.core import exceptions
@@ -18,6 +20,12 @@ def subclass_content_types():
         query |= ct_choice
     return query
 
+@dataclass
+class Facet:
+    name: str
+    facet_type: str
+    values: List[str]
+
 
 class QueryIndex(models.Model):
     query_string = models.CharField(max_length=1000)
@@ -37,8 +45,7 @@ class QueryIndex(models.Model):
 
 class ProductFilter(models.Model):
 
-    price = 'lowest_price'
-    location = 'location'
+    facets = []
     content_model = None
     sub_product = models.OneToOneField(
         ContentType,
@@ -103,6 +110,9 @@ class ProductFilter(models.Model):
             if not self.check_value(dependent):
                 del self.dependent_fields[count]
 
+    def add_product_facets(self):
+        facet_names = ['lowest_price', 'location']
+
     def save(self, *args, **kwargs):
         self.check_bools()
         self.check_keyterm()
@@ -113,9 +123,6 @@ class ProductFilter(models.Model):
     def __str__(self):
         return self.get_content_model().__name__ + ' Filter'
 
-
-class Facet:
-    pass
 
 
 class Sorter:
