@@ -1,13 +1,13 @@
-import decimal
-from operator import itemgetter
-from django.db.models import Min, Max, Q
-from django.contrib.postgres.search import SearchVector
-from django.contrib.gis.measure import D
-from Addresses.models import Zipcode
-from Products.models import ProductSubClass
-from Products.serializers import SubClassSerializer
-from Profiles.serializers import SupplierProductMiniSerializer
-from FinishSurfaces.models import FinishSurface
+# import decimal
+# from operator import itemgetter
+# from django.db.models import Min, Max, Q
+# from django.contrib.postgres.search import SearchVector
+# from django.contrib.gis.measure import D
+# from Addresses.models import Zipcode
+# from Products.models import ProductSubClass
+# from Products.serializers import SubClassSerializer
+# from Profiles.serializers import SupplierProductMiniSerializer
+# from FinishSurfaces.models import FinishSurface
 
 
 # class FilterSorter:
