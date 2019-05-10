@@ -22,12 +22,16 @@ def subclass_content_types():
 
 @dataclass
 class Facet:
+    """ data structure for filter
+        Facet(name: str, facet_type: str, values: [str])
+     """
     name: str
     facet_type: str
-    values: List[str]
+    values: List[str] = []
 
 
 class QueryIndex(models.Model):
+    """ cache relating query strings to json responses"""
     query_string = models.CharField(max_length=1000)
     response = JSONField()
     product_filter = models.ForeignKey(
@@ -47,18 +51,25 @@ class ProductFilter(models.Model):
 
     facets = []
     content_model = None
+    products = None
     sub_product = models.OneToOneField(
         ContentType,
         limit_choices_to=subclass_content_types(),
         on_delete=models.CASCADE
         )
-    standalones = ArrayField(
+    bool_groups = JSONField(blank=True, null=True)
+    key_field = models.CharField(max_length=30, null=True, blank=True)
+    color_field = models.CharField(max_length=30, null=True, blank=True)
+    independent_multichoice_fields = ArrayField(
         models.CharField(max_length=30, blank=True),
         null=True,
         blank=True
         )
-    bool_groups = JSONField(blank=True, null=True)
-    key_field = models.CharField(max_length=30, null=True, blank=True)
+    independent_range_fields = ArrayField(
+        models.CharField(max_length=30, blank=True),
+        null=True,
+        blank=True
+    )
     dependent_fields = ArrayField(
         models.CharField(max_length=30, blank=True),
         null=True,
@@ -70,6 +81,12 @@ class ProductFilter(models.Model):
         if not self.content_model:
             self.content_model = self.sub_product.model_class()
         return self.content_model
+
+    def get_model_products(self):
+        if not self.products:
+            model = self.get_content_model()
+            self.products = model.objects.all()
+        return self.products
 
     def check_value(self, name, fieldname: str = None):
         mymodel = self.get_content_model()
@@ -84,6 +101,7 @@ class ProductFilter(models.Model):
     def check_bools(self):
         if not self.bool_groups:
             return
+        valid_groups = []
         for group_count, group in enumerate(self.bool_groups):
             for key in group.keys():
                 if key != ('values' or 'name'):
@@ -92,18 +110,43 @@ class ProductFilter(models.Model):
             if not values:
                 del self.bool_groups[group_count]
                 continue
+            valid_values = []
             for count, value in enumerate(values):
                 if not self.check_value(value, 'BooleanField'):
                     del values[count]
+                    continue
+                valid_values.append(value)
+            valid_groups.append(Facet(group['name'], 'BoolGroup', valid_values))
+        self.facets = self.facets + valid_groups
 
     def check_keyterm(self):
         if not self.check_value(self.key_field):
             self.key_field = None
+            return
+        products = self.get_model_products().values_list(self.key_field, flat=True).distinct()
+        self.facets.append(Facet(self.key_field, 'KeyTerm', list(products)))
 
-    def check_standalones(self):
-        for count, standalone in enumerate(self.standalones):
+    def check_mc_fields(self):
+        for count, standalone in enumerate(self.independent_multichoice_fields):
             if not self.check_value(standalone):
-                del self.standalones[count]
+                del self.independent_multichoice_fields[count]
+                continue
+            products = self.get_model_products().values_list(standalone, flat=True).distinct()
+            self.facets.append(Facet(standalone, 'MultiText', list(products)))
+
+    def check_range_fields(self):
+        for count, standalone in enumerate(self.independent_range_fields):
+            if not self.check_value(standalone):
+                del self.independent_range_fields[count]
+                continue
+            
+            # add facet with min and max for field, but
+            # can you get max with range? which fields if any should be range,
+            # or should they just be decimal?
+
+    def check_color_field(self):
+        # finish this one up
+        pass
 
     def check_dependents(self):
         for count, dependent in enumerate(self.dependent_fields):
@@ -116,7 +159,7 @@ class ProductFilter(models.Model):
     def save(self, *args, **kwargs):
         self.check_bools()
         self.check_keyterm()
-        self.check_standalones()
+        self.check_mc_fields()
         self.check_dependents()
         super().save(*args, **kwargs)
 
