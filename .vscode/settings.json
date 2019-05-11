@@ -9,6 +9,9 @@
         "--load-plugins=pylint_django",
         "--max-line-length=130",
     ],
+    "python.linting.flake8Args": [
+        "--max-line-length=130",
+    ],
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
     "python.pythonPath": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Scripts\\python.exe",
