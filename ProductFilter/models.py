@@ -14,7 +14,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
 from config.scripts.globals import PRODUCT_SUBCLASSES
 from Addresses.models import Zipcode
-
+from Products.serializers import SubClassSerializer
 
 def subclass_content_types():
     ct_choices = []
@@ -28,6 +28,15 @@ def subclass_content_types():
     return query
 
 @dataclass
+class FacetValue:
+    """ datastructure for facet value
+        FacetValue(value: str, count: int, enabled: bool)
+    """
+    value: str
+    count: int = None
+    enabled: bool = False
+
+@dataclass
 class Facet:
     """ data structure for filter
         Facet(name: str, facet_type: str, quer_value, values: [str])
@@ -35,9 +44,11 @@ class Facet:
     name: str
     facet_type: str
     quer_value: str
-    values: List[str] = None
+    values: List = None
     total_count: int = 0
     qterms: List[str] = None
+    queryset: QuerySet = None
+    return_values: List[FacetValue] = None
 
 
 class QueryIndex(models.Model):
@@ -166,13 +177,19 @@ class ProductFilter(models.Model):
             #     values = self.get_model_products().aggregate(Min(standalone), Max(standalone))
 
     def check_color_field(self):
-        values = self.get_model_products().values_list('label_color', flat=True).distinct()
-        self.facets.append(Facet('color', 'ColorFacet', 'label_color', list(values)))
+        check, fieldtype = self.check_value(self.color_field)
+        if not check:
+            self.color_field = None
+            return
+        values = self.get_model_products().values_list(self.color_field, flat=True).distinct()
+        self.facets.append(Facet('color', 'ColorFacet', self.color_field, list(values)))
 
     def check_dependents(self):
         for count, dependent in enumerate(self.dependent_fields):
             if not self.check_value(dependent):
                 del self.dependent_fields[count]
+            values = self.get_model_products().values_list(dependent, flat=True).distinct()
+            self.facets.append(Facet(dependent, 'DependentFacet', dependent, list(values)))
 
     def add_product_facets(self):
         price_values = self.get_model_products().aggregate(Min('lowest_price'), Max('lowest_price'))
@@ -206,23 +223,37 @@ class ProductFilter(models.Model):
 class FilterResponse:
     legit_queries: str = None
     page: int = 1
+    load_more: True
     message: str = None
+    product_count: int = 0
     filter_dict: List[dict] = None
     products: List[dict] = None
 
 
 class Sorter:
     """ takes a request and returns a filter and product set """
-    def __init__(self, product_filter: ProductFilter, request: HttpRequest, update=False):
-        self.product_filter = product_filter
+    def __init__(self, product_subclass: models.Model, request: HttpRequest, update=False):
+        self.product_filter = self.get_filter(product_subclass)
         self.query_index: QueryIndex = None
         self.request = request
         self.search_term = None
         self.availabity = False
+        self.page_size = 60
         self.ordering_term = None
         self.facets: List[Facet] = []
         self.response: FilterResponse = FilterResponse()
         self.__get_response(update)
+
+    def get_content_type(self, model: models.Model) -> ContentType:
+        content_type = ContentType.objects.get_for_model(model)
+        return content_type
+
+    def get_filter(self, model: models.Model) -> ProductFilter:
+        content_type = self.get_content_type(model)
+        prod_filter = ProductFilter.objects.filter(sub_product=content_type).first()
+        if not prod_filter:
+            raise Exception('No filter for this class')
+        return prod_filter
 
     def __get_response(self, update=False):
         if self.request.method != 'GET':
@@ -247,7 +278,8 @@ class Sorter:
         self.response.page = int(self.request.GET.get('page', 1))
         self.search_term = self.request.GET.get('search', None)
         self.ordering_term = self.request.GET.get('order_term', None)
-        for facet in self.product_filter.facets:
+        for f_dict in self.product_filter.filter_dictionary:
+            facet = Facet(**f_dict)
             queries = query.split('&')
             applicable = [q.replace(f'{facet.quer_value}-', '') for q in queries if facet.quer_value in q]
             facet.qterms = applicable
@@ -261,6 +293,10 @@ class Sorter:
         products = self.__filter_location(products)
         products = self.__filter_price(products)
         products = self.__filter_range(products)
+        # remaing filters are multichoice / bool needing count
+        self.__filter_bools(products.all())
+        self.__filter_multi(products.all())
+        products = self.__count_objects(products)
 
     def __filter_search_terms(self, products: QuerySet):
         if not self.search_term:
@@ -369,25 +405,76 @@ class Sorter:
         bool_indices = self.get_indices_by_ft('BoolGroupFacet')
         bool_indices.append(self.get_index_by_qv('availability'))
         legit_queries = []
-        search_terms = {}
         for index in bool_indices:
+            search_terms = {}
             facet = self.facets[index]
-            qterms = facet.qterms
-            for term in qterms:
+            for term in facet.qterms:
                 search_terms[term] = True
                 legit_queries.append(f'{facet.quer_value}-{term}')
+            facet.queryset = products.filter(**search_terms)
         self.response.legit_queries = self.response.legit_queries + legit_queries
-        return products.filter(**search_terms)
 
-    def __filter_multi(self):
-        
-        pass
+    def __check_keyterm(self):
+        indices = []
+        kt_index = self.get_indices_by_ft('KeyTermFacet')[0]
+        color_index = self.get_indices_by_ft('ColorFacet')[0]
+        manu_index = self.get_indices_by_ft('ManufacturerFacet')[0]
+        keyterm_facet = self.facets[kt_index]
+        indices = indices + [kt_index, color_index, manu_index]
+        if keyterm_facet.qterms:
+            indices = indices + self.get_indices_by_ft('DependentFacet')
+        return indices
 
-    def __filter_manufacturer(self):
-        pass
+    def __filter_multi(self, products: QuerySet):
+        indices = self.__check_keyterm()
+        legit_queries = []
+        for index in indices:
+            facet = self.facets[index]
+            q_object = models.Q()
+            for term in facet.qterms:
+                q_object |= models.Q(**{facet.quer_value: term})
+                legit_queries.append(f'{facet.quer_value}-{term}')
+            facet.queryset = products.filter(q_object)
+        self.response.legit_queries = self.response.legit_queries + legit_queries
 
-    def __order(self):
-        pass
+    def __count_objects(self, products: QuerySet):
+        exclude_list = ['RangeFacet', 'LocationFacet', 'PriceFacet']
+        indices = []
+        all_qs = []
+        for count, _facet in self.facets:
+            if _facet.facet_type not in exclude_list:
+                indices.append(count)
+        for index in indices:
+            _products = products.all()
+            others = indices.copy().remove(index)
+            q_sets = [self.facets[q].queryset for q in others]
+            _products = _products.intersection(*q_sets)
+            facet = self.facets[index]
+            all_qs.append(facet.queryset)
+            for value in facet.values:
+                term = {facet.quer_value: value}
+                count = _products.filter(**term).count()
+                facet.total_count += count
+                facet.return_values.append(FacetValue(
+                    value,
+                    count,
+                    bool(value in facet.qterms)
+                ))
+        for index in indices:
+            facet = self.facets[index]
+            facet.queryset = None
+            facet.values = None
+        self.response.filter_dict = asdict(self.facets)
+        final_qs = products.intersection(*all_qs)
+        self.response.product_count = final_qs.count()
+        return final_qs
 
-    def __paginate(self):
-        pass
+    def __serialize_products(self, products: QuerySet):
+        start_page = self.response.page - 1
+        product_start = start_page * self.page_size
+        product_end = self.response.page * self.page_size
+        if product_end > self.response.product_count:
+            self.response.load_more = False
+            _products = products[product_start:]
+        _products = products[product_start:product_end]
+        self.response.products = SubClassSerializer(_products, many=True).data
