@@ -10,6 +10,6 @@ from .models import FinishSurface
 
 @api_view(['GET'])
 def fs_products_list(request):
-    prod_filter = Sorter(FinishSurface, request)
-    content = prod_filter.response
+    prod_filter = Sorter(FinishSurface, request, True)
+    content = prod_filter.get_repsonse()
     return Response(content, status=status.HTTP_200_OK)
