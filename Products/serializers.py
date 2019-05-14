@@ -27,15 +27,15 @@ class SerpyProduct(serpy.Serializer):
     manufacturer = SerpyManufacturer()
     lowest_price = serpy.Field()
     average_price = serpy.Field()
-    average_rating = serpy.Field(call=True)
-    rating_count = serpy.Field(call=True)
+    # average_rating = serpy.Field(call=True)
+    # rating_count = serpy.Field(call=True)
 
     def get_swatch_image(self, prod_obj):
-        return prod_obj.swatch_image.image.url
+        return prod_obj.swatch_image.url
 
 
 class SubClassSerializer(serpy.Serializer):
-    product = SerpyProduct()
+    product_ptr = SerpyProduct()
 
 
 # class ProductSerializer(serializers.ModelSerializer):

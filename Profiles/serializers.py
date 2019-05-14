@@ -192,22 +192,18 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
         employee = self.context.get('employee', None)
         if not employee:
             return False
-        if (employee.company_account_owner or
+        return bool(
+            employee.company_account_owner or
             employee.company_account_admin or
-                employee == instance.local_admin):
-            return True
-        else:
-            return False
+            employee == instance.local_admin)
 
     def get_deletable(self, instance):
         employee = self.context.get('employee', None)
         if not employee:
             return False
-        if (employee.company_account_owner or
-                employee.company_account_admin):
-            return True
-        else:
-            return False
+        return bool(
+            employee.company_account_owner or
+            employee.company_account_admin)
 
 
 class ShippingLocationUpdateSerializer(serializers.ModelSerializer):

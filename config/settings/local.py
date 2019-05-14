@@ -79,5 +79,9 @@ INTERNAL_IPS = [
 ]
 
 
-GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
-GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
+# GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
+# GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
+# GEO_LIB = 'C:\\\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Lib\\site-packages\\osgeo'
+# GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\share\proj'
+# GDAL_LIBRARY_PATH = GEO_LIB + 'gdal204.dll'
+# GEOS_LIBRARY_PATH = GEO_LIB + 'geos_c.dll'
