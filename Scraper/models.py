@@ -119,6 +119,7 @@ class ScraperSubgroup(models.Model):
     )
     base_scraping_url = models.URLField(max_length=2000, blank=True)
     scraped = models.BooleanField(default=False)
+    cleaned = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('manufacturer', 'category')
@@ -141,16 +142,16 @@ class ScraperSubgroup(models.Model):
         prod_type = self.get_prod_type()
         return prod_type.variable_fields()
 
-    def get_prod_type(self, db='default'):
-        product = self.products.select_subclasses().first()
+    def get_prod_type(self, db='scraper_default'):
+        product = self.products.using(db).select_subclasses().first()
         print(type(product))
         return type(product)
 
-    def get_products(self, db='default'):
+    def get_products(self, db='scraper_default'):
         prod_type = self.get_prod_type()
         return prod_type.objects.using(db).filter(subgroup=self)
 
-    def get_values_set(self, db='default'):
+    def get_values_set(self, db='scraper_default'):
         new_dict = {}
         fields_to_check = self.get_variable_fields()
         products = self.get_products(db)

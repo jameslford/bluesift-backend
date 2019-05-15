@@ -29,7 +29,7 @@ class Product(models.Model):
     )
 
     name = models.CharField(max_length=1200)
-    bb_sku = models.CharField(max_length=100, primary_key=True, unique=True)
+    bb_sku = models.UUIDField(primary_key=True, unique=True, editable=False)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)

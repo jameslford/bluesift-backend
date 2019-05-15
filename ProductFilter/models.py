@@ -29,6 +29,9 @@ MULTITEXT_FACET = 'MultiTextFacet'
 PRICE_FACET = 'PriceFacet'
 RANGE_FACET = 'RangeFacet'
 
+def get_finish_surface_ct():
+    fs_model = PRODUCT_SUBCLASSES['FinishSurface']
+    return ContentType.objects.get_for_model(fs_model)
 
 def subclass_content_types():
     ct_choices = []
@@ -95,7 +98,8 @@ class ProductFilter(models.Model):
     sub_product = models.OneToOneField(
         ContentType,
         limit_choices_to=subclass_content_types(),
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True
         )
     bool_groups = pg_fields.JSONField(blank=True, null=True)
     key_field = models.CharField(max_length=30, null=True, blank=True)

@@ -98,6 +98,7 @@ class ScraperFinishSurface(ScraperBaseProduct):
         return self
 
     def set_actual_color(self):
+        # pylint: disable=no-member
         image = self.product.swatch_image
         if not image:
             return

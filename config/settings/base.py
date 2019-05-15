@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'Profiles',
     'Ratings',
     'Scraper',
-    'Scraper.ScraperFinishSurface'
+    'Scraper.ScraperFinishSurface',
+    'Scraper.ScraperCleaner'
 ]
 
 ROOT_URLCONF = 'config.urls'
