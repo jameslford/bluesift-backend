@@ -2,8 +2,6 @@ import datetime
 import decimal
 import random
 from django.core.management.base import BaseCommand
-# from rest_framework.authtoken.models import Token
-# from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
 from config.scripts import lists
 from Profiles.models import (
@@ -22,10 +20,8 @@ class Command(BaseCommand):
         product_ids = Product.objects.all().values_list('id', flat=True)
         for email, address, comp_name in zip(lists.emails, lists.addresses, lists.company_names):
             user_model = get_user_model()
-            # password = make_password('tomatoes')
             password = 'tomatoes'
             user = user_model.objects.create_user(email=email, is_supplier=True, password=password)
-            # Token.objects.create(user=user)
             zipcode = Zipcode.objects.get(code=address[3])
             location_address = Address.objects.create(
                 address_line_1=address[0],
@@ -77,41 +73,3 @@ class Command(BaseCommand):
                     lead_time_ts=datetime.timedelta(days=lead_time),
                     offer_installation=offer_install
                 )
-
-
-    #     CompanyAccount.objects.all().delete()
-    #     CompanyShippingLocation.objects.all().delete()
-    #     for q in lists.users:
-    #         loc_dict = lists.create_user_data(q)
-    #         user_model = get_user_model()
-    #         user, created = user_model.objects.get_or_create(email=loc_dict['email'])
-    #         # if created:
-    #         password = loc_dict['password']
-    #         password = make_password(password)
-    #         user.password = password
-    #         user.is_supplier = True
-    #         user.is_active = True
-    #         user.save()
-    #         Token.objects.create(user=user)
-    #         account, created = CompanyAccount.objects.get_or_create(account_owner=user, name=loc_dict['ca_name'])
-    #         for location in loc_dict['locations']:
-    #             nickname = location['nickname']
-    #             number = location['number']
-    #             street = location['address_line']
-    #             city = location['city']
-    #             state = location['state']
-    #             zip_code = location['zip']
-    #             zip_code = Zipcode.objects.get(code=zip_code)
-    #             address, created = Address.objects.get_or_create(
-    #                 address_line_1=street,
-    #                 city=city,
-    #                 state=state,
-    #                 postal_code=zip_code,
-    #             )
-    #             new_loc, created = CompanyShippingLocation.objects.get_or_create(
-    #                 company_account=account,
-    #                 nickname=nickname,
-    #                 approved_in_store_seller=True,
-    #                 approved_online_seller=True,
-    #                 phone_number=number
-    #             )

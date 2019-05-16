@@ -142,24 +142,15 @@ class ScraperSubgroup(models.Model):
         prod_type = self.get_prod_type()
         return prod_type.variable_fields()
 
-    def get_prod_type(self, db='scraper_default'):
-        product = self.products.using(db).select_subclasses().first()
-        print(type(product))
+    def get_prod_type(self):
+        # pylint: disable=no-member
+        product = self.products.select_subclasses().first()
         return type(product)
 
-    def get_products(self, db='scraper_default'):
+    def get_products(self):
         prod_type = self.get_prod_type()
-        return prod_type.objects.using(db).filter(subgroup=self)
+        return prod_type.objects.filter(subgroup=self)
 
-    def get_values_set(self, db='scraper_default'):
-        new_dict = {}
-        fields_to_check = self.get_variable_fields()
-        products = self.get_products(db)
-        new_dict['pk'] = self.pk
-        for field in fields_to_check:
-            results = products.values_list(field, flat=True).distinct()
-            new_dict[field] = list(results)
-        return new_dict
 
 
 class ScraperBaseProduct(models.Model):
@@ -353,4 +344,3 @@ class SubScraperBase:
         sub_mod = self.get_sub_module()
         func = getattr(sub_mod, 'api_response')
         return func(self.subgroup.base_scraping_url)
-

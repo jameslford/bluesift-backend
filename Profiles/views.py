@@ -2,12 +2,10 @@
     accompanying products. supporting functions first, actual views at bottom '''
 
 from django.conf import settings
+from django.contrib.postgres.search import SearchVector
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-# from rest_framework.pagination import PageNumberPagination
-from django.contrib.postgres.search import SearchVector
 from rest_framework.response import Response
-# from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from rest_framework import status
 
 from Profiles.models import (
@@ -16,13 +14,10 @@ from Profiles.models import (
     SupplierProduct
     )
 from Products.models import Product
-# from Products.scripts import FilterSorter
-# from Addresses.models import Address, Zipcode
 
 from .serializers import (
     CompanyAccountDetailSerializer,
     SVLocationSerializer,
-    # CVLocationSerializer,
     EmployeeProfileSerializer,
     ShippingLocationListSerializer,
     ShippingLocationUpdateSerializer,

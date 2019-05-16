@@ -14,10 +14,11 @@ from .colors import assign_label_color
 
 def scraper_to_revised():
     exclude_production()
-    departments = ScraperDepartment.objects.all()
-    manufacturers = ScraperManufacturer.objects.all()
-    categories = ScraperCategory.objects.all()
-    subgroups = ScraperSubgroup.objects.all()
+    departments = ScraperDepartment.objects.using('scraper_default').all()
+    manufacturers = ScraperManufacturer.objects.using('scraper_default').all()
+    categories = ScraperCategory.objects.using('scraper_default').all()
+    subgroups = ScraperSubgroup.objects.using('scraper_default').all()
+    products = ScraperBaseProduct.objects.using('scraper_default').all().select_subclasses()
     for department in departments:
         department.save(using='scraper_revised')
     for manufacturer in manufacturers:
@@ -26,11 +27,9 @@ def scraper_to_revised():
         category.save(using='scraper_revised')
     for group in subgroups:
         group.save(using='scraper_revised')
-    original_groups = ScraperSubgroup.objects.all()
-    for og in original_groups:
-        products = og.products.select_subclasses().all()
-        for product in products:
-            product.save(using='scraper_revised')
+    for product in products:
+        product.save(using='scraper_revised')
+
 
 def revised_to_default():
     exclude_production()
@@ -64,22 +63,7 @@ def clean_revised():
     assign_label_color()
 
 
-def delete_revised():
-    exclude_production()
-    departments = ScraperDepartment.objects.using('scraper_revised').all()
-    manufacturers = ScraperManufacturer.objects.using('scraper_revised').all()
-    categories = ScraperCategory.objects.using('scraper_revised').all()
-    subgroups = ScraperSubgroup.objects.using('scraper_revised').all()
-    for group in subgroups:
-        products = group.products.select_subclasses()
-        products.all().delete()
-    subgroups.delete()
-    categories.delete()
-    departments.delete()
-    manufacturers.delete()
-
-
-def delete_scraper_default():
+def delete_scraper_revised():
     ScraperManufacturer.objects.all().delete()
     ScraperDepartment.objects.all().delete()
     ScraperCategory.objects.all().delete()
@@ -90,22 +74,19 @@ def delete_scraper_default():
 
 def initialize_data():
     for mod in MODS:
-        manufacturer = ScraperManufacturer.objects.get_or_create(name=mod[0])[0]
-        department = ScraperDepartment.objects.get_or_create(name=mod[1])[0]
-        category = ScraperCategory.objects.get_or_create(name=mod[2], department=department)[0]
-        subgroup = ScraperSubgroup.objects.get_or_create(
+        manufacturer = ScraperManufacturer.objects.using('scraper_default').get_or_create(name=mod[0])[0]
+        department = ScraperDepartment.objects.using('scraper_default').get_or_create(name=mod[1])[0]
+        category = ScraperCategory.objects.using('scraper_default').get_or_create(name=mod[2], department=department)[0]
+        subgroup = ScraperSubgroup.objects.using('scraper_default').get_or_create(
             manufacturer=manufacturer,
             category=category,
             base_scraping_url=mod[3]
             )[0]
 
 
-def scrape_new():
-    for group in ScraperSubgroup.objects.all():
-        if not group.scraped:
+def scrape(overwrite=False):
+    for group in ScraperSubgroup.objects.using('scraper_default').all():
+        if overwrite:
             group.get_data()
-
-
-def scrape_all():
-    for group in ScraperSubgroup.objects.all():
-        group.get_data()
+        elif not group.scraped:
+            group.get_data()

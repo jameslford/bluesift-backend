@@ -8,7 +8,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         path = settings.ZIP_PATH
-        # zip_dic = {}
         with open(path) as readfile:
             reader = csv.reader(readfile, delimiter=",")
             for row in reader:
@@ -17,4 +16,3 @@ class Command(BaseCommand):
                     continue
                 coord = Coordinate.objects.create(lat=float(row[1]), lng=float(row[2]))
                 Zipcode.objects.get_or_create(code=row[0], centroid=coord)
-                # zip_dic[row[0]] = [row[1], row[2]]

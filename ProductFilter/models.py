@@ -29,10 +29,6 @@ MULTITEXT_FACET = 'MultiTextFacet'
 PRICE_FACET = 'PriceFacet'
 RANGE_FACET = 'RangeFacet'
 
-def get_finish_surface_ct():
-    fs_model = PRODUCT_SUBCLASSES['FinishSurface']
-    return ContentType.objects.get_for_model(fs_model)
-
 def subclass_content_types():
     ct_choices = []
     for name, subclass in PRODUCT_SUBCLASSES.items():

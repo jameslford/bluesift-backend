@@ -1,4 +1,4 @@
-from Scraper.models import ScraperSubgroup
+from Scraper.models import ScraperSubgroup, ScraperBaseProduct
 from .check_settings import check_local
 
 
@@ -19,11 +19,15 @@ def get_final_images():
             product.get_final_images()
 
 
-def get_images():
+def get_images(overwrite=False):
     check_local()
-    subgroups = ScraperSubgroup.objects.all()
+    subgroups = ScraperSubgroup.objects.using('scraper_default').all()
     for group in subgroups:
         products = group.products.all()
         for product in products:
-            product.get_local_images()
-            product.get_final_images()
+            if overwrite:
+                product.get_local_images(True)
+                product.get_final_images(True)
+            else:
+                product.get_local_images()
+                product.get_final_images()

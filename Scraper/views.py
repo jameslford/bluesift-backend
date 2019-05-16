@@ -5,6 +5,7 @@ from rest_framework.decorators import (
     )
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+from rest_framework import status
 from Scraper.models import ScraperSubgroup, ScraperBaseProduct
 from Scraper.ScraperCleaner.models import ScraperCleaner
 from .permissions import StagingAdminOnly, StagingorLocalAdmin
@@ -29,7 +30,7 @@ def subgroup_list(request):
             ).first()
         group_dict = {
             'name': group.__str__(),
-            'revised_id': revised_group.id,
+            'revised_pk': revised_group.pk,
             'scraped': group.scraped,
             'cleaned': revised_group.cleaned if revised_group else 'no group',
             'default_count': group.products.count(),
@@ -47,7 +48,7 @@ def subgroup_detail(request, pk):
         return Response('invalid pk')
     group_dict = {
         'subgroup': subgroup.__str__(),
-        'pk': pk,
+        'revised_pk': pk,
         'category_name': subgroup.category.name,
         'manufacturer_name': subgroup.manufacturer.name,
         'cleaned': subgroup.cleaned,
@@ -72,21 +73,24 @@ def subgroup_detail(request, pk):
 
 @api_view(['GET'])
 @permission_classes((StagingorLocalAdmin,))
-def view_products(request):
-    manufacturer = request.GET.get('manufacturer', None)
-    category = request.GET.get('category', None)
+def view_products(request, pk):
+    """ used to view all products of subgroup from scraper_default that have xxxx value for xxxx field
+
+    Arguments:
+        request including 1 parameter
+            default_subgroup_pk
+        and 2 query parameters:
+            field
+            value
+
+    Returns:
+        list of products
+    """
     field = request.GET.get('field', None)
     value = request.GET.get('value', None)
-    if not (
-            manufacturer and
-            category and
-            field and
-            value):
+    if not field and value:
         return Response('not enought fields')
-    default_subgroup = ScraperSubgroup.objects.using('scraper_default').filter(
-        manufacturer__name=manufacturer,
-        category__name=category
-        ).first()
+    default_subgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=pk).first()
     if not default_subgroup:
         return Response('could not find subgroup')
     argument = {field: value}
@@ -100,25 +104,39 @@ def update_revised(request):
     manufacturer = request.POST.get('manufacturer', None)
     category = request.POST.get('category', None)
     field = request.GET.get('field', None)
-    old_value = request.GET.get('old_value', None)
+    initial_value = request.GET.get('old_value', None)
     new_value = request.GET.get('new_value', None)
     if not (
             manufacturer and
             category and
             field and
-            old_value and
+            initial_value and
             new_value):
-        return Response('not enought fields')
-    revised_subgroup = ScraperSubgroup.objects.using('scraper_revised').filter(
+        return Response('not enough fields')
+    if new_value == initial_value:
+        return Response('no difference in new and old value')
+    default_subgroup = ScraperSubgroup.objects.using('scraper_default').filter(
         manufacturer__name=manufacturer,
         category__name=category
         ).first()
-    if not revised_subgroup:
+    if not default_subgroup:
         return Response('could not find subgroup')
-    argument = {field: old_value}
-    products = revised_subgroup.products.filter(**argument)
-    ids = [p.pk for p in products]
-    for product in products:
-        pass
-
-    
+    argument = {field: initial_value}
+    default_products = default_subgroup.products.filter(**argument)
+    pks = [product.pk for product in default_products.all()]
+    if not pks:
+        return Response('no products for this subgroup')
+    revised_products = ScraperBaseProduct.objects.using('scraper_revised').filter(pk__in=pks).select_subclasses()
+    for product in revised_products:
+        setattr(product, field, new_value)
+        product.save()
+    cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
+        subgroup_manufacturer_name=manufacturer,
+        subgroup_category_name=category,
+        field_name=field,
+        initial_value=initial_value
+        )[0]
+    cleaner.new_value = new_value
+    cleaner.product_pks = [product.pk for product in revised_products]
+    cleaner.save()
+    return Response(status=status.HTTP_201_CREATED)
