@@ -12,7 +12,9 @@ class ScraperCleaner(models.Model):
         )
     field_name = models.CharField(max_length=200, null=True, blank=True)
     initial_values = pg_fields.ArrayField(
-        models.CharField(max_length=200, null=True, blank=True)
+        models.CharField(max_length=200, null=True, blank=True),
+        null=True,
+        blank=True
         )
     new_value = models.CharField(max_length=200, null=True, blank=True)
 
@@ -47,7 +49,8 @@ class ScraperCleaner(models.Model):
         self.save()
 
     def clean(self):
-        revised_products = ScraperBaseProduct.objects.using('scraper_revised').filter(pk__in=self.default_product_pks).select_subclasses()
+        revised_products = ScraperBaseProduct.objects.using('scraper_revised').filter(
+            pk__in=self.default_product_pks).select_subclasses()
         for product in revised_products:
             setattr(product, self.field_name, self.new_value)
             product.save()
