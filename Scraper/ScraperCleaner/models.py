@@ -5,13 +5,15 @@ from Scraper.models import ScraperSubgroup, ScraperBaseProduct
 class ScraperCleaner(models.Model):
     subgroup_manufacturer_name = models.CharField(max_length=200, null=True, blank=True)
     subgroup_category_name = models.CharField(max_length=200, null=True, blank=True)
-    product_pks = pg_fields.ArrayField(
+    default_product_pks = pg_fields.ArrayField(
         models.UUIDField(null=True, blank=True),
         null=True,
         blank=True
         )
     field_name = models.CharField(max_length=200, null=True, blank=True)
-    initial_value = models.CharField(max_length=200, null=True, blank=True)
+    initial_values = pg_fields.ArrayField(
+        models.CharField(max_length=200, null=True, blank=True)
+        )
     new_value = models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
@@ -19,7 +21,7 @@ class ScraperCleaner(models.Model):
             'subgroup_manufacturer_name',
             'subgroup_category_name',
             'field_name',
-            'initial_value'
+            'new_value'
             ]]
 
     def refresh_and_clean(self):
@@ -30,7 +32,7 @@ class ScraperCleaner(models.Model):
             ).first()
         if not subgroup:
             return
-        argument = {self.field_name: self.initial_value}
+        argument = {self.field_name + '__in': list(self.initial_values)}
         default_products = subgroup.products.filter(**argument)
         if not default_products:
             return
@@ -38,14 +40,14 @@ class ScraperCleaner(models.Model):
         revised_products = ScraperBaseProduct.objects.filter(pk__in=pks).select_subclasses()
         if not revised_products:
             return
-        self.product_pks = pks
+        self.default_product_pks = pks
         for product in revised_products:
             setattr(product, self.field_name, self.new_value)
             product.save()
         self.save()
 
     def clean(self):
-        revised_products = ScraperBaseProduct.objects.using('scraper_revised').filter(pk__in=self.product_pks).select_subclasses()
+        revised_products = ScraperBaseProduct.objects.using('scraper_revised').filter(pk__in=self.default_product_pks).select_subclasses()
         for product in revised_products:
             setattr(product, self.field_name, self.new_value)
             product.save()

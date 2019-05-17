@@ -1,6 +1,6 @@
 import uuid
 from model_utils.managers import InheritanceManager
-from django.contrib.postgres.fields.array import ArrayField
+from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
 from django.db.models import Min, Avg
 from django.contrib.gis.geos import MultiPoint
@@ -55,9 +55,6 @@ class Product(models.Model):
     commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
     light_commercial_warranty = models.CharField(max_length=100, null=True)
     commercial = models.BooleanField(default=False)
-
-    # content = models.OneToOneField(ProductSubClass, on_delete=models.CASCADE)
-    notes = models.TextField(null=True, blank=True)
 
     manufacturer = models.ForeignKey(
         Manufacturer,
@@ -138,30 +135,3 @@ class ProductSubClass(Product):
     class Meta:
         abstract = True
 
-    @staticmethod
-    def key_term():
-        return {}
-
-# class Filter(models.Model):
-#     bool_groups = ArrayField
-
-
-
-# class ProductSubClass(models.Model):
-#     objects = InheritanceManager()
-
-
-# class ProductSubClass(models.Model):
-
-#     _product = GenericRelation(
-#         Product,
-#         content_type_field='content_type',
-#         object_id_field='object_id'
-#         )
-
-#     class Meta:
-#         abstract = True
-
-    # @property
-    # def product(self):
-    #     return self._product.first()
