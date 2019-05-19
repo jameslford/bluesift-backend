@@ -113,30 +113,21 @@ def view_products(request, pk):
 
 @api_view(['POST'])
 @permission_classes((StagingorLocalAdmin,))
-def update_revised(request):
-    manufacturer = request.POST.get('manufacturer', None)
-    category = request.POST.get('category', None)
-    field = request.GET.get('field', None)
-    current_value = request.GET.get('current_value', None)
-    new_value = request.GET.get('new_value', None)
-    if not (
-            manufacturer and
-            category and
-            field and
-            current_value and
-            new_value):
+def update_field(request):
+    subgroup_pk = request.POST.get('subgroup_pk', None)
+    field = request.POST.get('field', None)
+    current_value = request.POST.get('current_value', None)
+    new_value = request.POST.get('new_value', None)
+    if not (subgroup_pk and field and current_value and new_value):
         return Response('not enough fields')
     if new_value == current_value:
         return Response('no difference in new and old value')
-    revised_subgroup = ScraperSubgroup.objects.using('scraper_revised').filter(
-        manufacturer__name=manufacturer,
-        category__name=category
-        ).first()
+    revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=subgroup_pk).first()
     if not revised_subgroup:
         return Response('could not find subgroup')
-    argument = {field: current_value}
-    model_type = type(revised_subgroup.products.first())
-    revised_products = model_type.using('scraper_revised').filter(**argument)
+    argument = {field: current_value, 'subgroup': subgroup_pk}
+    model_type = revised_subgroup.get_prod_type()
+    revised_products = model_type.objects.filter(**argument)
     pks = [product.pk for product in revised_products.all()]
     if not pks:
         return Response('no products for this subgroup')
@@ -147,8 +138,8 @@ def update_revised(request):
     initial_values = default_products.values_list(field, flat=True).distinct()
     for initial_value in initial_values:
         cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
-            subgroup_manufacturer_name=manufacturer,
-            subgroup_category_name=category,
+            subgroup_manufacturer_name=revised_subgroup.manufacturer.name,
+            subgroup_category_name=revised_subgroup.category.name,
             field_name=field,
             initial_value=initial_value
             )[0]
@@ -160,16 +151,16 @@ def update_revised(request):
 @api_view(['PUT'])
 @permission_classes((StagingorLocalAdmin,))
 def alter_values(request):
-    revised_subgroup_pk = request.PUT.get('subgroup_pk', None)
-    value = request.PUT.get('value', None)
-    if not value or revised_subgroup_pk:
+    revised_subgroup_pk = request.POST.get('subgroup_pk', None)
+    value = request.POST.get('value', None)
+    if not (value or revised_subgroup_pk):
         return Response('must send revised_subgroup_pk')
-    field = request.PUT.get('field', None)
-    command = request.PUT.get('command', None)
+    field = request.POST.get('field', None)
+    command = request.POST.get('command', None)
     if not field and command:
         return Response('must have field and command')
-    scraper = ScraperSubgroup.objects.using('scraper_revised').filter(pk=revised_subgroup_pk).first()
-    products = scraper.products.all()
+    revised_subgroup = ScraperSubgroup.objects.using('scraper_revised').filter(pk=revised_subgroup_pk).first()
+    products = ScraperBaseProduct.objects.filter(subgroup=revised_subgroup).select_subclasses()
     if value:
         arg = {field: value}
         products = products.filter(**arg)
@@ -179,4 +170,13 @@ def alter_values(request):
         new_value = cleaner(command)
         cleaner.create_scraper_cleaner(product.pk, field)
         setattr(product, field, new_value)
+        product.save()
+    return Response(status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes((StagingorLocalAdmin,))
+def stock_clean(request):
+    subgroup_pk = request.POST.get('subgroup_pk')
+    subgroup: ScraperSubgroup = ScraperSubgroup.objects.get(pk=subgroup_pk)
+    subgroup.run_stock_clean()
     return Response(status=status.HTTP_200_OK)

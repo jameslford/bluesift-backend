@@ -139,7 +139,10 @@ class ScraperSubgroup(models.Model):
 
     def run_stock_clean(self):
         mod = self.get_module()
-        mod.Scraper(self)
+        scraper = mod.Scraper
+        if 'clean' not in dir(scraper):
+            raise Exception('no clean method')
+        mod.Scraper(self).clean()
 
     def get_variable_fields(self):
         prod_type = self.get_prod_type()

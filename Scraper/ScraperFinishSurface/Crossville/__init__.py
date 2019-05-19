@@ -84,26 +84,30 @@ class Scraper(SubScraperBase):
                     product.length = clean_value(size[1])
 
                 for app in applications:
-                    product.floors = True if 'Interior floors dry' in app else False
-                    product.walls = True if 'Interior walls dry' in app else False
-                    product.counter_tops = True if 'Counters' in app else False
-                    product.shower_floors = True if 'Interior floors wet' in app else False
-                    product.shower_walls = True if 'Interior walls wet' in app else False
-                    product.covered_walls = True if 'Exterior covered walls' in app else False
-                    product.exterior_walls = True if 'Exterior walls' in app else False
-                    product.pool_lining = True if 'Pool fountain full lining' in app else False
+                    product.floors = bool('Interior floors dry' in app)
+                    product.walls = bool('Interior walls dry' in app)
+                    product.counter_tops = bool('Counters' in app)
+                    product.shower_floors = bool('Interior floors wet' in app)
+                    product.shower_walls = bool('Interior walls wet' in app)
+                    product.covered_walls = bool('Exterior covered walls' in app)
+                    product.exterior_walls = bool('Exterior walls' in app)
+                    product.pool_lining = bool('Pool fountain full lining' in app)
 
-                
                 product = product.name_sku_check()
                 if not product:
                     continue
         self.subgroup.scraped = True
         self.subgroup.save()
 
-
-
-
-
-              
-
-
+    def clean(self):
+        default_products = ScraperFinishSurface.objects.using('scraper_default').filter(subgroup=self.subgroup)
+        for default_product in default_products:
+            default_product: ScraperFinishSurface = default_product
+            sub_material: str = default_product.sub_material.lower()
+            if 'mosaic' in sub_material:
+                revised_product: ScraperFinishSurface = ScraperFinishSurface.objects.using(
+                    'scraper_revised').get(pk=default_product.pk)
+                new_sub_material = sub_material.replace('mosaic', '')
+                revised_product.sub_material = new_sub_material
+                revised_product.shape = 'mosaic'
+                revised_product.save()

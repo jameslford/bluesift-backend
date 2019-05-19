@@ -38,10 +38,14 @@ class CleanerUtility:
         self.value = value
 
     def lower_values(self):
-        return self.value.lower()
+        if self.value:
+            return self.value.lower()
+        return self.value
 
     def strip_values(self):
-        return self.value.strip()
+        if self.value:
+            return self.value.strip()
+        return self.value
 
     def fraction_to_decimal_values(self):
         new_val = self.value.split('/')
@@ -49,7 +53,7 @@ class CleanerUtility:
             raise Exception('not a fraction')
 
     def create_scraper_cleaner(self, product_pk: str, field: str):
-        default_product = ScraperBaseProduct.objects.using('scraper_default').get_subclasses(pk=product_pk)
+        default_product = ScraperBaseProduct.objects.using('scraper_default').filter(pk=product_pk).select_subclasses().first()
         initial_value = getattr(default_product, field)
         scraper_cleaner = ScraperCleaner.objects.get_or_create(
             subgroup_manufacturer_name=default_product.subgroup.manufacturer.name,
@@ -59,6 +63,7 @@ class CleanerUtility:
         )[0]
         scraper_cleaner.new_value = self.value
         scraper_cleaner.save()
+        print('cleaner saved')
 
     def __call__(self, function: str):
         func = getattr(self, function)
