@@ -62,7 +62,6 @@ class ScraperDepartment(models.Model):
         if new_model != self.corresponding_class():
             raise Exception('wrong class in department submodule or globals for ' + self.name)
 
-
     def add_to_default(self):
         self.check_sub_classes()
         corresponding_class = self.corresponding_class()
@@ -138,6 +137,10 @@ class ScraperSubgroup(models.Model):
         mod = self.get_module()
         mod.Scraper(self).get_detail()
 
+    def run_stock_clean(self):
+        mod = self.get_module()
+        mod.Scraper(self)
+
     def get_variable_fields(self):
         prod_type = self.get_prod_type()
         return prod_type.variable_fields()
@@ -150,7 +153,6 @@ class ScraperSubgroup(models.Model):
     def get_products(self):
         prod_type = self.get_prod_type()
         return prod_type.objects.filter(subgroup=self)
-
 
 
 class ScraperBaseProduct(models.Model):

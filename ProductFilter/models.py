@@ -16,6 +16,8 @@ from django.contrib.postgres import fields as pg_fields
 from config.scripts.globals import PRODUCT_SUBCLASSES
 from Addresses.models import Zipcode
 from Products.serializers import SubClassSerializer
+from Products.models import Product
+from Profiles.serializers import SupplierProductMiniSerializer
 
 
 AVAILABILITY_FACET = 'AvailabilityFacet'
@@ -605,3 +607,104 @@ class Sorter:
         if self.qi_response:
             return self.qi_response
         return asdict(self.response)
+
+
+@dataclass
+class DetailListItem:
+    name: str = None
+    terms: List = dfield(default_factory=lambda: [])
+
+@dataclass
+class DetailResponse:
+    unit: str = None
+    manufacturer: str = None
+    manufacturer_url: str = None
+    swatch_image: str = None
+    room_scene: str = None
+    priced: List = dfield(default_factory=lambda: [])
+    lists: List[DetailListItem] = dfield(default_factory=lambda: [])
+
+
+class DetailBuilder:
+
+    def __init__(self, pk: str):
+        self.bb_sku = pk
+        self.product = self.get_subclass_instance()
+        self.response: DetailResponse = DetailResponse()
+
+    def get_subclass_instance(self):
+        product = Product.obejcts.filter(pk=self.bb_sku).select_subclasses().first()
+        if not product:
+            raise Exception('no product found for ' + self.bb_sku)
+        return product
+
+    def get_product_filter(self) -> ProductFilter:
+        model_type = type(self.get_subclass_instance())
+        return Sorter(model_type).product_filter
+
+    def get_priced(self):
+        return SupplierProductMiniSerializer(self.product.in_store_priced(), many=True).data
+
+    def get_stock_details(self) -> DetailListItem:
+        details_list = [{'term': attr[0], 'values': attr[1]} for attr in self.product.attribute_list() if attr[1]]
+        return details_list
+
+    def get_subclass_remaining(self):
+        remaining_list = []
+        model_fields = type(self.get_subclass_instance()).get_fields(include_parents=False)
+        model_fields = [field.verbose_name for field in model_fields]
+        bool_attributes = self.get_bool_attributes()
+        fields_to_check = [field for field in model_fields if field not in bool_attributes]
+        for attr in fields_to_check:
+            value = getattr(self.product, attr)
+            if value:
+                val_dict = {
+                    'term': attr,
+                    'value': value
+                }
+                remaining_list.append(val_dict)
+        return remaining_list
+
+    def get_bool_attributes(self):
+        attributes = []
+        filter_bools = self.get_product_filter().bool_groups
+        for group in filter_bools:
+            group_attrs = group.get('values', None)
+            if group_attrs:
+                attributes = attributes + group_attrs
+        return attributes
+
+    def get_bool_groups(self):
+        filter_bools = self.get_product_filter().bool_groups
+        groups_list = []
+        for group in filter_bools:
+            group_attrs = group.get('values', None)
+            group_name = group.get('name', None)
+            if group_attrs and group_name:
+                group_vals = [{'term': attr, 'value': getattr(self.product, attr)} for attr in group_attrs]
+                groups_list.append(DetailListItem(group_name, group_vals))
+        return groups_list
+
+    def assign_response(self):
+        self.response.lists = [self.get_bool_groups()]
+        details_list = self.get_stock_details() + self.get_subclass_remaining()
+        self.response.lists.append(DetailListItem('details', details_list))
+        self.response.priced = self.get_priced()
+        self.response.manufacturer = self.product.manufacturer_name()
+        self.response.manufacturer_url = self.product.manufacturer_url
+        self.response.swatch_image = self.product.swatch_image
+        self.response.room_scene = self.product.room_scene
+        self.response.unit = self.product.unit
+
+    def assign_detail_response(self):
+        self.assign_response()
+        detail_dict = asdict(self.response)
+        self.product.detail_response = detail_dict
+        self.product.save()
+
+    def get_reponse(self):
+        detail_response = self.product.detail_response
+        if detail_response:
+            return detail_response
+        self.assign_detail_response()
+        return self.product.detail_response
