@@ -348,15 +348,12 @@ class Sorter:
         self.__parse_querydict(request_dict)
 
     def __parse_querydict(self, request_dict: QueryDict):
-        query = request_dict.getlist('quer', None)
         self.response.page = int(request_dict.get('page', 1))
         self.search_term = request_dict.get('search', None)
         self.ordering_term = request_dict.get('order_term', None)
         for f_dict in self.product_filter.filter_dictionary:
             facet = Facet(**f_dict)
-            queries = [q.strip('&') for q in query]
-            applicable = [q.replace(f'{facet.quer_value}-', '') for q in queries if facet.quer_value in q]
-            facet.qterms = applicable
+            facet.qterms = request_dict.getlist(facet.quer_value, None)
             self.facets.append(facet)
         self.__build_response()
 
