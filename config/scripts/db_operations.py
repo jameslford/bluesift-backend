@@ -1,4 +1,7 @@
+import os
+import datetime
 from django.conf import settings
+from django.core.management import call_command
 from Scraper.models import (
     ScraperBaseProduct,
     ScraperCategory,
@@ -90,3 +93,21 @@ def scrape(overwrite=False):
             group.get_data()
         elif not group.scraped:
             group.get_data()
+
+
+def backup_db():
+    now = datetime.datetime.now()
+    dt_string = now.strftime('%Y-%m-%d-%H-%M-%S')
+    environment = settings.ENVIRONMENT
+    current_path = os.getcwd()
+    for database in settings.DATABASES:
+        path = f'{current_path}\\z_backups\\{environment}_{database}_{dt_string}.json'
+        db_arg = f'--database={database}'
+        with open(path, 'w+') as f:
+            call_command('dumpdata', db_arg, stdout=f)
+
+
+def migrate_all():
+    for database in settings.DATABASES:
+        db_arg = f'--database={database}'
+        call_command('migrate', db_arg)

@@ -1,5 +1,5 @@
 from django.db import models
-from Products.models import Product, ProductSubClass
+from Products.models import ProductSubClass
 
 
 class FinishSurface(ProductSubClass):
@@ -47,69 +47,10 @@ class FinishSurface(ProductSubClass):
     slip_resistant = models.BooleanField(default=False)
 
 
-    @staticmethod
-    def bool_groups():
-        return [
-            {
-                'name': 'applications',
-                'terms': [
-                    'walls',
-                    'countertops',
-                    'floors',
-                    'cabinet_fronts',
-                    'shower_floors',
-                    'shower_walls',
-                    'exterior_walls',
-                    'exterior_floors',
-                    'covered_walls',
-                    'covered_floors',
-                    'pool_linings',
-                    'bullnose',
-                    'covebase',
-                    'corner_covebase'
-                ]
-            }
-        ]
-
-    @staticmethod
-    def key_term():
-        return {
-            'name': 'material',
-            # 'class': Material
-        }
-
-    @staticmethod
-    def dependents():
-        return [
-            'finish',
-            'sub_material',
-            'surface_coating'
-        ]
-
-    @staticmethod
-    def fk_standalones():
-        return [
-            'label_color',
-            'look'
-        ]
-
-    @staticmethod
-    def standalones():
-        return []
-
-    def details(self):
-        return [
-            ['material', self.material if self.material else None],
-            ['finish', self.finish if self.finish else None],
-            ['submaterial', self.sub_material if self.sub_material else None],
-            ['surface_coating', self.surface_coating if self.surface_coating else None],
-            ['thickness', self.thickness if self.thickness else None],
-            ['width', self.width if self.width else None],
-            ['length', self.length if self.length else None],
-            ['edge', self.edge if self.edge else None],
-        ]
-
-
     def set_size(self):
         if not self.size:
             self.size = self.width + ' x ' + self.length
+
+    @classmethod
+    def special_method(cls):
+        print('hello world')

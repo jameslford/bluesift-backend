@@ -146,3 +146,9 @@ class ProductSubClass(Product):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def run_special(cls):
+        if hasattr(cls, 'special_method'):
+            special_method = getattr(cls, 'special_method')
+            special_method()

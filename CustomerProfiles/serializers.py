@@ -1,10 +1,9 @@
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address, Zipcode
-# from Addresses.models import Address
-from .models import CustomerProfile, CustomerProduct, CustomerProject, CustomerProjectApplication
-from Products.serializers import ProductDetailSerializer, ProductSerializerforSupplier
 from Products.models import Product
+from Products.serializers import SerpyProduct
+from .models import CustomerProfile, CustomerProduct, CustomerProject, CustomerProjectApplication
 
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
@@ -65,7 +64,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
-    product = ProductSerializerforSupplier(required=False)
+    product = SerpyProduct()
 
     class Meta:
         model = CustomerProduct

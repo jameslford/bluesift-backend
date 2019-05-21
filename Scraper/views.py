@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from Scraper.models import ScraperSubgroup, ScraperBaseProduct
 from Scraper.ScraperCleaner.models import ScraperCleaner, CleanerUtility
-from .permissions import StagingAdminOnly, StagingorLocalAdmin
+from config.permissions import StagingAdminOnly, StagingorLocalAdmin
 
 
 @api_view(['GET'])

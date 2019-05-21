@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from Addresses.models import Address, Zipcode
 from django.contrib.postgres.search import SearchVector
-from Products.serializers import ProductSerializerforSupplier
+from Products.serializers import SerpyProduct
 from .models import (
     CompanyAccount,
     CompanyShippingLocation,
@@ -253,7 +253,7 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
 
 
 class SupplierProductSerializer(serializers.ModelSerializer):
-    product = ProductSerializerforSupplier(read_only=True)
+    product = SerpyProduct()
 
     class Meta:
         model = SupplierProduct

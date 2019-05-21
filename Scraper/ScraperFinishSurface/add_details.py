@@ -7,16 +7,22 @@ NEW_MODEL = FinishSurface
 
 
 def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
+    new_product.material = revised_product.material
+    new_product.sub_material = revised_product.sub_material
     new_product.finish = revised_product.finish
     new_product.surface_coating = revised_product.surface_coating
     new_product.look = revised_product.look
     new_product.shade_variation = revised_product.shade_variation
+
     new_product.shape = revised_product.shape
     new_product.label_color = revised_product.label_color
+
     new_product.edge = revised_product.edge
     new_product.end = revised_product.end
+
     new_product.install_type = revised_product.install_type
     new_product.sqft_per_carton = revised_product.sqft_per_carton
+
     new_product.walls = revised_product.walls
     new_product.floors = revised_product.floors
     new_product.countertops = revised_product.countertops
@@ -31,7 +37,7 @@ def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
     new_product.covebase = revised_product.covebase
     new_product.pool_linings = revised_product.pool_linings
     name = (
-        f'{revised_product.department_name}_{new_product.manufacturer.label}_{new_product.manufacturer_sku}'
+        f'{revised_product.department_name()}_{new_product.manufacturer.label}_{new_product.manufacturer_sku}'
         f'{new_product.manu_collection}_{new_product.manufacturer_style}_'
         f'{new_product.material}_{new_product.sub_material}_{new_product.finish}_'
         f'{revised_product.width}x{revised_product.length}x{revised_product.thickness}'

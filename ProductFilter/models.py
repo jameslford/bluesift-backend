@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
@@ -15,7 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
 from config.scripts.globals import PRODUCT_SUBCLASSES
 from Addresses.models import Zipcode
-from Products.serializers import SubClassSerializer
+from Products.serializers import SerpyProduct
 from Products.models import Product
 from Profiles.serializers import SupplierProductMiniSerializer
 
@@ -173,7 +174,7 @@ class ProductFilter(models.Model):
         if not self.bool_groups:
             return
         valid_groups = []
-        for group_count, group in enumerate(self.bool_groups):
+        for group_count, group in sorted(enumerate(self.bool_groups), reverse=True):
             for key in list(group):
                 if key not in ('values', 'name'):
                     del group[key]
@@ -199,7 +200,8 @@ class ProductFilter(models.Model):
         self.facets.append(Facet(self.key_field, KEYTERM_FACET, self.key_field, list(products)))
 
     def check_mc_fields(self):
-        for count, standalone in enumerate(self.independent_multichoice_fields):
+        indices = sorted(enumerate(self.independent_multichoice_fields), reverse=True)
+        for count, standalone in indices:
             check = self.check_value(standalone)[0]
             if not check:
                 del self.independent_multichoice_fields[count]
@@ -211,7 +213,7 @@ class ProductFilter(models.Model):
         range_fields = [pg_fields.IntegerRangeField, pg_fields.DecimalRangeField]
         discreet_fields = [models.DecimalField, models.IntegerField]
         acceptable_fields = [f.__name__ for f in range_fields + discreet_fields]
-        for count, standalone in enumerate(self.independent_range_fields):
+        for count, standalone in sorted(enumerate(self.independent_range_fields), reverse=True):
             check, field_type = self.check_value(standalone, acceptable_fields)
             if not check:
                 del self.independent_range_fields[count]
@@ -234,7 +236,7 @@ class ProductFilter(models.Model):
         self.facets.append(Facet('color', COLOR_FACET, self.color_field, list(values)))
 
     def check_dependents(self):
-        for count, dependent in enumerate(self.dependent_fields):
+        for count, dependent in sorted(enumerate(self.dependent_fields), reverse=True):
             if not self.check_value(dependent):
                 del self.dependent_fields[count]
             values = self.get_model_products().values_list(dependent, flat=True).distinct()
@@ -275,6 +277,7 @@ class ProductFilter(models.Model):
 
     def __str__(self):
         return self.get_content_model().__name__ + ' Filter'
+
 
 @dataclass
 class FilterResponse:
@@ -410,9 +413,10 @@ class Sorter:
 
     def __filter_location(self, products: QuerySet):
         loc_facet_index = self.get_index_by_qv('location')
-        loc_facet: Facet = self.facets[loc_facet_index]
         if not self.availabity:
+            del self.facets[loc_facet_index]
             return products
+        loc_facet: Facet = self.facets[loc_facet_index]
         rad_raw = [q for q in loc_facet.qterms if 'radius' in q]
         zip_raw = [q for q in loc_facet.qterms if 'zip' in q]
         if not (rad_raw and zip_raw):
@@ -439,7 +443,7 @@ class Sorter:
     def __filter_price(self, products: QuerySet):
         price_facet_index = self.get_index_by_qv('lowest_price')
         if not self.availabity:
-            # del self.facets[price_facet_index]
+            del self.facets[price_facet_index]
             return products
         return self.__filter_range(products, price_facet_index)
 
@@ -506,7 +510,7 @@ class Sorter:
 
     def __delete_dependents(self):
         facet_indices = self.get_indices_by_ft(DEPENDENT_FACET)
-        for index in facet_indices:
+        for index in sorted(facet_indices, reverse=True):
             del self.facets[index]
 
     def __filter_multi(self, products: QuerySet):
@@ -591,7 +595,7 @@ class Sorter:
             self.response.load_more = False
             _products = products[product_start:]
         _products = products[product_start:product_end]
-        self.response.products = SubClassSerializer(_products, many=True).data
+        self.response.products = SerpyProduct(_products, many=True).data
 
     def __assign_response_to_QI(self):
         self.query_index.response = asdict(self.response)
@@ -612,7 +616,7 @@ class Sorter:
 @dataclass
 class DetailListItem:
     name: str = None
-    terms: List = dfield(default_factory=lambda: [])
+    terms: List = None
 
 @dataclass
 class DetailResponse:
@@ -621,8 +625,8 @@ class DetailResponse:
     manufacturer_url: str = None
     swatch_image: str = None
     room_scene: str = None
-    priced: List = dfield(default_factory=lambda: [])
-    lists: List[DetailListItem] = dfield(default_factory=lambda: [])
+    priced: List = None
+    lists: List[DetailListItem] = None
 
 
 class DetailBuilder:
@@ -633,7 +637,7 @@ class DetailBuilder:
         self.response: DetailResponse = DetailResponse()
 
     def get_subclass_instance(self):
-        product = Product.obejcts.filter(pk=self.bb_sku).select_subclasses().first()
+        product = Product.objects.filter(pk=self.bb_sku).select_subclasses().first()
         if not product:
             raise Exception('no product found for ' + self.bb_sku)
         return product
@@ -643,7 +647,9 @@ class DetailBuilder:
         return Sorter(model_type).product_filter
 
     def get_priced(self):
-        return SupplierProductMiniSerializer(self.product.in_store_priced(), many=True).data
+        if self.product.in_store_priced():
+            return SupplierProductMiniSerializer(self.product.in_store_priced(), many=True).data
+        return []
 
     def get_stock_details(self) -> DetailListItem:
         details_list = [{'term': attr[0], 'values': attr[1]} for attr in self.product.attribute_list() if attr[1]]
@@ -651,8 +657,8 @@ class DetailBuilder:
 
     def get_subclass_remaining(self):
         remaining_list = []
-        model_fields = type(self.get_subclass_instance()).get_fields(include_parents=False)
-        model_fields = [field.verbose_name for field in model_fields]
+        model_fields = type(self.get_subclass_instance())._meta.get_fields(include_parents=False)
+        model_fields = [field.name for field in model_fields if field.name != 'product_ptr']
         bool_attributes = self.get_bool_attributes()
         fields_to_check = [field for field in model_fields if field not in bool_attributes]
         for attr in fields_to_check:
@@ -692,19 +698,20 @@ class DetailBuilder:
         self.response.priced = self.get_priced()
         self.response.manufacturer = self.product.manufacturer_name()
         self.response.manufacturer_url = self.product.manufacturer_url
-        self.response.swatch_image = self.product.swatch_image
-        self.response.room_scene = self.product.room_scene
+        self.response.swatch_image = self.product.swatch_image.url
+        self.response.room_scene = self.product.room_scene.url if self.product.room_scene else None
         self.response.unit = self.product.unit
 
     def assign_detail_response(self):
         self.assign_response()
         detail_dict = asdict(self.response)
-        self.product.detail_response = detail_dict
-        self.product.save()
+        product: Product = Product.objects.filter(pk=self.bb_sku).first()
+        product.detail_response = detail_dict
+        product.save()
+        return product.detail_response
 
     def get_reponse(self):
         detail_response = self.product.detail_response
         if detail_response:
             return detail_response
-        self.assign_detail_response()
-        return self.product.detail_response
+        return self.assign_detail_response()

@@ -1,12 +1,7 @@
 import serpy
+from uuid import UUID
 from rest_framework import serializers
 from .models import Product, Manufacturer
-
-
-class ManufacturerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Manufacturer
-        fields = ('id', 'label')
 
 
 class SerpyManufacturer(serpy.Serializer):
@@ -15,8 +10,8 @@ class SerpyManufacturer(serpy.Serializer):
 
 
 class SerpyProduct(serpy.Serializer):
-    pk = serpy.Field()
-    bb_sku = serpy.Field()
+    # pk = serpy.Field()
+    pk = serpy.MethodField()
     unit = serpy.Field()
     manufacturer_style = serpy.Field()
     manu_collection = serpy.Field()
@@ -33,51 +28,8 @@ class SerpyProduct(serpy.Serializer):
     def get_swatch_image(self, prod_obj):
         return prod_obj.swatch_image.url
 
-
-class SubClassSerializer(serpy.Serializer):
-    product_ptr = SerpyProduct()
-
-
-# class ProductSerializer(serializers.ModelSerializer):
-#     manufacturer = ManufacturerSerializer()
-
-#     class Meta:
-#         model = Product
-#         fields = (
-#             'id',
-#             'name',
-#             'swatch_image',
-#             'manufacturer',
-#             'lowest_price',
-#             'average_rating'
-#             'bb_sku',
-#             'manufacturer_color',
-#             'manu_collection',
-#             'for_sale_online',
-#             'for_sale_in_store',
-#             'size',
-#             'actual_color',
-#             'label_color',
-#             'tiling_image',
-#             )
-
-
-
-class ProductSerializerforSupplier(serializers.ModelSerializer):
-
-    class Meta:
-        model = Product
-        fields = (
-            'pk',
-            'unit',
-            'manu_collection',
-            'manufacturer_sku',
-            'name',
-            'swatch_image',
-            'manufacturer',
-            'lowest_price',
-            'average_price'
-            )
+    def get_pk(self, prod_obj: Product):
+        return str(prod_obj.bb_sku)
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -105,55 +57,4 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'tiling_image',
 
         )
-
-
-
-
-
-# class MaterialSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Material
-#         fields = ('id', 'label')
-
-
-# class SerpyMaterial(serpy.Serializer):
-#     pk = serpy.Field('id')
-#     label = serpy.Field()
-
-
-# class FinishSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Finish
-#         fields = ('id', 'label')
-
-
-# class SerpyFinish(serpy.Serializer):
-#     pk = serpy.Field('id')
-#     label = serpy.Field()
-
-
-# class ImageSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Image
-#         fields = ('image',)
-
-
-# class SerpyImage(serpy.Serializer):
-#     pk = serpy.Field('id')
-#     image = serpy.Field()
-
-
-# class ColorSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Color
-#         fields = ('label')
-
-
-# class SerpyColor(serpy.Serializer):
-#     label = serpy.Field()
-
 
