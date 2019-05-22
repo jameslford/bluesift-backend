@@ -43,15 +43,30 @@ def subclass_content_types():
         query |= ct_choice
     return query
 
+def return_radii():
+    return [5, 10, 15, 25, 50, 100]
 
 @dataclass
 class FacetValue:
     """ datastructure for facet value
         FacetValue(value: str, count: int, enabled: bool)
     """
-    value: str
+    value: str = None
     count: int = None
     enabled: bool = False
+
+@dataclass
+class RangeFacetValue(FacetValue):
+    abs_min: str = None
+    abs_max: str = None
+    selected_min: str = None
+    selected_max: str = None
+
+@dataclass
+class LocationFacet(FacetValue):
+    default_radii: List[int] = dfield(default_factory=return_radii)
+    zipcode: str = None
+    radius: int = 10
 
 
 @dataclass
@@ -66,7 +81,7 @@ class Facet:
     total_count: int = 0
     qterms: List[str] = None
     queryset: QuerySet = None
-    return_values: List[FacetValue] = dfield(default_factory=lambda: [])
+    return_values: List = dfield(default_factory=lambda: [])
 
 
 class QueryIndex(models.Model):
@@ -78,12 +93,23 @@ class QueryIndex(models.Model):
         on_delete=models.CASCADE,
         related_name='query_indexes'
     )
+    products = models.ManyToManyField(
+        'Products.Product',
+        related_name='query_indexes'
+        )
     created = models.DateTimeField(auto_now=True)
     last_retrieved = models.DateTimeField(null=True)
     times_accessed = models.PositiveIntegerField(null=True, default=1)
 
     class Meta:
         unique_together = ('query_string', 'product_filter')
+
+    def __str__(self):
+        return self.query_string
+
+    def refresh(self):
+        product_filter: ProductFilter = self.product_filter
+        Sorter(product_filter.get_content_model(), querystring=self.query_string)
 
 
 class ProductFilter(models.Model):
@@ -212,14 +238,20 @@ class ProductFilter(models.Model):
     def check_range_fields(self):
         range_fields = [pg_fields.IntegerRangeField, pg_fields.DecimalRangeField]
         discreet_fields = [models.DecimalField, models.IntegerField]
-        acceptable_fields = [f.__name__ for f in range_fields + discreet_fields]
+        acceptable_field_types = [f.__name__ for f in range_fields + discreet_fields]
         for count, standalone in sorted(enumerate(self.independent_range_fields), reverse=True):
-            check, field_type = self.check_value(standalone, acceptable_fields)
+            check, field_type = self.check_value(standalone, acceptable_field_types)
             if not check:
                 del self.independent_range_fields[count]
                 continue
-            values = self.get_model_products().aggregate(Min(standalone), Max(standalone))
-            self.facets.append(Facet(standalone, RANGE_FACET, standalone, list(values)))
+            self.get_range_values(standalone, standalone)
+
+    def get_range_values(self, name, quer_value, facet_type=RANGE_FACET):
+        values = self.get_model_products().aggregate(Min(quer_value), Max(quer_value))
+        min_val = values.get(f'{quer_value}__min', None)
+        max_val = values.get(f'{quer_value}__max', None)
+        range_value = RangeFacetValue(abs_min=str(min_val), abs_max=str(max_val))
+        self.facets.append(Facet(name, facet_type, quer_value, return_values=[asdict(range_value)]))
 
             # may need to use structure below:
             # if field_type in acceptable_fields[:2]:
@@ -243,17 +275,17 @@ class ProductFilter(models.Model):
             self.facets.append(Facet(dependent, DEPENDENT_FACET, dependent, list(values)))
 
     def add_product_facets(self):
-        price_values = self.get_model_products().aggregate(Min('lowest_price'), Max('lowest_price'))
-        self.facets.append(Facet('price', PRICE_FACET, 'lowest_price', list(price_values)))
+        self.get_range_values('price', 'lowest_price', PRICE_FACET)
         self.facets.append(Facet('availability', AVAILABILITY_FACET, 'availability', ['for_sale_in_store']))
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values)))
-        self.facets.append(Facet('location', LOCATION_FACET, 'location', [{'default_radii': [5, 10, 15, 25, 50, 100]}]))
+        self.facets.append(Facet('location', LOCATION_FACET, 'location'))
 
     def check_fields(self):
         self.add_product_facets()
         self.check_bools()
         self.check_keyterm()
+        self.check_range_fields()
         self.check_color_field()
         self.check_mc_fields()
         self.check_dependents()
@@ -272,8 +304,8 @@ class ProductFilter(models.Model):
         self.filter_dictionary = None
         self.check_fields()
         self.add_filter_dictionary()
-        self.refresh_QueryIndex()
         super().save(*args, **kwargs)
+        self.refresh_QueryIndex()
 
     def __str__(self):
         return self.get_content_model().__name__ + ' Filter'
@@ -334,11 +366,13 @@ class Sorter:
 
     def __process(self, request_dict: QueryDict, update=False):
         query_params = request_dict.urlencode()
+        print(query_params)
         query_index, created = QueryIndex.objects.get_or_create(
             query_string=query_params,
             product_filter=self.product_filter
             )
         if not created and not update:
+            print(query_params)
             query_index.times_accessed += 1
             query_index.last_accessed = now()
             query_index.save()
@@ -362,7 +396,7 @@ class Sorter:
         products = self.product_filter.get_model_products()
         products = self.__filter_search_terms(products)
         products = self.__filter_location(products)
-        products = self.__filter_price(products)
+        # products = self.__filter_price(products)
         products = self.__filter_range(products)
         self.__filter_bools(products.all())
         self.__filter_multi(products.all())
@@ -403,10 +437,11 @@ class Sorter:
         values = avail_facet.values
         for q_term in q_terms:
             if q_term in values:
+                print(q_term + 'is true')
                 self.availabity = True
-                self.response.legit_queries.append(f'availability-{q_term}')
-            else:
-                avail_facet.qterms.remove(q_term)
+                return True
+            avail_facet.qterms.remove(q_term)
+            return False
 
     def __filter_location(self, products: QuerySet):
         loc_facet_index = self.get_index_by_qv('location')
@@ -414,80 +449,83 @@ class Sorter:
             del self.facets[loc_facet_index]
             return products
         loc_facet: Facet = self.facets[loc_facet_index]
+        loc_facet.return_values = [LocationFacet()]
+        return_facet: RangeFacetValue = loc_facet.return_values[0]
         rad_raw = [q for q in loc_facet.qterms if 'radius' in q]
         zip_raw = [q for q in loc_facet.qterms if 'zip' in q]
         if not (rad_raw and zip_raw):
             return products
         radius_int = int(rad_raw[-1].replace('radius-', ''))
-        loc_facet.values.append({'selected_radius': radius_int})
+        return_facet.radius = radius_int
         radius = D(mi=radius_int)
         zipcode = zip_raw[-1].replace('zipcode-', '')
         coords = Zipcode.objects.filter(code=zipcode).first().centroid.point
         if not coords:
-            loc_facet['values'].append({'zipcode': 'invalid zipcode'})
+            return_facet.zipcode = 'invalid zipcode'
             return products
-        loc_facet['values'].append({'zipcode': int(zipcode)})
-        self.response.legit_queries = [
-            'location-radius-' + radius_int,
-            'location-zipcode-' + zipcode
-            ]
+        return_facet.zipcode = zipcode
+        return_facet.enabled = True
         new_products = products.filter(locations__distance_lte=(coords, radius))
         if not new_products:
             self.response.message = 'No results'
             return None
+        loc_facet.return_values = [return_facet]
         return products
 
-    def __filter_price(self, products: QuerySet):
-        price_facet_index = self.get_index_by_qv('lowest_price')
-        if not self.availabity:
-            del self.facets[price_facet_index]
-            return products
-        return self.__filter_range(products, price_facet_index)
-
-    def __filter_range(self, products: QuerySet, facet_index=None):
-        facet_indicies = [self.facets[facet_index]] if facet_index else self.get_indices_by_ft(RANGE_FACET)
+    def __filter_range(self, products: QuerySet):
+        facet_indicies = self.get_indices_by_ft(RANGE_FACET)
+        facet_indicies.append(self.get_index_by_qv('lowest_price'))
         if not facet_indicies:
             return products
-        for index in facet_indicies:
+        for index in sorted(facet_indicies, reverse=True):
             facet = self.facets[index]
+            facet_value = facet.return_values[0]
+            return_facet = RangeFacetValue(**facet_value)
             if not facet.qterms:
+                return_facet.selected_max = return_facet.abs_max
+                return_facet.selected_min = return_facet.abs_min
+                facet.return_values = [return_facet]
                 facet.queryset = products
                 continue
+            # facet.return_values = return_facet
             min_query = [q.replace('min-', '') for q in facet.q_terms if 'min' in q]
             max_query = [q.replace('max-', '') for q in facet.q_terms if 'max' in q]
             if min_query:
                 products = self.__complete_range(products, facet, min_query, 'min')
+                return_facet.selected_min = min_query
+                return_facet.enabled = True
+            else:
+                return_facet.selected_min = return_facet.abs_min
             if max_query:
                 products = self.__complete_range(products, facet, max_query, 'max')
+                return_facet.selected_max = max_query
+                return_facet.enabled = True
+            else:
+                return_facet.selected_max = return_facet.abs_max
             if not products:
                 self.response.message = 'No results'
                 return None
+            facet.return_values = [return_facet]
         return products
 
     def __complete_range(self, products: QuerySet, facet, query, direction: str):
         qrange = Decimal(query[-1])
         direction_transform = {'min': 'gte', 'max': 'lte'}
         quer_value = facet.quer_value
-        self.response.legit_queries.append(f'{quer_value}-{direction}-{str(qrange)}')
-        facet.values.append({f'{direction}-range': qrange})
         argument = {f'{quer_value}__{direction_transform[direction]}': qrange}
         return products.filter(**argument)
 
     def __filter_bools(self, products: QuerySet):
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET)
         bool_indices.append(self.get_index_by_qv('availability'))
-        legit_queries = []
         for index in bool_indices:
-            search_terms = {}
             facet = self.facets[index]
             if not facet.qterms:
                 self.facets[index].queryset = products
                 continue
-            for term in facet.qterms:
-                search_terms[term] = True
-                legit_queries.append(f'{facet.quer_value}-{term}')
+            facet.qterms = [term for term in facet.qterms if term in facet.values]
+            search_terms = {term: True for term in facet.qterms}
             facet.queryset = products.filter(**search_terms)
-        self.response.legit_queries = self.response.legit_queries + legit_queries
 
     def __check_keyterm(self):
         indices = self.get_indices_by_ft(MULTITEXT_FACET)
@@ -512,7 +550,6 @@ class Sorter:
 
     def __filter_multi(self, products: QuerySet):
         indices = self.__check_keyterm()
-        legit_queries = []
         for index in indices:
             facet = self.facets[index]
             if not facet.qterms:
@@ -521,9 +558,7 @@ class Sorter:
             q_object = models.Q()
             for term in facet.qterms:
                 q_object |= models.Q(**{facet.quer_value: term})
-                legit_queries.append(f'{facet.quer_value}-{term}')
             facet.queryset = products.filter(q_object)
-        self.response.legit_queries = self.response.legit_queries + legit_queries
 
     def __get_counted_facet_indices(self):
         exclude_list = [RANGE_FACET, LOCATION_FACET, PRICE_FACET]
@@ -578,10 +613,11 @@ class Sorter:
         self.__set_filter_dict()
 
     def __set_filter_dict(self):
-        indices = self.__get_counted_facet_indices()
-        for index in indices:
-            self.facets[index].queryset = None
-            self.facets[index].values = None
+        for facet in self.facets:
+            facet.queryset = None
+            facet.values = None
+            for term in facet.qterms:
+                self.response.legit_queries = [q for q in self.response.legit_queries] + [f'{facet.quer_value}={term}']
         self.response.filter_dict = [asdict(qfacet) for qfacet in self.facets]
 
     def __serialize_products(self, products: QuerySet):

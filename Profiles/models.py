@@ -21,6 +21,7 @@ class CompanyAccount(models.Model):
         return self.name
 
     def get_employees(self):
+        # pylint: disable=no-member
         return self.employees
 
     def shipping_location_count(self):
@@ -213,7 +214,7 @@ class SupplierProduct(models.Model):
 
     def percentage_off(self):
         if not self.on_sale and self.sale_price and self.in_store_ppu:
-            return
+            return None
         return self.sale_price / self.in_store_ppu
 
     def set_banner(self):
@@ -261,16 +262,18 @@ class SupplierProduct(models.Model):
         self.check_availability()
         self.check_approvals()
         super(SupplierProduct, self).save(*args, **kwargs)  # Call the real save() method
-        self.product.set_prices()
         if self.supplier.address:
             self.product.set_locations()
+        self.product.set_prices()
+        self.product.refresh_queries()
 
-    def delete(self, using=None, keep_parents=False):
+    def delete(self, using=None):
         address = False
         if self.supplier.address:
             address = True
         product = self.product
-        super().delete(using=using, keep_parents=keep_parents)
-        product.set_prices()
+        super().delete(using=using)
         if address:
             product.set_locations()
+        product.set_prices()
+        product.refresh_queries()

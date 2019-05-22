@@ -51,12 +51,12 @@ class CustomerProject(models.Model):
         return self.products.count()
 
     def clean(self):
+        # pylint: disable=no-member
         projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 10
         existing_projects = self.owner.projects.all().count()
         if existing_projects <= projects_allowed:
             return super().clean()
-        else:
-            raise ValidationError("Already at plan's project quota")
+        raise ValidationError("Already at plan's project quota")
 
     def save(self, *args, **kwargs):
         self.full_clean()

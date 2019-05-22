@@ -2,6 +2,7 @@ import datetime
 import decimal
 import random
 from django.core.management.base import BaseCommand
+from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 from config.scripts import lists
 from Profiles.models import (
@@ -17,7 +18,7 @@ from Products.models import Product
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        product_ids = Product.objects.all().values_list('id', flat=True)
+        product_ids = Product.objects.all().values_list('pk', flat=True)
         for email, address, comp_name in zip(lists.emails, lists.addresses, lists.company_names):
             user_model = get_user_model()
             password = 'tomatoes'
@@ -57,19 +58,23 @@ class Command(BaseCommand):
                 units_available = random.randint(10, 60)
                 units_per_order = decimal.Decimal(3.5)
                 select_id = random.choice(location_prod_ids)
-                location_prod_ids.remove(select_id)
+                del location_prod_ids[location_prod_ids.index(select_id)]
+                # location_prod_ids.remove(select_id)
                 product = Product.objects.get(pk=select_id)
                 # available_online = random.choice([True, False])
                 lead_time = random.randint(1, 14)
                 offer_install = random.choice([True, False])
-                SupplierProduct.objects.create(
-                    product=product,
-                    supplier=location,
-                    units_available_in_store=units_available,
-                    units_per_order=units_per_order,
-                    for_sale_in_store=True,
-                    in_store_ppu=price,
-                    # for_sale_online=available_online,
-                    lead_time_ts=datetime.timedelta(days=lead_time),
-                    offer_installation=offer_install
-                )
+                try:
+                    SupplierProduct.objects.create(
+                        product=product,
+                        supplier=location,
+                        units_available_in_store=units_available,
+                        units_per_order=units_per_order,
+                        for_sale_in_store=True,
+                        in_store_ppu=price,
+                        # for_sale_online=available_online,
+                        lead_time_ts=datetime.timedelta(days=lead_time),
+                        offer_installation=offer_install
+                    )
+                except IntegrityError:
+                    continue

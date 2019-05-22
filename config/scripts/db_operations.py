@@ -11,6 +11,7 @@ from Scraper.models import (
     ScraperAggregateProductRating
     )
 from Products.models import Product
+from ProductFilter.models import ProductFilter
 from .lists import MODS
 from .check_settings import exclude_production
 from .colors import assign_label_color
@@ -111,3 +112,16 @@ def migrate_all():
     for database in settings.DATABASES:
         db_arg = f'--database={database}'
         call_command('migrate', db_arg)
+
+
+def refresh_filters():
+    p_filters = ProductFilter.objects.all()
+    for p_filter in p_filters:
+        p_filter.save()
+
+
+def refresh_default_database():
+    Product.objects.all().delete()
+    revised_to_default()
+    assign_label_color()
+    refresh_filters()

@@ -114,7 +114,11 @@ class Product(models.Model):
             self.lowest_price = price["in_store_ppu__min"]
             self.average_price = price['in_store_ppu__avg']
         self.save()
-        return
+
+    def refresh_queries(self):
+        query_indexes = self.query_indexes.all()
+        for qi in query_indexes:
+            qi.refresh()
 
     def set_locations(self):
         self.locations = None

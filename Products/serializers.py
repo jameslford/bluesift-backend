@@ -20,10 +20,13 @@ class SerpyProduct(serpy.Serializer):
     name = serpy.Field()
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
-    lowest_price = serpy.Field()
-    average_price = serpy.Field()
+    lowest_price = serpy.MethodField()
+    # average_price = serpy.Field()
     # average_rating = serpy.Field(call=True)
     # rating_count = serpy.Field(call=True)
+
+    def get_lowest_price(self, prod_obj):
+        return str(prod_obj.lowest_price)
 
     def get_swatch_image(self, prod_obj):
         return prod_obj.swatch_image.url

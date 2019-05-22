@@ -1,3 +1,4 @@
+import os
 import csv
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -7,7 +8,9 @@ from Addresses.models import Zipcode, Coordinate
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        path = settings.ZIP_PATH
+        cwd = os.getcwd()
+        path = f'{cwd}\\config\\management\\zips\\zipcodes.csv'
+        # print(path)
         with open(path) as readfile:
             reader = csv.reader(readfile, delimiter=",")
             for row in reader:
