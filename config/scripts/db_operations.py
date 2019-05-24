@@ -1,6 +1,7 @@
 import os
 import datetime
 from django.conf import settings
+from django.db import transaction
 from django.core.management import call_command
 from Scraper.models import (
     ScraperBaseProduct,
@@ -16,6 +17,7 @@ from .lists import MODS
 from .check_settings import exclude_production
 from .colors import assign_label_color
 
+@transaction.atomic(using='scraper_revised')
 def scraper_to_revised():
     exclude_production()
     departments = ScraperDepartment.objects.using('scraper_default').all()
@@ -34,33 +36,20 @@ def scraper_to_revised():
     for product in products:
         product.save(using='scraper_revised')
 
-
+@transaction.atomic()
 def revised_to_default():
     exclude_production()
     departments = ScraperDepartment.objects.using('scraper_revised').all()
     for department in departments:
         department.add_to_default()
 
-
+@transaction.atomic(using='production')
 def staging_to_production():
     if settings.ENVIRONMENT != 'staging':
         raise Exception('can only be run in staging environment!')
     staging_products = Product.objects.all().select_subclasses()
     for staging_product in staging_products:
-        model_type = type(staging_product)
-        staging_id = staging_product.bb_sku
-        production_product = model_type.objects.using('production').get_or_create(bb_sku=staging_id)[0]
-        production_product.swatch_image = staging_product.swatch_image
-        production_product.room_scene = staging_product.room_scene
-        production_product.tiling_image = staging_product.tiling_image
-        staging_dict = staging_product.__dict__.copy()
-        del staging_dict['_state']
-        del staging_dict['swatch_image']
-        del staging_dict['room_scene']
-        del staging_dict['tiling_image']
-        del staging_dict['bb_sku']
-        production_product(**staging_dict)
-        production_product.save()
+        staging_product.save(using='production')
 
 
 def clean_revised():

@@ -49,7 +49,7 @@ class Command(BaseCommand):
                 approved_in_store_seller=True
             )
             max_count = product_ids.count()
-            rang_int = random.randint(10, max_count)
+            rang_int = random.randint(10, max_count) // 5
             location_prod_ids = list(product_ids)
             for x in range(rang_int):
                 price = random.uniform(1, 10)

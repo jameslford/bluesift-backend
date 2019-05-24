@@ -26,7 +26,9 @@ class SerpyProduct(serpy.Serializer):
     # rating_count = serpy.Field(call=True)
 
     def get_lowest_price(self, prod_obj):
-        return str(prod_obj.lowest_price)
+        if prod_obj.lowest_price:
+            return float(prod_obj.lowest_price)
+        return None
 
     def get_swatch_image(self, prod_obj):
         return prod_obj.swatch_image.url

@@ -3,7 +3,7 @@ from decimal import Decimal
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List, Tuple
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import Upper, Lower
 from django.db.models import Min, Max
 from django.urls import resolve as dj_resolve
@@ -43,6 +43,14 @@ def subclass_content_types():
     for ct_choice in ct_choices:
         query |= ct_choice
     return query
+
+
+def get_filter(model: models.Model):
+    content_type = ContentType.objects.get_for_model(model)
+    prod_filter = ProductFilter.objects.filter(sub_product=content_type).first()
+    if not prod_filter:
+        raise Exception('No filter for this class')
+    return prod_filter
 
 def return_radii():
     return [5, 10, 15, 25, 50, 100]
@@ -196,14 +204,14 @@ class ProductFilter(models.Model):
             Tuple[bool, str]
         """
         mymodel = self.get_content_model()
-        try:
-            field = mymodel._meta.get_field(name)
-            field_type = field.get_internal_type()
-            if fieldnames and field_type not in fieldnames:
-                return [False, field_type]
-            return [True, field_type]
-        except exceptions.FieldDoesNotExist:
+        fields = (field.name for field in mymodel._meta.get_fields())
+        if name not in fields:
             return [False, None]
+        field = mymodel._meta.get_field(name)
+        field_type = field.get_internal_type()
+        if fieldnames and field_type not in fieldnames:
+            return [False, field_type]
+        return [True, field_type]
 
     def check_bools(self):
         if not self.bool_groups:
@@ -232,7 +240,8 @@ class ProductFilter(models.Model):
             self.key_field = None
             return
         products = self.get_model_products().values_list(self.key_field, flat=True).distinct()
-        self.facets.append(Facet(self.key_field, KEYTERM_FACET, self.key_field, list(products), order=5))
+        products = [v for v in products if v]
+        self.facets.append(Facet(self.key_field, KEYTERM_FACET, self.key_field, values=products, order=5))
 
     def check_mc_fields(self):
         indices = sorted(enumerate(self.independent_multichoice_fields), reverse=True)
@@ -242,7 +251,8 @@ class ProductFilter(models.Model):
                 del self.independent_multichoice_fields[count]
                 continue
             products = self.get_model_products().values_list(standalone, flat=True).distinct()
-            self.facets.append(Facet(standalone, MULTITEXT_FACET, standalone, list(products), order=6))
+            products = [v for v in products if v]
+            self.facets.append(Facet(standalone, MULTITEXT_FACET, standalone, values=products, order=6))
 
     def check_range_fields(self):
         range_fields = [pg_fields.IntegerRangeField, pg_fields.DecimalRangeField]
@@ -253,12 +263,16 @@ class ProductFilter(models.Model):
             if not check:
                 del self.independent_range_fields[count]
                 continue
-            self.get_range_values(standalone, standalone)
+            self.get_range_values(standalone, standalone, count)
 
-    def get_range_values(self, name, quer_value, facet_type=RANGE_FACET, order=7):
+    def get_range_values(self, name, quer_value, count, facet_type=RANGE_FACET, order=7):
         values = self.get_model_products().aggregate(Min(quer_value), Max(quer_value))
         min_val = values.get(f'{quer_value}__min', None)
         max_val = values.get(f'{quer_value}__max', None)
+        if not (min_val or max_val):
+            return
+        if min_val == max_val:
+            return
         range_value = RangeFacetValue(value=name, abs_min=str(min_val), abs_max=str(max_val))
         self.facets.append(Facet(name, facet_type, quer_value, order=order, return_values=[asdict(range_value)]))
 
@@ -302,18 +316,19 @@ class ProductFilter(models.Model):
     def add_filter_dictionary(self):
         self.filter_dictionary = [asdict(facet) for facet in self.facets]
 
+    @transaction.atomic()
     def refresh_QueryIndex(self):
         """ refreshes all QueryIndex objects that are linked to self
         """
         for query_index in self.query_indexes.all():
             query_index.refresh()
 
+    @transaction.atomic()
     def save(self, *args, **kwargs):
         self.filter_dictionary = None
         self.check_fields()
         self.add_filter_dictionary()
         super().save(*args, **kwargs)
-        self.refresh_QueryIndex()
 
     def __str__(self):
         return self.get_content_model().__name__ + ' Filter'
@@ -333,7 +348,7 @@ class FilterResponse:
 class Sorter:
     """ takes a request and returns a filter and product set """
     def __init__(self, products: QuerySet, request: HttpRequest = None, update=False):
-        self.product_filter = self.get_filter(products.all().first())
+        self.product_filter = get_filter(products.all().first())
         self.products = products
         self.query_index: QueryIndex = None
         self.search_term = None
@@ -358,13 +373,6 @@ class Sorter:
         if created:
             self.__process(quer_index, True)
         self.__process(quer_index, update)
-
-    def get_filter(self, model: models.Model) -> ProductFilter:
-        content_type = ContentType.objects.get_for_model(model)
-        prod_filter = ProductFilter.objects.filter(sub_product=content_type).first()
-        if not prod_filter:
-            raise Exception('No filter for this class')
-        return prod_filter
 
     def __process(self, query_index: QueryIndex, update=False):
         if not update:
@@ -588,7 +596,7 @@ class Sorter:
                 term = {facet.quer_value: value}
                 if facet.facet_type in (BOOLGROUP_FACET, AVAILABILITY_FACET):
                     term = {value: True}
-                count = _products.filter(**term).intersection(*q_sets).count()
+                count = _products.exclude().filter(**term).intersection(*q_sets).count()
                 facet.total_count += count
                 return_values.append(FacetValue(
                     value,
@@ -685,16 +693,16 @@ class DetailBuilder:
         return product
 
     def get_product_filter(self) -> ProductFilter:
-        model_type = type(self.get_subclass_instance())
-        return Sorter(model_type).product_filter
+        # model_type = type(self.get_subclass_instance())
+        return get_filter(self.product)
 
     def get_priced(self):
         if self.product.in_store_priced():
-            return SupplierProductMiniSerializer(self.product.in_store_priced(), many=True).data
+            return list(SupplierProductMiniSerializer(self.product.in_store_priced(), many=True).data)
         return []
 
     def get_stock_details(self) -> DetailListItem:
-        details_list = [{'term': attr[0], 'values': attr[1]} for attr in self.product.attribute_list() if attr[1]]
+        details_list = [{'term': attr[0], 'value': attr[1]} for attr in self.product.attribute_list() if attr[1]]
         return details_list
 
     def get_subclass_remaining(self):
@@ -734,7 +742,7 @@ class DetailBuilder:
         return groups_list
 
     def assign_response(self):
-        self.response.lists = [self.get_bool_groups()]
+        self.response.lists = self.get_bool_groups()
         details_list = self.get_stock_details() + self.get_subclass_remaining()
         self.response.lists.append(DetailListItem('details', details_list))
         self.response.priced = self.get_priced()
@@ -752,8 +760,8 @@ class DetailBuilder:
         product.save()
         return product.detail_response
 
-    def get_reponse(self):
+    def get_reponse(self, update=False):
         detail_response = self.product.detail_response
-        if detail_response:
+        if detail_response and not update:
             return detail_response
         return self.assign_detail_response()

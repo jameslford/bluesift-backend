@@ -1,12 +1,12 @@
 import uuid
 import copy
 import io
-from io import BytesIO
 import importlib
 import requests
+from io import BytesIO
 from django.conf import settings
 from django.core.files import File
-from django.db import models
+from django.db import models, transaction
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
 from PIL import Image as pimage

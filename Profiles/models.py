@@ -262,10 +262,10 @@ class SupplierProduct(models.Model):
         self.check_availability()
         self.check_approvals()
         super(SupplierProduct, self).save(*args, **kwargs)  # Call the real save() method
-        if self.supplier.address:
-            self.product.set_locations()
-        self.product.set_prices()
-        self.product.refresh_queries()
+        # if self.supplier.address:
+        #     self.product.set_locations()
+        # self.product.set_prices()
+        # self.product.refresh_queries()
 
     def delete(self, using=None):
         address = False
@@ -273,7 +273,7 @@ class SupplierProduct(models.Model):
             address = True
         product = self.product
         super().delete(using=using)
-        if address:
-            product.set_locations()
-        product.set_prices()
-        product.refresh_queries()
+        # if address:
+        #     product.set_locations()
+        # product.set_prices()
+        # product.refresh_queries()

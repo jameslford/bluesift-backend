@@ -10,5 +10,5 @@ from ProductFilter.models import DetailBuilder
 @api_view(['GET'])
 def product_detail(request, pk):
     detail = DetailBuilder(pk)
-    response = detail.get_reponse()
+    response = detail.get_reponse(update=True)
     return Response(response, status=status.HTTP_200_OK)

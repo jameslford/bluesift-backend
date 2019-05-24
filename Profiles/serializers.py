@@ -97,7 +97,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
             )
 
     def get_priced_products(self, instance):
-        order = self.context.get('order_by', 'id')
+        order = self.context.get('order_by', 'pk')
         search_terms = self.context.get('search', None)
         prods = SupplierProduct.objects.filter(supplier=instance).prefetch_related(
             'product',
@@ -142,7 +142,7 @@ class CVLocationSerializer(serializers.ModelSerializer):
             )
 
     def get_priced_products(self, instance):
-        order = self.context.get('order_by', 'id')
+        order = self.context.get('order_by', 'pk')
         search_terms = self.context.get('search', None)
         prods = SupplierProduct.objects.filter(supplier=instance).prefetch_related(
             'product',
@@ -174,7 +174,7 @@ class ShippingLocationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyShippingLocation
         fields = (
-            'id',
+            'pk',
             'company_account',
             'company_name',
             'address',
@@ -258,7 +258,7 @@ class SupplierProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupplierProduct
         fields = (
-            'id',
+            'pk',
             'in_store_ppu',
             'units_available_in_store',
             'units_per_order',
@@ -275,7 +275,7 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupplierProduct
         fields = (
-            'id',
+            'pk',
             'in_store_ppu',
             'units_available_in_store',
             'units_per_order',
@@ -303,7 +303,7 @@ class SupplierProductMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupplierProduct
         fields = (
-            'id',
+            'pk',
             'in_store_ppu',
             'units_available_in_store',
             'units_per_order',

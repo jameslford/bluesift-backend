@@ -56,7 +56,7 @@ def company_account(request):
         # only account owner and sys_admin can update company account
         if not (employee.company_account_owner or
                 employee.company_account_admin):
-                return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_403_FORBIDDEN)
         return Response('need to finish this')
 
 
@@ -86,7 +86,7 @@ def sv_supplier_location(request, pk=None):
         data = request.data
         order_by = request.GET.get('order_by', 'id')
         search_request = request.GET.getlist('search', None)
-        location = account.shipping_locations.filter(id=pk).select_related(
+        location = account.shipping_locations.filter(pk=pk).select_related(
             'address',
             'address__postal_code',
             'address__coordinates',
@@ -112,14 +112,14 @@ def sv_supplier_location(request, pk=None):
         if not (employee.company_account_owner or
                 employee.company_account_admin):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        location = account.shipping_locations.filter(id=pk).first()
+        location = account.shipping_locations.filter(pk=pk).first()
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         location.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     if request.method == 'PUT':
-        location = account.shipping_locations.filter(id=pk).first()
+        location = account.shipping_locations.filter(pk=pk).first()
         if not location:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if not (employee.company_account_owner or
@@ -146,7 +146,7 @@ def supplier_product(request, pk=None):
 
     sup_prod = None
     if pk:
-        sup_prod = SupplierProduct.objects.filter(id=pk).first()
+        sup_prod = SupplierProduct.objects.filter(pk=pk).first()
         if not sup_prod:
             return Response('invalid supplier product')
         if sup_prod.supplier.company_account != employee.company_account:
@@ -179,7 +179,7 @@ def supplier_product(request, pk=None):
         location = None
         location_id = request.POST.get('proj_id', None)
         if location_id:
-            location = locations.filter(id=location_id).first()
+            location = locations.filter(pk=location_id).first()
         elif locations.count() == 1:
             location = locations.first()
         if not location:
@@ -189,7 +189,7 @@ def supplier_product(request, pk=None):
         prod_id = request.POST.get('prod_id', None)
         if not prod_id:
             return Response('No product selected', status=status.HTTP_400_BAD_REQUEST)
-        product = Product.objects.filter(id=prod_id).first()
+        product = Product.objects.filter(pk=prod_id).first()
         if not product:
             return Response('Invalid product', status=status.HTTP_400_BAD_REQUEST)
 
@@ -238,7 +238,7 @@ def employee_detail(request, pk=None):
     if not pk:
         return Response('no employee specified')
     employee_account = employee_prof.company_account
-    target_employee = employee_account.employees.filter(id=pk).first()
+    target_employee = employee_account.employees.filter(pk=pk).first()
     if not target_employee:
         return Response('invalid employee', status=status.HTTP_403_FORBIDDEN)
 
@@ -267,7 +267,7 @@ def supplier_short_lib(request):
     location = None
     location_id = request.GET.get('proj_id', None)
     if location_id:
-        location = locations.filter(id=location_id).first()
+        location = locations.filter(pk=location_id).first()
     elif locations.count() > 0:
         location = locations.first()
     else:
@@ -277,13 +277,13 @@ def supplier_short_lib(request):
     for local in locations:
         content = {}
         content['nickname'] = local.nickname
-        content['id'] = local.id
+        content['id'] = local.pk
         locations_list.append(content)
 
     product_ids = []
     products = location.priced_products.all()
     for prod in products:
-        product_ids.append(prod.product.id)
+        product_ids.append(prod.product.pk)
 
     full_content = {
         'list': locations_list,
@@ -298,7 +298,7 @@ def supplier_short_lib(request):
     return Response(response, status=status.HTTP_200_OK)
 
 
-''' customer side views '''
+# customer side views 
 
 
 @api_view(['GET'])
@@ -333,7 +333,7 @@ def cv_supplier_location(request, pk):
         'priced_products__product',
         'priced_products__product__manufacturer',
         'priced_products__product__swatch_image',
-    ).filter(id=pk).first()
+    ).filter(pk=pk).first()
     if not supplier:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     serialized = SVLocationSerializer(supplier)

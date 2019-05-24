@@ -53,7 +53,7 @@ def customer_project(request, pk=None):
 
     if request.method == 'DELETE':
         projects = CustomerProject.objects.filter(owner=profile)
-        project = projects.filter(id=pk).first()
+        project = projects.filter(pk=pk).first()
         if not project:
             return Response('Invalid projects', status=status.HTTP_400_BAD_REQUEST)
         project.delete()
@@ -66,11 +66,11 @@ def customer_project(request, pk=None):
             'products__product__manufacturer',
             'products__product__swatch_image',
             'applications__products',
-            ).filter(id=pk).first()
+            ).filter(pk=pk).first()
         if not project.owner == profile:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        products = project.products.values_list('product__id', flat=True).distinct()
-        products = Product.objects.filter(id__in=products)
+        products = project.products.values_list('product__pk', flat=True).distinct()
+        products = Product.objects.filter(pk__in=products)
         cats = [cls.__name__ for cls in ProductSubClass.__subclasses__()]
 
         serialized_project = CustomerProjectDetailSerializer(project)
@@ -89,7 +89,7 @@ def customer_project_application(request, pk=None):
     user = request.user
 
     if request.method == 'GET':
-        application = CustomerProjectApplication.objects.select_related('project__owner__user').filter(id=pk).first()
+        application = CustomerProjectApplication.objects.select_related('project__owner__user').filter(pk=pk).first()
         if not application:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if application.project.owner.user != user:
@@ -102,7 +102,7 @@ def customer_project_application(request, pk=None):
         label = request.data.get('label', None)
         if not project_id or not label:
             return Response('not enough data', status=status.HTTP_400_BAD_REQUEST)
-        project = CustomerProject.objects.filter(id=project_id).select_related('owner__user').first()
+        project = CustomerProject.objects.filter(pk=project_id).select_related('owner__user').first()
         if not project:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if project.owner.user != user:
@@ -111,7 +111,7 @@ def customer_project_application(request, pk=None):
         return Response(status=status.HTTP_201_CREATED)
 
     if request.method == 'DELETE':
-        app = CustomerProjectApplication.objects.select_related('project__owner__user').filter(id=pk).first()
+        app = CustomerProjectApplication.objects.select_related('project__owner__user').filter(pk=pk).first()
         if not app:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if app.project.owner.user != user:
@@ -128,40 +128,11 @@ def customer_project_application(request, pk=None):
             return Response(serialized_app.errors, status=status.HTTP_400_BAD_REQUEST)
         app_id = data.get('id', None)
         application = CustomerProjectApplication.objects.select_related(
-            'project__owner__user').filter(id=app_id).first()
+            'project__owner__user').filter(pk=app_id).first()
         if not application or application.project.owner.user != user:
             return Response(status=status.HTTP_403_FORBIDDEN)
         serialized_app.update(application, data)
         return Response(status=status.HTTP_200_OK)
-
-
-# @api_view(['DELETE', 'PUT', 'POST'])
-# @permission_classes((IsAuthenticated,))
-# def customer_project_application_product(request, pk=None):
-#     user = request.user
-
-#     if request.method == 'POST':
-#         app_id = request.data.get('application_id', None)
-#         cus_prod_id = request.data.get('customer_product_id', None)
-#         if not app_id or not cus_prod_id:
-#             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-#         application = CustomerProjectApplication.objects.select_related(
-#             'project',
-#             'project__owner__user').filter(id=app_id).first()
-#         cus_product = CustomerProduct.objects.select_related(
-#             'project',
-#             'project__owner__user').filter(id=cus_prod_id).first()
-#         if not application or not cus_product:
-#             return Response(status=status.HTTP_400_BAD_REQUEST)
-#         if (application.project.owner.user != user or
-#                 cus_product.project.owner.user != user or
-#                 application.project != cus_product.project):
-#                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-#         application.products.add(cus_product)
-#         return Response(status=status.HTTP_202_ACCEPTED)
-
-#     if request.method == 'DELETE':
-#         pass
 
 
 @api_view(['DELETE', 'PUT', 'POST', 'GET'])
@@ -180,7 +151,7 @@ def customer_product(request, pk=None):
         if not projects:
             CustomerProject.objects.create(owner=profile)
 
-        product = Product.objects.filter(id=prod_id).first()
+        product = Product.objects.filter(pk=prod_id).first()
         if not product:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if projects.count() == 1:
@@ -188,7 +159,7 @@ def customer_product(request, pk=None):
             CustomerProduct.objects.create(product=product, project=project)
             return Response(status=status.HTTP_201_CREATED)
         if project_id:
-            project = projects.filter(id=project_id).first()
+            project = projects.filter(pk=project_id).first()
             if not project:
                 return Response('Invalid project number', status=status.HTTP_400_BAD_REQUEST)
             CustomerProduct.objects.create(product=product, project=project)
@@ -201,7 +172,7 @@ def customer_product(request, pk=None):
             return Response('No product specified for deletion', status=status.HTTP_400_BAD_REQUEST)
         product = CustomerProduct.objects.select_related('project', 'project__owner').filter(pk=pk).first()
         if not product:
-            return Response('Invalid product id', status=status.HTTP_400_BAD_REQUEST)
+            return Response('Invalid product pk', status=status.HTTP_400_BAD_REQUEST)
         if product.project.owner != profile:
             return Response('Not your product to delete', status=status.HTTP_400_BAD_REQUEST)
         product.delete()
@@ -212,8 +183,6 @@ def customer_short_lib(request):
     user = request.user
     proj_id = request.GET.get('proj_id', None)
     prod_id = request.GET.get('prod_id', None)
-    if prod_id:
-        prod_id = int(prod_id)
     profile = CustomerProfile.objects.get_or_create(user=user)[0]
     projects = CustomerProject.objects.filter(owner=profile)
     project = projects.first()
@@ -222,20 +191,20 @@ def customer_short_lib(request):
     projects_list = []
     # product_ids = []
     if proj_id:
-        project = projects.filter(id=proj_id).first()
-    selected_project = {'id': project.id, 'nickname': project.nickname}
+        project = projects.filter(pk=proj_id).first()
+    selected_project = {'id': project.pk, 'nickname': project.nickname}
     for proj in projects:
         content = {}
         content['nickname'] = proj.nickname
-        content['id'] = proj.id
+        content['id'] = proj.pk
         content['remove'] = False
         for k in proj.products.select_related('product').all():
-            if k.product.id == prod_id:
+            if k.product.pk == prod_id:
                 content['remove'] = True
-                content['cprod'] = k.id
+                content['cprod'] = k.pk
         projects_list.append(content)
     products = project.products.all()
-    selected_product_ids = [q.product.id for q in products]
+    selected_product_ids = [q.product.pk for q in products]
     full_content = {
         'list': projects_list,
         'count': projects.count(),
