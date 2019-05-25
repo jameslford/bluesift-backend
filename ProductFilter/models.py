@@ -33,16 +33,19 @@ MULTITEXT_FACET = 'MultiTextFacet'
 PRICE_FACET = 'PriceFacet'
 RANGE_FACET = 'RangeFacet'
 
-def subclass_content_types():
-    ct_choices = []
-    for name, subclass in PRODUCT_SUBCLASSES.items():
-        ct = ContentType.objects.get_for_model(subclass)
-        kwargs = {'app_label': ct.app_label, 'model': ct.model}
-        ct_choices.append(models.Q(**kwargs))
-    query = ct_choices.pop()
-    for ct_choice in ct_choices:
-        query |= ct_choice
-    return query
+# def subclass_content_types():
+#     ct_choices = []
+#     for name, subclass in PRODUCT_SUBCLASSES.items():
+#         ct = ContentType.objects.get_for_model(subclass)
+#         kwargs = {'app_label': ct.app_label, 'model': ct.model}
+#         ct_choices.append(models.Q(**kwargs))
+#     query = ct_choices.pop()
+#     for ct_choice in ct_choices:
+#         query |= ct_choice
+#     return query
+
+def valid_subclasses():
+    return list(PRODUCT_SUBCLASSES.values())
 
 
 def get_filter(model: models.Model):
@@ -55,6 +58,7 @@ def get_filter(model: models.Model):
 def return_radii():
     return [5, 10, 15, 25, 50, 100]
 
+
 @dataclass
 class FacetValue:
     """ datastructure for facet value
@@ -64,12 +68,14 @@ class FacetValue:
     count: int = None
     enabled: bool = False
 
+
 @dataclass
 class RangeFacetValue(FacetValue):
     abs_min: str = None
     abs_max: str = None
     selected_min: str = None
     selected_max: str = None
+
 
 @dataclass
 class LocationFacet(FacetValue):
@@ -140,7 +146,7 @@ class ProductFilter(models.Model):
     products: QuerySet = None
     sub_product = models.OneToOneField(
         ContentType,
-        limit_choices_to=subclass_content_types(),
+        # limit_choices_to=subclass_content_types(),
         on_delete=models.CASCADE,
         null=True
         )
@@ -305,6 +311,12 @@ class ProductFilter(models.Model):
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values), order=8))
         self.facets.append(Facet('location', LOCATION_FACET, 'location', order=3))
 
+    def check_content_model(self):
+        if self.sub_product in valid_subclasses():
+            return False
+        return True
+
+
     def check_fields(self):
         self.add_product_facets()
         self.check_bools()
@@ -331,6 +343,9 @@ class ProductFilter(models.Model):
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
+        if not self.check_content_model():
+            self.delete()
+            return
         self.filter_dictionary = None
         self.check_fields()
         self.add_filter_dictionary()
