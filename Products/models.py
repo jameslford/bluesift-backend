@@ -3,7 +3,6 @@ from model_utils.managers import InheritanceManager
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
 from django.db.models import Min, Avg
-from django.db import transaction
 from django.contrib.gis.geos import MultiPoint
 
 
@@ -116,11 +115,11 @@ class Product(models.Model):
             self.average_price = price['in_store_ppu__avg']
         self.save()
 
-    @transaction.atomic()
-    def refresh_queries(self):
+    def invalidate_queries(self):
         query_indexes = self.query_indexes.all()
         for qi in query_indexes:
-            qi.refresh()
+            qi.dirty = True
+            qi.save()
 
     def set_locations(self):
         self.locations = None
@@ -130,6 +129,7 @@ class Product(models.Model):
             points = MultiPoint(*coordinates)
             self.locations = points
             self.save()
+
 
     def manufacturer_name(self):
         if not self.manufacturer:

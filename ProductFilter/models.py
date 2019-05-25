@@ -101,6 +101,7 @@ class QueryIndex(models.Model):
     query_dict = models.CharField(max_length=1000)
     query_path = models.CharField(max_length=500)
     response = pg_fields.JSONField(null=True)
+    dirty = models.BooleanField(default=False)
     product_filter = models.ForeignKey(
         'ProductFilter',
         on_delete=models.CASCADE,
@@ -315,6 +316,11 @@ class ProductFilter(models.Model):
 
     def add_filter_dictionary(self):
         self.filter_dictionary = [asdict(facet) for facet in self.facets]
+
+    def invalidate_queries(self):
+        for query_index in self.query_indexes.all():
+            query_index.dirty = True
+            query_index.save()
 
     @transaction.atomic()
     def refresh_QueryIndex(self):
@@ -535,7 +541,7 @@ class Sorter:
                 self.facets[index].queryset = products
                 continue
             facet.qterms = [term for term in facet.qterms if term in facet.values]
-            search_terms = {term: True for term in facet.qterms}
+            search_terms = [{term: True} for term in facet.qterms]
             facet.queryset = products.filter(**search_terms)
 
     def __check_keyterm(self):

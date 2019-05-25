@@ -254,26 +254,3 @@ class SupplierProduct(models.Model):
             self.for_sale_online = False
         if not self.supplier.approved_in_store_seller:
             self.for_sale_in_store = False
-
-    def save(self, *args, **kwargs):
-        self.set_banner()
-        self.set_self_bb_sku()
-        self.check_on_sale()
-        self.check_availability()
-        self.check_approvals()
-        super(SupplierProduct, self).save(*args, **kwargs)  # Call the real save() method
-        # if self.supplier.address:
-        #     self.product.set_locations()
-        # self.product.set_prices()
-        # self.product.refresh_queries()
-
-    def delete(self, using=None):
-        address = False
-        if self.supplier.address:
-            address = True
-        product = self.product
-        super().delete(using=using)
-        # if address:
-        #     product.set_locations()
-        # product.set_prices()
-        # product.refresh_queries()
