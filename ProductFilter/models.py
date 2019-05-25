@@ -376,7 +376,7 @@ class Sorter:
             query_dict=request.GET.urlencode(),
             product_filter=self.product_filter
             )
-        if created:
+        if created or quer_index.dirty:
             self.__process(quer_index, True)
         self.__process(quer_index, update)
 
