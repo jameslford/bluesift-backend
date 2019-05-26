@@ -50,8 +50,6 @@ REST_FRAMEWORK = {
 }
 
 
-
-
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_HOST_USER = 'BuildingBook'
 EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASSWORD')

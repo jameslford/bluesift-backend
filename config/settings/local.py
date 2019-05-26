@@ -1,8 +1,11 @@
 from .base import *
 from .passwords import *
+from celery.schedules import crontab
 
 DEBUG = True
 ENVIRONMENT = 'local'
+
+BROKER_URL = 'redis://localhost:6379'
 
 STATIC_URL = '/static/'
 
@@ -77,11 +80,3 @@ MIDDLEWARE = [
 INTERNAL_IPS = [
     '127.0.0.1'
 ]
-
-
-# GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
-# GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH')
-# GEO_LIB = 'C:\\\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Lib\\site-packages\\osgeo'
-# GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\share\proj'
-# GDAL_LIBRARY_PATH = GEO_LIB + 'gdal204.dll'
-# GEOS_LIBRARY_PATH = GEO_LIB + 'geos_c.dll'

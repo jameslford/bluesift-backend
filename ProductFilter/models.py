@@ -341,7 +341,7 @@ class ProductFilter(models.Model):
         for query_index in self.query_indexes.all():
             query_index.refresh()
 
-    @transaction.atomic()
+    # @transaction.atomic()
     def save(self, *args, **kwargs):
         if not self.check_content_model():
             self.delete()
@@ -349,6 +349,12 @@ class ProductFilter(models.Model):
         self.filter_dictionary = None
         self.check_fields()
         self.add_filter_dictionary()
+        qis = self.query_indexes.all()
+        for qi in qis:
+            qi.dirty = True
+            qi.save()
+        # from config.tasks import refresh_filter_qis
+        # refresh_filter_qis(self.pk)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -455,7 +461,7 @@ class Sorter:
         return indices
 
     def __check_availability_facet(self):
-        avail_facet: Facet = self.facets[self.get_index_by_qv('availability')]
+        avail_facet: Facet = self.facets[self.get_indices_by_ft(AVAILABILITY_FACET)[0]]
         if not avail_facet.qterms:
             del self.facets[self.get_index_by_qv('lowest_price')]
             return False
@@ -548,16 +554,20 @@ class Sorter:
         return products.filter(**argument)
 
     def __filter_bools(self, products: QuerySet):
-        bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET)
-        bool_indices.append(self.get_index_by_qv('availability'))
+        bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET) + self.get_indices_by_ft(AVAILABILITY_FACET)
         for index in bool_indices:
             facet = self.facets[index]
             if not facet.qterms:
+                print('no qterms for ' + facet.name)
                 self.facets[index].queryset = products
                 continue
             facet.qterms = [term for term in facet.qterms if term in facet.values]
-            search_terms = [{term: True} for term in facet.qterms]
-            facet.queryset = products.filter(**search_terms)
+            # search_terms = [{term: True} for term in facet.qterms]
+            queryset = products
+            for term in facet.qterms:
+                arg = {term: True}
+                queryset = products.filter(**arg)
+            facet.queryset = queryset
 
     def __check_keyterm(self):
         indices = self.get_indices_by_ft(MULTITEXT_FACET)
@@ -610,6 +620,9 @@ class Sorter:
                 return
             _products = products.all()
             others = [o for o in indices if o != index]
+            for zindex in others:
+                if not self.facets[zindex].queryset:
+                    print('facet with no queryset name is ' + self.facets[zindex].name)
             q_sets = [self.facets[q].queryset for q in others]
             all_qs.append(facet.queryset)
             return_values = []
@@ -617,7 +630,7 @@ class Sorter:
                 term = {facet.quer_value: value}
                 if facet.facet_type in (BOOLGROUP_FACET, AVAILABILITY_FACET):
                     term = {value: True}
-                count = _products.exclude().filter(**term).intersection(*q_sets).count()
+                count = _products.filter(**term).intersection(*q_sets).count()
                 facet.total_count += count
                 return_values.append(FacetValue(
                     value,
@@ -670,6 +683,7 @@ class Sorter:
 
     def __assign_response_to_QI(self):
         self.query_index.response = asdict(self.response)
+        self.query_index.dirty = False
         self.query_index.save()
 
     def get_repsonse(self):

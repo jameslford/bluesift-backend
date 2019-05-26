@@ -18,10 +18,12 @@ DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
 
 
 INSTALLED_APPS = [
-    'djmoney',
     'corsheaders',
-    # 'grappelli',
+    'djmoney',
+    'django_celery_results',
+    'django_celery_beat',
     'storages',
+    # 'grappelli',
 
     'debug_toolbar',
     'django.contrib.admin',
@@ -53,6 +55,14 @@ INSTALLED_APPS = [
     'Scraper.ScraperFinishSurface',
     'Scraper.ScraperCleaner'
 ]
+
+# CELERY STUFF
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_CACHE_BACKEND = 'django-cache'
+CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TIMEZONE = 'US/Eastern'
 
 ROOT_URLCONF = 'config.urls'
 
@@ -94,6 +104,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
 
 
 LANGUAGE_CODE = 'en-us'

@@ -1,8 +1,10 @@
 import os
 import datetime
+from stat import S_ISREG, ST_CTIME, ST_MODE
 from django.conf import settings
 from django.db import transaction
 from django.core.management import call_command
+from config.settings.custom_storage import MediaStorage
 from Scraper.models import (
     ScraperBaseProduct,
     ScraperCategory,
@@ -91,10 +93,33 @@ def backup_db():
     environment = settings.ENVIRONMENT
     current_path = os.getcwd()
     for database in settings.DATABASES:
-        path = f'{current_path}\\z_backups\\{environment}_{database}_{dt_string}.json'
+        env_path = f'{current_path}\\z_backups\\{environment}\\{database}\\'
+        if not os.path.exists(env_path):
+            os.makedirs(env_path)
+        filename = f'{env_path}{dt_string}.json'
         db_arg = f'--database={database}'
-        with open(path, 'w+') as f:
+        with open(filename, 'w+') as f:
             call_command('dumpdata', db_arg, stdout=f)
+
+
+def clean_backups():
+    """gets sorted array of files per <current_environment>/<database>
+    and uploads to aws media. then deletes file from local
+    """
+    environment = settings.ENVIRONMENT
+    current_path = os.getcwd()
+    s3 = MediaStorage()
+    for database in settings.DATABASES:
+        dirpath = f'{current_path}\\z_backups\\{environment}\\{database}\\'
+        entries = (os.path.join(dirpath, fn) for fn in os.listdir(dirpath))
+        entries = ((os.stat(path), path) for path in entries)
+        entries = ((stat[ST_CTIME], path) for stat, path in entries if S_ISREG(stat[ST_MODE]))
+        for cdate, path in sorted(entries)[:-1]:
+            with open(path, 'rb') as f:
+                name = f'db_backups\\{environment}\\{database}\\{os.path.basename(path)}'
+                s3.save(name, f)
+                f.close()
+                os.remove(path)
 
 
 def migrate_all():
