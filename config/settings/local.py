@@ -5,7 +5,7 @@ from celery.schedules import crontab
 DEBUG = True
 ENVIRONMENT = 'local'
 
-BROKER_URL = 'redis://localhost:6379'
+CELERY_BROKER_URL = 'redis://localhost:6379'
 
 STATIC_URL = '/static/'
 
