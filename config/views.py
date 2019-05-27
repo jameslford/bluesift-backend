@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from django.http import HttpRequest, HttpResponseRedirect
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from rest_framework import status
@@ -17,8 +18,8 @@ from CustomerProfiles.views import (
 )
 
 
-def landing(request):
-    return render(request, 'index.html')
+def landing(request: HttpRequest):
+    return HttpResponseRedirect('admin/')
 
 
 # @api_view(['POST'])
