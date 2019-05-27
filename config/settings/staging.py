@@ -66,7 +66,7 @@ GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 
 def show_toolbar(request):
     # return request.user.is_staff
-    return True
+    return DEBUG
 
 
 DEBUG_TOOLBAR_CONFIG = {
