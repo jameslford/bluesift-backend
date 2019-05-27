@@ -11,6 +11,8 @@ colorama==0.4.1
 coverage==4.5.3
 dj-database-url==0.5.0
 Django==2.2.1
+django-celery-beat==1.5.0
+django-celery-results==1.1.0
 django-cors-headers==2.5.3
 django-debug-toolbar==1.11
 django-heroku==0.3.1
@@ -18,6 +20,7 @@ django-json-widget==0.2.0
 django-model-utils==3.1.2
 django-money==0.14.4
 django-storages==1.7.1
+django-timezone-field==3.0
 djangorestframework==3.9.3
 docutils==0.14
 entrypoints==0.3
@@ -42,6 +45,7 @@ pygeocoder==1.2.5
 pylint==2.3.1
 pylint-django==2.0.9
 pylint-plugin-utils==0.5
+python-crontab==2.3.6
 python-dateutil==2.8.0
 pytz==2019.1
 redis==3.2.1
