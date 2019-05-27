@@ -52,7 +52,7 @@ def show_toolbar(request):
 
 
 DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': 'config.settings.staging.show_toolbar',
+    'SHOW_TOOLBAR_CALLBACK': 'config.settings.production.show_toolbar',
 }
 
 
