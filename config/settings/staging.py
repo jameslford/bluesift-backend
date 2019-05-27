@@ -4,6 +4,8 @@ from .base import *
 
 DEBUG = True
 ENVIRONMENT = 'staging'
+# BROKER_URL = 'PASS'
+CELERY_BROKER_URL=os.environ['REDIS_URL']
 
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
