@@ -25,7 +25,7 @@ class UserResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = (
-            'pk'
+            'pk',
             'email',
             'get_first_name',
             'is_supplier',

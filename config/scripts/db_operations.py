@@ -13,11 +13,13 @@ from Scraper.models import (
     ScraperDepartment,
     ScraperAggregateProductRating
     )
+from Scraper.ScraperCleaner.models import ScraperCleaner
 from Products.models import Product
 from ProductFilter.models import ProductFilter
 from .lists import MODS
 from .check_settings import exclude_production
 from .colors import assign_label_color
+
 
 @transaction.atomic(using='scraper_revised')
 def scraper_to_revised():
@@ -38,12 +40,14 @@ def scraper_to_revised():
     for product in products:
         product.save(using='scraper_revised')
 
+
 @transaction.atomic()
 def revised_to_default():
     exclude_production()
     departments = ScraperDepartment.objects.using('scraper_revised').all()
     for department in departments:
         department.add_to_default()
+
 
 @transaction.atomic(using='production')
 def staging_to_production():
@@ -54,8 +58,10 @@ def staging_to_production():
         staging_product.save(using='production')
 
 
+@transaction.atomic()
 def clean_revised():
-    assign_label_color()
+    for cleaner in ScraperCleaner.objects.all():
+        cleaner.run_clean()
 
 
 def delete_scraper_revised():
@@ -134,6 +140,7 @@ def refresh_filters():
         p_filter.save()
 
 
+@transaction.atomic()
 def refresh_default_database():
     Product.objects.all().delete()
     revised_to_default()

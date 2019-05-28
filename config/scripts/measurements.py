@@ -32,7 +32,7 @@ def unified_measurement(value):
     }
     conversion = 1
     _value = value
-    for key in conversion_dict.keys():
+    for key in conversion_dict:
         if key in _value:
             conversion = conversion_dict.get(key, 1)
             _value = _value.replace(key, '')
@@ -53,7 +53,7 @@ def unified_measurement(value):
     if len(space_split) < 2:
         if '/' in _value:
             num, den = _value.split('/')
-            rval = str((float(num) / float(den) * conversion))
+            rval = str(round((float(num) / float(den) * conversion)), 3)
             return rval.replace(' .', '')
         else:
             try:
@@ -66,13 +66,13 @@ def unified_measurement(value):
     second = space_split[1]
     if '/' in second:
         num, den = second.split('/')
-        add = float(num) / float(den)
+        add = round((float(num) / float(den)), 3)
         nval = add + first
         rval = str(nval * conversion)
         return rval.replace(' .', '')
     _value = _value.replace(' .', '')
     try:
-        _value = float(_value) * conversion
+        _value = round((float(_value) * conversion), 3)
         return str(_value)
     except ValueError:
         return _value

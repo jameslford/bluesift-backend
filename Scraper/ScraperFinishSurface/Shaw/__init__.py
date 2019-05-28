@@ -57,5 +57,17 @@ class Scraper(SubScraperBase):
         self.subgroup.scraped = True
         self.subgroup.save()
 
-
-
+    def clean(self):
+        from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
+        default_tiles = ScraperFinishSurface.objects.using('scraper_default').filter(material='stone & glass')
+        revised_tiles = ScraperFinishSurface.objects.filter(material='stone & glass')
+        for tile in default_tiles:
+            default_look = tile.look
+            revised_product: ScraperFinishSurface = revised_tiles.get(pk=tile.pk)
+            if not default_look:
+                continue
+            if 'mosaic' in default_look.lower():
+                revised_product.shape = 'mosaic'
+            if 'glass' in default_look.lower():
+                revised_product.sub_material = 'glass'
+            revised_product.save()

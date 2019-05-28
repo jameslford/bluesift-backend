@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'djmoney',
     'django_celery_results',
+    'django_json_widget',
     'django_celery_beat',
     'storages',
     # 'grappelli',

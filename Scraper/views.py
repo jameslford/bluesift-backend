@@ -6,7 +6,7 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from Scraper.models import ScraperSubgroup, ScraperBaseProduct
+from Scraper.models import ScraperSubgroup, ScraperBaseProduct, ScraperDepartment
 from Scraper.ScraperCleaner.models import ScraperCleaner, CleanerUtility
 from config.permissions import StagingAdminOnly, StagingorLocalAdmin
 
@@ -103,12 +103,13 @@ def view_products(request, pk):
     value = request.GET.get('value', None)
     if not field and value:
         return Response('not enought fields')
-    default_subgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=pk).first()
+    default_subgroup: ScraperSubgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=pk).first()
     if not default_subgroup:
         return Response('could not find subgroup')
     argument = {field: value}
-    products = default_subgroup.products.filter(**argument).values()
-    return Response(list(products))
+    model = default_subgroup.get_prod_type()
+    products = model.objects.using('scraper_default').filter(**argument).values()
+    return Response({'products': list(products)})
 
 
 @api_view(['POST'])
@@ -123,18 +124,14 @@ def update_field(request):
     if new_value == current_value:
         return Response('no difference in new and old value')
     revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=subgroup_pk).first()
-    if not revised_subgroup:
-        return Response('could not find subgroup')
     argument = {field: current_value, 'subgroup': subgroup_pk}
     model_type = revised_subgroup.get_prod_type()
     revised_products = model_type.objects.filter(**argument)
     pks = [product.pk for product in revised_products.all()]
-    if not pks:
-        return Response('no products for this subgroup')
     for product in revised_products:
         setattr(product, field, new_value)
         product.save()
-    default_products = ScraperBaseProduct.objects.using('scraper_default').filter(pk__in=pks).select_subclasses()
+    default_products = model_type.objects.using('scraper_default').filter(pk__in=pks)
     initial_values = default_products.values_list(field, flat=True).distinct()
     for initial_value in initial_values:
         cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
@@ -168,10 +165,11 @@ def alter_values(request):
         initial_value = getattr(product, field)
         cleaner = CleanerUtility(initial_value)
         new_value = cleaner(command)
-        cleaner.create_scraper_cleaner(product.pk, field)
+        cleaner.create_scraper_cleaner(product.pk, field, new_value)
         setattr(product, field, new_value)
         product.save()
     return Response(status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
 @permission_classes((StagingorLocalAdmin,))
@@ -180,3 +178,33 @@ def stock_clean(request):
     subgroup: ScraperSubgroup = ScraperSubgroup.objects.get(pk=subgroup_pk)
     subgroup.run_stock_clean()
     return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes((StagingorLocalAdmin,))
+def get_departments(request):
+    departments = ScraperDepartment.objects.using('scraper_default').all()
+    content = [{'name': d.name, 'pk': d.pk} for d in departments]
+    return Response(content, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes((StagingorLocalAdmin,))
+def department_detail(request, pk):
+    # revised_department = ScraperDepartment.objects.get(pk=pk)
+    default_department: ScraperDepartment = ScraperDepartment.objects.using('scraper_default').get(pk=pk)
+    corresponding_class = default_department.corresponding_class()
+    variable_fields = corresponding_class.variable_fields()
+    content = []
+    for field in variable_fields:
+        value = {
+            'field_name': field,
+            'revised_values': list(corresponding_class.objects.values_list(field, flat=True).distinct()),
+            'default_values': list(corresponding_class.objects.using('scraper_default').values_list(field, flat=True))
+        }
+        content.append(value)
+    return Response(content, status=status.HTTP_200_OK)
+
+
+
+

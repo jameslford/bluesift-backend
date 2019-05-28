@@ -1,7 +1,7 @@
 import sys
 import importlib
 import requests
-from config.scripts.measurements import clean_value
+from config.scripts.measurements import clean_value, unified_measurement
 from Scraper.models import SubScraperBase
 from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 
@@ -104,10 +104,17 @@ class Scraper(SubScraperBase):
         for default_product in default_products:
             default_product: ScraperFinishSurface = default_product
             sub_material: str = default_product.sub_material.lower()
-            if 'mosaic' in sub_material:
-                revised_product: ScraperFinishSurface = ScraperFinishSurface.objects.using(
+            revised_product: ScraperFinishSurface = ScraperFinishSurface.objects.using(
                     'scraper_revised').get(pk=default_product.pk)
+            if 'mosaic' in sub_material:
                 new_sub_material = sub_material.replace('mosaic', '')
-                revised_product.sub_material = new_sub_material
+                revised_product.sub_material = new_sub_material.strip()
                 revised_product.shape = 'mosaic'
-                revised_product.save()
+            if revised_product.shower_walls:
+                revised_product.walls = True
+            if revised_product.shower_floors:
+                revised_product.floors = True
+            if 'countertop' in sub_material:
+                revised_product.sub_material = 'porcelain'
+                revised_product.countertops = True
+            revised_product.save()

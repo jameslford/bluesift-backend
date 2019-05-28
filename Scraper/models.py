@@ -148,10 +148,11 @@ class ScraperSubgroup(models.Model):
         prod_type = self.get_prod_type()
         return prod_type.variable_fields()
 
-    def get_prod_type(self):
+    def get_prod_type(self, db='scraper_revised'):
         # pylint: disable=no-member
-        product = self.products.select_subclasses().first()
-        return type(product)
+        products = ScraperBaseProduct.objects.using(db).filter(subgroup=self).select_subclasses()
+        # product = self.products.select_subclasses().first()
+        return type(products.first())
 
     def get_products(self):
         prod_type = self.get_prod_type()

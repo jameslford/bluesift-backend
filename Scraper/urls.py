@@ -11,7 +11,7 @@ from .views import (
 urlpatterns = [
     path('subgroups', subgroup_list),
     path('subgroup_detail/<int:pk>', subgroup_detail),
-    path('default_products/<int:pk>', view_products),
+    path('scraper_product/<int:pk>', view_products),
     path('update_field', update_field),
     path('alter_values', alter_values),
     path('stock_clean', stock_clean)

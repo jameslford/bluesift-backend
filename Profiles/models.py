@@ -99,6 +99,8 @@ class CompanyShippingLocation(models.Model):
     phone_number = models.CharField(max_length=10)
     email = models.EmailField(null=True, blank=True)
     number = models.IntegerField(null=True, blank=True)
+    info = models.CharField(max_length=200, blank=True, null=True)
+    website = models.URLField(max_length=300, blank=True, null=True)
     image = models.ImageField(null=True, blank=True, upload_to='storefronts/')
     slug = models.SlugField(null=True, blank=True)
 

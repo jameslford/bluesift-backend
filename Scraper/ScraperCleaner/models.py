@@ -9,21 +9,28 @@ class ScraperCleaner(models.Model):
     initial_value = models.CharField(max_length=200, null=True, blank=True)
     new_value = models.CharField(max_length=200, null=True, blank=True)
 
-    def clean(self):
+
+    def __str__(self):
+        return (
+            f'{self.subgroup_manufacturer_name} {self.subgroup_category_name} '
+            f'{self.field_name} {self.initial_value}'
+        )
+
+    def run_clean(self):
         default_subgroups = ScraperSubgroup.objects.using('scraper_default').all()
-        subgroup = default_subgroups.filter(
+        subgroup: ScraperSubgroup = default_subgroups.filter(
             manufacturer__name=self.subgroup_manufacturer_name,
             category__name=self.subgroup_category_name
             ).first()
         if not subgroup:
             return
         argument = {self.field_name: self.initial_value}
-        model_type = type(subgroup.products.first())
-        default_products = model_type.objects.using('scraper_default').filter(**argument).select_subclasses()
+        model_type = subgroup.get_prod_type()
+        default_products = model_type.objects.using('scraper_default').filter(**argument)
         if not default_products:
             return
         pks = [product.pk for product in default_products]
-        revised_products = ScraperBaseProduct.objects.filter(pk__in=pks).select_subclasses()
+        revised_products = ScraperBaseProduct.objects.using('scraper_revised').filter(pk__in=pks).select_subclasses()
         if not revised_products:
             return
         for product in revised_products:
@@ -52,7 +59,8 @@ class CleanerUtility:
         if len(new_val) < 2:
             raise Exception('not a fraction')
 
-    def create_scraper_cleaner(self, product_pk: str, field: str):
+    @classmethod
+    def create_scraper_cleaner(cls, product_pk: str, field: str, new_value: str):
         default_product = ScraperBaseProduct.objects.using('scraper_default').filter(pk=product_pk).select_subclasses().first()
         initial_value = getattr(default_product, field)
         scraper_cleaner = ScraperCleaner.objects.get_or_create(
@@ -61,7 +69,7 @@ class CleanerUtility:
             field_name=field,
             initial_value=initial_value
         )[0]
-        scraper_cleaner.new_value = self.value
+        scraper_cleaner.new_value = new_value
         scraper_cleaner.save()
         print('cleaner saved')
 
