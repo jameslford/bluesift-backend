@@ -219,6 +219,13 @@ class SupplierProduct(models.Model):
             return None
         return self.sale_price / self.in_store_ppu
 
+    def reset_product(self):
+        product = Product.objects.filter(pk=self.product_bb_sku).first()
+        if not product:
+            self.delete()
+        self.product = product
+        self.save()
+
     def set_banner(self):
         if not self.banner_item:
             return

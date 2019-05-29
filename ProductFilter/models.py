@@ -475,8 +475,9 @@ class Sorter:
         print('avai facet indexes = ' + str(avail_facet_indexes))
         avail_facet: Facet = self.facets[self.get_indices_by_ft(AVAILABILITY_FACET)[0]]
         if not avail_facet.qterms:
-            del self.facets[self.get_index_by_qv('lowest_price')]
-            del self.facets[self.get_index_by_qv('location')]
+            indexes = self.get_indices_by_ft(PRICE_FACET) + self.get_indices_by_ft(LOCATION_FACET)
+            for index in indexes:
+                del self.facets[index]
             return False
         print('avail facet values =' + avail_facet.name + str(avail_facet.values))
         for q_term in avail_facet.qterms:

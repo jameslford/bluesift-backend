@@ -2,7 +2,7 @@ import webcolors
 import scipy
 import scipy.cluster
 import numpy as np
-from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
+from FinishSurfaces.models import FinishSurface
 
 def hex_to_rgb(hex_val):
     hex_val = hex_val.strip('#')
@@ -13,7 +13,7 @@ def manhattan(x, y):
     return abs(x[0] - y[0]) + abs(x[1] - y[1]) + abs(x[2] - y[2])
 
 
-def get_rgbs(products: ScraperFinishSurface):
+def get_rgbs(products: FinishSurface):
     for product in products:
         product.set_actual_color()
     actual_colors = products.values_list('actual_color', flat=True)
@@ -32,7 +32,7 @@ def get_rgbs(products: ScraperFinishSurface):
 
 
 def assign_label_color():
-    products = ScraperFinishSurface.objects.using('scraper_revised').all()
+    products = FinishSurface.objects.all()
     rgbs = get_rgbs(products)
     for product in products:
         if not product.actual_color:

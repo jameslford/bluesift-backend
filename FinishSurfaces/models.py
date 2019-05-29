@@ -1,10 +1,14 @@
+import operator
+import webcolors
+from PIL import Image as pimage
 from django.db import models
 from Products.models import ProductSubClass
 
 
 class FinishSurface(ProductSubClass):
 
-    label_color = models.CharField(max_length=200, null=True, blank=True)
+    label_color = models.CharField(max_length=50, null=True, blank=True)
+    actual_color = models.CharField(max_length=50, null=True, blank=True)
 
     material = models.CharField(max_length=200)
     sub_material = models.CharField(max_length=200, null=True, blank=True)
@@ -56,6 +60,28 @@ class FinishSurface(ProductSubClass):
         print('hello world')
 
 
+    def set_actual_color(self):
+        # pylint: disable=no-member
+        image = self.swatch_image
+        if not image:
+            return
+        try:
+            image = pimage.open(image)
+        except OSError:
+            print('deleting ' + self.name + 'from set_actual_color')
+            self.delete()
+            return
+        try:
+            image = image.convert('P', palette=pimage.ADAPTIVE, colors=1)
+        except ValueError:
+            print('unable')
+            return
+        image = image.convert('RGB')
 
+        colors = image.getcolors()
+        first_percentage, first_color = max(colors, key=operator.itemgetter(0))
+        real_color = webcolors.rgb_to_hex(first_color)
+        self.actual_color = real_color
+        self.save()
 
 

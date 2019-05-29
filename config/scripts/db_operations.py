@@ -139,10 +139,18 @@ def refresh_filters():
     for p_filter in p_filters:
         p_filter.save()
 
+@transaction.atomic()
+def reset_supplier_products():
+    from Profiles.models import SupplierProduct
+    for supplier_product in SupplierProduct.objects.all():
+        supplier_product.reset_product()
+
 
 @transaction.atomic()
 def refresh_default_database():
     Product.objects.all().delete()
-    revised_to_default()
     assign_label_color()
+    revised_to_default()
     refresh_filters()
+    reset_supplier_products()
+
