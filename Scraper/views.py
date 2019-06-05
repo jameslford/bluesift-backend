@@ -106,7 +106,7 @@ def view_products(request, pk):
     default_subgroup: ScraperSubgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=pk).first()
     if not default_subgroup:
         return Response('could not find subgroup')
-    argument = {field: value}
+    argument = {field: value, 'subgroup': default_subgroup}
     model = default_subgroup.get_prod_type()
     products = model.objects.using('scraper_default').filter(**argument).values()
     return Response({'products': list(products)})
