@@ -17,4 +17,5 @@ def mohawk_url_correction(db='scraper_revised'):
         new_url = bad.product_url.replace(base_string, '')
         new_url = base_string + new_url
         bad.product_url = new_url
-        bad.save()
+        bad.save(using=db)
+        print(bad.product_url)
