@@ -94,6 +94,7 @@ class Facet:
     quer_value: str
     values: List = dfield(default_factory=lambda: [])
     order: int = 10
+    selected: bool = False
     total_count: int = 0
     qterms: List[str] = None
     queryset: QuerySet = None
@@ -520,6 +521,7 @@ class Sorter:
             self.response.load_more = False
             return products
         loc_facet.return_values = [return_facet]
+        loc_facet.selected = True
         return products
 
     def __filter_range(self, products: QuerySet):
@@ -538,7 +540,7 @@ class Sorter:
                 facet.return_values = [return_facet]
                 facet.queryset = products
                 continue
-            # facet.return_values = return_facet
+            facet.selected = True
             min_query = [q.replace('min-', '') for q in facet.qterms if 'min' in q]
             max_query = [q.replace('max-', '') for q in facet.qterms if 'max' in q]
             facet.qterms = []
@@ -580,7 +582,7 @@ class Sorter:
                 self.facets[index].queryset = products
                 continue
             facet.qterms = [term for term in facet.qterms if term in facet.values]
-            # search_terms = [{term: True} for term in facet.qterms]
+            facet.selected = True
             queryset = products
             for term in facet.qterms:
                 arg = {term: True}
@@ -618,6 +620,7 @@ class Sorter:
             q_object = models.Q()
             for term in facet.qterms:
                 q_object |= models.Q(**{facet.quer_value: term})
+                facet.selected = True
             facet.queryset = products.filter(q_object)
 
     def __get_counted_facet_indices(self):
