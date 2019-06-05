@@ -184,7 +184,7 @@ def stock_clean(request):
 @permission_classes((StagingorLocalAdmin,))
 def get_departments(request):
     departments = ScraperDepartment.objects.using('scraper_default').all()
-    content = [{'name': d.name, 'pk': d.pk} for d in departments]
+    content = {'departments': [{'name': d.name, 'pk': d.pk} for d in departments]}
     return Response(content, status=status.HTTP_200_OK)
 
 
@@ -193,18 +193,14 @@ def get_departments(request):
 def department_detail(request, pk):
     # revised_department = ScraperDepartment.objects.get(pk=pk)
     default_department: ScraperDepartment = ScraperDepartment.objects.using('scraper_default').get(pk=pk)
-    corresponding_class = default_department.corresponding_class()
+    corresponding_class = default_department.get_product_type()
     variable_fields = corresponding_class.variable_fields()
-    content = []
+    content = {'fields': []}
     for field in variable_fields:
         value = {
             'field_name': field,
             'revised_values': list(corresponding_class.objects.values_list(field, flat=True).distinct()),
-            'default_values': list(corresponding_class.objects.using('scraper_default').values_list(field, flat=True))
+            'default_values': list(corresponding_class.objects.using('scraper_default').values_list(field, flat=True).distinct())
         }
-        content.append(value)
+        content['fields'].append(value)
     return Response(content, status=status.HTTP_200_OK)
-
-
-
-

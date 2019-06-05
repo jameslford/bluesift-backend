@@ -51,6 +51,9 @@ class ScraperDepartment(models.Model):
             return True
         return False
 
+    def get_product_type(self):
+        return self.get_module().REVISED_MODEL
+
     def revised_products(self):
         return ScraperBaseProduct.objects.using(
             'scraper_revised'
