@@ -64,8 +64,6 @@ class Scraper(SubScraperBase):
             product: ScraperFinishSurface = product
             product.subgroup = self.subgroup
             product.manufacturer_collection = collection
-            product.product_url = self.base_url + url
+            product.product_url = url
             product.name_sku_check()
         return
-
-
