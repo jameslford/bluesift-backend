@@ -1,5 +1,4 @@
-clone:
-  depth: full
+
 pipelines:
   default:
     - step:
