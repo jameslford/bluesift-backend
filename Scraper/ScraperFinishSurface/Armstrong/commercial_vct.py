@@ -5,7 +5,8 @@ from config.scripts.measurements import clean_value
 def get_special(product: ScraperFinishSurface, item):
     att_list = item.get('attributeList', None)
     product.commercial = True
-    product.material = 'vinyl composite tile'
+    product.material = 'resilient'
+    product.sub_material = 'vinyl composite tile'
     collection = att_list[0].lower()
     look = 'shaded / specked'
     if 'feature' in collection:

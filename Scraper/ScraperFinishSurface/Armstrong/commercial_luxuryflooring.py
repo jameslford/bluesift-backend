@@ -75,7 +75,8 @@ def get_special(product: ScraperFinishSurface, item):
     att_list = item.get('attributeList', None)
     product.commercial = True
     product.manufacturer_collection = att_list[0].lower()
-    product.material = 'luxury vinyl tile'
+    product.material = 'resilient'
+    product.sub_material = 'luxury vinyl tile'
     look = 'wood'
     for tag in wood_tags:
         if tag in product.manufacturer_style:

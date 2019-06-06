@@ -18,7 +18,8 @@ def get_special(product, item):
     product.width = clean_value(dims[0])
     product.length = clean_value(dims[1])
     product.thickness = clean_value(dims[2])
-    product.material = 'luxury vinyl tile'
+    product.material = 'resilient'
+    product.sub_material = 'luxury vinyl tile'
     product.finish = att_list[1]
     product.install_type = att_list[2]
     return product

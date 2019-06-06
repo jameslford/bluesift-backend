@@ -339,6 +339,7 @@ class SubScraperBase:
         func = getattr(sub_mod, 'get_special')
         return func(product, item)
 
+
     def get_sub_detail(self):
         sub_mod = self.get_sub_module()
         func = getattr(sub_mod, 'get_special_detail')

@@ -22,7 +22,8 @@ def get_special(product: ScraperFinishSurface, item):
             look = 'natural pattern'
     product.look = look
     product.commercial = True
-    product.material = 'linoleum'
+    product.material = 'resilient'
+    product.sub_material = 'linoleum'
 
     size_line = att_list[1]
     size_split = size_line.split('<br/>')

@@ -21,3 +21,4 @@ def get_special(product: ScraperFinishSurface, item):
         product.material = 'vinyl'
     product.sub_material = item['Look']
     return product
+

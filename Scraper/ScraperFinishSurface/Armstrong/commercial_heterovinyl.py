@@ -9,7 +9,8 @@ metal_tags = ['steel']
 
 
 def get_special(product: ScraperFinishSurface, item):
-    product.material = 'heterogeneous sheet vinyl'
+    product.material = 'resilient'
+    product.sub_material = 'sheet vinyl'
     product.commercial = True
     att_list = item.get('attributeList', None)
     collection = att_list[0]

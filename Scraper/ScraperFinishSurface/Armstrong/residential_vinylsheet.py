@@ -58,7 +58,8 @@ def get_special(product, item):
     widths = [clean_value(k) for k in att_list if 'ft.' in k]
     width = '-'.join(widths)
     product.width = width
-    product.material = 'vinyl sheet'
+    product.material = 'resilient'
+    product.sub_material = 'vinyl sheet'
     return product
 
 def get_special_detail(product: ScraperFinishSurface, data: dict):

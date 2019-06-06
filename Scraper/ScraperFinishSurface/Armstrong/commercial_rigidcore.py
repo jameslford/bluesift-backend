@@ -20,7 +20,8 @@ def get_special(product: ScraperFinishSurface, item):
     product.width = clean_value(width)
     product.length = clean_value(length)
     product.thickness = clean_value(thickness)
-    product.material = 'vinyl rigid core'
+    product.material = 'resilient'
+    product.sub_material = 'rigid core'
     product.commercial = True
     return product
 

@@ -23,7 +23,8 @@ def get_special(product, item):
     #     if tag in product.manufacturer_style:
     #         look = 'geometric'
     # product.look = look
-    product.material = 'vinyl tile'
+    product.material = 'resilient'
+    product.sub_material = 'vinyl composite tile'
     return product
 
 def get_special_detail(product: ScraperFinishSurface, data: dict):

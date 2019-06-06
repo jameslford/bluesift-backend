@@ -5,7 +5,8 @@ from config.scripts.measurements import clean_value
 def get_special(product: ScraperFinishSurface, item):
     att_list = item.get('attributeList', None)
     product.look = 'shaded / specked'
-    product.material = 'homogeneous sheet vinyl'
+    product.material = 'resilient'
+    product.sub_material = 'sheet vinyl'
     product.commercial = True
     product.manufacturer_collection = att_list[0]
     width, length, thickness = att_list[1].split('x')

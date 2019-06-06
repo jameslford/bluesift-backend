@@ -24,12 +24,12 @@ class Scraper(SubScraperBase):
             product.manufacturer_collection = item.get('SellingStyleName', None)
             product.manufacturer_style = item.get('SellingColorName', None)
             base_product_url = self.base_url + '/flooring'
-            product.product_url = (
+            product_url = (
                 f'{base_product_url}/{self.subgroup.category.name}/details/'
                 f'{"-".join(product.manufacturer_collection.strip().split(" "))}-{style_number}/'
                 f'{"-".join(product.manufacturer_style.strip().split(" "))}'
             )
-            # vignette = item['Vignette']
+            product.product_url = product_url.replace('+', '')
             image = (
                 f'https://shawfloors.scene7.com/is/image/ShawIndustries/'
                 f'{product.manufacturer_sku}'
@@ -56,18 +56,3 @@ class Scraper(SubScraperBase):
         #     self.get_data(new_link)
         self.subgroup.scraped = True
         self.subgroup.save()
-
-    def clean(self):
-        from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
-        default_tiles = ScraperFinishSurface.objects.using('scraper_default').filter(material='stone & glass')
-        revised_tiles = ScraperFinishSurface.objects.filter(material='stone & glass')
-        for tile in default_tiles:
-            default_look = tile.look
-            revised_product: ScraperFinishSurface = revised_tiles.get(pk=tile.pk)
-            if not default_look:
-                continue
-            if 'mosaic' in default_look.lower():
-                revised_product.shape = 'mosaic'
-            if 'glass' in default_look.lower():
-                revised_product.sub_material = 'glass'
-            revised_product.save()

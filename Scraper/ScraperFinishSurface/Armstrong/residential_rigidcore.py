@@ -23,7 +23,8 @@ def get_special(product, item):
 
     product.finish = att_list[1].lower()
     product.install_type = att_list[2]
-    product.material = 'rigid core'
+    product.material = 'resilient'
+    product.sub_material = 'rigid core'
     return product
 
 def get_special_detail(product: ScraperFinishSurface, data: dict):
