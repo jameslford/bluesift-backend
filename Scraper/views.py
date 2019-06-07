@@ -1,4 +1,5 @@
 import os
+from django.db import transaction
 from rest_framework.decorators import (
     api_view,
     permission_classes
@@ -6,6 +7,7 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
+from django.http import HttpRequest, QueryDict
 from Scraper.models import ScraperSubgroup, ScraperBaseProduct, ScraperDepartment
 from Scraper.ScraperCleaner.models import ScraperCleaner, CleanerUtility
 from config.permissions import StagingAdminOnly, StagingorLocalAdmin
@@ -142,6 +144,37 @@ def update_field(request):
             )[0]
         cleaner.new_value = new_value
         cleaner.save()
+    return Response(status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes((StagingorLocalAdmin,))
+@transaction.atomic()
+def update_value_from_department(request: HttpRequest, pk):
+    field = request.POST.get('field')
+    if field not in ('width', 'thickness', 'length'):
+        return Response('cannot alter this field', status=status.HTTP_400_BAD_REQUEST)
+    current_value = request.POST.get('current_value')
+    new_value = request.POST.get('new_value')
+    department: ScraperDepartment = ScraperDepartment.objects.get(pk=pk)
+    revised_products = department.get_product_type().objects.filter(**{field: current_value})
+    for revised_product in revised_products:
+        setattr(revised_product, field, new_value)
+    default_products = department.get_product_type().objects.using('scraper_default').filter(
+        pk__in=[product.pk for product in revised_products])
+    default_subs = default_products.values_list('subgroup__pk', flat=True).distinct()
+    for sub in default_subs:
+        subgroup = ScraperSubgroup.objects.using('scraper_default').get(pk=sub)
+        initial_values = subgroup.products.values_list(field, flat=True).distinct()
+        for initial_value in initial_values:
+            cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
+                subgroup_manufacturer_name=subgroup.manufacturer.name,
+                subgroup_category_name=subgroup.category.name,
+                field_name=field,
+                initial_value=initial_value
+                )[0]
+            cleaner.new_value = new_value
+            cleaner.save()
     return Response(status=status.HTTP_201_CREATED)
 
 

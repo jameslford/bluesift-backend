@@ -57,9 +57,14 @@ def staging_to_production():
     for staging_product in staging_products:
         staging_product.save(using='production')
 
+@transaction.atomic()
+def run_stock_clean():
+    for group in ScraperSubgroup.objects.all():
+        group.run_stock_clean()
+
 
 @transaction.atomic()
-def clean_revised():
+def run_scraper_cleaners():
     for cleaner in ScraperCleaner.objects.all():
         cleaner.run_clean()
 
@@ -86,7 +91,6 @@ def initialize_data():
             category=category,
             base_scraping_url=mod[3]
             )[0]
-        print('create ' )
 
 
 def scrape(overwrite=False):

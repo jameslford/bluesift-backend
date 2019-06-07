@@ -139,6 +139,10 @@ class ScraperSubgroup(models.Model):
     def __str__(self):
         return f'{self.manufacturer.name}_{self.category.name}'
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.base_scraping_url = self.base_scraping_url.replace(' ', '')
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
     # the 4 or 5 methods below could potentially be moved to subscraperbase - unesscessarry pinging back and
     # forth if no work is done in manufacturer root
 
@@ -154,11 +158,24 @@ class ScraperSubgroup(models.Model):
         mod.Scraper(self).get_detail()
 
     def run_stock_clean(self):
+        self.run_special_cleaner()
+        self.lower_and_strip()
+
+    def run_special_cleaner(self):
         mod = self.get_module()
         scraper = mod.Scraper
+        products = self.get_products()
+        if not products:
+            return
         if 'clean' in dir(scraper):
+            print('clean in dir')
             mod.Scraper(self).clean()
-        for product in self.get_products():
+
+    def lower_and_strip(self):
+        products = self.get_products()
+        if not products:
+            return
+        for product in products:
             for field in self.get_variable_fields():
                 value = getattr(product, field, None)
                 if value:
@@ -171,13 +188,16 @@ class ScraperSubgroup(models.Model):
 
     def get_prod_type(self, db='scraper_revised'):
         # pylint: disable=no-member
-        products = ScraperBaseProduct.objects.using(db).filter(subgroup=self).select_subclasses()
-        # product = self.products.select_subclasses().first()
+        products = ScraperBaseProduct.objects.filter(subgroup=self).select_subclasses()
+        if not products:
+            return None
         return type(products.first())
 
     def get_products(self):
         prod_type = self.get_prod_type()
-        return prod_type.objects.filter(subgroup=self)
+        if prod_type:
+            return prod_type.objects.filter(subgroup=self)
+        return None
 
 
 class ScraperBaseProduct(models.Model):

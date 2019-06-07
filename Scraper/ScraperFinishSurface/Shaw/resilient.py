@@ -24,7 +24,9 @@ def get_special(product: ScraperFinishSurface, item):
 
 
 def clean(product: ScraperFinishSurface):
+    print(product.material)
     default_product = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
+    print(default_product.material)
     product.product_url = product.product_url.replace('+', '')
     if 'LOOSE' in default_product.material:
         product.install_type = 'loose lay'
@@ -49,4 +51,4 @@ def clean(product: ScraperFinishSurface):
         product.sub_material = 'rigid core spc'
         product.install_type = 'float'
     product.material = 'resilient'
-    product.save()
+    product.save(using='scraper_revised')

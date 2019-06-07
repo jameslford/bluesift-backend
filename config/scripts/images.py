@@ -21,7 +21,11 @@ def get_final_images():
 
 def get_images(overwrite=False):
     check_local()
-    subgroups = ScraperSubgroup.objects.using('scraper_default').all()
+    subgroups = None
+    if overwrite:
+        subgroups = ScraperSubgroup.objects.using('scraper_default').all()
+    else:
+        subgroups = ScraperSubgroup.objects.using('scraper_default').filter(scraped=False)
     for group in subgroups:
         products = group.products.all()
         for product in products:
