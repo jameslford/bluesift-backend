@@ -71,29 +71,35 @@ class ScraperFinishSurface(ScraperBaseProduct):
             'label_color'
         ]
 
-    def name_sku_check(self, update=False):
+    def get_name(self):
         name = (
-            f'{self.subgroup.manufacturer.name}_{self.subgroup.category.name}_'
-            f'{self.manufacturer_sku}_{self.material}_{self.manufacturer_collection}_'
-            f'{self.manufacturer_style}_{self.finish}_{self.width}x{self.length}x{self.thickness}_'
-            f'{self.end}_{self.edge}_{self.install_type}'
+            f'{self.subgroup.manufacturer.name}_{self.material}_{self.sub_material}_{self.manufacturer_collection}_'
+            f'{self.manufacturer_style}_{self.finish}_{self.width}x{self.length}x{self.thickness}'
         )
+        return name
 
-        check_self = ScraperFinishSurface.objects.using('scraper_default').filter(name=name).first()
-        if check_self:
-            if update:
-                check_self = self
-                return check_self
-            print('name exist')
+    def name_sku_check(self):
+        if not self.manufacturer_sku:
+            print('no sku')
             return None
-        check_sku = ScraperFinishSurface.objects.using('scraper_default').filter(manufacturer_sku=self.manufacturer_sku).first()
-        if self.manufacturer_sku and check_sku:
-            print('sku exist - ' + check_sku.name)
-            return None
-        if not self.swatch_image_original:
-            print('no image')
-            return None
-        self.name = name
-        print(self.name)
-        self.save()
-        return self
+        existing_product = ScraperFinishSurface.objects.using('scraper_default').filter(
+            manufacturer_sku=self.manufacturer_sku).first()
+        if not existing_product:
+            self.save(using='scraper_default')
+            print(self.name)
+            return self
+        keys = [k for k in existing_product.__dict__.keys() if '_state' not in k]
+        for k in keys:
+            existing_attr = getattr(existing_product, k, None)
+            if existing_attr:
+                continue
+            new_attr = getattr(self, k, None)
+            if new_attr:
+                setattr(existing_product, k, new_attr)
+        existing_product.save(using='scraper_default')
+        print('updated ' + existing_product.name)
+        return None
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.name = self.get_name()
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)

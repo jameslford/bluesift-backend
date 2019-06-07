@@ -36,6 +36,8 @@ class Scraper(SubScraperBase):
                 continue
 
             rating = item.get('rating', None)
+            db = self.subgroup._state.db
+            print(str(db))
             if rating:
                 rating_count = rating.get('count', None)
                 rating_value = rating.get('val', None)
@@ -44,7 +46,7 @@ class Scraper(SubScraperBase):
                     new_rating.rating_value = rating_value
                     new_rating.rating_count = rating_count
                     new_rating.product_bbsku = product.bb_sku
-                    new_rating.save()
+                    new_rating.save(using=db)
         self.subgroup.scraped = True
         self.subgroup.save()
 

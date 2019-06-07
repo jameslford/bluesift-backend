@@ -30,30 +30,39 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'OPTIONS': {
-            'options': '-c search_path=bluesift_default'
+            'options': '-c search_path=bluesift_default,public'
         },
         'NAME': 'buildbook',
         'USER': 'postgres',
         'PASSWORD': LOCAL_DB_PASSWORD,
+        'TEST': {
+            'NAME': 'test_default'
+        }
     },
     'scraper_default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'OPTIONS': {
-            'options': '-c search_path=scraper_default'
+            'options': '-c search_path=scraper_default,public'
             },
         'NAME': 'buildbook',
         'USER': 'postgres',
         'PASSWORD': LOCAL_DB_PASSWORD,
+        'TEST': {
+            'NAME': 'test_scraper_default'
+        }
     },
     'scraper_revised': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'OPTIONS': {
-            'options': '-c search_path=scraper_revised'
+            'options': '-c search_path=scraper_revised,public'
             },
         'NAME': 'buildbook',
         'USER': 'postgres',
         'PASSWORD': LOCAL_DB_PASSWORD,
-    }
+        'TEST': {
+            'NAME': 'test_scraper_revised'
+        }
+    },
 }
 
 

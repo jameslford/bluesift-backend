@@ -40,7 +40,6 @@ class Scraper(SubScraperBase):
             self.get_detail(url, collection)
         self.subgroup.scraped = True
         self.subgroup.save()
-        return
 
 
     def get_detail(self, url, collection):

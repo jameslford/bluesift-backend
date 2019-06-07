@@ -75,14 +75,18 @@ def delete_scraper_revised():
 
 def initialize_data():
     for mod in MODS:
-        manufacturer = ScraperManufacturer.objects.using('scraper_default').get_or_create(name=mod[0])[0]
-        department = ScraperDepartment.objects.using('scraper_default').get_or_create(name=mod[1])[0]
-        category = ScraperCategory.objects.using('scraper_default').get_or_create(name=mod[2], department=department)[0]
-        subgroup = ScraperSubgroup.objects.using('scraper_default').get_or_create(
+        manufacturer = ScraperManufacturer.objects.db_manager('scraper_default').get_or_create(name=mod[0])[0]
+        manufacturer = ScraperManufacturer.objects.using('scraper_default').get(name=mod[0])
+        department = ScraperDepartment.objects.db_manager('scraper_default').get_or_create(name=mod[1])[0]
+        department = ScraperDepartment.objects.using('scraper_default').get(name=mod[1])
+        category = ScraperCategory.objects.db_manager('scraper_default').get_or_create(name=mod[2], department=department)[0]
+        category = ScraperCategory.objects.using('scraper_default').get(name=mod[2], department=department)
+        subgroup = ScraperSubgroup.objects.db_manager('scraper_default').get_or_create(
             manufacturer=manufacturer,
             category=category,
             base_scraping_url=mod[3]
             )[0]
+        print('create ' )
 
 
 def scrape(overwrite=False):
@@ -91,6 +95,11 @@ def scrape(overwrite=False):
             group.get_data()
         elif not group.scraped:
             group.get_data()
+
+
+def clean_all():
+    for group in ScraperSubgroup.objects.all():
+        pass
 
 
 def backup_db():

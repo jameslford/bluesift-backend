@@ -25,9 +25,6 @@ def get_images(overwrite=False):
     for group in subgroups:
         products = group.products.all()
         for product in products:
-            if overwrite:
-                product.get_local_images(True)
-                product.get_final_images(True)
-            else:
-                product.get_local_images()
-                product.get_final_images()
+            product.get_local_images(overwrite)
+            product.get_final_images(overwrite)
+

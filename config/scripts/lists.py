@@ -255,22 +255,22 @@ MODS = [
         'tile',
         ''
     ],
-    [
-        'Mohawk',
-        'ScraperFinishSurface',
-        'hardwood',
-        'https://www.mohawkflooring.com/api/products/styles'
-    ],
-    [
-        'Mohawk',
-        'ScraperFinishSurface',
-        'tile',
-        'https://www.mohawkflooring.com/api/products/styles'
-    ],
-    [
-        'Mohawk',
-        'ScraperFinishSurface',
-        'vinyl',
-        'https://www.mohawkflooring.com/api/products/styles'
-    ]
+    # [
+    #     'Mohawk',
+    #     'ScraperFinishSurface',
+    #     'hardwood',
+    #     'https://www.mohawkflooring.com/api/products/styles'
+    # ],
+    # [
+    #     'Mohawk',
+    #     'ScraperFinishSurface',
+    #     'tile',
+    #     'https://www.mohawkflooring.com/api/products/styles'
+    # ],
+    # [
+    #     'Mohawk',
+    #     'ScraperFinishSurface',
+    #     'vinyl',
+    #     'https://www.mohawkflooring.com/api/products/styles'
+    # ]
 ]

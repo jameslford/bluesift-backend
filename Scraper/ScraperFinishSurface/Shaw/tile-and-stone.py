@@ -1,5 +1,6 @@
-from ..models import ScraperFinishSurface
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 from config.scripts.measurements import clean_value
+
 
 def get_special(product: ScraperFinishSurface, item):
     product.material = 'stone & glass'
@@ -13,17 +14,13 @@ def get_special(product: ScraperFinishSurface, item):
     return product
 
 
-def clean():
-    from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
-    default_tiles = ScraperFinishSurface.objects.using('scraper_default').filter(material='stone & glass')
-    revised_tiles = ScraperFinishSurface.objects.filter(material='stone & glass')
-    for tile in default_tiles:
-        default_look = tile.look
-        revised_product: ScraperFinishSurface = revised_tiles.get(pk=tile.pk)
-        if not default_look:
-            continue
-        if 'mosaic' in default_look.lower():
-            revised_product.shape = 'mosaic'
-        if 'glass' in default_look.lower():
-            revised_product.sub_material = 'glass'
-        revised_product.save()
+def clean(product: ScraperFinishSurface):
+    default_product = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
+    default_look = default_product.look
+    if not default_look:
+        return
+    if 'mosaic' in default_look.lower():
+        product.shape = 'mosaic'
+    if 'glass' in default_look.lower():
+        product.sub_material = 'glass'
+    product.save()

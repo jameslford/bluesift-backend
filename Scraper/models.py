@@ -18,6 +18,16 @@ from Products.models import Manufacturer, Product
 LOCAL_STORAGE = get_local_storage()
 
 
+def validate_image(image: pimage.Image):
+    """ validates pillow image """
+    try:
+        image.verify()
+        return True
+    except:
+        print('image wouldnt verify')
+        return False
+
+
 class ScraperManufacturer(models.Model):
     name = models.CharField(max_length=50)
 
@@ -60,7 +70,7 @@ class ScraperDepartment(models.Model):
         ).filter(subgroup__category__department=self).select_subclasses()
 
     def check_sub_classes(self):
-        revised_model = self.get_module().REVISED_MODEL
+        # revised_model = self.get_module().REVISED_MODEL
         new_model = self.get_module().NEW_MODEL
         if new_model != self.corresponding_class():
             raise Exception('wrong class in department submodule or globals for ' + self.name)
@@ -129,6 +139,9 @@ class ScraperSubgroup(models.Model):
     def __str__(self):
         return f'{self.manufacturer.name}_{self.category.name}'
 
+    # the 4 or 5 methods below could potentially be moved to subscraperbase - unesscessarry pinging back and
+    # forth if no work is done in manufacturer root
+
     def get_module(self):
         return importlib.import_module(f'Scraper.{self.category.department.name}.{self.manufacturer.name}')
 
@@ -143,9 +156,14 @@ class ScraperSubgroup(models.Model):
     def run_stock_clean(self):
         mod = self.get_module()
         scraper = mod.Scraper
-        if 'clean' not in dir(scraper):
-            raise Exception('no clean method')
-        mod.Scraper(self).clean()
+        if 'clean' in dir(scraper):
+            mod.Scraper(self).clean()
+        for product in self.get_products():
+            for field in self.get_variable_fields():
+                value = getattr(product, field, None)
+                if value:
+                    setattr(product, field, value.strip().lower())
+                    product.save()
 
     def get_variable_fields(self):
         prod_type = self.get_prod_type()
@@ -163,7 +181,7 @@ class ScraperSubgroup(models.Model):
 
 
 class ScraperBaseProduct(models.Model):
-    name = models.CharField(max_length=1000, unique=True)
+    name = models.CharField(max_length=1000)
     manufacturer_sku = models.CharField(max_length=200, null=True, blank=True, unique=True)
     manufacturer_collection = models.CharField(max_length=200, blank=True)
     manufacturer_style = models.CharField(max_length=200, blank=True)
@@ -229,10 +247,9 @@ class ScraperBaseProduct(models.Model):
             if not update and destination:
                 print('already got')
                 continue
-            image_name = f'local_{str(self.bb_sku)}.png'
+            image_name = f'local_{str(self.manufacturer_sku)}.png'
             image: pimage.Image = self.download_image(url)
             if not image:
-                # print('bad image')
                 continue
             buffer = BytesIO()
             image.save(buffer, 'PNG', optimize=True)
@@ -253,18 +270,11 @@ class ScraperBaseProduct(models.Model):
             print('cannot identify image file for ' + self.name)
             return None
         image_copy = copy.copy(image)
-        if not self.validate_image(image_copy):
+        if not validate_image(image_copy):
             print('not valid image')
             return None
         return image
 
-    def validate_image(self, image: pimage.Image):
-        try:
-            image.verify()
-            return True
-        except:
-            print('image wouldnt verify')
-            return False
 
     def get_final_images(self, update=False):
         check_local()
@@ -292,7 +302,7 @@ class ScraperBaseProduct(models.Model):
             except IOError:
                 print('io error')
                 continue
-            images_name = str(self.bb_sku) + '.jpg'
+            images_name = str(self.manufacturer_sku) + '.jpg'
             destination.save(images_name, buffer)
             print('getting final for ' + self.name)
             self.save()
@@ -331,26 +341,57 @@ class ScraperAggregateProductRating(models.Model):
 
 
 class SubScraperBase:
+
+    """ superclass for subclasses in each scrapermanufacturers init modules.
+    simply grants them access to standardized methods mainly for retrieving functions from submodules """
+
     def __init__(self, subgroup: ScraperSubgroup):
         self.subgroup = subgroup
 
     def get_sub_function(self, product, item: dict = None):
-        sub_mod = self.get_sub_module()
-        func = getattr(sub_mod, 'get_special')
-        return func(product, item)
 
+        """ called from the subclass in the init module of a departments
+        manufacturers, i.e. 'scraperfinishsurfaces.shaw'. Will get a function specific to scraping data
+        for the self.subgroup - standard for any manufacturer with more than 1 category,
+        i.e shaw.laminate and shaw.hardwood """
+
+        sub_mod = self.get_sub_module()
+        func = getattr(sub_mod, 'get_special', None)
+        if func:
+            return func(product, item)
+        return product
 
     def get_sub_detail(self):
+
+        """ niche function for returning a function needed by subgroups who have to do a second pass on the data.
+        i.e. gather intial data with specific urls, then reiterate on those products using urls to gather more """
+
         sub_mod = self.get_sub_module()
-        func = getattr(sub_mod, 'get_special_detail')
+        func = getattr(sub_mod, 'get_special_detail', None)
+        return func
+
+    def get_clean_func(self):
+
+        """ returns a function for self.subgroup that is specifcally for cleaning that subgroup.
+        if function not present, will return None """
+
+        sub_mod = self.get_sub_module()
+        func = getattr(sub_mod, 'clean', None)
         return func
 
     def get_sub_module(self):
+
+        """ returns a module specific to self.subgroup. i.e scraperfinishsurface.amrstrong.commercial_hardwood """ 
+
         current_module = f'Scraper.{self.subgroup.category.department.name}.{self.subgroup.manufacturer.name}'
         return importlib.import_module(f'.{self.subgroup.category.name}', current_module)
 
     def get_sub_response(self):
-        print('getting response')
+
+        """ for use in subgroups that have a require a lengthy request (using headers, post, etc..) that are not
+        able to be contained in the subgroups base url. Response is obtained in subgroups submodule and
+        this function returns that response """
+
         sub_mod = self.get_sub_module()
         func = getattr(sub_mod, 'api_response')
         return func(self.subgroup.base_scraping_url)

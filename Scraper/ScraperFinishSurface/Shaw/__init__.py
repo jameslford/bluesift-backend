@@ -14,7 +14,7 @@ class Scraper(SubScraperBase):
         if not url:
             url = self.subgroup.base_scraping_url
         results = requests.get(url).json()
-        next_link = results.get('@odata.nextLink', None)
+        # next_link = results.get('@odata.nextLink', None)
         items = results['value']
         for item in items:
             product = ScraperFinishSurface()
@@ -49,10 +49,12 @@ class Scraper(SubScraperBase):
             if residential_warranty:
                 product.residential_warranty = residential_warranty
             product.name_sku_check()
-        # if next_link:
-        #     new_link = str(next_link.strip('"'))
-        #     print(new_link)
-        #     new_link = None
-        #     self.get_data(new_link)
         self.subgroup.scraped = True
         self.subgroup.save()
+
+    def clean(self):
+        clean_func = self.get_clean_func()
+        for product in self.subgroup.get_products():
+            if clean_func:
+                clean_func(product)
+

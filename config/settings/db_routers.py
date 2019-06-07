@@ -5,7 +5,10 @@ class ScraperRouter:
         if 'ScraperCleaner' == model._meta.app_label:
             return 'scraper_default'
         if 'Scraper' in model._meta.app_label:
-            return 'scraper_revised'
+            instance = hints.get('instance', None)
+            if not instance:
+                return 'scraper_revised'
+            return instance._state.db
         return None
 
     def db_for_write(self, model, **hints):
@@ -13,7 +16,10 @@ class ScraperRouter:
         if model._meta.app_label == 'ScraperCleaner':
             return 'scraper_default'
         if 'Scraper' in model._meta.app_label:
-            return 'scraper_revised'
+            instance = hints.get('instance', None)
+            if not instance:
+                return 'scraper_revised'
+            return instance._state.db
         return None
 
     def allow_relation(self, obj1, obj2, **hints):

@@ -39,6 +39,7 @@ def get_special(product, item):
     product.submaterial = 'engineered tile'
     return product
 
+
 def get_special_detail(product: ScraperFinishSurface, data: dict):
     product.surface_coating = data.get('Wear Layer Type', None)
     product.look = data.get('Look', None)

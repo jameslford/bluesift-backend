@@ -83,4 +83,3 @@ class Scraper(SubScraperBase):
         if 'Floor' in application:
             product.floors = True
         return product
-
