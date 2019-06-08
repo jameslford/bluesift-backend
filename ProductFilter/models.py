@@ -345,6 +345,7 @@ class ProductFilter(models.Model):
         if not self.check_content_model():
             self.delete()
             return
+        self.facets = []
         self.filter_dictionary = None
         self.check_fields()
         self.add_filter_dictionary()

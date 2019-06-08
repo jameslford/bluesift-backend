@@ -121,7 +121,7 @@ def update_field(request):
     field = request.POST.get('field', None)
     current_value = request.POST.get('current_value', None)
     new_value = request.POST.get('new_value', None)
-    if not (subgroup_pk and field and current_value and new_value):
+    if not (subgroup_pk and field and current_value):
         return Response('not enough fields')
     if new_value == current_value:
         return Response('no difference in new and old value')
