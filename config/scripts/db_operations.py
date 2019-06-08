@@ -174,8 +174,10 @@ def refresh_default_database():
 @transaction.atomic()
 def load_from_backup():
     exclude_production()
-    backups = glob.glob('z_backups\\local\\scraper_default\\*.json')
+    if os.name == 'nt':
+        path = 'z_backups\\local\\scraper_default\\*.json'
+    else:
+        path = 'z_backups/local/scraper_default/*.json'
+    backups = glob.glob(path)
     latest = max(backups, key=os.path.getctime)
     call_command('loaddata', latest, '--database=scraper_default')
-
-    
