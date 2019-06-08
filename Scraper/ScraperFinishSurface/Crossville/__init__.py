@@ -110,11 +110,46 @@ class Scraper(SubScraperBase):
                 new_sub_material = sub_material.replace('mosaic', '')
                 revised_product.sub_material = new_sub_material.strip()
                 revised_product.shape = 'mosaic'
-            if revised_product.shower_walls:
-                revised_product.walls = True
-            if revised_product.shower_floors:
-                revised_product.floors = True
+            if (default_product.shower_walls or
+                default_product.covered_walls or
+                default_product.exterior_walls):
+                default_product.walls = True
+            if (default_product.shower_floors or
+                default_product.covered_floors or
+                default_product.exterior_floors):
+                default_product.floors = True
             if 'countertop' in sub_material:
                 revised_product.sub_material = 'porcelain'
                 revised_product.countertops = True
+            length = default_product.length
+            if length:
+                length = crossvile_measurement(length)
+            thickness = default_product.thickness
+            if thickness:
+                thickness = crossvile_measurement(thickness)
+            revised_product.thickness = thickness
+            revised_product.length = length
             revised_product.save()
+
+
+def crossvile_measurement(value: str) -> str:
+    new_val = value.replace('+', '')
+    new_val = new_val.replace('panel', '')
+    length_split = new_val.split(' ')
+    unit = length_split.pop(-1)
+    recomb = []
+    for measure in length_split:
+        _measure = measure
+        if '/' in measure:
+            msplit = _measure.split('/')
+            num = float(msplit[0]) / float(msplit[1])
+            _measure = round(num, 3)
+        recomb.append(_measure)
+    new_num = ''.join(recomb)
+    if 'mm' in unit:
+        new_num = float(new_num) / 25.4
+        new_num = str(round(new_num, 3))
+    return new_num
+
+
+
