@@ -32,7 +32,9 @@ def scraper_to_revised():
     subgroups = ScraperSubgroup.objects.using('scraper_default').all()
     products = ScraperBaseProduct.objects.using('scraper_default').all().select_subclasses()
     for department in departments:
+        print(department.name)
         department.save(using='scraper_revised')
+        print(department.name + ' saved')
     for manufacturer in manufacturers:
         manufacturer.save(using='scraper_revised')
     for category in categories:
