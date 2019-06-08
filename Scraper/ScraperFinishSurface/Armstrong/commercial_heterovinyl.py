@@ -14,28 +14,8 @@ def get_special(product: ScraperFinishSurface, item):
     product.commercial = True
     att_list = item.get('attributeList', None)
     collection = att_list[0]
-    look = 'shaded / specked'
-    if 'ambigu' in collection:
-        look = 'textile'
-    elif 'stoneRun' in collection:
-        look = 'stone'
-    elif 'timber' in collection:
-        look = 'wood'
-    else:
-        for tag in textile_tags:
-            if tag in product.manufacturer_style:
-                look = 'textile'
-        for tag in wood_tags:
-            if tag in product.manufacturer_style:
-                look = 'wood'
-        for tag in stone_tags:
-            if tag in product.manufacturer_style:
-                look = 'stone'
-        if 'steel' in product.manufacturer_style:
-            look = 'metal'
-
-    product.look = look
     width, length, thickness = att_list[1].split('x')
+    product.manufacturer_collection = collection
     product.width = clean_value(width)
     product.length = clean_value(length)
     product.thickness = clean_value(thickness)
@@ -50,3 +30,26 @@ def get_special_detail(product: ScraperFinishSurface, empty_dict: dict):
     product.install_type = install_type
     product.lrv = lrv
     return product
+
+
+def clean(product: ScraperFinishSurface):
+    pass
+    #     look = 'shaded / specked'
+    # if 'ambigu' in collection:
+    #     look = 'textile'
+    # elif 'stoneRun' in collection:
+    #     look = 'stone'
+    # elif 'timber' in collection:
+    #     look = 'wood'
+    # else:
+    #     for tag in textile_tags:
+    #         if tag in product.manufacturer_style:
+    #             look = 'textile'
+    #     for tag in wood_tags:
+    #         if tag in product.manufacturer_style:
+    #             look = 'wood'
+    #     for tag in stone_tags:
+    #         if tag in product.manufacturer_style:
+    #             look = 'stone'
+    #     if 'steel' in product.manufacturer_style:
+    #         look = 'metal'

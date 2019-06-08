@@ -97,3 +97,12 @@ class Scraper(SubScraperBase):
             product.sqft_per_carton = data.get('Square Feet per Box', None)
             product = func(product, data)
         return product
+
+
+    def clean(self):
+        clean_func = self.get_clean_func()
+        products = self.subgroup.get_products()
+        for product in products:
+            if clean_func:
+                print('running clean func for ' + self.subgroup.__str__())
+                clean_func(product)

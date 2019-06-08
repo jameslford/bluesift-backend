@@ -57,6 +57,6 @@ class Scraper(SubScraperBase):
         products = self.subgroup.get_products()
         for product in products:
             if clean_func:
-                # print('running clean func')
+                print('running clean func for ' + self.subgroup.__str__())
                 clean_func(product)
 

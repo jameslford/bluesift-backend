@@ -34,23 +34,16 @@ wood_tags = [
     'woodcrest'
 ]
 
-natural_tag = 'framingham'
+natural_tag = ['framingham']
+
+look_dict = {
+    'textile': textile_tags,
+    'geometric_pattern': geometric_tags,
+    'wood': wood_tags,
+    'natural_pattern': natural_tag,
+}
 
 def get_special(product, item):
-    # look = 'stone'
-    # if natural_tag in product.manufacturer_style:
-    #     look = 'natural pattern'
-    # for tag in wood_tags:
-    #     if tag in product.manufacturer_style:
-    #         look = 'wood'
-    # for tag in geometric_tags:
-    #     if tag in product.manufacturer_style:
-    #         look = 'geometric'
-    # for tag in textile_tags:
-    #     if tag in product.manufacturer_style:
-    #         look = 'textile'
-    # product.look = look
-
     att_list = item.get('attributeList', None)
 
     gloss = [k for k in att_list if 'Gloss' in k]
@@ -66,3 +59,22 @@ def get_special_detail(product: ScraperFinishSurface, data: dict):
     product.look = data.get('Look', None)
     product.surface_coating = data.get('Wear Layer Type', None)
     return product
+
+
+def clean(product: ScraperFinishSurface):
+    default_product: ScraperFinishSurface = ScraperFinishSurface.objects.get(pk=product.pk)
+    product.length = '0-120'
+    product.width = '144'
+    product.thickness = thk_dic.get(default_product.manufacturer_collection, None)
+    product.look = assign_look(default_product)
+    product.shape = 'continuous'
+    product.save()
+
+
+def assign_look(default_product: ScraperFinishSurface):
+    for look in look_dict:
+        tag_list = look_dict[look]
+        for tag in tag_list:
+            if tag in default_product.manufacturer_style.lower():
+                return look
+    return 'stone'

@@ -1,6 +1,7 @@
 import sys
 import importlib
 import requests
+from fractions import Fraction
 from config.scripts.measurements import clean_value, unified_measurement
 from Scraper.models import SubScraperBase
 from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
@@ -105,7 +106,7 @@ class Scraper(SubScraperBase):
             default_product: ScraperFinishSurface = default_product
             sub_material: str = default_product.sub_material.lower()
             revised_product: ScraperFinishSurface = ScraperFinishSurface.objects.using(
-                    'scraper_revised').get(pk=default_product.pk)
+                'scraper_revised').get(pk=default_product.pk)
             if 'mosaic' in sub_material:
                 new_sub_material = sub_material.replace('mosaic', '')
                 revised_product.sub_material = new_sub_material.strip()
@@ -135,21 +136,21 @@ class Scraper(SubScraperBase):
 def crossvile_measurement(value: str) -> str:
     new_val = value.replace('+', '')
     new_val = new_val.replace('panel', '')
+    new_val = new_val.strip()
     length_split = new_val.split(' ')
     unit = length_split.pop(-1)
-    recomb = []
+    recomb = 0
     for measure in length_split:
         _measure = measure
         if '/' in measure:
             msplit = _measure.split('/')
             num = float(msplit[0]) / float(msplit[1])
-            _measure = round(num, 3)
-        recomb.append(_measure)
-    new_num = ''.join(recomb)
+            _measure = round(num, 2)
+        else:
+            _measure = round(float(measure), 2)
+        recomb += _measure
     if 'mm' in unit:
-        new_num = float(new_num) / 25.4
-        new_num = str(round(new_num, 3))
-    return new_num
-
-
-
+        recomb = round((recomb / 25.4), 2)
+    elif 'm' in unit:
+        recomb = round((recomb * 39.37), 2)
+    return str(round(recomb, 2))

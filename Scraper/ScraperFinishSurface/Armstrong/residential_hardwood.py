@@ -28,4 +28,9 @@ def get_special_detail(product: ScraperFinishSurface, data: dict):
     return product
 
 
+def clean(product: ScraperFinishSurface):
+    default_product: ScraperFinishSurface = ScraperFinishSurface.objects.get(pk=product.pk)
+    if default_product.length:
+        product.length = default_product.length.replace('varying lengths:', '').strip()
+    product.save()
 

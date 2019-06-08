@@ -31,3 +31,18 @@ def get_special_detail(product: ScraperFinishSurface, data: dict):
     product.look = data.get('Look', None)
     product.surface_coating = data.get('Wear Layer Type', None)
     return product
+
+def clean(product: ScraperFinishSurface):
+    default_product: ScraperFinishSurface = ScraperFinishSurface.objects.get(pk=product.pk)
+    if default_product.length:
+        product.length = default_product.length.replace('in.', '').strip()
+    if default_product.width:
+        product.width = default_product.width.replace('in.', '').strip()
+    if default_product.thickness:
+        product.thickness = default_product.thickness.replace('in.', '').strip()
+    look = 'wood'
+    for tag in stone_tags:
+        if tag in default_product.manufacturer_style.lower():
+            look = 'stone'
+    product.look = look
+    product.save()

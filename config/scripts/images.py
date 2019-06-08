@@ -31,4 +31,3 @@ def get_images(overwrite=False):
         for product in products:
             product.get_local_images(overwrite)
             product.get_final_images(overwrite)
-

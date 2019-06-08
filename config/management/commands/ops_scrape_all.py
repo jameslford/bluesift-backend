@@ -21,10 +21,10 @@ class Command(BaseCommand):
         if not user.is_admin:
             print('not admin')
             return
-        self.stdout.write(self.style.WARNING('This will rescrape all data and redownload images. Are you sure?'))
+        self.stdout.write(self.style.WARNING('This will rescrape all data. Are you sure?'))
         confirm = input('please answer [yes/no]')
         if confirm == 'yes':
             initialize_data()
             scrape(True)
-            get_images(True)
+            get_images()
             scraper_to_revised()

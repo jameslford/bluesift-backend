@@ -157,9 +157,10 @@ class ScraperSubgroup(models.Model):
         mod = self.get_module()
         mod.Scraper(self).get_detail()
 
+    @transaction.atomic()
     def run_stock_clean(self):
         self.run_special_cleaner()
-        self.lower_and_strip()
+        # self.lower_and_strip()
 
     def run_special_cleaner(self):
         mod = self.get_module()
