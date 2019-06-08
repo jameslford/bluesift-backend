@@ -90,11 +90,13 @@ def initialize_data():
         department = ScraperDepartment.objects.using('scraper_default').get(name=mod[1])
         category = ScraperCategory.objects.db_manager('scraper_default').get_or_create(name=mod[2], department=department)[0]
         category = ScraperCategory.objects.using('scraper_default').get(name=mod[2], department=department)
-        subgroup = ScraperSubgroup.objects.db_manager('scraper_default').get_or_create(
+        subgroup, subgroup_created = ScraperSubgroup.objects.db_manager('scraper_default').get_or_create(
             manufacturer=manufacturer,
             category=category,
-            base_scraping_url=mod[3]
-            )[0]
+            )
+        if subgroup_created:
+            subgroup.base_scraping_url = mod[3]
+            subgroup.save()
 
 
 def scrape(overwrite=False):

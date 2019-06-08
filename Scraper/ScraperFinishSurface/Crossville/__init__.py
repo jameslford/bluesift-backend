@@ -130,6 +130,9 @@ class Scraper(SubScraperBase):
                 thickness = crossvile_measurement(thickness)
             revised_product.thickness = thickness
             revised_product.length = length
+            finish_split = default_product.finish.split('-')
+            if len(finish_split) > 1:
+                revised_product.finish = finish_split[-1].strip()
             revised_product.save()
 
 
