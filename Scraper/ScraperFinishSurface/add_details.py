@@ -1,5 +1,7 @@
+import decimal
 from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 from FinishSurfaces.models import FinishSurface
+from django.contrib.postgres.fields import DecimalRangeField
 from config.scripts.measurements import char_dec_range_conversion
 
 REVISED_MODEL = ScraperFinishSurface
@@ -43,6 +45,7 @@ def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
         f'{revised_product.width}x{revised_product.length}x{revised_product.thickness}'
     )
     new_product.name = name
+
     # new_product.width = char_dec_range_conversion(revised_product.width)
     # new_product.length = char_dec_range_conversion(revised_product.length)
     # new_product.thickness = char_dec_range_conversion(revised_product.thickness)

@@ -1,5 +1,6 @@
 import os
 import datetime
+import glob
 from stat import S_ISREG, ST_CTIME, ST_MODE
 from django.conf import settings
 from django.db import transaction
@@ -17,8 +18,9 @@ from Scraper.ScraperCleaner.models import ScraperCleaner
 from Products.models import Product
 from ProductFilter.models import ProductFilter
 from .lists import MODS
-from .check_settings import exclude_production
+from .check_settings import exclude_production, check_staging
 from .colors import assign_label_color
+from config.settings.local import DATABASES as local_dbs
 
 
 @transaction.atomic(using='scraper_revised')
@@ -111,7 +113,7 @@ def backup_db():
     dt_string = now.strftime('%Y-%m-%d-%H-%M-%S')
     environment = settings.ENVIRONMENT
     current_path = os.getcwd()
-    for database in settings.DATABASES:
+    for database in local_dbs:
         env_path = f'{current_path}\\z_backups\\{environment}\\{database}\\'
         if not os.path.exists(env_path):
             os.makedirs(env_path)
@@ -128,7 +130,7 @@ def clean_backups():
     environment = settings.ENVIRONMENT
     current_path = os.getcwd()
     s3 = MediaStorage()
-    for database in settings.DATABASES:
+    for database in local_dbs:
         dirpath = f'{current_path}\\z_backups\\{environment}\\{database}\\'
         entries = (os.path.join(dirpath, fn) for fn in os.listdir(dirpath))
         entries = ((os.stat(path), path) for path in entries)
@@ -142,7 +144,7 @@ def clean_backups():
 
 
 def migrate_all():
-    for database in settings.DATABASES:
+    for database in local_dbs:
         db_arg = f'--database={database}'
         call_command('migrate', db_arg)
 
@@ -151,6 +153,7 @@ def refresh_filters():
     p_filters = ProductFilter.objects.all()
     for p_filter in p_filters:
         p_filter.save()
+
 
 @transaction.atomic()
 def reset_supplier_products():
@@ -167,3 +170,12 @@ def refresh_default_database():
     refresh_filters()
     reset_supplier_products()
 
+
+@transaction.atomic()
+def load_from_backup():
+    exclude_production()
+    backups = glob.glob('z_backups\\local\\scraper_default\\*.json')
+    latest = max(backups, key=os.path.getctime)
+    call_command('loaddata', latest, '--database=scraper_default')
+
+    

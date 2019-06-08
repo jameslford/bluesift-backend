@@ -59,6 +59,9 @@ class FinishSurface(ProductSubClass):
     def special_method(cls):
         print('hello world')
 
+    def assign_shape(self):
+        pass
+
 
     def set_actual_color(self):
         # pylint: disable=no-member
