@@ -290,12 +290,11 @@ def supplier_short_lib(request):
         'count': locations.count(),
         'selected_location': {
             'nickname': location.nickname,
-            'id': location.id
+            'pk': location.pk
         },
         'product_ids': product_ids
     }
-    response = {'shortLib': full_content}
-    return Response(response, status=status.HTTP_200_OK)
+    return Response(full_content, status=status.HTTP_200_OK)
 
 
 # customer side views 

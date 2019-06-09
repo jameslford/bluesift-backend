@@ -64,7 +64,6 @@ def customer_project(request, pk=None):
             'products',
             'products__product',
             'products__product__manufacturer',
-            'products__product__swatch_image',
             'applications__products',
             ).filter(pk=pk).first()
         if not project.owner == profile:
@@ -192,7 +191,7 @@ def customer_short_lib(request):
     # product_ids = []
     if proj_id:
         project = projects.filter(pk=proj_id).first()
-    selected_project = {'id': project.pk, 'nickname': project.nickname}
+    selected_project = {'pk': project.pk, 'nickname': project.nickname}
     for proj in projects:
         content = {}
         content['nickname'] = proj.nickname
@@ -211,5 +210,4 @@ def customer_short_lib(request):
         'selected_location': selected_project,
         'product_ids': selected_product_ids
     }
-    response = {'shortLib': full_content}
-    return Response(response, status=status.HTTP_200_OK)
+    return Response(full_content, status=status.HTTP_200_OK)
