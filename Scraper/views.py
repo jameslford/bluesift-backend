@@ -44,7 +44,7 @@ def subgroup_list(request):
             ).first()
         group_dict = {
             'name': group.__str__(),
-            'revised_pk': revised_group.pk,
+            'revised_pk': revised_group.pk if revised_group else None,
             'scraped': group.scraped,
             'cleaned': revised_group.cleaned if revised_group else 'no group',
             'default_count': group.products.count(),

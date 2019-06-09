@@ -16,7 +16,7 @@ STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
 
 ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
