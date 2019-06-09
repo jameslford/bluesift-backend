@@ -107,10 +107,6 @@ def scrape(overwrite=False):
             group.get_data()
 
 
-def clean_all():
-    for group in ScraperSubgroup.objects.all():
-        pass
-
 
 def backup_db():
     now = datetime.datetime.now()

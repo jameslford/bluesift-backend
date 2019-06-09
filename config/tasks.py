@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from config.scripts.db_operations import backup_db, clean_backups
+from config.scripts.db_operations import backup_db, clean_backups, scrape, scraper_to_revised, initialize_data, run_stock_clean
+from config.scripts.images import get_images
 
 
 @shared_task
@@ -26,3 +27,17 @@ def backup_db_task():
 def clean_backups_task():
     clean_backups()
     return 'backups_cleaned'
+
+
+@shared_task
+def subgroup_command(command):
+    if command == 'scrape_new':
+        initialize_data()
+        scrape()
+        get_images()
+        scraper_to_revised()
+    elif command == 'clean_new':
+        run_stock_clean()
+    else:
+        return 'bad command called'
+    return f'{command} run'

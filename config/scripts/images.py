@@ -1,10 +1,10 @@
 from Scraper.models import ScraperSubgroup, ScraperBaseProduct
-from .check_settings import check_local
+from .check_settings import exclude_production
 
 
 
 def get_images(overwrite=False):
-    check_local()
+    exclude_production()
     products = None
     if overwrite:
         products = ScraperBaseProduct.objects.using('scraper_default').all()

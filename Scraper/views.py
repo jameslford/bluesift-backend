@@ -12,6 +12,7 @@ from Scraper.models import ScraperSubgroup, ScraperBaseProduct, ScraperDepartmen
 from Scraper.ScraperCleaner.models import ScraperCleaner, CleanerUtility
 from config.scripts.db_operations import scrape, run_stock_clean
 from config.permissions import StagingAdminOnly, StagingorLocalAdmin
+from config.tasks import subgroup_command as task_subgroup_command
 
 SCRAPE_NEW = 'scrape_new'
 CLEAN_NEW = 'clean_new'
@@ -213,9 +214,9 @@ def run_subgroup_command(request: HttpRequest):
     if command not in SUBGROUP_COMMANDS:
         return Response('invalid command', status=status.HTTP_403_FORBIDDEN)
     if command == SCRAPE_NEW:
-        scrape()
+        task_subgroup_command(SCRAPE_NEW)
     if command == CLEAN_NEW:
-        run_stock_clean()
+        task_subgroup_command(CLEAN_NEW)
     return Response(status=status.HTTP_200_OK)
 
 

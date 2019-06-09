@@ -11,7 +11,7 @@ from model_utils import Choices
 from model_utils.managers import InheritanceManager
 from PIL import Image as pimage
 from config.settings.local_storage import get_local_storage
-from config.scripts.check_settings import check_local
+from config.scripts.check_settings import exclude_production
 from Products.models import Manufacturer, Product
 
 
@@ -257,7 +257,7 @@ class ScraperBaseProduct(models.Model):
 
 
     def get_local_images(self, update=False):
-        check_local()
+        exclude_production()
         images = [
             [self.swatch_image_original, self.swatch_image_local],
             [self.room_scene_original, self.room_scene_local],
@@ -301,7 +301,7 @@ class ScraperBaseProduct(models.Model):
 
 
     def get_final_images(self, update=False):
-        check_local()
+        exclude_production()
         img_groups = [
             [self.swatch_image_local, self.swatch_image_final],
             [self.room_scene_local, self.room_scene_final],
