@@ -46,7 +46,7 @@ def clean(product: ScraperFinishSurface):
     default_product: ScraperFinishSurface = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
     if default_product.width:
         width = default_product.width
-        width_split = default_product.split('-')
+        width_split = width.split('-')
         if len(width_split) > 1:
             width = width_split[0]
         product.width = width.replace('in.', '').strip()
