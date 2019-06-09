@@ -83,3 +83,17 @@ class Scraper(SubScraperBase):
         if 'Floor' in application:
             product.floors = True
         return product
+
+
+    def clean(self):
+        products = self.subgroup.get_products()
+        for product in products:
+            default_product: ScraperFinishSurface = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
+            thickness = default_product.thickness
+            if thickness:
+                thickness = thickness.replace('mm', '').strip()
+                thk_split = thickness.split('-')
+                thickness = thk_split[-1]
+                thickness = round((float(thickness)/25.4), 3)
+                product.thickness = str(thickness)
+                product.save()
