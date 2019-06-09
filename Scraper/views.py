@@ -214,9 +214,9 @@ def run_subgroup_command(request: HttpRequest):
     if command not in SUBGROUP_COMMANDS:
         return Response('invalid command', status=status.HTTP_403_FORBIDDEN)
     if command == SCRAPE_NEW:
-        task_subgroup_command(SCRAPE_NEW)
+        task_subgroup_command.delay(SCRAPE_NEW)
     if command == CLEAN_NEW:
-        task_subgroup_command(CLEAN_NEW)
+        task_subgroup_command.delay(CLEAN_NEW)
     return Response(status=status.HTTP_200_OK)
 
 
