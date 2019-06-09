@@ -57,7 +57,6 @@ def subgroup_list(request):
 @permission_classes((IsAdminUser,))
 def subgroup_detail(request, pk):
     revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=pk).first()
-
     manufacturer_name = revised_subgroup.manufacturer.name
     category_name = revised_subgroup.category.name
     default_subgroup = ScraperSubgroup.objects.using('scraper_default').filter(
@@ -71,7 +70,7 @@ def subgroup_detail(request, pk):
         'subgroup': revised_subgroup.__str__(),
         'revised_pk': pk,
         'category_name': revised_subgroup.category.name,
-        'commands': CleanerUtility.get_functions_list(),
+        'commands': None,
         'manufacturer_name': revised_subgroup.manufacturer.name,
         'cleaned': revised_subgroup.cleaned,
         'fields': []
@@ -137,6 +136,8 @@ def update_field(request):
     if new_value == current_value:
         return Response('no difference in new and old value')
     revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=subgroup_pk).first()
+    if not revised_subgroup.cleaned:
+        return Response('Should be stock cleaned first', status=status.HTTP_400_BAD_REQUEST)
     argument = {field: current_value, 'subgroup': subgroup_pk}
     model_type = revised_subgroup.get_prod_type()
     revised_products = model_type.objects.filter(**argument)

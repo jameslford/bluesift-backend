@@ -1,8 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
+from celery.utils.log import get_task_logger
 from config.scripts.db_operations import backup_db, clean_backups, scrape, scraper_to_revised, initialize_data, run_stock_clean
 from config.scripts.images import get_images
 
+logger = get_task_logger(__name__)
 
 @shared_task
 def check_cache():
