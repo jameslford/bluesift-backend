@@ -31,7 +31,7 @@ def clean(product: ScraperFinishSurface):
         width = round((float(width) * 12), 2)
         product.width = '0-' + str(width)
     if default_product.length:
-        length = default_product.replace('up to', '')
+        length = default_product.length.replace('up to', '')
         length = length.replace('ft.', '').strip()
         length = round((float(length) * 12), 2)
         product.length = '0-' + str(length)
