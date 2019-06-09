@@ -139,6 +139,12 @@ class QueryIndex(models.Model):
         request.GET = QueryDict(self.query_dict)
         view(request, update=True, *args, **kwargs)
 
+    
+    # need to write this method to create all possible queries for a given view
+    @classmethod
+    def get_all_combinations(cls):
+        pass
+
 
 class ProductFilter(models.Model):
     """ Basic instance structure to set filter fields for product subclasses

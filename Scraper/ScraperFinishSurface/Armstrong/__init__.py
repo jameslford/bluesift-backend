@@ -37,7 +37,6 @@ class Scraper(SubScraperBase):
 
             rating = item.get('rating', None)
             db = self.subgroup._state.db
-            print(str(db))
             if rating:
                 rating_count = rating.get('count', None)
                 rating_value = rating.get('val', None)
@@ -94,7 +93,10 @@ class Scraper(SubScraperBase):
             product.residential_warranty = data.get('Residential Warranty', None)
             product.light_commercial_warranty = data.get('Light Commercial Warranty', None)
             product.commercial_warranty = data.get('Commercial Warranty', None)
-            product.sqft_per_carton = data.get('Square Feet per Box', None)
+            sqft_per_carton = data.get('Square Feet per Box', None)
+            if not sqft_per_carton:
+                sqft_per_carton = data.get('Coverage Per Carton', None)
+            product.sqft_per_carton = sqft_per_carton
             product = func(product, data)
         return product
 

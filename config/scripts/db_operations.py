@@ -63,7 +63,7 @@ def staging_to_production():
 
 @transaction.atomic()
 def run_stock_clean():
-    for group in ScraperSubgroup.objects.all():
+    for group in ScraperSubgroup.objects.filter(cleaned=False):
         group.run_stock_clean()
 
 

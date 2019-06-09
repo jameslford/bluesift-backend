@@ -14,19 +14,8 @@ natural_tag = 'urban gallery'
 geometric_tag = 'regency essence'
 solid_tag = 'solid colors'
 
-def get_special(product, item):
-    # look = 'stone'
-    # for tag in wood_tags:
-    #     if tag in product.manufacturer_style:
-    #         look = 'wood'
-    # if natural_tag in product.manufacturer_style:
-    #     look = 'natural pattern'
-    # if solid_tag in product.manufacturer_style:
-    #     look = 'solid color'
-    # if geometric_tag in product.manufacturer_style:
-    #     look = 'geometric pattern'
-    # product.look = look
 
+def get_special(product, item):
     att_list = item.get('attributeList', None)
     dims = att_list[0].split('x')
     if len(dims) > 2:
@@ -52,4 +41,15 @@ def clean(product: ScraperFinishSurface):
     product.width = default_product.width.replace('in.', '').strip() if default_product.width else None
     product.thickness = default_product.thickness.replace('in.', '').strip() if default_product.thickness else None
     product.sub_material = 'engineered tile'
+    look = 'stone'
+    for tag in wood_tags:
+        if tag in default_product.manufacturer_style.lower():
+            look = 'wood'
+    if natural_tag in default_product.manufacturer_style.lower():
+        look = 'natural pattern'
+    if solid_tag in default_product.manufacturer_style.lower():
+        look = 'solid color'
+    if geometric_tag in default_product.manufacturer_style.lower():
+        look = 'geometric pattern'
+    product.look = look
     product.save()

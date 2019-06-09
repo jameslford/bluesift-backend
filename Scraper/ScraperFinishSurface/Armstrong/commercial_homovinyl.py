@@ -21,3 +21,20 @@ def get_special_detail(product: ScraperFinishSurface, empty_dict: dict):
     product.lrv = empty_dict.get('Light Reflectance', None)
     product.install_type = empty_dict.get('Installation Method', None)
     return product
+
+
+def clean(product: ScraperFinishSurface):
+    default_product: ScraperFinishSurface = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
+    product.shape = 'continuous'
+    if default_product.width:
+        width = default_product.width.replace('ft.', '').strip()
+        width = round((float(width) * 12), 2)
+        product.width = '0-' + str(width)
+    if default_product.length:
+        length = default_product.replace('up to', '')
+        length = length.replace('ft.', '').strip()
+        length = round((float(length) * 12), 2)
+        product.length = '0-' + str(length)
+    if default_product.thickness:
+        product.thickness = default_product.thickness.replace('in.', '').strip()
+    product.save()

@@ -65,6 +65,8 @@ class ScraperFinishSurface(ScraperBaseProduct):
             'end',
             'install_type',
             'sqft_per_carton',
+            'lrv',
+            'cof',
             'width',
             'length',
             'thickness',

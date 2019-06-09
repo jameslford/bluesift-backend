@@ -64,7 +64,7 @@ def get_special_detail(product: ScraperFinishSurface, data: dict):
 def clean(product: ScraperFinishSurface):
     default_product: ScraperFinishSurface = ScraperFinishSurface.objects.get(pk=product.pk)
     product.length = '0-120'
-    product.width = '144'
+    product.width = '0-144'
     product.thickness = thk_dic.get(default_product.manufacturer_collection, None)
     product.look = assign_look(default_product)
     product.shape = 'continuous'

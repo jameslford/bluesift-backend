@@ -162,6 +162,7 @@ class ScraperSubgroup(models.Model):
         self.run_special_cleaner()
         self.lower_and_strip()
 
+
     def run_special_cleaner(self):
         mod = self.get_module()
         scraper = mod.Scraper
@@ -171,6 +172,8 @@ class ScraperSubgroup(models.Model):
         if 'clean' in dir(scraper):
             print('clean in dir')
             mod.Scraper(self).clean()
+            self.cleaned = True
+            self.save()
 
     def lower_and_strip(self):
         products = self.get_products()

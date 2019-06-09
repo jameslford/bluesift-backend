@@ -7,10 +7,19 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from django.http import HttpRequest, QueryDict
+from django.http import HttpRequest
 from Scraper.models import ScraperSubgroup, ScraperBaseProduct, ScraperDepartment
 from Scraper.ScraperCleaner.models import ScraperCleaner, CleanerUtility
+from config.scripts.db_operations import scrape, run_stock_clean
 from config.permissions import StagingAdminOnly, StagingorLocalAdmin
+
+SCRAPE_NEW = 'scrape_new'
+CLEAN_NEW = 'clean_new'
+
+SUBGROUP_COMMANDS = [
+    SCRAPE_NEW,
+    CLEAN_NEW
+]
 
 
 @api_view(['GET'])
@@ -21,6 +30,7 @@ def subgroup_list(request):
     content = {
         'default_product_count': ScraperBaseProduct.objects.using('scraper_default').count(),
         'revised_product_count': ScraperBaseProduct.objects.count(),
+        'commands': SUBGROUP_COMMANDS,
         'groups': []
     }
 
@@ -176,6 +186,37 @@ def update_value_from_department(request: HttpRequest, pk):
             cleaner.new_value = new_value
             cleaner.save()
     return Response(status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes((StagingorLocalAdmin,))
+@transaction.atomic()
+def update_subgroup_property(request: HttpRequest, pk):
+    field = request.POST.get('field', None)
+    subgroup = None
+    if field == 'cleaned':
+        subgroup = ScraperSubgroup.objects.get(pk=pk)
+    elif field == 'scraped':
+        subgroup = ScraperSubgroup.objects.using('scraper_default').get(pk=pk)
+    else:
+        return Response('invalid field', status=status.HTTP_400_BAD_REQUEST)
+    value = not getattr(subgroup, field)
+    setattr(subgroup, field, value)
+    subgroup.save()
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes((StagingorLocalAdmin,))
+@transaction.atomic()
+def run_subgroup_command(request: HttpRequest):
+    command = request.POST.get('command', None)
+    if command not in SUBGROUP_COMMANDS:
+        return Response('invalid command', status=status.HTTP_403_FORBIDDEN)
+    if command == SCRAPE_NEW:
+        scrape()
+    if command == CLEAN_NEW:
+        run_stock_clean()
+    return Response(status=status.HTTP_200_OK)
 
 
 @api_view(['PUT'])

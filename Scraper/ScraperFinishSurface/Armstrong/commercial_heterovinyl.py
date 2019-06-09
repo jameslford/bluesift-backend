@@ -33,23 +33,37 @@ def get_special_detail(product: ScraperFinishSurface, empty_dict: dict):
 
 
 def clean(product: ScraperFinishSurface):
-    pass
-    #     look = 'shaded / specked'
-    # if 'ambigu' in collection:
-    #     look = 'textile'
-    # elif 'stoneRun' in collection:
-    #     look = 'stone'
-    # elif 'timber' in collection:
-    #     look = 'wood'
-    # else:
-    #     for tag in textile_tags:
-    #         if tag in product.manufacturer_style:
-    #             look = 'textile'
-    #     for tag in wood_tags:
-    #         if tag in product.manufacturer_style:
-    #             look = 'wood'
-    #     for tag in stone_tags:
-    #         if tag in product.manufacturer_style:
-    #             look = 'stone'
-    #     if 'steel' in product.manufacturer_style:
-    #         look = 'metal'
+    default_product: ScraperFinishSurface = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
+    look = 'shaded / specked'
+    if 'ambigu' in default_product.manufacturer_collection.lower():
+        look = 'textile'
+    elif 'stonerun' in default_product.manufacturer_collection.lower():
+        look = 'stone'
+    elif 'timber' in default_product.manufacturer_collection.lower():
+        look = 'wood'
+    else:
+        for tag in textile_tags:
+            if tag in default_product.manufacturer_style.lower():
+                look = 'textile'
+        for tag in wood_tags:
+            if tag in default_product.manufacturer_style.lower():
+                look = 'wood'
+        for tag in stone_tags:
+            if tag in default_product.manufacturer_style.lower():
+                look = 'stone'
+        if 'steel' in default_product.manufacturer_style.lower():
+            look = 'metal'
+    product.look = look
+    product.shape = 'continuous'
+    if default_product.width:
+        width = default_product.width.replace('ft.', '').strip()
+        width = round((float(width) * 12), 2)
+        product.width = '0-' + str(width)
+    if default_product.length:
+        length = default_product.length.replace('up to', '')
+        length = length.replace('ft.', '').strip()
+        length = round((float(length) * 12), 2)
+        product.length = '0-' + str(length)
+    if default_product.thickness:
+        product.thickness = default_product.thickness.replace('in.', '').strip()
+    product.save()

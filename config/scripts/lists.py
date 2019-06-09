@@ -104,6 +104,12 @@ MODS = [
     [
         'Armstrong',
         'ScraperFinishSurface',
+        'commercial_vct',
+        'https://www.armstrongflooring.com/commercial/en-us/products/vinyl-composition-tile/browse/_jcr_content.browseresults.json?category=vct&pageSize=386&currPageIndex=1'
+    ],
+    [
+        'Armstrong',
+        'ScraperFinishSurface',
         'commercial_luxuryflooring',
         'https://www.armstrongflooring.com/commercial/en-us/products/lvt-luxury-flooring/browse/_jcr_content.browseresults.json?category=lvt&pageSize=320&currPageIndex=1'
     ],

@@ -1,3 +1,4 @@
+import decimal
 from ..models import ScraperFinishSurface
 from config.scripts.measurements import clean_value
 
@@ -25,7 +26,7 @@ def get_special(product: ScraperFinishSurface, item):
 
 def clean(product: ScraperFinishSurface):
     print(product.material)
-    default_product = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
+    default_product: ScraperFinishSurface = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
     print(default_product.material)
     product.product_url = product.product_url.replace('+', '')
     if 'LOOSE' in default_product.material:
@@ -51,4 +52,10 @@ def clean(product: ScraperFinishSurface):
         product.sub_material = 'rigid core spc'
         product.install_type = 'float'
     product.material = 'resilient'
+    if default_product.thickness:
+        thick_split = default_product.thickness.split('/')
+        num = decimal.Decimal(thick_split[0])
+        dem = decimal.Decimal(thick_split[1])
+        thickness = round((num / dem), 3)
+        product.thickness = str(thickness)
     product.save(using='scraper_revised')

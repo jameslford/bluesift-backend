@@ -18,7 +18,7 @@ def get_special(product: ScraperFinishSurface, item):
     size_line = att_list[1]
     size_split = size_line.split('<br/>')
     if len(size_split) > 1:
-        sizes = [s.split('x') for s in size_line]
+        sizes = [s.split('x') for s in size_split]
         widths = set([clean_value(x[0]) for x in sizes])
         lengths = set([clean_value(x[1]) for x in sizes])
         thicknessses = set([clean_value(x[2]) for x in sizes])

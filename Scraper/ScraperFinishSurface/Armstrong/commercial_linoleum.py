@@ -12,15 +12,6 @@ def get_special(product: ScraperFinishSurface, item):
     att_list = item.get('attributeList', None)
     collection = att_list[0].lower()
     product.manufacturer_collection = collection
-    look = 'solid color'
-    if 'colorette' in collection:
-        look = 'solid color'
-    if 'granette' in collection:
-        look = 'shaded / specked'
-    for tag in natural_tags:
-        if tag in collection:
-            look = 'natural pattern'
-    product.look = look
     product.commercial = True
     product.material = 'resilient'
     product.sub_material = 'linoleum'
@@ -44,9 +35,30 @@ def get_special(product: ScraperFinishSurface, item):
     return product
 
 
-
 def get_special_detail(product: ScraperFinishSurface, empty_dict: dict):
     product.finish = empty_dict.get('gloss', None)
     product.lrv = empty_dict.get('Light Reflectance', None)
     product.install_type = empty_dict.get('Installation Method', None)
     return product
+
+
+def clean(product: ScraperFinishSurface):
+    default_product: ScraperFinishSurface = ScraperFinishSurface.objects.using('scraper_default').get(pk=product.pk)
+    if default_product.width:
+        width = default_product.width
+        width_split = default_product.split('-')
+        if len(width_split) > 1:
+            width = width_split[0]
+        product.width = width.replace('in.', '').strip()
+    if default_product.thickness:
+        product.thickness = default_product.thickness.replace('in.', '').strip()
+    look = 'solid color'
+    if 'colorette' in default_product.manufacturer_collection.lower():
+        look = 'solid color'
+    if 'granette' in default_product.manufacturer_collection.lower():
+        look = 'shaded / specked'
+    for tag in natural_tags:
+        if tag in default_product.manufacturer_collection.lower():
+            look = 'natural pattern'
+    product.look = look
+    product.save()

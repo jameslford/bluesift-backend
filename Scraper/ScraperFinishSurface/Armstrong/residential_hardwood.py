@@ -3,11 +3,9 @@ from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 
 
 def get_special(product, item):
-
     att_list = item.get('attributeList', None)
     if not att_list:
         return product
-
     dims = att_list[0].split('x')
     product.width = clean_value(dims[0])
     product.length = clean_value(dims[1])
@@ -33,4 +31,3 @@ def clean(product: ScraperFinishSurface):
     if default_product.length:
         product.length = default_product.length.replace('varying lengths:', '').strip()
     product.save()
-
