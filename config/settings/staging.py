@@ -2,7 +2,7 @@ import os
 import dj_database_url
 from .base import *
 
-DEBUG = True
+DEBUG = False
 ENVIRONMENT = 'staging'
 # BROKER_URL = 'PASS'
 CELERY_BROKER_URL = os.environ['REDIS_URL']
@@ -16,7 +16,7 @@ STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
 
 ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_ALLOW_ALL = True
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
