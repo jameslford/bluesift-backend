@@ -453,6 +453,7 @@ class Sorter:
         ).filter(search=self.search_term)
         if not searched_prods:
             self.response.return_products = False
+            self.response.load_more = False
             self.response.message = Message(
                 note='Test search produced no results. Make sure to use full words')
             return products
