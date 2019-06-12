@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path, include, reverse
 from django.views.generic.base import RedirectView
-from .views import landing, get_short_lib
+from .views import landing, get_short_lib, pl_status_for_product
 
 
 urlpatterns = [
@@ -19,6 +19,7 @@ urlpatterns = [
     path('mailing-list/', include('MailingList.urls')),
     path('orders/', include('Orders.urls')),
     path('products/', include('Products.urls')),
+    path('pl_status/<str:pk>', pl_status_for_product),
     path('scraper/', include('Scraper.urls')),
     path('supplierProfiles/', include('Profiles.urls'), name='profiles'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -136,40 +136,36 @@ def customer_project_application(request, pk=None):
 
 @api_view(['DELETE', 'PUT', 'POST', 'GET'])
 @permission_classes((IsAuthenticated,))
-def customer_product(request, pk=None):
+def customer_product(request, prod_pk=None, proj_pk=None):
     user = request.user
     profile = CustomerProfile.objects.filter(user=user).first()
     if not profile:
         profile = CustomerProfile.objects.create(user=user)
+    projects = profile.projects
+    if not projects:
+        CustomerProject.objects.create(owner=profile)
 
     if request.method == 'POST':
         prod_id = request.POST.get('prod_id')
         project_id = request.POST.get('proj_id', None)
-        # projects = CustomerProject.objects.filter(owner=user)
-        projects = profile.projects
-        if not projects:
-            CustomerProject.objects.create(owner=profile)
 
         product = Product.objects.filter(pk=prod_id).first()
         if not product:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        if project_id:
+            project = projects.get(pk=project_id)
+            CustomerProduct.objects.create(product=product, project=project)
+            return Response(status=status.HTTP_201_CREATED)
         if projects.count() == 1:
             project = projects.first()
             CustomerProduct.objects.create(product=product, project=project)
             return Response(status=status.HTTP_201_CREATED)
-        if project_id:
-            project = projects.filter(pk=project_id).first()
-            if not project:
-                return Response('Invalid project number', status=status.HTTP_400_BAD_REQUEST)
-            CustomerProduct.objects.create(product=product, project=project)
-            return Response(status=status.HTTP_201_CREATED)
-        else:
-            return Response('No project specified', status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
-        if not pk:
+        if not prod_pk and prod_pk:
             return Response('No product specified for deletion', status=status.HTTP_400_BAD_REQUEST)
-        product = CustomerProduct.objects.select_related('project', 'project__owner').filter(pk=pk).first()
+        project: CustomerProject = projects.get(pk=proj_pk)
+        product = project.products.filter(product__pk=prod_pk).first()
         if not product:
             return Response('Invalid product pk', status=status.HTTP_400_BAD_REQUEST)
         if product.project.owner != profile:
@@ -195,7 +191,7 @@ def customer_short_lib(request):
     for proj in projects:
         content = {}
         content['nickname'] = proj.nickname
-        content['id'] = proj.pk
+        content['pk'] = proj.pk
         content['remove'] = False
         for k in proj.products.select_related('product').all():
             if k.product.pk == prod_id:
