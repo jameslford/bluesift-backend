@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import random
+from django.db import transaction
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
@@ -17,9 +18,11 @@ from Products.models import Product
 
 class Command(BaseCommand):
 
+    @transaction.atomic()
     def handle(self, *args, **options):
         product_ids = Product.objects.all().values_list('pk', flat=True)
         for email, address, comp_name in zip(lists.emails, lists.addresses, lists.company_names):
+            print(email, address, comp_name)
             user_model = get_user_model()
             password = 'tomatoes'
             user = user_model.objects.create_user(email=email, is_supplier=True, password=password)
@@ -51,6 +54,7 @@ class Command(BaseCommand):
             max_count = product_ids.count()
             rang_int = random.randint(10, max_count) // 5
             location_prod_ids = list(product_ids)
+            print(location_prod_ids)
             for x in range(rang_int):
                 price = random.uniform(1, 10)
                 price = round(float(price), 2)
@@ -64,17 +68,14 @@ class Command(BaseCommand):
                 # available_online = random.choice([True, False])
                 lead_time = random.randint(1, 14)
                 offer_install = random.choice([True, False])
-                try:
-                    SupplierProduct.objects.create(
-                        product=product,
-                        supplier=location,
-                        units_available_in_store=units_available,
-                        units_per_order=units_per_order,
-                        for_sale_in_store=True,
-                        in_store_ppu=price,
-                        # for_sale_online=available_online,
-                        lead_time_ts=datetime.timedelta(days=lead_time),
-                        offer_installation=offer_install
-                    )
-                except IntegrityError:
-                    continue
+                sup_prod = SupplierProduct.objects.get_or_create(
+                    product=product,
+                    supplier=location,
+                    )[0]
+                sup_prod.units_available_in_store = units_available
+                sup_prod.units_per_order = units_per_order
+                sup_prod.for_sale_in_store = True
+                sup_prod.in_store_ppu = price
+                sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
+                sup_prod.offer_installation = offer_install
+                sup_prod.save()

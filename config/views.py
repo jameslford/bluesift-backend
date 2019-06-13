@@ -48,6 +48,7 @@ def get_proj_or_loc(user):
         CustomerProject.objects.create(owner=user.customer_profile, nickname='First Project')
     return CustomerProject.objects.filter(owner=profile).all()
 
+
 def get_user_product_model(user):
     if not user.is_authenticated:
         return None
@@ -55,11 +56,11 @@ def get_user_product_model(user):
         return SupplierProduct
     return CustomerProduct
 
+
 def get_pl_products(user, location) -> [str]:
     if user.is_supplier:
         return location.priced_products.values_list('product__pk', flat=True)
     return location.products.values_list('product__pk', flat=True)
-
 
 
 def landing(request: HttpRequest):

@@ -331,7 +331,6 @@ def cv_supplier_location(request, pk):
         'priced_products',
         'priced_products__product',
         'priced_products__product__manufacturer',
-        'priced_products__product__swatch_image',
     ).filter(pk=pk).first()
     if not supplier:
         return Response(status=status.HTTP_400_BAD_REQUEST)

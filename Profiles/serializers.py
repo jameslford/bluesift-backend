@@ -101,7 +101,6 @@ class SVLocationSerializer(serializers.ModelSerializer):
         search_terms = self.context.get('search', None)
         prods = SupplierProduct.objects.filter(supplier=instance).prefetch_related(
             'product',
-            'product__swatch_image',
             'product__manufacturer',
             )
         if search_terms:

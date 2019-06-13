@@ -190,7 +190,7 @@ class SupplierProduct(models.Model):
 
     for_sale_in_store = models.BooleanField(default=False)
     in_store_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    product_bb_sku = models.CharField(max_length=60, unique=True)
+    product_bb_sku = models.CharField(max_length=60)
 
     for_sale_online = models.BooleanField(default=False)
     online_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
