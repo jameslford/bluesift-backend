@@ -5,6 +5,7 @@ from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from Addresses.models import Address, Zipcode
 from django.contrib.postgres.search import SearchVector
 from Products.serializers import SerpyProduct
+from ProductFilter.models import Sorter
 from .models import (
     CompanyAccount,
     CompanyShippingLocation,
@@ -92,8 +93,8 @@ class SVLocationSerializer(serializers.ModelSerializer):
             'rating_count',
             'address',
             'phone_number',
-            'priced_products',
-            'image'
+            # 'priced_products',
+            # 'image'
             )
 
     def get_priced_products(self, instance):

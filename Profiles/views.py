@@ -15,7 +15,7 @@ from Profiles.models import (
     SupplierProduct
     )
 from Products.models import Product
-
+from ProductFilter.models import ProductFilter
 from .serializers import (
     CompanyAccountDetailSerializer,
     SVLocationSerializer,
@@ -306,7 +306,7 @@ def cv_supplier_location(request, pk):
     ).filter(pk=pk).first()
     if not supplier:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    serialized = SVLocationSerializer(supplier)
+    serialized_location = SVLocationSerializer(supplier)
     return Response({
-        'location': serialized.data,
+        'location': serialized_location.data,
         }, status=status.HTTP_200_OK)
