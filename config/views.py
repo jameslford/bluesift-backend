@@ -20,6 +20,7 @@ class PLShort:
     nickname: str
     pk: int
 
+
 @dataclass
 class PLMedium(PLShort):
     remove: bool
@@ -32,26 +33,22 @@ class PLStatusList:
 
 @dataclass
 class ShortLib:
-    count = 0
+    count: int
     product_ids: List[str]
+    pl_short_list: List[PLShort]
     selected_location: PLShort = None
 
 
 def get_proj_or_loc(user):
-    if not user.is_authenticated:
-        return None
     if user.is_supplier:
         employee = EmployeeProfile.objects.filter(user=user).first()
         return employee.company_account.shipping_locations.all()
-    profile = CustomerProfile.objects.get_or_create(user=user)[0]
-    if not CustomerProject.objects.filter(owner=profile).exists():
+    if not CustomerProject.objects.filter(owner=user.customer_profile).exists():
         CustomerProject.objects.create(owner=user.customer_profile, nickname='First Project')
-    return CustomerProject.objects.filter(owner=profile).all()
+    return CustomerProject.objects.filter(owner=user.customer_profile).all()
 
 
 def get_user_product_model(user):
-    if not user.is_authenticated:
-        return None
     if user.is_suppler:
         return SupplierProduct
     return CustomerProduct
@@ -63,34 +60,55 @@ def get_pl_products(user, location) -> [str]:
     return location.products.values_list('product__pk', flat=True)
 
 
+def locations_list(locations) -> List[PLShort]:
+    pl_list = []
+    for location in locations:
+        nickname = location.nickname
+        pk = location.pk
+        pl_list.append(PLShort(nickname, pk))
+    return pl_list
+
+
 def landing(request: HttpRequest):
     return HttpResponseRedirect('admin/')
 
 
 @api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def get_short_lib(request):
+# @permission_classes((IsAuthenticated,))
+def get_short_lib(request, pk=None):
     user = request.user
-    if user.is_supplier:
-        return supplier_short_lib(request)
-    return customer_short_lib(request)
+    if not user.is_authenticated:
+        return None
+    locations = get_proj_or_loc(user)
+    location = locations.first()
+    if pk:
+        location = locations.get(pk=pk)
+    selected_proj_loc = PLShort(location.nickname, location.pk)
+    pl_list = locations_list(locations)
+    products_ids = get_pl_products(user, location)
+    short_lib = ShortLib(
+        count=locations.count(),
+        product_ids=products_ids,
+        pl_short_list=pl_list,
+        selected_location=selected_proj_loc
+        )
+    return Response(asdict(short_lib), status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
-@permission_classes((IsAuthenticated,))
+# @permission_classes((IsAuthenticated,))
 def pl_status_for_product(request: HttpRequest, pk):
-    pl_list = PLStatusList([])
+    pl_list = PLStatusList(pl_list=[])
     user = request.user
-    if not user:
+    if not user.is_authenticated:
         return Response(asdict(pl_list), status=status.HTTP_200_OK)
     product = Product.objects.get(pk=pk)
     locations = get_proj_or_loc(user)
-    for location in locations:
+    locs = locations_list(locations)
+    for loc in locs:
+        location = locations.get(pk=loc.pk)
         product_pks = get_pl_products(user, location)
-        nickname = location.nickname
-        pk = location.pk
         remove = product.pk in product_pks
-        pl = PLMedium(nickname, pk, remove)
-        pl_list.pl_list.append(pl)
+        plmed = PLMedium(loc.nickname, loc.pk, remove)
+        pl_list.pl_list.append(plmed)
     return Response(asdict(pl_list), status=status.HTTP_200_OK)
-

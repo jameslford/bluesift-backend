@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from Profiles.models import (
+    CompanyAccount,
     EmployeeProfile,
     CompanyShippingLocation,
     SupplierProduct
@@ -137,29 +138,31 @@ def sv_supplier_location(request, pk=None):
 
 @api_view(['PUT', 'DELETE', 'POST'])
 @permission_classes((IsAuthenticated,))
-def supplier_product(request, pk=None):
+def supplier_product(request, proj_pk, prod_pk=None):
     user = request.user
-    employee = EmployeeProfile.objects.filter(user=user).first()
-    # only employees can access these views
-    if not employee:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+    employee: EmployeeProfile = EmployeeProfile.objects.filter(user=user).first()
+    account: CompanyAccount = employee.company_account
+    location: CompanyShippingLocation = account.shipping_locations.filter(pk=proj_pk).first()
+    if not location:
+        return Response('Incorrect Proj pk', status=status.HTTP_400_BAD_REQUEST)
+    if not (
+            employee.company_account_admin or
+            employee.company_account_owner or
+            employee == location.local_admin
+            ):
+        return Response(
+            'You are not authorized to modify products for this store location',
+            status=status.HTTP_403_FORBIDDEN
+            )
 
-    sup_prod = None
-    if pk:
-        sup_prod = SupplierProduct.objects.filter(pk=pk).first()
-        if not sup_prod:
-            return Response('invalid supplier product')
-        if sup_prod.supplier.company_account != employee.company_account:
-            return Response('invalid supplier product - account')
-        if not (employee.company_account_owner or
-                employee.company_account_admin or
-                employee == sup_prod.supplier.local_admin):
-            return Response(
-                'You are not authorized to modify products for this store location',
-                status=status.HTTP_403_FORBIDDEN
-                    )
+    if request.method == 'POST':
+        prod_id = request.POST.get('prod_pk', None)
+        product = Product.objects.filter(pk=prod_id).first()
+        SupplierProduct.objects.get_or_create(product=product, supplier=location)
+        return Response(status=status.HTTP_201_CREATED)
 
     if request.method == 'DELETE':
+        sup_prod = location.priced_products.filter(product__pk=prod_pk)
         sup_prod.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -167,42 +170,11 @@ def supplier_product(request, pk=None):
         data = request.data
         serialized_prod = SupplierProductUpdateSerializer(data=data)
         if serialized_prod.is_valid():
-            serialized_prod.update(instance=sup_prod, validated_data=data)
+            serialized_prod.update(location=location, validated_data=data)
             return Response(status=status.HTTP_202_ACCEPTED)
-        return Response(serialized_prod.errors, status=status.HTTP_402_PAYMENT_REQUIRED)
 
-    if request.method == 'POST':
-        locations = employee.company_account.shipping_locations.all()
-        if not locations:
-            return Response('No locations for this account', status=status.HTTP_400_BAD_REQUEST)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        location = None
-        location_id = request.POST.get('proj_id', None)
-        if location_id:
-            location = locations.filter(pk=location_id).first()
-        elif locations.count() == 1:
-            location = locations.first()
-        if not location:
-            return Response('Invalid Location', status=status.HTTP_400_BAD_REQUEST)
-
-        product = None
-        prod_id = request.POST.get('prod_id', None)
-        if not prod_id:
-            return Response('No product selected', status=status.HTTP_400_BAD_REQUEST)
-        product = Product.objects.filter(pk=prod_id).first()
-        if not product:
-            return Response('Invalid product', status=status.HTTP_400_BAD_REQUEST)
-
-        if not (employee.company_account_owner or
-                employee.company_account_admin or
-                employee == location.local_admin):
-            return Response(
-                'You are not authorized to modify products for this store location',
-                status=status.HTTP_403_FORBIDDEN
-                    )
-
-        SupplierProduct.objects.create(product=product, supplier=location)
-        return Response(status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])

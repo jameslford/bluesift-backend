@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('grappelli/', include('grappelli.urls')),
     path('get_short_lib/', get_short_lib),
+    path('get_short_lib/<int:pk>', get_short_lib),
     path('accounts/', include('Accounts.urls')),
     path('bbadmin/', include('BBadmin.urls')),
     path('carts/', include('Carts.urls')),

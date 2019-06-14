@@ -284,7 +284,11 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
             'banner_item',
         )
 
-    def update(self, instance, validated_data):
+    def update(self, location, validated_data):
+        sup_prod_pk = validated_data.get('pk')
+        instance = location.priced_product.filter(pk=sup_prod_pk).first()
+        if not instance:
+            return
         instance.in_store_ppu = validated_data.get('in_store_ppu', instance.in_store_ppu)
         instance.units_available_in_store = validated_data.get(
             'units_available_in_store',
@@ -294,7 +298,7 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
         instance.for_sale_in_store = validated_data.get('for_sale_in_store', instance.for_sale_in_store)
         instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)
         instance.save()
-        return instance
+        return
 
 
 class SupplierProductMiniSerializer(serializers.ModelSerializer):
