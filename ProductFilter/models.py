@@ -47,6 +47,24 @@ def valid_subclasses():
     return list(PRODUCT_SUBCLASSES.values())
 
 
+def get_absolute_range(products, quer_value):
+    values = products.aggregate(Min(quer_value), Max(quer_value))
+    min_val = values.get(f'{quer_value}__min', None)
+    max_val = values.get(f'{quer_value}__max', None)
+    if not (min_val or max_val):
+        return []
+    if min_val == max_val:
+        return []
+    return [min_val, max_val]
+
+    # may need to use structure below:
+    # if field_type in acceptable_fields[:2]:
+    #     values = self.get_model_products().aggregate(Min(Lower(standalone)), Max(Upper(standalone)))
+    # else:
+    #     values = self.get_model_products().aggregate(Min(standalone), Max(standalone))
+    
+
+
 def get_filter(model: models.Model):
     content_type = ContentType.objects.get_for_model(model)
     prod_filter = ProductFilter.objects.filter(sub_product=content_type).first()
@@ -281,21 +299,13 @@ class ProductFilter(models.Model):
             self.get_range_values(standalone, standalone, count)
 
     def get_range_values(self, name, quer_value, facet_type=RANGE_FACET, order=7):
-        values = self.get_model_products().aggregate(Min(quer_value), Max(quer_value))
-        min_val = values.get(f'{quer_value}__min', None)
-        max_val = values.get(f'{quer_value}__max', None)
-        if not (min_val or max_val):
+        values = get_absolute_range(self.get_model_products(), quer_value)
+        if not values:
             return
-        if min_val == max_val:
-            return
+        min_val, max_val = values
         range_value = RangeFacetValue(value=name, abs_min=str(min_val), abs_max=str(max_val))
         self.facets.append(Facet(name, facet_type, quer_value, order=order, total_count=1, return_values=[asdict(range_value)]))
 
-            # may need to use structure below:
-            # if field_type in acceptable_fields[:2]:
-            #     values = self.get_model_products().aggregate(Min(Lower(standalone)), Max(Upper(standalone)))
-            # else:
-            #     values = self.get_model_products().aggregate(Min(standalone), Max(standalone))
 
     def check_color_field(self):
         check, fieldtype = self.check_value(self.color_field)
@@ -325,7 +335,6 @@ class ProductFilter(models.Model):
         if self.sub_product in valid_subclasses():
             return False
         return True
-
 
     def check_fields(self):
         self.add_product_facets()
@@ -540,6 +549,13 @@ class Sorter:
             facet = self.facets[index]
             facet_value = facet.return_values[0]
             return_facet = RangeFacetValue(**facet_value)
+            if not return_facet.abs_max or not return_facet.abs_min:
+                values = get_absolute_range(products, facet.quer_value)
+                if not values:
+                    del self.facets[index]
+                    continue
+                return_facet.abs_min = values[0]
+                return_facet.abs_max = values[1]
             if not facet.qterms:
                 return_facet.selected_max = return_facet.abs_max
                 return_facet.selected_min = return_facet.abs_min
