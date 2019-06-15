@@ -325,7 +325,8 @@ class ProductFilter(models.Model):
             self.facets.append(Facet(dependent, DEPENDENT_FACET, dependent, values=values))
 
     def add_product_facets(self):
-        self.get_range_values('price_per_SF', 'lowest_price', PRICE_FACET, order=2)
+        # self.get_range_values('price_per_SF', 'lowest_price', PRICE_FACET, order=2)
+        self.facets.append(Facet('price', PRICE_FACET, 'priced__in_store_ppu', order=2))
         self.facets.append(Facet('availability', AVAILABILITY_FACET, 'availability', values=['for_sale_in_store'], order=1))
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values), order=8))
