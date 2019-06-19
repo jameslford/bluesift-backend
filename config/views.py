@@ -1,17 +1,11 @@
 from dataclasses import dataclass, asdict
-from dataclasses import field as dfield
 from typing import List
-from django.conf import settings
 from django.http import HttpRequest, HttpResponseRedirect
-from django.contrib.auth import get_user_model
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from Profiles.views import supplier_product, supplier_short_lib
-from Profiles.models import CompanyShippingLocation, SupplierProduct, EmployeeProfile
-from CustomerProfiles.views import customer_short_lib
-from CustomerProfiles.models import CustomerProject, CustomerProduct, CustomerProfile
+from Profiles.models import SupplierProduct, EmployeeProfile
+from CustomerProfiles.models import CustomerProject, CustomerProduct
 from Products.models import Product
 
 
@@ -74,7 +68,6 @@ def landing(request: HttpRequest):
 
 
 @api_view(['GET'])
-# @permission_classes((IsAuthenticated,))
 def get_short_lib(request, pk=None):
     user = request.user
     if not user.is_authenticated:
@@ -96,7 +89,6 @@ def get_short_lib(request, pk=None):
 
 
 @api_view(['GET'])
-# @permission_classes((IsAuthenticated,))
 def pl_status_for_product(request: HttpRequest, pk):
     pl_list = PLStatusList(pl_list=[])
     user = request.user

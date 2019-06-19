@@ -5,7 +5,6 @@ from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from Addresses.models import Address, Zipcode
 from django.contrib.postgres.search import SearchVector
 from Products.serializers import SerpyProduct
-from ProductFilter.models import Sorter
 from .models import (
     CompanyAccount,
     CompanyShippingLocation,
@@ -77,7 +76,7 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
 
 
 class SVLocationSerializer(serializers.ModelSerializer):
-    priced_products = serializers.SerializerMethodField()
+    # priced_products = serializers.SerializerMethodField()
     address = AddressSerializer(read_only=True)
 
     class Meta:

@@ -15,7 +15,6 @@ from Profiles.models import (
     SupplierProduct
     )
 from Products.models import Product
-from ProductFilter.models import ProductFilter
 from .serializers import (
     CompanyAccountDetailSerializer,
     SVLocationSerializer,
@@ -24,6 +23,7 @@ from .serializers import (
     ShippingLocationUpdateSerializer,
     SupplierProductUpdateSerializer
     )
+
 
 ''' supplier side views  '''
 
@@ -162,9 +162,10 @@ def supplier_product(request, proj_pk, prod_pk=None):
         return Response(status=status.HTTP_201_CREATED)
 
     if request.method == 'DELETE':
-        sup_prod = location.priced_products.filter(product__pk=prod_pk)
-        sup_prod.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        sup_prod = location.priced_products.filter(product__pk=prod_pk).first()
+        if sup_prod:
+            sup_prod.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     if request.method == 'PUT':
         data = request.data
@@ -226,49 +227,6 @@ def employee_detail(request, pk=None):
         return Response('need to finish')
 
 
-def supplier_short_lib(request):
-    user = request.user
-    employee = EmployeeProfile.objects.filter(user=user).first()
-    if not employee:
-        return Response('not an employee', status=status.HTTP_400_BAD_REQUEST)
-
-    locations = employee.company_account.shipping_locations.all()
-    if not locations:
-        return Response('no locations', status=status.HTTP_400_BAD_REQUEST)
-
-    location = None
-    location_id = request.GET.get('proj_id', None)
-    if location_id:
-        location = locations.filter(pk=location_id).first()
-    elif locations.count() > 0:
-        location = locations.first()
-    else:
-        return Response('Invalid Location', status=status.HTTP_400_BAD_REQUEST)
-
-    locations_list = []
-    for local in locations:
-        content = {}
-        content['nickname'] = local.nickname
-        content['id'] = local.pk
-        locations_list.append(content)
-
-    product_ids = []
-    products = location.priced_products.all()
-    for prod in products:
-        product_ids.append(prod.product.pk)
-
-    full_content = {
-        'list': locations_list,
-        'count': locations.count(),
-        'selected_location': {
-            'nickname': location.nickname,
-            'pk': location.pk
-        },
-        'product_ids': product_ids
-    }
-    return Response(full_content, status=status.HTTP_200_OK)
-
-
 # customer side views 
 
 
@@ -280,26 +238,20 @@ def supplier_list(request):
         search_string = search_string.split(' ')
         for term in search_string:
             suppliers = suppliers.annotate(
-                    search=SearchVector(
-                        'company_account__name',
-                        'nickname',
-                        'address__address_line_1',
-                        'address__city',
-                        'address__postal_code__code'
-                    )
+                search=SearchVector(
+                    'company_account__name',
+                    'nickname',
+                    'address__address_line_1',
+                    'address__city',
+                    'address__postal_code__code'
+                )
             ).filter(search=term)
     serialized_suppliers = ShippingLocationListSerializer(suppliers, many=True)
     return Response({'suppliers': serialized_suppliers.data})
 
-
 @api_view(['GET'])
 def cv_supplier_location(request, pk):
-    supplier = CompanyShippingLocation.objects.select_related(
-        'address',
-        'address__postal_code',
-        'address__coordinates',
-        'company_account',
-    ).prefetch_related(
+    supplier = CompanyShippingLocation.objects.prefetch_related(
         'priced_products',
         'priced_products__product',
         'priced_products__product__manufacturer',
@@ -308,5 +260,69 @@ def cv_supplier_location(request, pk):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     serialized_location = SVLocationSerializer(supplier)
     return Response({
-        'location': serialized_location.data,
+        'location': serialized_location.data
         }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def cv_supplier_location_content(request, pk):
+    supplier = CompanyShippingLocation.objects.prefetch_related(
+        'priced_products',
+        'priced_products__product',
+        'priced_products__product__manufacturer',
+    ).filter(pk=pk).first()
+    if not supplier:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    from ProductFilter.models import Sorter, construct_range_facet, PRICE_FACET, Facet
+    from FinishSurfaces.models import FinishSurface
+    facet = Facet('supplier price', PRICE_FACET, 'in_store_ppu')
+    products, facet = construct_range_facet(supplier.priced_products.all(), facet)
+    fs_pks = [sup_prod.product.pk for sup_prod in products]
+    fs_products = FinishSurface.objects.filter(pk__in=fs_pks)
+    fs_content = Sorter(fs_products, request, price_range=facet)
+    return Response(fs_content.get_repsonse(), status=status.HTTP_200_OK)
+
+
+
+
+# def supplier_short_lib(request):
+#     user = request.user
+#     employee = EmployeeProfile.objects.filter(user=user).first()
+#     if not employee:
+#         return Response('not an employee', status=status.HTTP_400_BAD_REQUEST)
+
+#     locations = employee.company_account.shipping_locations.all()
+#     if not locations:
+#         return Response('no locations', status=status.HTTP_400_BAD_REQUEST)
+
+#     location = None
+#     location_id = request.GET.get('proj_id', None)
+#     if location_id:
+#         location = locations.filter(pk=location_id).first()
+#     elif locations.count() > 0:
+#         location = locations.first()
+#     else:
+#         return Response('Invalid Location', status=status.HTTP_400_BAD_REQUEST)
+
+#     locations_list = []
+#     for local in locations:
+#         content = {}
+#         content['nickname'] = local.nickname
+#         content['id'] = local.pk
+#         locations_list.append(content)
+
+#     product_ids = []
+#     products = location.priced_products.all()
+#     for prod in products:
+#         product_ids.append(prod.product.pk)
+
+#     full_content = {
+#         'list': locations_list,
+#         'count': locations.count(),
+#         'selected_location': {
+#             'nickname': location.nickname,
+#             'pk': location.pk
+#         },
+#         'product_ids': product_ids
+#     }
+#     return Response(full_content, status=status.HTTP_200_OK)

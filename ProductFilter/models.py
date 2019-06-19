@@ -32,45 +32,6 @@ MULTITEXT_FACET = 'MultiTextFacet'
 PRICE_FACET = 'PriceFacet'
 RANGE_FACET = 'RangeFacet'
 
-# def subclass_content_types():
-#     ct_choices = []
-#     for name, subclass in PRODUCT_SUBCLASSES.items():
-#         ct = ContentType.objects.get_for_model(subclass)
-#         kwargs = {'app_label': ct.app_label, 'model': ct.model}
-#         ct_choices.append(models.Q(**kwargs))
-#     query = ct_choices.pop()
-#     for ct_choice in ct_choices:
-#         query |= ct_choice
-#     return query
-
-def valid_subclasses():
-    return list(PRODUCT_SUBCLASSES.values())
-
-
-def get_absolute_range(products, quer_value):
-    values = products.aggregate(Min(quer_value), Max(quer_value))
-    min_val = values.get(f'{quer_value}__min', None)
-    max_val = values.get(f'{quer_value}__max', None)
-    if not (min_val or max_val):
-        return []
-    if min_val == max_val:
-        return []
-    return [min_val, max_val]
-
-    # may need to use structure below:
-    # if field_type in acceptable_fields[:2]:
-    #     values = self.get_model_products().aggregate(Min(Lower(standalone)), Max(Upper(standalone)))
-    # else:
-    #     values = self.get_model_products().aggregate(Min(standalone), Max(standalone))
-    
-
-
-def get_filter(model: models.Model):
-    content_type = ContentType.objects.get_for_model(model)
-    prod_filter = ProductFilter.objects.filter(sub_product=content_type).first()
-    if not prod_filter:
-        raise Exception('No filter for this class')
-    return prod_filter
 
 def return_radii():
     return [5, 10, 15, 25, 50, 100]
@@ -116,6 +77,72 @@ class Facet:
     qterms: List[str] = None
     queryset: QuerySet = None
     return_values: List = dfield(default_factory=lambda: [])
+
+
+def valid_subclasses():
+    return list(PRODUCT_SUBCLASSES.values())
+
+
+def get_absolute_range(products: QuerySet, facet: Facet):
+    values = products.aggregate(Min(facet.quer_value), Max(facet.quer_value))
+    min_val = values.get(f'{facet.quer_value}__min', None)
+    max_val = values.get(f'{facet.quer_value}__max', None)
+    if not (min_val or max_val):
+        return facet
+    if min_val == max_val:
+        return facet
+    return_value = RangeFacetValue()
+    return_value.value = facet.name
+    return_value.abs_max = str(max_val)
+    return_value.selected_max = str(max_val)
+    return_value.abs_min = str(min_val)
+    return_value.selected_min = str(min_val)
+    facet.return_values = [return_value]
+    return facet
+
+
+def complete_range(products: QuerySet, quer_value, query, direction: str):
+    qrange = Decimal(query[-1])
+    direction_transform = {'min': 'gte', 'max': 'lte'}
+    argument = {f'{quer_value}__{direction_transform[direction]}': qrange}
+    return products.filter(**argument)
+
+
+def get_filter(model: models.Model):
+    content_type = ContentType.objects.get_for_model(model)
+    prod_filter = ProductFilter.objects.filter(sub_product=content_type).first()
+    if not prod_filter:
+        raise Exception('No filter for this class')
+    return prod_filter
+
+
+def construct_range_facet(products: QuerySet, facet: Facet, request: HttpRequest = None) -> Facet:
+    if not facet.return_values:
+        facet = get_absolute_range(products, facet)
+    facet_value = facet.return_values[-1]
+    if not facet.qterms:
+        if not request:
+            return (products, facet)
+        facet.qterms = request.GET.getlist(facet.quer_value, None)
+    min_query = [q.replace('min-', '') for q in facet.qterms if 'min' in q]
+    max_query = [q.replace('max-', '') for q in facet.qterms if 'max' in q]
+    facet.qterms = []
+    if min_query:
+        facet.qterms.append(f'min-{min_query[-1]}')
+        products = complete_range(products, facet.quer_value, min_query, 'min')
+        facet_value.selected_min = min_query[-1]
+        facet.total_count += 1
+        facet_value.enabled = True
+        facet.selected = True
+    if max_query:
+        facet.qterms.append(f'max-{max_query[-1]}')
+        products = complete_range(products, facet.quer_value, max_query, 'max')
+        facet_value.selected_max = max_query[-1]
+        facet.total_count += 1
+        facet_value.enabled = True
+        facet.selected = True
+    facet.return_values = [facet_value]
+    return (products, facet)
 
 
 class QueryIndex(models.Model):
@@ -306,7 +333,6 @@ class ProductFilter(models.Model):
         range_value = RangeFacetValue(value=name, abs_min=str(min_val), abs_max=str(max_val))
         self.facets.append(Facet(name, facet_type, quer_value, order=order, total_count=1, return_values=[asdict(range_value)]))
 
-
     def check_color_field(self):
         check, fieldtype = self.check_value(self.color_field)
         if not check:
@@ -325,8 +351,7 @@ class ProductFilter(models.Model):
             self.facets.append(Facet(dependent, DEPENDENT_FACET, dependent, values=values))
 
     def add_product_facets(self):
-        # self.get_range_values('price_per_SF', 'lowest_price', PRICE_FACET, order=2)
-        self.facets.append(Facet('price', PRICE_FACET, 'priced__in_store_ppu', order=2))
+        self.facets.append(Facet('price', PRICE_FACET, 'lowest_price', total_count=1, order=2))
         self.facets.append(Facet('availability', AVAILABILITY_FACET, 'availability', values=['for_sale_in_store'], order=1))
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values), order=8))
@@ -378,6 +403,7 @@ class Message:
     main: str = 'No results'
     note: str = 'Please expand selection'
 
+
 @dataclass
 class FilterResponse:
     legit_queries: List[str] = dfield(default_factory=list)
@@ -392,9 +418,10 @@ class FilterResponse:
 
 class Sorter:
     """ takes a request and returns a filter and product set """
-    def __init__(self, products: QuerySet, request: HttpRequest = None, update=False):
+    def __init__(self, products: QuerySet, request: HttpRequest = None, update=False, price_range: RangeFacetValue = None):
         self.product_filter = get_filter(products.all().first())
         self.products = products
+        self.price_range = price_range
         self.query_index: QueryIndex = None
         self.search_term = None
         self.page_size = 40
@@ -489,25 +516,15 @@ class Sorter:
             [bool] -- [true if user has queried for availability, false otherwise]
         """
         avail_facet_indexes = self.get_indices_by_ft(AVAILABILITY_FACET)
-        print('avai facet indexes = ' + str(avail_facet_indexes))
         avail_facet: Facet = self.facets[self.get_indices_by_ft(AVAILABILITY_FACET)[0]]
         if not avail_facet.qterms:
             indexes = self.get_indices_by_ft(PRICE_FACET) + self.get_indices_by_ft(LOCATION_FACET)
+            if self.price_range:
+                indexes = indexes + avail_facet_indexes
             for index in sorted(indexes, reverse=True):
                 del self.facets[index]
             return False
-        print('avail facet values =' + avail_facet.name + str(avail_facet.values))
-        for q_term in avail_facet.qterms:
-            try:
-                if q_term in avail_facet.values:
-                    print(q_term + 'is true')
-                    return True
-            except TypeError:
-                raise Exception('how does avail facet have no values ' + str(avail_facet.values))
-
-        del self.facets[self.get_index_by_qv('lowest_price')]
-        avail_facet.qterms = []
-        return False
+        return True
 
     def __filter_location(self, products: QuerySet):
         loc_facet_index = self.get_indices_by_ft(LOCATION_FACET)
@@ -548,53 +565,12 @@ class Sorter:
         _products = products
         for index in sorted(facet_indicies, reverse=True):
             facet = self.facets[index]
-            facet_value = facet.return_values[0]
-            return_facet = RangeFacetValue(**facet_value)
-            if not return_facet.abs_max or not return_facet.abs_min:
-                values = get_absolute_range(products, facet.quer_value)
-                if not values:
-                    del self.facets[index]
-                    continue
-                return_facet.abs_min = values[0]
-                return_facet.abs_max = values[1]
-            if not facet.qterms:
-                return_facet.selected_max = return_facet.abs_max
-                return_facet.selected_min = return_facet.abs_min
-                facet.return_values = [return_facet]
-                facet.queryset = products
-                continue
-            facet.selected = True
-            min_query = [q.replace('min-', '') for q in facet.qterms if 'min' in q]
-            max_query = [q.replace('max-', '') for q in facet.qterms if 'max' in q]
-            facet.qterms = []
-            if min_query:
-                facet.qterms.append(f'min-{min_query[-1]}')
-                _products = self.__complete_range(_products, facet, min_query, 'min')
-                return_facet.selected_min = min_query[-1]
-                return_facet.enabled = True
-            else:
-                return_facet.selected_min = return_facet.abs_min
-            if max_query:
-                facet.qterms.append(f'max-{max_query[-1]}')
-                _products = self.__complete_range(_products, facet, max_query, 'max')
-                return_facet.selected_max = max_query[-1]
-                return_facet.enabled = True
-            else:
-                return_facet.selected_max = return_facet.abs_max
-            if not _products:
-                self.response.return_products = False
-                self.response.load_more = False
-                self.response.message = 'No results'
-                return products
-            facet.return_values = [return_facet]
+            _products, new_facet = construct_range_facet(_products, facet)
+            del self.facets[index]
+            self.facets.append(new_facet)
+        if self.price_range:
+            self.facets.append(self.price_range)
         return _products
-
-    def __complete_range(self, products: QuerySet, facet, query, direction: str):
-        qrange = Decimal(query[-1])
-        direction_transform = {'min': 'gte', 'max': 'lte'}
-        quer_value = facet.quer_value
-        argument = {f'{quer_value}__{direction_transform[direction]}': qrange}
-        return products.filter(**argument)
 
     def __filter_bools(self, products: QuerySet):
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET) + self.get_indices_by_ft(AVAILABILITY_FACET)
@@ -747,6 +723,7 @@ class DetailListItem:
     name: str = None
     terms: List = None
 
+
 @dataclass
 class DetailResponse:
     unit: str = None
@@ -844,3 +821,22 @@ class DetailBuilder:
         if detail_response and not update:
             return detail_response
         return self.assign_detail_response()
+
+
+# def subclass_content_types():
+#     ct_choices = []
+#     for name, subclass in PRODUCT_SUBCLASSES.items():
+#         ct = ContentType.objects.get_for_model(subclass)
+#         kwargs = {'app_label': ct.app_label, 'model': ct.model}
+#         ct_choices.append(models.Q(**kwargs))
+#     query = ct_choices.pop()
+#     for ct_choice in ct_choices:
+#         query |= ct_choice
+#     return query
+
+
+    # may need to use structure below:
+    # if field_type in acceptable_fields[:2]:
+    #     values = self.get_model_products().aggregate(Min(Lower(standalone)), Max(Upper(standalone)))
+    # else:
+    #     values = self.get_model_products().aggregate(Min(standalone), Max(standalone))

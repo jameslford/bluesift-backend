@@ -149,18 +149,18 @@ def customer_product(request, proj_pk, prod_pk=None):
         project = projects.filter(pk=proj_pk).first()
 
     if request.method == 'POST':
-        prod_id = request.POST.get('prod_id', None)
-        product = Product.objects.filter(pk=prod_id).first()
+        prod_pk = request.POST.get('prod_pk', None)
+        product = Product.objects.filter(pk=prod_pk).first()
         if product:
             CustomerProduct.objects.create(product=product, project=project)
             return Response(status=status.HTTP_201_CREATED)
 
     if request.method == 'DELETE':
-        if not prod_pk and prod_pk:
+        if not prod_pk:
             return Response('No product specified for deletion', status=status.HTTP_400_BAD_REQUEST)
         cus_product: CustomerProduct = project.products.filter(product__pk=prod_pk).first()
         if cus_product:
-            product.delete()
+            cus_product.delete()
             return Response(status=status.HTTP_202_ACCEPTED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
