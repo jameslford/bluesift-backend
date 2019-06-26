@@ -29,7 +29,7 @@ class CompanyAccountDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyAccount
         fields = (
-            'id',
+            'pk',
             'headquarters',
             'phone_number',
             'name',
@@ -66,7 +66,7 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeProfile
         fields = (
-            'id',
+            'pk',
             'title',
             'name',
             'email',
@@ -76,7 +76,7 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
 
 
 class SVLocationSerializer(serializers.ModelSerializer):
-    # priced_products = serializers.SerializerMethodField()
+    priced_products = serializers.SerializerMethodField()
     address = AddressSerializer(read_only=True)
 
     class Meta:
@@ -92,7 +92,7 @@ class SVLocationSerializer(serializers.ModelSerializer):
             'rating_count',
             'address',
             'phone_number',
-            # 'priced_products',
+            'priced_products',
             # 'image'
             )
 

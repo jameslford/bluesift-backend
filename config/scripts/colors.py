@@ -23,7 +23,7 @@ def get_rgbs(products: FinishSurface):
     ar = np.array(rgb_colors)
     shape = ar.shape
     ar = ar.reshape(scipy.product(shape[0]), shape[1]).astype(float)
-    codes, dist = scipy.cluster.vq.kmeans(ar, 21, check_finite=False)
+    codes, dist = scipy.cluster.vq.kmeans(ar, 19, check_finite=False)
     rgbs = []
     for code in codes:
         rounded = tuple(int(round(n)) for n in code)

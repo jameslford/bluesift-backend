@@ -418,7 +418,8 @@ class FilterResponse:
 
 class Sorter:
     """ takes a request and returns a filter and product set """
-    def __init__(self, products: QuerySet, request: HttpRequest = None, update=False, price_range: RangeFacetValue = None):
+    def __init__(self, products: QuerySet, request: HttpRequest = None, update=False, price_range: RangeFacetValue = None, location_pk=None):
+        self.location_pk = location_pk
         self.product_filter = get_filter(products.all().first())
         self.products = products
         self.price_range = price_range
@@ -697,7 +698,7 @@ class Sorter:
             _products = products[product_start:]
         _products = products[product_start:product_end]
         _product_pks = _products.values_list('bb_sku', flat=True)
-        self.response.products = SerpyProduct(_products, many=True).data
+        self.response.products = SerpyProduct(_products, many=True, label=self.location_pk).data
         self.query_index.products.clear()
         self.query_index.products.add(*_product_pks)
 

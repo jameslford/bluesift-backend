@@ -67,9 +67,16 @@ class Product(models.Model):
 
     objects = InheritanceManager()
 
-
     def __str__(self):
         return self.name
+
+    def get_price(self, location_pk: int = None):
+        if not location_pk:
+            return self.lowest_price
+        sup_prod = self.priced.filter(supplier=location_pk).first()
+        if not sup_prod:
+            return None
+        return sup_prod.in_store_ppu
 
     def average_rating(self):
         avg_rating = self.ratings.all().aggregate(Avg('rating'))

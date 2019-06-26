@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from .models import MailingList, EmailAddress
 from rest_framework import status
 
+
 @api_view(['POST'])
 def add_to_mailinglist(request):
     data = request.data
@@ -13,7 +14,7 @@ def add_to_mailinglist(request):
         return Response('Email needed!', status=status.HTTP_400_BAD_REQUEST)
     valid = send_mail(
         subject="You're on the list",
-        from_email='no_reply@BlueSift.com',        
+        from_email='no_reply@BlueSift.com',
         message="Thanks for signing up! We can't wait to share what we've built for you!",
         recipient_list=[email_address]
     )

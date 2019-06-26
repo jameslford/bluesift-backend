@@ -135,6 +135,8 @@ def sv_supplier_location(request, pk=None):
         serialized_loc.update(instance=location, validated_data=data)
         return Response('Accepted', status=status.HTTP_202_ACCEPTED)
 
+    return Response('Unsupported Method', status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['PUT', 'DELETE', 'POST'])
 @permission_classes((IsAuthenticated,))
@@ -279,7 +281,7 @@ def cv_supplier_location_content(request, pk):
     products, facet = construct_range_facet(supplier.priced_products.all(), facet)
     fs_pks = [sup_prod.product.pk for sup_prod in products]
     fs_products = FinishSurface.objects.filter(pk__in=fs_pks)
-    fs_content = Sorter(fs_products, request, price_range=facet)
+    fs_content = Sorter(fs_products, request, price_range=facet, location_pk=pk)
     return Response(fs_content.get_repsonse(), status=status.HTTP_200_OK)
 
 
