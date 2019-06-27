@@ -78,8 +78,8 @@ def sv_supplier_location(request, pk=None):
             return Response(status=status.HTTP_403_FORBIDDEN)
         data = request.data
         serialized_loc = ShippingLocationUpdateSerializer(data=data)
-        if not serialized_loc.is_valid():
-            return Response(serialized_loc.errors, status=status.HTTP_400_BAD_REQUEST)
+        # if not serialized_loc.is_valid():
+        #     return Response(serialized_loc.errors, status=status.HTTP_400_BAD_REQUEST)
         serialized_loc.create(account, data)
         return Response('Accepted', status=status.HTTP_201_CREATED)
 
@@ -277,7 +277,7 @@ def cv_supplier_location_content(request, pk):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     from ProductFilter.models import Sorter, construct_range_facet, PRICE_FACET, Facet
     from FinishSurfaces.models import FinishSurface
-    facet = Facet('supplier price', PRICE_FACET, 'in_store_ppu')
+    facet = Facet('supplier price', PRICE_FACET, 'in_store_ppu', order=2)
     products, facet = construct_range_facet(supplier.priced_products.all(), facet)
     fs_pks = [sup_prod.product.pk for sup_prod in products]
     fs_products = FinishSurface.objects.filter(pk__in=fs_pks)

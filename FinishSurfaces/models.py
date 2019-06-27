@@ -86,5 +86,3 @@ class FinishSurface(ProductSubClass):
         real_color = webcolors.rgb_to_hex(first_color)
         self.actual_color = real_color
         self.save()
-
-

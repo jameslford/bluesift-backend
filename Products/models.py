@@ -49,6 +49,7 @@ class Product(models.Model):
 
     for_sale_online = models.BooleanField(default=False)
     for_sale_in_store = models.BooleanField(default=False)
+    installation_offered = models.BooleanField(default=False)
     locations = models.MultiPointField(null=True)
 
     residential_warranty = models.CharField(max_length=100, null=True, blank=True)

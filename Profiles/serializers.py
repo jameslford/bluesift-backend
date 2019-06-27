@@ -219,7 +219,8 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
     def create(self, account, validated_data):
         address = validated_data.pop('address', None)
         zipcode = address.pop('postal_code', None)
-        zipcode = Zipcode.objects.filter(code=zipcode).first()
+        code = zipcode.get('code', None)
+        zipcode = Zipcode.objects.filter(code=code).first()
         if not zipcode:
             return 'Invalid Zip'
         address = Address.objects.create(postal_code=zipcode, **address)

@@ -71,7 +71,8 @@ def landing(request: HttpRequest):
 def get_short_lib(request, pk=None):
     user = request.user
     if not user.is_authenticated:
-        return None
+        blank_slib = ShortLib(0, [], [])
+        return Response(asdict(blank_slib), status=status.HTTP_200_OK)
     locations = get_proj_or_loc(user)
     location = locations.first()
     if pk:

@@ -10,6 +10,14 @@ class CoordinateSerializer(serializers.ModelSerializer):
             'lng'
         )
 
+class ZipcodeForUpdate(serializers.ModelSerializer):
+
+    class Meta:
+        model = Zipcode
+        fields = (
+            'code',
+            )
+
 
 class ZipcodeSerializer(serializers.ModelSerializer):
     # centroid = CoordinateSerializer()
@@ -24,6 +32,7 @@ class ZipcodeSerializer(serializers.ModelSerializer):
 
 
 class AddressUpdateSerializer(serializers.ModelSerializer):
+    postal_code = ZipcodeForUpdate()
 
     class Meta:
         model = Address
