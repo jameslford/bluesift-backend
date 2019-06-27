@@ -85,8 +85,10 @@ def valid_subclasses():
 
 def get_absolute_range(products: QuerySet, facet: Facet):
     values = products.aggregate(Min(facet.quer_value), Max(facet.quer_value))
+    print(values)
     min_val = values.get(f'{facet.quer_value}__min', None)
     max_val = values.get(f'{facet.quer_value}__max', None)
+    print(min_val, max_val)
     if not (min_val or max_val):
         return facet
     if min_val == max_val:
@@ -120,6 +122,8 @@ def get_filter(model: models.Model):
 def construct_range_facet(products: QuerySet, facet: Facet, request: HttpRequest = None) -> Facet:
     if not facet.return_values:
         facet = get_absolute_range(products, facet)
+    if not facet.return_values:
+        return (products, facet)
     facet.total_count = 1
     if not facet.qterms:
         if not request:
@@ -424,17 +428,17 @@ class FilterResponse:
 class Sorter:
     """ takes a request and returns a filter and product set """
     def __init__(
-        self,
-        products: QuerySet,
-        request: HttpRequest = None,
-        update=False, 
-        price_range: RangeFacetValue = None,
-        location_pk=None
-        ):
+            self,
+            products: QuerySet,
+            request: HttpRequest = None,
+            update=False,
+            price_range: Facet = None,
+            location_pk=None
+                ):
         self.location_pk = location_pk
+        self.price_range = price_range
         self.product_filter = get_filter(products.all().first())
         self.products = products
-        self.price_range = price_range
         self.query_index: QueryIndex = None
         self.search_term = None
         self.page_size = 40
@@ -468,15 +472,23 @@ class Sorter:
         self.query_index = query_index
         self.__parse_querydict(QueryDict(query_index.query_dict))
 
+    def __instantiate_facets(self):
+        for f_dict in self.product_filter.filter_dictionary:
+            facet: Facet = Facet(**f_dict)
+            self.facets.append(facet)
+        if self.price_range is not None:
+            original_priced = self.get_indices_by_ft(PRICE_FACET)
+            del self.facets[original_priced[0]]
+            self.facets.append(self.price_range)
+
+
     def __parse_querydict(self, request_dict: QueryDict):
+        self.__instantiate_facets()
         self.response.page = int(request_dict.get('page', 1))
         self.search_term = request_dict.get('search', None)
         self.ordering_term = request_dict.get('order_term', None)
-        for f_dict in self.product_filter.filter_dictionary:
-            facet: Facet = Facet(**f_dict)
-            print(facet.name, str(facet.values))
+        for facet in self.facets:
             facet.qterms = request_dict.getlist(facet.quer_value, [])
-            self.facets.append(facet)
         self.__build_response()
 
     def __build_response(self):
@@ -527,15 +539,12 @@ class Sorter:
 
         Returns:
             [bool] -- [true if user has queried for availability, false otherwise]
-        """
+            """
         avail_facet: Facet = self.facets[self.get_indices_by_ft(AVAILABILITY_FACET)[0]]
-        indexes = []
-        if not avail_facet.qterms or self.price_range:
+        if not avail_facet.qterms and not self.location_pk:
             indexes = self.get_indices_by_ft(PRICE_FACET) + self.get_indices_by_ft(LOCATION_FACET)
             for index in sorted(indexes, reverse=True):
                 del self.facets[index]
-            if self.price_range:
-                self.facets.append(self.price_range)
 
     def __filter_location(self, products: QuerySet):
         loc_facet_index = self.get_indices_by_ft(LOCATION_FACET)
@@ -568,19 +577,36 @@ class Sorter:
         loc_facet.selected = True
         return products
 
-    def __filter_range(self, products: QuerySet, priced=False):
-        facet_indicies = self.get_indices_by_ft(RANGE_FACET)
-        if priced:
-            facet_indicies = self.get_indices_by_ft(PRICE_FACET)
-        if not facet_indicies:
-            return products
+    def __range_iterator(self, products: QuerySet, facet_indices):
         _products = products
-        for index in sorted(facet_indicies, reverse=True):
+        for index in sorted(facet_indices, reverse=True):
             facet = self.facets[index]
-            _products, new_facet = construct_range_facet(_products, facet)
+            print('range iterator on ' + facet.name)
+            _products, new_facet = construct_range_facet(products, facet)
+            print('range facet from construct_range = ', facet)
             del self.facets[index]
             self.facets.append(new_facet)
         return _products
+
+    def __filter_range(self, products: QuerySet, priced=False):
+        if priced:
+            print('priced range facet')
+            facet_indices = self.get_indices_by_ft(PRICE_FACET)
+            if self.location_pk is not None:
+                product_type = type(products.first())
+                from Profiles.models import CompanyShippingLocation
+                product_pks = list(products.values_list('pk', flat=True))
+                location: CompanyShippingLocation = CompanyShippingLocation.objects.filter(pk=self.location_pk).first()
+                sup_prods = location.priced_products.all().filter(product__pk__in=product_pks)
+                print('sup prods count = ' + str(sup_prods.count()))
+                sup_prods = self.__range_iterator(sup_prods, facet_indices)
+                sp_pks = sup_prods.values_list('product__pk', flat=True).distinct()
+                return product_type.objects.filter(pk__in=sp_pks)
+        else:
+            facet_indices = self.get_indices_by_ft(RANGE_FACET)
+        if not facet_indices:
+            return products
+        return self.__range_iterator(products, facet_indices)
 
     def __filter_bools(self, products: QuerySet):
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET) + self.get_indices_by_ft(AVAILABILITY_FACET)
@@ -594,10 +620,12 @@ class Sorter:
             facet.qterms = [term for term in facet.qterms if term in facet.values]
             facet.selected = True
             queryset = products
+            print('qterms for ' + facet.name)
             for term in facet.qterms:
+                print(term)
                 arg = {term: True}
                 queryset = products.filter(**arg)
-            facet.queryset = queryset
+            self.facets[index].queryset = queryset
 
     def __check_keyterm(self):
         indices = self.get_indices_by_ft(MULTITEXT_FACET)
@@ -642,9 +670,9 @@ class Sorter:
         return indices
 
     def __count_objects(self, products: QuerySet):
+        priced_products = self.__filter_range(products, True)
         all_qs = []
         indices = self.__get_counted_facet_indices()
-        priced_products = self.__filter_range(products, True)
         for index in indices:
             facet = self.facets[index]
             if not facet.queryset:

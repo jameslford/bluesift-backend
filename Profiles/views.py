@@ -275,56 +275,10 @@ def cv_supplier_location_content(request, pk):
     ).filter(pk=pk).first()
     if not supplier:
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    from ProductFilter.models import Sorter, construct_range_facet, PRICE_FACET, Facet
+    from ProductFilter.models import Sorter, PRICE_FACET, Facet
     from FinishSurfaces.models import FinishSurface
     facet = Facet('supplier price', PRICE_FACET, 'in_store_ppu', order=2)
-    products, facet = construct_range_facet(supplier.priced_products.all(), facet)
-    fs_pks = [sup_prod.product.pk for sup_prod in products]
+    fs_pks = [sup_prod.product.pk for sup_prod in supplier.priced_products.all()]
     fs_products = FinishSurface.objects.filter(pk__in=fs_pks)
     fs_content = Sorter(fs_products, request, price_range=facet, location_pk=pk)
     return Response(fs_content.get_repsonse(), status=status.HTTP_200_OK)
-
-
-
-
-# def supplier_short_lib(request):
-#     user = request.user
-#     employee = EmployeeProfile.objects.filter(user=user).first()
-#     if not employee:
-#         return Response('not an employee', status=status.HTTP_400_BAD_REQUEST)
-
-#     locations = employee.company_account.shipping_locations.all()
-#     if not locations:
-#         return Response('no locations', status=status.HTTP_400_BAD_REQUEST)
-
-#     location = None
-#     location_id = request.GET.get('proj_id', None)
-#     if location_id:
-#         location = locations.filter(pk=location_id).first()
-#     elif locations.count() > 0:
-#         location = locations.first()
-#     else:
-#         return Response('Invalid Location', status=status.HTTP_400_BAD_REQUEST)
-
-#     locations_list = []
-#     for local in locations:
-#         content = {}
-#         content['nickname'] = local.nickname
-#         content['id'] = local.pk
-#         locations_list.append(content)
-
-#     product_ids = []
-#     products = location.priced_products.all()
-#     for prod in products:
-#         product_ids.append(prod.product.pk)
-
-#     full_content = {
-#         'list': locations_list,
-#         'count': locations.count(),
-#         'selected_location': {
-#             'nickname': location.nickname,
-#             'pk': location.pk
-#         },
-#         'product_ids': product_ids
-#     }
-#     return Response(full_content, status=status.HTTP_200_OK)
