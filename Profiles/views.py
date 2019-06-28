@@ -268,17 +268,7 @@ def cv_supplier_location(request, pk):
 
 @api_view(['GET'])
 def cv_supplier_location_content(request, pk):
-    supplier = CompanyShippingLocation.objects.prefetch_related(
-        'priced_products',
-        'priced_products__product',
-        'priced_products__product__manufacturer',
-    ).filter(pk=pk).first()
-    if not supplier:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    from ProductFilter.models import Sorter, PRICE_FACET, Facet
+    from ProductFilter.models import Sorter
     from FinishSurfaces.models import FinishSurface
-    facet = Facet('supplier price', PRICE_FACET, 'in_store_ppu', order=2)
-    fs_pks = [sup_prod.product.pk for sup_prod in supplier.priced_products.all()]
-    fs_products = FinishSurface.objects.filter(pk__in=fs_pks)
-    fs_content = Sorter(fs_products, request, price_range=facet, location_pk=pk)
-    return Response(fs_content.get_repsonse(), status=status.HTTP_200_OK)
+    fs_content = Sorter(FinishSurface, request=request, location_pk=pk)
+    return Response(fs_content(), status=status.HTTP_200_OK)

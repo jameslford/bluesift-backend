@@ -138,7 +138,6 @@ class Product(models.Model):
             self.locations = points
             self.save()
 
-
     def manufacturer_name(self):
         if not self.manufacturer:
             return None
