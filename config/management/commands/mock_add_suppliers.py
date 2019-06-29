@@ -63,9 +63,7 @@ class Command(BaseCommand):
                 units_per_order = decimal.Decimal(3.5)
                 select_id = random.choice(location_prod_ids)
                 del location_prod_ids[location_prod_ids.index(select_id)]
-                # location_prod_ids.remove(select_id)
                 product = Product.objects.get(pk=select_id)
-                # available_online = random.choice([True, False])
                 lead_time = random.randint(1, 14)
                 offer_install = random.choice([True, False])
                 sup_prod = SupplierProduct.objects.get_or_create(

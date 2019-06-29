@@ -35,7 +35,9 @@ class SerpyProduct(serpy.Serializer):
         return float(price)
 
     def get_swatch_image(self, prod_obj):
-        return prod_obj.swatch_image.url
+        if prod_obj.swatch_image:
+            return prod_obj.swatch_image.url
+        return None
 
     def get_pk(self, prod_obj: Product):
         return str(prod_obj.bb_sku)

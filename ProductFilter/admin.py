@@ -23,5 +23,20 @@ class ProductFilterAdmin(admin.ModelAdmin):
         pg_fields.JSONField: {'widget': JSONEditorWidget},
     }
 
+@admin.register(QueryIndex)
+class QueryIndexAdmin(admin.ModelAdmin):
+    fields = (
+        'query_dict',
+        'query_path',
+        'response',
+        'dirty',
+        'product_filter',
+        'products'
+    )
 
-admin.site.register(QueryIndex)
+    list_filter = ('query_path',)
+    ordering = ('query_path',)
+
+    formfield_overrides = {
+        pg_fields.JSONField: {'widget': JSONEditorWidget},
+    }
