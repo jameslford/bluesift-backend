@@ -170,6 +170,8 @@ class CompanyShippingLocation(models.Model):
         super(CompanyShippingLocation, self).save(*args, **kwargs)
 
 
+
+
 class SupplierProduct(models.Model):
 
     product = models.ForeignKey(
@@ -188,11 +190,13 @@ class SupplierProduct(models.Model):
     units_available_in_store = models.IntegerField(default=0, null=True)
     units_per_order = models.DecimalField(max_digits=10, decimal_places=2, default=1)
 
-    for_sale_in_store = models.BooleanField(default=False)
-    in_store_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     product_bb_sku = models.CharField(max_length=60)
 
-    for_sale_online = models.BooleanField(default=False)
+    publish_in_store_availability = models.BooleanField(default=True)
+    publish_in_store_price = models.BooleanField(default=False)
+    publish_online_price = models.BooleanField(default=False)
+
+    in_store_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     online_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
 
     on_sale = models.BooleanField(default=False)
@@ -255,11 +259,11 @@ class SupplierProduct(models.Model):
 
     def check_availability(self):
         if self.units_available_in_store <= 0:
-            self.for_sale_in_store = False
-            self.for_sale_online = False
+            self.publish_in_store_price = False
 
     def check_approvals(self):
         if not self.supplier.approved_online_seller:
-            self.for_sale_online = False
+            self.publish_online_price = False
         if not self.supplier.approved_in_store_seller:
-            self.for_sale_in_store = False
+            self.publish_in_store_price = False
+            self.publish_in_store_availability = False

@@ -10,20 +10,15 @@ class SerpyManufacturer(serpy.Serializer):
 
 
 class SerpyProduct(serpy.Serializer):
-    # pk = serpy.Field()
     pk = serpy.MethodField()
     unit = serpy.Field()
     manufacturer_style = serpy.Field()
     manu_collection = serpy.Field()
-    # for_sale_online = serpy.Field()
-    for_sale_in_store = serpy.Field()
+    priced_in_store = serpy.Field()
     name = serpy.Field()
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
     lowest_price = serpy.MethodField()
-    # average_price = serpy.Field()
-    # average_rating = serpy.Field(call=True)
-    # rating_count = serpy.Field(call=True)
 
     def get_lowest_price(self, prod_obj: Product):
         if not prod_obj.lowest_price:

@@ -247,7 +247,7 @@ class ShippingLocationUpdateSerializer(serializers.ModelSerializer):
             file_type = image_file['filetype'].split('/')[0]
             if file_type == 'image':
                 imf = ContentFile(base64.b64decode(image_file['file']))
-                instance.image.save(image_file['filename'],  imf)
+                instance.image.save(image_file['filename'], imf)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.save()
 
@@ -262,7 +262,8 @@ class SupplierProductSerializer(serializers.ModelSerializer):
             'in_store_ppu',
             'units_available_in_store',
             'units_per_order',
-            'for_sale_in_store',
+            'published',
+            'priced_in_store',
             'on_sale',
             'sale_price',
             'banner_item',
@@ -279,7 +280,9 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
             'in_store_ppu',
             'units_available_in_store',
             'units_per_order',
-            'for_sale_in_store',
+            'publish_in_store_availability',
+            'publish_in_store_price',
+            'publish_online_price',
             'sale_price',
             'on_sale',
             'banner_item',
@@ -287,7 +290,7 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, location, validated_data):
         sup_prod_pk = validated_data.get('pk')
-        instance = location.priced_product.filter(pk=sup_prod_pk).first()
+        instance: SupplierProduct = location.priced_product.filter(pk=sup_prod_pk).first()
         if not instance:
             return
         instance.in_store_ppu = validated_data.get('in_store_ppu', instance.in_store_ppu)
@@ -296,8 +299,9 @@ class SupplierProductUpdateSerializer(serializers.ModelSerializer):
             instance.units_available_in_store
             )
         instance.units_per_order = validated_data.get('units_per_order', instance.units_per_order)
-        instance.for_sale_in_store = validated_data.get('for_sale_in_store', instance.for_sale_in_store)
-        instance.for_sale_online = validated_data.get('for_sale_online', instance.for_sale_online)
+        instance.publish_in_store_availability = validated_data.get('publish_in_store_availability', instance.publish_in_store_availability)
+        instance.publish_in_store_price = validated_data.get('publish_in_store_price', instance.publish_in_store_price)
+        instance.publish_online_price = validated_data.get('publish_online_price', instance.publish_online_price)
         instance.save()
         return
 

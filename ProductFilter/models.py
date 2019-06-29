@@ -398,7 +398,9 @@ class ProductFilter(models.Model):
 
     def add_product_facets(self):
         self.facets.append(Facet('availability', AVAILABILITY_FACET, 'availability', values=[
-            'for_sale_in_store',
+            'in_store',
+            'in_store_and_priced',
+            'online_and_priced',
             'installation_offered'
             ], order=1))
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()

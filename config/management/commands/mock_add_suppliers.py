@@ -72,7 +72,7 @@ class Command(BaseCommand):
                     )[0]
                 sup_prod.units_available_in_store = units_available
                 sup_prod.units_per_order = units_per_order
-                sup_prod.for_sale_in_store = True
+                sup_prod.priced_in_store = True
                 sup_prod.in_store_ppu = price
                 sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
                 sup_prod.offer_installation = offer_install

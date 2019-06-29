@@ -12,12 +12,36 @@ class Manufacturer(models.Model):
     def __str__(self):
         return self.label
 
-    def products(self):
-        try:
-            products = self.products
-            return products
-        except:
-            return None
+
+class ProductAvailabilityQuerySet(models.QuerySet):
+    def priced_in_store(self, location_pk=None):
+        from Profiles.models import SupplierProduct
+        if location_pk:
+            pks = SupplierProduct.objects.filter(
+                supplier__pk=location_pk,
+                publish_in_store_price=True,
+                ).values_list('product__pk', flat=True).distinct()
+        else:
+            pks = SupplierProduct.objects.filter(
+                publish_in_store_price=True,).values_list('product__pk', flat=True).distinct()
+        return self.filter(pk__in=pks)
+
+    def available_in_store(self, location_pk=None):
+        from Profiles.models import SupplierProduct
+        if location_pk:
+            pks = SupplierProduct.objects.filter(
+                supplier__pk=location_pk,
+                publish_in_store_availability=True,
+                ).values_list('product__pk', flat=True).distinct()
+        else:
+            pks = SupplierProduct.objects.filter(
+                publish_in_store_availability=True,).values_list('product__pk', flat=True).distinct()
+        return self.filter(pk__in=pks)
+
+    def safe_commands(self):
+        return ('priced_in_store', 'available_in_store')
+
+
 
 
 class Product(models.Model):
@@ -29,7 +53,7 @@ class Product(models.Model):
     )
 
     name = models.CharField(max_length=1200)
-    bb_sku = models.UUIDField(primary_key=True, unique=True, editable=False)
+    bb_sku = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4, editable=False)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
@@ -47,8 +71,9 @@ class Product(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True, blank=True)
 
-    for_sale_online = models.BooleanField(default=False)
-    for_sale_in_store = models.BooleanField(default=False)
+    in_store = models.BooleanField(default=False)    
+    online_and_priced = models.BooleanField(default=False)
+    in_store_and_priced = models.BooleanField(default=False)
     installation_offered = models.BooleanField(default=False)
     locations = models.MultiPointField(null=True)
 
@@ -67,6 +92,7 @@ class Product(models.Model):
         )
 
     objects = InheritanceManager()
+    availability = ProductAvailabilityQuerySet.as_manager()
 
     def __str__(self):
         return self.name
@@ -87,51 +113,46 @@ class Product(models.Model):
     def rating_count(self):
         return self.ratings.all().count()
 
-    def online_priced(self):
+    def get_in_store(self):
         return self.priced.select_related(
             'supplier',
             'supplier__company_account',
             'supplier__address',
             'supplier__address__coordinates',
             'supplier__address__postal_code'
-            ).filter(for_sale_online=True)
+        ).filter(publish_in_store_availability=True)
 
-    def in_store_priced(self):
+    def get_online_priced(self):
         return self.priced.select_related(
             'supplier',
             'supplier__company_account',
             'supplier__address',
             'supplier__address__coordinates',
             'supplier__address__postal_code'
-        ).filter(for_sale_in_store=True)
+            ).filter(publish_online_price=True)
+
+    def get_in_store_priced(self):
+        return self.priced.select_related(
+            'supplier',
+            'supplier__company_account',
+            'supplier__address',
+            'supplier__address__coordinates',
+            'supplier__address__postal_code'
+        ).filter(publish_in_store_price=True)
 
     def set_prices(self):
-        self.for_sale_in_store = False
-        self.for_sale_online = False
-        self.lowest_price = None
-        online_sellers = self.priced.filter(for_sale_online=True)
-        if online_sellers.count() > 0:
-            self.for_sale_online = True
-        in_store_sellers = self.priced.filter(for_sale_in_store=True)
-        if in_store_sellers.count() > 0:
-            self.for_sale_in_store = True
-        all_sellers = online_sellers | in_store_sellers
-        all_sellers = all_sellers.distinct()
-        if all_sellers.count() > 0:
-            price = all_sellers.aggregate(Min('in_store_ppu'), Avg('in_store_ppu'))
+        self.in_store = self.priced.all().filter(publish_in_store_availability=True).exist()
+        self.in_store_and_priced = self.priced.all().filter(publish_in_store_price=True).exist()
+        self.online_and_priced = self.priced.all().filter(publish_online_price=True).exist()
+        if self.in_store_and_priced or self.online_and_priced:
+            price = self.priced.all().aggregate(Min('in_store_ppu'), Avg('in_store_ppu'))
             self.lowest_price = price["in_store_ppu__min"]
             self.average_price = price['in_store_ppu__avg']
         self.save()
 
-    def invalidate_queries(self):
-        query_indexes = self.query_indexes.all()
-        for qi in query_indexes:
-            qi.dirty = True
-            qi.save()
-
     def set_locations(self):
         self.locations = None
-        in_store_sellers = self.priced.filter(for_sale_in_store=True)
+        in_store_sellers = self.priced.all().filter(publish_in_store_availability=True)
         if in_store_sellers.count() > 0:
             coordinates = [q.supplier.address.coordinates.point for q in in_store_sellers]
             points = MultiPoint(*coordinates)
