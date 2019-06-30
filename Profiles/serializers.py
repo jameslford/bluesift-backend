@@ -262,8 +262,6 @@ class SupplierProductSerializer(serializers.ModelSerializer):
             'in_store_ppu',
             'units_available_in_store',
             'units_per_order',
-            'published',
-            'priced_in_store',
             'on_sale',
             'sale_price',
             'banner_item',

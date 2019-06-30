@@ -510,7 +510,9 @@ class Sorter:
     def get_products(self):
         if self.location_pk:
             pks = SupplierProduct.objects.filter(supplier__pk=self.location_pk).values_list('product__pk', flat=True)
-            return self.product_type.objects.all().filter(pk__in=pks)
+            return self.product_type.objects.all().prefetch_related(
+                'priced'
+            ).filter(pk__in=pks)
         return self.product_type.objects.all()
 
     def __instantiate_facets(self):
@@ -780,12 +782,14 @@ class Sorter:
 
             return _products
         if self.location_pk:
-            location = CompanyShippingLocation.objects.get(pk=self.location_pk)
-            pks = list(_products.values_list('pk', flat=True))
-            sup_prods = location.priced_products.all().filter(product__pk__in=pks)
+            # location = CompanyShippingLocation.objects.get(pk=self.location_pk)
+            # pks = list(_products.values_list('pk', flat=True))
+            # sup_prods = location.priced_products.all().filter(product__pk__in=pks)
+            sup_prods = products.supplier_products()
             sup_prods = self.__range_iterator(sup_prods, price_indices[0])
-            sp_pks = sup_prods.values_list('product__pk', flat=True).distinct()
-            return self.product_type.objects.filter(pk__in=sp_pks)
+            return sup_prods.values('products')
+            # sp_pks = sup_prods.values_list('product__pk', flat=True).distinct()
+            # return self.product_type.objects.filter(pk__in=sp_pks)
         return self.__range_iterator(_products, price_indices[0])
 
     def __filter_search_terms(self, products: QuerySet, search_term=None):

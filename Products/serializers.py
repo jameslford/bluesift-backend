@@ -17,7 +17,7 @@ class SerpyProduct(serpy.Serializer):
     name = serpy.Field()
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
-    lowest_price = serpy.MethodField()
+    # lowest_price = serpy.MethodField()
 
     def get_lowest_price(self, prod_obj: Product):
         if not prod_obj.lowest_price:

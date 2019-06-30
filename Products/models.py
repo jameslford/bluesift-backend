@@ -9,7 +9,7 @@ def availability_getter(query_term, location_pk=None):
     from Profiles.models import SupplierProduct
     term = {query_term: True}
     if location_pk:
-        term['supplier_pk'] = location_pk
+        term['supplier_id'] = location_pk
     return SupplierProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
 
 
@@ -45,6 +45,13 @@ class ProductAvailabilityQuerySet(models.QuerySet):
             return pks
         return self.filter(pk__in=pks)
 
+    def supplier_products(self, location_pk):
+        from Profiles.models import SupplierProduct
+        pks = self.values_list('pk', flat=True)
+        return SupplierProduct.objects.filter(
+            supplier__id=location_pk,
+            pk__in=pks
+            )
 
     def filter_availability(self, commands, location_pk=None, pk_only=False):
         pk_sets = []
@@ -82,6 +89,9 @@ class ProductManager(InheritanceManager):
 
     def available_in_store(self, location_pk=None):
         return self.get_queryset().available_in_store(location_pk)
+
+    def supplier_products(self, location_pk):
+        return self.get_queryset().supplier_products(location_pk)
 
     def safe_availability_commands(self):
         return self.get_queryset().safe_availability_commands()
