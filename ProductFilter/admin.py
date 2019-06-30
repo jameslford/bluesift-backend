@@ -31,7 +31,6 @@ class QueryIndexAdmin(admin.ModelAdmin):
         'response',
         'dirty',
         'product_filter',
-        'products'
     )
 
     list_filter = ('query_path',)

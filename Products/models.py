@@ -5,6 +5,13 @@ from django.contrib.gis.db import models
 from django.db.models import Min, Avg
 from django.contrib.gis.geos import MultiPoint
 
+def availability_getter(query_term, location_pk=None):
+    from Profiles.models import SupplierProduct
+    term = {query_term: True}
+    if location_pk:
+        term['supplier_pk'] = location_pk
+    return SupplierProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
+
 
 class Manufacturer(models.Model):
     label = models.CharField(max_length=200)
@@ -14,34 +21,70 @@ class Manufacturer(models.Model):
 
 
 class ProductAvailabilityQuerySet(models.QuerySet):
-    def priced_in_store(self, location_pk=None):
-        from Profiles.models import SupplierProduct
-        if location_pk:
-            pks = SupplierProduct.objects.filter(
-                supplier__pk=location_pk,
-                publish_in_store_price=True,
-                ).values_list('product__pk', flat=True).distinct()
-        else:
-            pks = SupplierProduct.objects.filter(
-                publish_in_store_price=True,).values_list('product__pk', flat=True).distinct()
+    def priced_in_store(self, location_pk=None, pk_only=False):
+        pks = availability_getter('publish_in_store_price', location_pk)
+        if pk_only:
+            return pks
         return self.filter(pk__in=pks)
+
+    def available_in_store(self, location_pk=None, pk_only=False):
+        pks = availability_getter('publish_in_store_availability', location_pk)
+        if pk_only:
+            return pks
+        return self.filter(pk__in=pks)
+
+    def priced_online(self, location_pk=None, pk_only=False):
+        pks = availability_getter('publish_online_price', location_pk)
+        if pk_only:
+            return pks
+        return self.filter(pk__in=pks)
+
+    def installation_offered(self, location_pk=None, pk_only=False):
+        pks = availability_getter('offer_installation', location_pk)
+        if pk_only:
+            return pks
+        return self.filter(pk__in=pks)
+
+
+    def filter_availability(self, commands, location_pk=None, pk_only=False):
+        pk_sets = []
+        clist = commands if isinstance(commands, list) else [commands]
+        for command in clist:
+            if command not in self.safe_availability_commands():
+                pk_sets = []
+                raise Exception(f'Unsafe method - {command}')
+            func = getattr(self, command, None)
+            if not func:
+                pk_sets = []
+                raise Exception(f'Unsafe method - {command}')
+            if not pk_only:
+                return func(location_pk)
+            pk_sets.append(func(location_pk, pk_only))
+        q_object = models.Q()
+        for pks in pk_sets:
+            term = {'pk__in': pks}
+            q_object |= models.Q(**term)
+        return self.filter(q_object)
+
+    def safe_availability_commands(self):
+        return ('available_in_store', 'priced_in_store', 'installation_offered')
+
+
+class ProductManager(InheritanceManager):
+    def get_queryset(self):
+        return ProductAvailabilityQuerySet(self.model, using=self._db)
+
+    def filter_availability(self, command, location_pk=None, pk_only=False):
+        return self.get_queryset().filter_availability(command, location_pk, pk_only)
+
+    def priced_in_store(self, location_pk=None):
+        return self.get_queryset().priced_in_store(location_pk)
 
     def available_in_store(self, location_pk=None):
-        from Profiles.models import SupplierProduct
-        if location_pk:
-            pks = SupplierProduct.objects.filter(
-                supplier__pk=location_pk,
-                publish_in_store_availability=True,
-                ).values_list('product__pk', flat=True).distinct()
-        else:
-            pks = SupplierProduct.objects.filter(
-                publish_in_store_availability=True,).values_list('product__pk', flat=True).distinct()
-        return self.filter(pk__in=pks)
+        return self.get_queryset().available_in_store(location_pk)
 
-    def safe_commands(self):
-        return ('priced_in_store', 'available_in_store')
-
-
+    def safe_availability_commands(self):
+        return self.get_queryset().safe_availability_commands()
 
 
 class Product(models.Model):
@@ -91,8 +134,7 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         )
 
-    objects = InheritanceManager()
-    availability = ProductAvailabilityQuerySet.as_manager()
+    objects = ProductManager()
 
     def __str__(self):
         return self.name

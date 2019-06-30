@@ -14,7 +14,6 @@ class SerpyProduct(serpy.Serializer):
     unit = serpy.Field()
     manufacturer_style = serpy.Field()
     manu_collection = serpy.Field()
-    priced_in_store = serpy.Field()
     name = serpy.Field()
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
