@@ -4,7 +4,7 @@ from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List, Tuple
 from django.db import models, transaction
-from django.db.models.functions import Upper, Lower
+from django.db.models.functions import Upper, Lower, Least, Cast, Coalesce
 from django.db.models import Min, Max, Subquery
 from django.urls import resolve as dj_resolve
 from django.contrib.postgres.search import SearchVector
@@ -470,7 +470,6 @@ class Sorter:
         self.location_pk = location_pk
         self.page_size = 40
         self.update = update
-
         self.response: FilterResponse = FilterResponse()
         self.facets: List[Facet] = []
         self.query_index: QueryIndex = None
@@ -563,17 +562,26 @@ class Sorter:
         products = self.__filter_range(products)
         return self.__finalize_response(products, True)
 
+
     def __finalize_response(self, products: QuerySet, new_terms=False):
-        initial_products = self.__filter_availability(self.query_index.get_products())
+        # initial_products = self.__filter_availability(self.query_index.get_products())
         if new_terms:
+            avai_prods = products.select_related(
+                'manufacturer'
+            ).filter(pk__in=Subquery(self.query_index.get_products().values('pk')))
+            avai_prods = self.__filter_availability(avai_prods)
             self.__count_objects(products)
-            products = products.intersection(initial_products)
-            print('product_count_after intersection = ' + str(products.count()))
-            self.response.product_count = products.count()
-            products = products.product_prices()
+            # products = products.select_related(
+            #     'manufacturer'
+            # ).filter(pk__in=Subquery(initial_products.values('pk')))
+            self.response.product_count = avai_prods.count()
+            products = avai_prods.product_prices(self.location_pk)
+            # prices = self.__get_prices(products.all())
+            # print(prices)
             self.__serialize_products(products)
             self.__set_filter_dict()
             return asdict(self.response)
+        initial_products = self.__filter_availability(products)
         response = self.query_index.response
         availability_facet = self.facets[self.get_index_by_qv('availability')]
         response['filter_dict'] = [asdict(availability_facet)] + response['filter_dict']
@@ -596,7 +604,6 @@ class Sorter:
         qsets = [self.facets[q].queryset for q in indices]
         products = products.intersection(*qsets)
         self.response.product_count = products.count()
-        self.__serialize_products(products)
         self.__set_filter_dict()
         self.query_index.products.clear()
         self.query_index.products.add(*products)
@@ -645,18 +652,19 @@ class Sorter:
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
             return
+        # print('product count', products.first())
         start_page = self.response.page - 1
-        product_start = start_page * self.page_size
+        product_start = start_page * self.page_size + 1
         product_end = self.response.page * self.page_size
-        print('product_count = ' + str(len(products)))
+        # print('product_count = ' + str(len(products)))
         if product_end > self.response.product_count:
             print('under page size. Product start = ' + str(product_start))
             self.response.load_more = False
             _products = products[product_start:]
             self.response.products = SerpyProduct(_products, many=True, label=self.location_pk).data
             return
-        _products = products[product_start:product_end]
-        self.response.products = SerpyProduct(_products, many=True, label=self.location_pk).data
+        _products = products.all()[product_start:product_end]
+        self.response.products = SerpyProduct(_products, many=True).data
 
     def __set_filter_dict(self):
         for facet in self.facets:
@@ -845,7 +853,7 @@ class DetailBuilder:
         self.response: DetailResponse = DetailResponse()
 
     def get_subclass_instance(self):
-        product = Product.objects.filter(pk=self.bb_sku).select_subclasses().first()
+        product = Product.subclasses.filter(pk=self.bb_sku).select_subclasses().first()
         if not product:
             raise Exception('no product found for ' + self.bb_sku)
         return product
@@ -855,8 +863,8 @@ class DetailBuilder:
         return get_filter(self.product)
 
     def get_priced(self):
-        if self.product.in_store_priced():
-            return list(SupplierProductMiniSerializer(self.product.in_store_priced(), many=True).data)
+        if self.product.get_in_store_priced():
+            return list(SupplierProductMiniSerializer(self.product.get_in_store_priced(), many=True).data)
         return []
 
     def get_stock_details(self) -> DetailListItem:

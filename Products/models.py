@@ -11,15 +11,9 @@ from django.db.models import (
     FloatField,
     CharField
 )
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Coalesce, Least
 from django.contrib.gis.geos import MultiPoint
 
-# SERIALIZED_PRODUCT_LIST_FIELDS = (
-#     'pk',
-#     'swatch_image',
-#     'manu_collection',
-#     'low_price'
-# )
 
 def availability_getter(query_term, location_pk=None):
     from Profiles.models import SupplierProduct
@@ -67,25 +61,6 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         sup_prods = SupplierProduct.objects.filter(supplier__id=location_pk).filter(product__in=Subquery(self.values('pk')))
         return sup_prods
 
-    def product_prices(self, location_pk=None):
-        from Profiles.models import SupplierProduct, CompanyShippingLocation
-        # products = self
-        term = {'product': OuterRef('bb_sku')}
-        if location_pk:
-            term['supplier__pk'] = location_pk
-            # pks = CompanyShippingLocation.objects.get(pk=location_pk).priced_products.all().values_list('product__pk', flat=True)
-            # products = self.filter(pk__in=pks)
-        price_quer = (
-            SupplierProduct.objects.filter(product=OuterRef('pk')).annotate(
-                low_price=Cast('in_store_ppu', FloatField())
-                ).order_by('-low_price')
-            )
-        return self.annotate(
-            low_price=Subquery(price_quer.values('low_price')[:1])
-            )
-            # .values(*SERIALIZED_PRODUCT_LIST_FIELDS)
-
-
     def filter_availability(self, commands, location_pk=None, pk_only=False):
         pk_sets = []
         clist = commands if isinstance(commands, list) else [commands]
@@ -109,8 +84,41 @@ class ProductAvailabilityQuerySet(models.QuerySet):
     def safe_availability_commands(self):
         return ('available_in_store', 'priced_in_store', 'installation_offered')
 
+    def product_prices(self, location_pk=None):
+        from Profiles.models import SupplierProduct
+        term = {'product__pk': OuterRef('pk')}
+        if location_pk:
+            term['supplier__pk'] = location_pk
+        sup_prods = (
+            SupplierProduct
+            .objects
+            .filter(**term).only('in_store_ppu', 'online_ppu')
+            .annotate(min_price=Least('in_store_ppu', 'online_ppu'))
+            .order_by('min_price')
+            .values('min_price')[:1]
+        )
 
-class ProductManager(InheritanceManager):
+        return self.annotate(
+            low_price=Subquery(
+                sup_prods,
+                output_field=CharField()
+            )
+        )
+
+
+
+    def get_lowest(self, location_pk=None):
+        from Profiles.models import SupplierProduct
+        term = {'product__in': self.values('pk')}
+        if location_pk:
+            term['supplier__pk'] = location_pk
+        sup_prods = SupplierProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
+            min_price=Least('in_store_ppu', 'online_ppu')
+        )
+        return list(sup_prods.values('min_price', 'product__pk'))
+
+
+class ProductPricingManager(models.Manager):
     def get_queryset(self):
         return ProductAvailabilityQuerySet(self.model, using=self._db)
 
@@ -131,6 +139,14 @@ class ProductManager(InheritanceManager):
 
     def product_prices(self, location_pk=None):
         return self.get_queryset().product_prices(location_pk)
+    #     from Profiles.models import SupplierProduct, CompanyShippingLocation
+    #     term = {'product__in': self.get_queryset().values('pk')}
+    #     if location_pk:
+    #         term['supplier__pk'] = location_pk
+    #     sup_prods = SupplierProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
+    #         min_price=Least('in_store_ppu', 'online_ppu')
+    #     )
+    #     return list(sup_prods.values('min_price', 'product__pk'))
 
 
 class Product(models.Model):
@@ -180,7 +196,8 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         )
 
-    objects = ProductManager()
+    objects = ProductPricingManager()
+    subclasses = InheritanceManager()
 
     def __str__(self):
         return self.name

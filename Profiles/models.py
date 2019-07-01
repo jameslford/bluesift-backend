@@ -1,8 +1,10 @@
 import datetime
 from decimal import Decimal
 from django.db import models
+from django.db.models import QuerySet
 from django.core.exceptions import ValidationError
 # from django.db.models import Avg
+from django.db.models.functions import Cast, Coalesce, Least
 from django.conf import settings
 from Addresses.models import Address
 from Products.models import Product
@@ -170,8 +172,6 @@ class CompanyShippingLocation(models.Model):
         super(CompanyShippingLocation, self).save(*args, **kwargs)
 
 
-
-
 class SupplierProduct(models.Model):
 
     product = models.ForeignKey(
@@ -205,6 +205,7 @@ class SupplierProduct(models.Model):
     lead_time_ts = models.DurationField(blank=True, null=True, default=datetime.timedelta(days=0))
     offer_installation = models.BooleanField(default=False)
     banner_item = models.BooleanField(default=False)
+
 
     class Meta:
         unique_together = ('product', 'supplier')
