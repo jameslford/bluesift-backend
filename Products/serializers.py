@@ -17,16 +17,17 @@ class SerpyProduct(serpy.Serializer):
     name = serpy.Field()
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
+    low_price = serpy.Field()
     # lowest_price = serpy.MethodField()
 
-    def get_lowest_price(self, prod_obj: Product):
-        if not prod_obj.lowest_price:
-            return None
-        location_pk = self.label
-        price = prod_obj.get_price(location_pk)
-        if not price:
-            return None
-        return float(price)
+    # def get_lowest_price(self, prod_obj: Product):
+    #     if not prod_obj.lowest_price:
+    #         return None
+    #     location_pk = self.label
+    #     price = prod_obj.get_price(location_pk)
+    #     if not price:
+    #         return None
+    #     return float(price)
 
     def get_swatch_image(self, prod_obj):
         if prod_obj.swatch_image:

@@ -5,7 +5,7 @@ from dataclasses import field as dfield
 from typing import List, Tuple
 from django.db import models, transaction
 from django.db.models.functions import Upper, Lower
-from django.db.models import Min, Max
+from django.db.models import Min, Max, Subquery
 from django.urls import resolve as dj_resolve
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
@@ -568,7 +568,9 @@ class Sorter:
         if new_terms:
             self.__count_objects(products)
             products = products.intersection(initial_products)
+            print('product_count_after intersection = ' + str(products.count()))
             self.response.product_count = products.count()
+            products = products.product_prices()
             self.__serialize_products(products)
             self.__set_filter_dict()
             return asdict(self.response)
@@ -646,9 +648,13 @@ class Sorter:
         start_page = self.response.page - 1
         product_start = start_page * self.page_size
         product_end = self.response.page * self.page_size
+        print('product_count = ' + str(len(products)))
         if product_end > self.response.product_count:
+            print('under page size. Product start = ' + str(product_start))
             self.response.load_more = False
             _products = products[product_start:]
+            self.response.products = SerpyProduct(_products, many=True, label=self.location_pk).data
+            return
         _products = products[product_start:product_end]
         self.response.products = SerpyProduct(_products, many=True, label=self.location_pk).data
 
@@ -681,8 +687,6 @@ class Sorter:
     def __filter_availability(self, products: QuerySet):
         index = self.get_index_by_qv('availability')
         if index is None:
-            print('no index for availability')
-            # return (products, False)
             return products
         facet: Facet = self.facets[index]
         return_values = []
@@ -695,8 +699,6 @@ class Sorter:
             facet.selected = True
             products = products.filter_availability(facet.qterms, self.location_pk, True)
             return products
-            # return (products, True)
-        # return (products, False)
         return products
 
     def __delete_dependents(self):
@@ -764,9 +766,7 @@ class Sorter:
 
     def __range_iterator(self, products: QuerySet, index):
         facet = self.facets[index]
-        print('range iterator on ' + facet.name)
         _products, new_facet = construct_range_facet(products, facet)
-        print('range facet from construct_range = ', facet)
         self.facets[index] = new_facet
         return _products
 
@@ -779,17 +779,12 @@ class Sorter:
             return _products
         price_indices = self.get_indices_by_ft(PRICE_FACET)
         if not price_indices:
-
             return _products
         if self.location_pk:
-            # location = CompanyShippingLocation.objects.get(pk=self.location_pk)
-            # pks = list(_products.values_list('pk', flat=True))
-            # sup_prods = location.priced_products.all().filter(product__pk__in=pks)
-            sup_prods = products.supplier_products()
+            sup_prods = products.supplier_products(self.location_pk)
             sup_prods = self.__range_iterator(sup_prods, price_indices[0])
-            return sup_prods.values('products')
-            # sp_pks = sup_prods.values_list('product__pk', flat=True).distinct()
-            # return self.product_type.objects.filter(pk__in=sp_pks)
+            # return_prods = sup_prods.values_list('product__pk', flat=True)
+            return self.product_type.objects.filter(pk__in=Subquery(sup_prods.values('product__pk')))
         return self.__range_iterator(_products, price_indices[0])
 
     def __filter_search_terms(self, products: QuerySet, search_term=None):

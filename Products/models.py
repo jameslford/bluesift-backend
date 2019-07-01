@@ -2,8 +2,24 @@ import uuid
 from model_utils.managers import InheritanceManager
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
-from django.db.models import Min, Avg
+from django.db.models import (
+    Min,
+    Avg,
+    Subquery,
+    OuterRef,
+    Count,
+    FloatField,
+    CharField
+)
+from django.db.models.functions import Cast
 from django.contrib.gis.geos import MultiPoint
+
+# SERIALIZED_PRODUCT_LIST_FIELDS = (
+#     'pk',
+#     'swatch_image',
+#     'manu_collection',
+#     'low_price'
+# )
 
 def availability_getter(query_term, location_pk=None):
     from Profiles.models import SupplierProduct
@@ -25,33 +41,50 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         pks = availability_getter('publish_in_store_price', location_pk)
         if pk_only:
             return pks
-        return self.filter(pk__in=pks)
+        return self.filter(pk__in=Subquery(pks))
 
     def available_in_store(self, location_pk=None, pk_only=False):
         pks = availability_getter('publish_in_store_availability', location_pk)
         if pk_only:
             return pks
-        return self.filter(pk__in=pks)
+        return self.filter(pk__in=Subquery(pks))
 
     def priced_online(self, location_pk=None, pk_only=False):
         pks = availability_getter('publish_online_price', location_pk)
         if pk_only:
             return pks
-        return self.filter(pk__in=pks)
+        return self.filter(pk__in=Subquery(pks))
 
     def installation_offered(self, location_pk=None, pk_only=False):
         pks = availability_getter('offer_installation', location_pk)
         if pk_only:
             return pks
-        return self.filter(pk__in=pks)
+        return self.filter(pk__in=Subquery(pks))
 
     def supplier_products(self, location_pk):
         from Profiles.models import SupplierProduct
-        pks = self.values_list('pk', flat=True)
-        return SupplierProduct.objects.filter(
-            supplier__id=location_pk,
-            pk__in=pks
+        # pks = self.values_list('pk', flat=True)
+        sup_prods = SupplierProduct.objects.filter(supplier__id=location_pk).filter(product__in=Subquery(self.values('pk')))
+        return sup_prods
+
+    def product_prices(self, location_pk=None):
+        from Profiles.models import SupplierProduct, CompanyShippingLocation
+        # products = self
+        term = {'product': OuterRef('bb_sku')}
+        if location_pk:
+            term['supplier__pk'] = location_pk
+            # pks = CompanyShippingLocation.objects.get(pk=location_pk).priced_products.all().values_list('product__pk', flat=True)
+            # products = self.filter(pk__in=pks)
+        price_quer = (
+            SupplierProduct.objects.filter(product=OuterRef('pk')).annotate(
+                low_price=Cast('in_store_ppu', FloatField())
+                ).order_by('-low_price')
             )
+        return self.annotate(
+            low_price=Subquery(price_quer.values('low_price')[:1])
+            )
+            # .values(*SERIALIZED_PRODUCT_LIST_FIELDS)
+
 
     def filter_availability(self, commands, location_pk=None, pk_only=False):
         pk_sets = []
@@ -95,6 +128,9 @@ class ProductManager(InheritanceManager):
 
     def safe_availability_commands(self):
         return self.get_queryset().safe_availability_commands()
+
+    def product_prices(self, location_pk=None):
+        return self.get_queryset().product_prices(location_pk)
 
 
 class Product(models.Model):
