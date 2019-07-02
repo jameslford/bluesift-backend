@@ -434,9 +434,7 @@ class ProductFilter(models.Model):
         self.check_fields()
         self.add_filter_dictionary()
         qis = self.query_indexes.all()
-        for qi in qis:
-            qi.dirty = True
-            qi.save()
+        qis.delete()
         super().save(*args, **kwargs)
 
     def __str__(self):
