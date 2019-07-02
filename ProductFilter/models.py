@@ -74,6 +74,7 @@ class Facet:
     quer_value: str
     values: List = dfield(default_factory=lambda: [])
     order: int = 10
+    key: bool = False
     selected: bool = False
     total_count: int = 0
     qterms: List[str] = None
@@ -345,7 +346,7 @@ class ProductFilter(models.Model):
             return
         products = self.get_model_products().values_list(self.key_field, flat=True).distinct()
         products = [v for v in products if v]
-        self.facets.append(Facet(self.key_field, KEYTERM_FACET, self.key_field, values=products, order=5))
+        self.facets.append(Facet(self.key_field, KEYTERM_FACET, self.key_field, key=True, values=products, order=5))
 
     def check_mc_fields(self):
         indices = sorted(enumerate(self.independent_multichoice_fields), reverse=True)
@@ -396,7 +397,7 @@ class ProductFilter(models.Model):
 
     def add_product_facets(self):
         self.facets.append(Facet(
-            'availability', AVAILABILITY_FACET, 'availability', values=Product.objects.safe_availability_commands(), order=1))
+            'availability', AVAILABILITY_FACET, 'availability', key=True, values=Product.objects.safe_availability_commands(), order=1))
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values), order=8))
 
