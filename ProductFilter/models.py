@@ -495,7 +495,7 @@ class Sorter:
 
     def __check_availability_facet(self, stripped_fields):
         avail_facet: Facet = self.facets[self.get_indices_by_ft(AVAILABILITY_FACET)[0]]
-        qterms = stripped_fields.pop('availability') if 'availability' in stripped_fields else None
+        qterms = stripped_fields.pop('availability') if 'availability' in stripped_fields else []
         avail_facet.qterms = [term for term in qterms if term in Product.objects.safe_availability_commands()]
         if not avail_facet.qterms:
             return False
@@ -544,10 +544,12 @@ class Sorter:
         return self.filter_floating(stripped_fields)
 
     def filter_floating(self, stripped_fields: dict):
+        print('stripped fields = ', stripped_fields)
         self.__instantiate_facets()
         self.__parse_querydict()
         if not stripped_fields:
             return self.__finalize_response(self.query_index.get_products().select_related('manufacturer'))
+        print('no stripped fields')
         products = self.get_products()
         self.__check_availability_facet(stripped_fields)
         search_terms = stripped_fields.pop('search') if 'search' in stripped_fields else None
@@ -561,7 +563,6 @@ class Sorter:
         products = self.__filter_location(products)
         products = self.__filter_range(products)
         return self.__finalize_response(products, True)
-
 
     def __finalize_response(self, products: QuerySet, new_terms=False):
         if new_terms:
@@ -578,8 +579,11 @@ class Sorter:
         products = self.__filter_availability(products)
         availability_facet = self.facets[self.get_index_by_qv('availability')]
         products = products.product_prices(self.location_pk)
+        product_count = products.count()
+        self.response.product_count = product_count
         serialized_prods = self.__serialize_products(products)
         response = self.query_index.response
+        response['product_count'] = product_count
         response['filter_dict'] = [asdict(availability_facet)] + response['filter_dict']
         response['products'] = serialized_prods
         return response
@@ -604,7 +608,6 @@ class Sorter:
         indices = self.__get_counted_facet_indices()
         qsets = [self.facets[q].queryset for q in indices]
         products = products.intersection(*qsets)
-        self.response.product_count = products.count()
         self.__set_filter_dict()
         self.query_index.products.clear()
         self.query_index.products.add(*products)
@@ -612,9 +615,8 @@ class Sorter:
         self.query_index.dirty = False
         self.query_index.save()
         self.response = FilterResponse()
-        if stripped_fields:
-            return self.filter_floating(stripped_fields)
-        return self.__finalize_response(products)
+        return self.filter_floating(stripped_fields)
+        # return self.__finalize_response(products)
 
     def __count_objects(self, products: QuerySet, new=False):
         indices = self.__get_counted_facet_indices()
@@ -657,7 +659,6 @@ class Sorter:
                     facet.selected = True
                 return_values.append(FacetValue(label, count, selected))
                 facet.return_values = return_values
-
 
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
@@ -727,7 +728,7 @@ class Sorter:
         color_index = self.get_indices_by_ft(COLOR_FACET)
         manu_index = self.get_indices_by_ft(MANUFACTURER_FACET)
         indices = indices + kt_index + color_index + manu_index
-        if not (kt_index and self.facets[kt_index[0]].qterms):
+        if not (kt_index or self.facets[kt_index[0]].qterms):
             self.__delete_dependents()
             return indices
         indices = indices + self.get_indices_by_ft(DEPENDENT_FACET)
