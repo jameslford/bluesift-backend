@@ -5,7 +5,7 @@ from dataclasses import field as dfield
 from typing import List, Tuple
 from django.db import models, transaction
 from django.db.models.functions import Upper, Lower, Least, Cast, Coalesce
-from django.db.models import Min, Max, Subquery
+from django.db.models import Min, Max, Subquery, Count, Q
 from django.urls import resolve as dj_resolve
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
@@ -546,9 +546,9 @@ class Sorter:
     def filter_floating(self, stripped_fields: dict):
         self.__instantiate_facets()
         self.__parse_querydict()
-        products = self.get_products()
         if not stripped_fields:
-            return self.__finalize_response(products)
+            return self.__finalize_response(self.query_index.get_products().select_related('manufacturer'))
+        products = self.get_products()
         self.__check_availability_facet(stripped_fields)
         search_terms = stripped_fields.pop('search') if 'search' in stripped_fields else None
         for key in stripped_fields:
@@ -564,28 +564,29 @@ class Sorter:
 
 
     def __finalize_response(self, products: QuerySet, new_terms=False):
-        # initial_products = self.__filter_availability(self.query_index.get_products())
         if new_terms:
             avai_prods = products.select_related(
                 'manufacturer'
             ).filter(pk__in=Subquery(self.query_index.get_products().values('pk')))
             avai_prods = self.__filter_availability(avai_prods)
-            self.__count_objects(products)
-            # products = products.select_related(
-            #     'manufacturer'
-            # ).filter(pk__in=Subquery(initial_products.values('pk')))
+            self.__count_objects(avai_prods)
             self.response.product_count = avai_prods.count()
             products = avai_prods.product_prices(self.location_pk)
-            # prices = self.__get_prices(products.all())
-            # print(prices)
-            self.__serialize_products(products)
+            self.response.products = self.__serialize_products(products)
             self.__set_filter_dict()
             return asdict(self.response)
-        initial_products = self.__filter_availability(products)
-        response = self.query_index.response
+        products = self.__filter_availability(products)
         availability_facet = self.facets[self.get_index_by_qv('availability')]
+        products = products.product_prices(self.location_pk)
+        serialized_prods = self.__serialize_products(products)
+        response = self.query_index.response
         response['filter_dict'] = [asdict(availability_facet)] + response['filter_dict']
+        response['products'] = serialized_prods
         return response
+        # return asdict(self.response)
+        # self.__count_objects(products)
+        # self.response.product_count = products.count()
+        # self.__set_filter_dict()
 
     def __parse_querydict(self):
         request_dict = QueryDict(self.query_index.query_dict)
@@ -623,10 +624,10 @@ class Sorter:
                 self.__return_no_products()
                 return
             new_prods = None
-            foc: FacetOthersCollection = FacetOthersCollection.objects.get_or_create(
+            foc, created = FacetOthersCollection.objects.get_or_create(
                 query_index=self.query_index,
-                facet_name=facet.name)[0]
-            if new:
+                facet_name=facet.name)
+            if created:
                 other_qsets = [self.facets[q].queryset for q in indices if q != index]
                 intersection = [product.pk for product in products.intersection(*other_qsets)]
                 new_prods = self.product_type.objects.filter(pk__in=intersection)
@@ -634,37 +635,43 @@ class Sorter:
             else:
                 new_prods = products.filter(pk__in=foc.get_product_pks())
             return_values = []
-            for value in facet.values:
-                count = 0
-                if facet.facet_type == BOOLGROUP_FACET:
-                    term = {value: True}
-                    count = new_prods.filter(**term).count()
-                else:
-                    term = {facet.quer_value: value}
-                    count = new_prods.filter(**term).count()
+            if facet.facet_type == BOOLGROUP_FACET:
+                args = {value: Count(value, filter=Q(**{value: True})) for value in facet.values}
+                bool_values = new_prods.aggregate(**args)
+                for value in bool_values.items():
+                    name, count = value
+                    selected = bool(facet.qterms and name in facet.qterms)
+                    facet.total_count += count
+                    if selected:
+                        facet.selected = True
+                    return_values.append(FacetValue(name, count, selected))
+                facet.return_values = return_values
+                continue
+            values = list(new_prods.values(facet.quer_value).annotate(val_count=Count(facet.quer_value)))
+            for value in values:
+                count = value['val_count']
+                label = value[facet.quer_value]
+                selected = bool(facet.qterms and label in facet.qterms)
                 facet.total_count += count
-                selected = bool(facet.qterms and value in facet.qterms)
                 if selected:
                     facet.selected = True
-                return_values.append(FacetValue(value, count, selected))
-            facet.return_values = return_values
+                return_values.append(FacetValue(label, count, selected))
+                facet.return_values = return_values
+
 
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
-            return
-        # print('product count', products.first())
+            return []
         start_page = self.response.page - 1
-        product_start = start_page * self.page_size + 1
+        product_start = start_page * self.page_size
         product_end = self.response.page * self.page_size
-        # print('product_count = ' + str(len(products)))
         if product_end > self.response.product_count:
             print('under page size. Product start = ' + str(product_start))
             self.response.load_more = False
             _products = products[product_start:]
-            self.response.products = SerpyProduct(_products, many=True, label=self.location_pk).data
-            return
+            return SerpyProduct(_products, many=True, label=self.location_pk).data
         _products = products.all()[product_start:product_end]
-        self.response.products = SerpyProduct(_products, many=True).data
+        return SerpyProduct(_products, many=True).data
 
     def __set_filter_dict(self):
         for facet in self.facets:
