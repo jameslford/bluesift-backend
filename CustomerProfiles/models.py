@@ -91,6 +91,7 @@ class CustomerProjectApplication(models.Model):
     label = models.CharField(max_length=100, blank=True, null=True)
     project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, blank=True, related_name='applications')
     products = models.ManyToManyField(CustomerProduct, blank=True)
+    quantity = models.IntegerField()
 
     def __str__(self):
         return self.label

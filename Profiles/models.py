@@ -206,12 +206,17 @@ class SupplierProduct(models.Model):
     offer_installation = models.BooleanField(default=False)
     banner_item = models.BooleanField(default=False)
 
-
     class Meta:
         unique_together = ('product', 'supplier')
 
     def __str__(self):
         return str(self.supplier) + ' ' + str(self.product.name)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.check_approvals()
+        self.check_availability()
+        self.product.set_locations()
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def location_address(self):
         return self.supplier.address.city_state()
