@@ -3,6 +3,7 @@ from Addresses.serializers import AddressSerializer
 from Addresses.models import Address, Zipcode
 from Products.models import Product
 from Products.serializers import SerpyProduct
+from django.db.models import Subquery
 from .models import CustomerProfile, CustomerProduct, CustomerProject, CustomerProjectApplication
 
 
@@ -44,6 +45,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
             'address',
             'product_count',
             'nickname',
+            'application_count'
             )
 
     def create(self, profile, validated_data):
@@ -51,7 +53,7 @@ class CustomerProjectSerializer(serializers.ModelSerializer):
         address_object = None
         if address:
             zipcode = address.pop('postal_code', None)
-            zipcode = Zipcode.objects.create(code=zipcode).first()
+            zipcode = Zipcode.objects.filter(**zipcode).first()
             if not zipcode:
                 return 'Invalid Zip'
             address_object = Address.objects.create(postal_code=zipcode, **address)
@@ -97,22 +99,24 @@ class CustomerProjectApplicationSerializer(serializers.ModelSerializer):
 
 
 class CustomerProjectDetailSerializer(serializers.ModelSerializer):
-    products = CustomerProductSerializer(many=True)
-    # products = serializers.SerializerMethodField()
+    # products = SerpyProduct(many=True)
+    products = serializers.SerializerMethodField()
     applications = CustomerProjectApplicationSerializer(many=True)
 
     class Meta:
         model = CustomerProject
         fields = (
-            'id',
+            'pk',
             'applications',
             'address',
             'nickname',
             'products'
             )
 
-    # def get_products(self, instance):
-    #     product_ids = self.context.get('product_ids', None)
-    #     products = instance.products.filter(product__id__in=list(product_ids))
-    #     return CustomerProductSerializer(products, many=True).data
-        # products = Product.objects.select_related('swatch_image', 'material', 'manufacturer').filter()
+    def get_products(self, instance):
+        # product_ids = self.context.get('product_ids', None)
+        products = Product.objects.select_related(
+            'manufacturer'
+        ).filter(pk__in=Subquery(instance.products.values('product__pk')))
+        products = products.product_prices()
+        return SerpyProduct(products, many=True).data

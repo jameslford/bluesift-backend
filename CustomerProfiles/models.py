@@ -50,6 +50,12 @@ class CustomerProject(models.Model):
     def product_count(self):
         return self.products.count()
 
+    def application_count(self):
+        # pylint: disable=no-member
+        if self.applications:
+            return self.applications.count()
+        return 0
+
     def clean(self):
         # pylint: disable=no-member
         projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 10
@@ -83,6 +89,7 @@ class CustomerProduct(models.Model):
     def __str__(self):
         return self.product.name
 
+
     class Meta:
         unique_together = ('product', 'project')
 
@@ -91,7 +98,7 @@ class CustomerProjectApplication(models.Model):
     label = models.CharField(max_length=100, blank=True, null=True)
     project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, blank=True, related_name='applications')
     products = models.ManyToManyField(CustomerProduct, blank=True)
-    quantity = models.IntegerField()
+    # quantity = models.IntegerField()
 
     def __str__(self):
         return self.label

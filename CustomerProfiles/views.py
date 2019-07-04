@@ -46,8 +46,8 @@ def customer_project(request, pk=None):
 
     if request.method == 'POST':
         serialized_project = CustomerProjectSerializer(data=request.data)
-        if not serialized_project.is_valid():
-            return Response(serialized_project.errors, status=status.HTTP_400_BAD_REQUEST)
+        # if not serialized_project.is_valid():
+        #     return Response(serialized_project.errors, status=status.HTTP_400_BAD_REQUEST)
         serialized_project.create(profile, request.data)
         return Response(status=status.HTTP_201_CREATED)
 
@@ -68,8 +68,7 @@ def customer_project(request, pk=None):
             ).filter(pk=pk).first()
         if not project.owner == profile:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        products = project.products.values_list('product__pk', flat=True).distinct()
-        products = Product.objects.filter(pk__in=products)
+        # products = project.products.values_list('product__pk', flat=True).distinct()
         cats = [cls.__name__ for cls in ProductSubClass.__subclasses__()]
 
         serialized_project = CustomerProjectDetailSerializer(project)
