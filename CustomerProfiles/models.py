@@ -98,10 +98,17 @@ class CustomerProjectApplication(models.Model):
     label = models.CharField(max_length=100, blank=True, null=True)
     project = models.ForeignKey(CustomerProject, on_delete=models.CASCADE, blank=True, related_name='applications')
     products = models.ManyToManyField(CustomerProduct, blank=True)
+    # architect = models.ForeignKey()
     # quantity = models.IntegerField()
+
+    class Meta:
+        unique_together = ('label', 'project')
 
     def __str__(self):
         return self.label
 
-    class Meta:
-        unique_together = ('label', 'project')
+    def category_selections(self):
+        from Products.models import ProductSubClass
+        return (cls.__name__ for cls in ProductSubClass.__subclasses__())
+
+    

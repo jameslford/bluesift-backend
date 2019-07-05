@@ -276,7 +276,7 @@ class ProductFilter(models.Model):
         """returns quer_values of facets that are never concretely set i.e price, location, ranges
         """
         print(self.independent_range_fields)
-        return ['lowest_price', 'in_store_ppu', 'location', 'search', 'availability'] + self.independent_range_fields
+        return ['low_price', 'in_store_ppu', 'location', 'search', 'availability'] + self.independent_range_fields
 
     def get_model_products(self):
         """ Returns a queryset containing all product subclasses of model type for
@@ -396,8 +396,14 @@ class ProductFilter(models.Model):
             self.facets.append(Facet(dependent, DEPENDENT_FACET, dependent, values=values))
 
     def add_product_facets(self):
-        self.facets.append(Facet(
-            'availability', AVAILABILITY_FACET, 'availability', key=True, values=Product.objects.safe_availability_commands(), order=1))
+        self.facets.append(
+            Facet(
+            'availability',
+            AVAILABILITY_FACET,
+            'availability',
+            key=True,
+            values=Product.objects.safe_availability_commands(), order=1)
+            )
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values), order=8))
 
@@ -500,7 +506,7 @@ class Sorter:
         if not avail_facet.qterms:
             return False
         self.facets.append(Facet('location', LOCATION_FACET, 'location', total_count=1, order=3))
-        self.facets.append(Facet('price', PRICE_FACET, 'lowest_price', total_count=1, order=2))
+        self.facets.append(Facet('price', PRICE_FACET, 'low_price', total_count=1, order=2))
         return True
 
     def get_products(self):
@@ -553,10 +559,12 @@ class Sorter:
         self.__instantiate_facets()
         self.__parse_querydict()
         if not stripped_fields:
-            return self.__finalize_response(self.query_index.get_products().select_related('manufacturer'))
+            return self.__finalize_response(
+                self.query_index.get_products().select_related('manufacturer').product_prices(self.location_pk)
+                )
         print('stripped fields')
         self.__check_availability_facet(stripped_fields)
-        products = self.get_products()
+        products = self.get_products().product_prices(self.location_pk)
         search_terms = stripped_fields.pop('search') if 'search' in stripped_fields else None
         for key in stripped_fields:
             index = self.get_index_by_qv(key)
@@ -583,7 +591,7 @@ class Sorter:
             return asdict(self.response)
         products = self.__filter_availability(products)
         availability_facet = self.facets[self.get_index_by_qv('availability')]
-        products = products.product_prices(self.location_pk)
+        # products = products.product_prices(self.location_pk)
         product_count = products.count()
         self.response.product_count = product_count
         serialized_prods = self.__serialize_products(products)
