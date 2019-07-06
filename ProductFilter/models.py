@@ -11,16 +11,16 @@ from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
-from django.core import exceptions
-from django.utils.timezone import now
+# from django.core import exceptions
+# from django.utils.timezone import now
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
-from config.scripts.globals import PRODUCT_SUBCLASSES
+from config.scripts.globals import PRODUCT_SUBCLASSES, valid_subclasses
 from Addresses.models import Zipcode
 from Products.serializers import SerpyProduct
 from Products.models import Product, ProductSubClass
 from Profiles.serializers import SupplierProductMiniSerializer
-from Profiles.models import CompanyShippingLocation, SupplierProduct
+from Profiles.models import SupplierProduct
 
 
 AVAILABILITY_FACET = 'AvailabilityFacet'
@@ -82,9 +82,6 @@ class Facet:
     collection_pk: uuid = None
     return_values: List = dfield(default_factory=lambda: [])
 
-
-def valid_subclasses():
-    return list(PRODUCT_SUBCLASSES.values())
 
 
 def get_absolute_range(products: QuerySet, facet: Facet):
@@ -398,11 +395,11 @@ class ProductFilter(models.Model):
     def add_product_facets(self):
         self.facets.append(
             Facet(
-            'availability',
-            AVAILABILITY_FACET,
-            'availability',
-            key=True,
-            values=Product.objects.safe_availability_commands(), order=1)
+                'availability',
+                AVAILABILITY_FACET,
+                'availability',
+                key=True,
+                values=Product.objects.safe_availability_commands(), order=1)
             )
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values), order=8))
