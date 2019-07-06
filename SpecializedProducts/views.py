@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 # from django.conf import settings
 from ProductFilter.models import Sorter
-from .models import FinishSurface
-
+# from SpecializedProduct.models import FinishSurface
+from SpecializedProducts.models import FinishSurface
 
 @api_view(['GET'])
 def fs_products_list(request, update=False):

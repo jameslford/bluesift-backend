@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from Profiles.models import SupplierProduct
+from UserProducts.models import SupplierProduct
 from .models import Cart, CartItem
 from .serializers import CartSerializer
 

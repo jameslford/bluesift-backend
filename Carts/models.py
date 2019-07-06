@@ -1,7 +1,7 @@
 import decimal
 from django.db import models
 from django.conf import settings
-from Profiles.models import SupplierProduct
+from UserProducts.models import SupplierProduct
 
 
 # class CartManager(models.Manager):
@@ -56,6 +56,7 @@ class Cart(models.Model):
 
     def item_count(self):
         return self.items.count()
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)

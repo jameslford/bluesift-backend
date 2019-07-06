@@ -13,21 +13,20 @@ from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
 
+from rest_framework.decorators import api_view
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from .serializers import (
-    UserSerializer,
     UserResponseSerializer,
     )
 
-from Profiles.models import CompanyAccount, EmployeeProfile
-from Profiles.serializers import CompanyAccountSerializer
-from CustomerProfiles.models import CustomerProfile, CustomerProject
-from CustomerProfiles.serializers import CustomerProfileSerializer
+# from rest_framework.permissions import IsAuthenticated
+# from Profiles.serializers import CompanyAccountSerializer
+# from CustomerProfiles.serializers import CustomerProfileSerializer
+# from Profiles.models import CompanyAccount, EmployeeProfile
+# from CustomerProfiles.models import CustomerProfile, CustomerProject
 
 
 @api_view(['POST'])
@@ -35,23 +34,26 @@ def create_user(request):
     full_name = request.data.get('full_name', None)
     email = request.data.get('email', None)
     password = request.data.get('password', None)
+    is_pro = request.data.get('is_pro', False)
+    is_supplier = request.data.get('is_pro', False)
     user_model = get_user_model()
     user = None
     if not email or not password:
         return Response('Email and password required!', status=status.HTTP_400_BAD_REQUEST)
     hashed_password = make_password(password)
 
-    user = user_model(
-        full_name=full_name,
+    user = user_model.create_user(
         email=email,
+        full_name=full_name,
         password=hashed_password,
+        is_pro=is_pro,
+        is_supplier=is_supplier,
         date_registered=datetime.datetime.now()
     )
 
     if not user:
         return Response('No user created', status=status.HTTP_400_BAD_REQUEST)
 
-    user.save()
     token = Token.objects.get_or_create(user=user)
 
     message = render_to_string('acc_activate_email.html', {
@@ -119,20 +121,20 @@ def custom_login(request):
     return Response(serialized_user.data, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def user_details(request):
-    user = request.user
-    serialized_user = UserSerializer(user)
-    if user.is_supplier:
-        account = CompanyAccount.objects.get_or_create(account_owner=user)
-        serialized_account = CompanyAccountSerializer(account)
-    else:
-        account = CustomerProfile.objects.get_or_create(user=user)
-        serialized_account = CustomerProfileSerializer(user=user)
+# @api_view(['GET'])
+# @permission_classes((IsAuthenticated,))
+# def user_details(request):
+#     user = request.user
+#     serialized_user = UserSerializer(user)
+#     if user.is_supplier:
+#         account = CompanyAccount.objects.get_or_create(account_owner=user)
+#         serialized_account = CompanyAccountSerializer(account)
+#     else:
+#         account = CustomerProfile.objects.get_or_create(user=user)
+#         serialized_account = CustomerProfileSerializer(user=user)
 
-    context = {
-        'user': serialized_user.data,
-        'account': serialized_account.data
-    }
-    return Response(context)
+#     context = {
+#         'user': serialized_user.data,
+#         'account': serialized_account.data
+#     }
+#     return Response(context)

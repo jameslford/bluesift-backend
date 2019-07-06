@@ -1,7 +1,4 @@
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
-from rest_framework.validators import UniqueValidator
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
 
@@ -14,6 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
             'get_first_name',
             'password',
             'is_supplier',
+            'is_pro',
             'staff',
             'admin',
             'is_active',
@@ -29,6 +27,7 @@ class UserResponseSerializer(serializers.ModelSerializer):
             'email',
             'get_first_name',
             'is_supplier',
+            'is_pro',
             'auth_token',
             'is_admin'
             )
@@ -45,6 +44,6 @@ class CreateSupplierSerializer(UserSerializer):
     phone_number = serializers.IntegerField(required=True)
 
 
-class LoginSerializer(serializers.Serializer):
-    email = serializers.CharField(max_length=50)
-    password = serializers.CharField(max_length=20, write_only=True)
+# class LoginSerializer(serializers.Serializer):
+#     email = serializers.CharField(max_length=50)
+#     password = serializers.CharField(max_length=20, write_only=True)

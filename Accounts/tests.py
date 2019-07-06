@@ -19,11 +19,8 @@ class AccountModelTest(TestCase):
     def test_if_add_lastname(self):
         jim = User.objects.get(id=1)
         jim.last_name = 'Ford'
-        self.assertEqual(jim.last_name,'Ford')
+        self.assertEqual(jim.last_name, 'Ford')
 
     def test_other_user(self):
-        claire = User.objects.get(email = 'claireford@gmail.com')
-        self.assertEqual(claire.get_first_name(),'claireford@gmail.com')
-
-
-
+        claire = User.objects.get(email='claireford@gmail.com')
+        self.assertEqual(claire.get_first_name(), 'claireford@gmail.com')

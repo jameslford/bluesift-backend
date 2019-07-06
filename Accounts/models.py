@@ -3,6 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from rest_framework.authtoken.models import Token
+from Profiles.models import BaseProfile
 
 
 class UserManager(BaseUserManager):
@@ -15,7 +16,8 @@ class UserManager(BaseUserManager):
             is_active=True,
             is_staff=False,
             is_admin=False,
-            is_supplier=False
+            is_supplier=False,
+            is_pro=False
             ):
         if not email:
             raise ValueError("User must have an email address")
@@ -23,6 +25,8 @@ class UserManager(BaseUserManager):
             raise ValueError("User must have valid email address")
         if not password:
             raise ValueError("Users must have a password")
+        if is_supplier and is_pro:
+            raise ValueError('User cannot be proffesional and supplier')
         user_obj = self.model(
             email=self.normalize_email(email),
             full_name=full_name,
@@ -38,7 +42,6 @@ class UserManager(BaseUserManager):
         return user_obj
 
     def create_staffuser(self, email, full_name=None, password=None):
-
         user = self.create_user(
             email,
             full_name=full_name,
@@ -65,10 +68,11 @@ class User(AbstractBaseUser):
 
     email = models.EmailField(max_length=200, unique=True)
     full_name = models.CharField(max_length=50, help_text='First Name', null=True, blank=True)
-    is_supplier = models.BooleanField(default=False)
     date_registered = models.DateTimeField(auto_now_add=True, null=True)
     date_confirmed = models.DateTimeField(auto_now_add=True, null=True)
     is_active = models.BooleanField(default=False)
+    is_pro = models.BooleanField(default=False)
+    is_supplier = models.BooleanField(default=False)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
 
@@ -90,13 +94,21 @@ class User(AbstractBaseUser):
         return self.email
 
     def get_token(self):
+        # pylint: disable=no-member
         return self.token
+
+    def get_profile(self):
+        return BaseProfile.subclasses.get_subclass(user=self)
 
     def get_locations(self):
         locations = None
+        # pylint: disable=no-member
         if not self.is_supplier:
+            # pylint: disable=no-member
             locations = self.customer_profile.projects
+        # pylint: disable=no-member
         elif self.employee_profile:
+            # pylint: disable=no-member
             locations = self.employee_profile.company_account.shipping_locations
         return locations
 
