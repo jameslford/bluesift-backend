@@ -1,15 +1,13 @@
 from django.contrib import admin
 from .models import (
-    CompanyAccount,
-    CompanyShippingLocation,
-    SupplierProduct,
-    EmployeeProfile
+    ProEmployeeProfile,
+    RetailerEmployeeProfile,
+    ConsumerProfile
     )
 
 
-admin.site.register(CompanyAccount)
-admin.site.register(CompanyShippingLocation)
-admin.site.register(SupplierProduct)
-admin.site.register(EmployeeProfile)
+admin.site.register(ConsumerProfile)
+admin.site.register(RetailerEmployeeProfile)
+admin.site.register(ProEmployeeProfile)
 
 # Register your models here.

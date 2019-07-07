@@ -4,7 +4,7 @@ from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List, Tuple
 from django.db import models, transaction
-from django.db.models.functions import Upper, Lower, Least, Cast, Coalesce
+# from django.db.models.functions import Upper, Lower, Least, Cast, Coalesce
 from django.db.models import Min, Max, Subquery, Count, Q
 from django.urls import resolve as dj_resolve
 from django.contrib.postgres.search import SearchVector
@@ -15,12 +15,12 @@ from django.http import HttpRequest, QueryDict
 # from django.utils.timezone import now
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
-from config.scripts.globals import PRODUCT_SUBCLASSES, valid_subclasses
+from config.scripts.globals import valid_subclasses
 from Addresses.models import Zipcode
 from Products.serializers import SerpyProduct
 from Products.models import Product, ProductSubClass
-from Profiles.serializers import SupplierProductMiniSerializer
-from Profiles.models import SupplierProduct
+from UserProducts.serializers import RetailerProductMiniSerializer
+from UserProducts.models import RetailerProduct
 
 
 AVAILABILITY_FACET = 'AvailabilityFacet'
@@ -81,7 +81,6 @@ class Facet:
     queryset: QuerySet = None
     collection_pk: uuid = None
     return_values: List = dfield(default_factory=lambda: [])
-
 
 
 def get_absolute_range(products: QuerySet, facet: Facet):
@@ -508,7 +507,7 @@ class Sorter:
 
     def get_products(self):
         if self.location_pk:
-            pks = SupplierProduct.objects.filter(supplier__pk=self.location_pk).values_list('product__pk', flat=True)
+            pks = RetailerProduct.objects.filter(supplier__pk=self.location_pk).values_list('product__pk', flat=True)
             return self.product_type.objects.all().prefetch_related(
                 'priced'
             ).filter(pk__in=pks)
@@ -838,7 +837,13 @@ class Sorter:
         for index in self.__get_counted_facet_indices():
             facet = self.facets[index]
             if facet.values:
-                facet.return_values = [FacetValue(value, 0, bool(facet.qterms and value in facet.qterms)) for value in facet.values]
+                facet.return_values = [
+                    FacetValue(
+                        value,
+                        0,
+                        bool(facet.qterms and value in facet.qterms)
+                        ) for value in facet.values
+                    ]
         self.response.message = 'No results'
 
 
@@ -878,7 +883,7 @@ class DetailBuilder:
 
     def get_priced(self):
         if self.product.get_in_store_priced():
-            return list(SupplierProductMiniSerializer(self.product.get_in_store_priced(), many=True).data)
+            return list(RetailerProductMiniSerializer(self.product.get_in_store_priced(), many=True).data)
         return []
 
     def get_stock_details(self) -> DetailListItem:

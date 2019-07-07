@@ -27,8 +27,7 @@ class CentroidManager(models.Manager):
         coords = self.filter(code=code).first().centroid.point
         if coords:
             return coords
-        else:
-            return
+
 
 
 class Zipcode(models.Model):

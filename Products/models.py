@@ -3,24 +3,24 @@ from model_utils.managers import InheritanceManager
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
 from django.db.models import (
-    Min,
     Avg,
     Subquery,
     OuterRef,
-    Count,
-    FloatField,
     CharField
+    # Min,
+    # Count,
+    # FloatField,
 )
-from django.db.models.functions import Cast, Coalesce, Least
+from django.db.models.functions import Least
 from django.contrib.gis.geos import MultiPoint
 
 
 def availability_getter(query_term, location_pk=None):
-    from Profiles.models import SupplierProduct
+    from UserProducts.models import RetailerProduct
     term = {query_term: True}
     if location_pk:
         term['supplier_id'] = location_pk
-    return SupplierProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
+    return RetailerProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
 
 
 class Manufacturer(models.Model):
@@ -56,9 +56,8 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         return self.filter(pk__in=Subquery(pks))
 
     def supplier_products(self, location_pk):
-        from Profiles.models import SupplierProduct
-        # pks = self.values_list('pk', flat=True)
-        sup_prods = SupplierProduct.objects.filter(supplier__id=location_pk).filter(product__in=Subquery(self.values('pk')))
+        from UserProducts.models import RetailerProduct
+        sup_prods = RetailerProduct.objects.filter(supplier__id=location_pk).filter(product__in=Subquery(self.values('pk')))
         return sup_prods
 
     def filter_availability(self, commands, location_pk=None, pk_only=False):
@@ -85,12 +84,12 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         return ('available_in_store', 'priced_in_store', 'installation_offered')
 
     def product_prices(self, location_pk=None):
-        from Profiles.models import SupplierProduct
+        from UserProducts.models import RetailerProduct
         term = {'product__pk': OuterRef('pk')}
         if location_pk:
             term['supplier__pk'] = location_pk
         sup_prods = (
-            SupplierProduct
+            RetailerProduct
             .objects
             .filter(**term).only('in_store_ppu', 'online_ppu')
             .annotate(min_price=Least('in_store_ppu', 'online_ppu'))
@@ -105,14 +104,12 @@ class ProductAvailabilityQuerySet(models.QuerySet):
             )
         )
 
-
-
     def get_lowest(self, location_pk=None):
-        from Profiles.models import SupplierProduct
+        from UserProducts.models import RetailerProduct
         term = {'product__in': self.values('pk')}
         if location_pk:
             term['supplier__pk'] = location_pk
-        sup_prods = SupplierProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
+        sup_prods = RetailerProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
             min_price=Least('in_store_ppu', 'online_ppu')
         )
         return list(sup_prods.values('min_price', 'product__pk'))
@@ -173,7 +170,7 @@ class Product(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True, blank=True)
 
-    in_store = models.BooleanField(default=False)    
+    in_store = models.BooleanField(default=False)
     online_and_priced = models.BooleanField(default=False)
     in_store_and_priced = models.BooleanField(default=False)
     installation_offered = models.BooleanField(default=False)
@@ -234,15 +231,15 @@ class Product(models.Model):
             'supplier__address__postal_code'
         ).filter(publish_in_store_price=True)
 
-    def set_prices(self):
-        self.in_store = self.priced.all().filter(publish_in_store_availability=True).exist()
-        self.in_store_and_priced = self.priced.all().filter(publish_in_store_price=True).exist()
-        self.online_and_priced = self.priced.all().filter(publish_online_price=True).exist()
-        if self.in_store_and_priced or self.online_and_priced:
-            price = self.priced.all().aggregate(Min('in_store_ppu'), Avg('in_store_ppu'))
-            self.lowest_price = price["in_store_ppu__min"]
-            self.average_price = price['in_store_ppu__avg']
-        self.save()
+    # def set_prices(self):
+    #     self.in_store = self.priced.all().filter(publish_in_store_availability=True).exist()
+    #     self.in_store_and_priced = self.priced.all().filter(publish_in_store_price=True).exist()
+    #     self.online_and_priced = self.priced.all().filter(publish_online_price=True).exist()
+    #     if self.in_store_and_priced or self.online_and_priced:
+    #         price = self.priced.all().aggregate(Min('in_store_ppu'), Avg('in_store_ppu'))
+    #         self.lowest_price = price["in_store_ppu__min"]
+    #         self.average_price = price['in_store_ppu__avg']
+    #     self.save()
 
     def set_locations(self):
         self.locations = None

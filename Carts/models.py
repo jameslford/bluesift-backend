@@ -1,7 +1,7 @@
 import decimal
 from django.db import models
 from django.conf import settings
-from UserProducts.models import SupplierProduct
+from UserProducts.models import RetailerProduct
 
 
 # class CartManager(models.Manager):
@@ -60,7 +60,7 @@ class Cart(models.Model):
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey(SupplierProduct, on_delete=models.CASCADE, blank=True)
+    product = models.ForeignKey(RetailerProduct, on_delete=models.CASCADE, blank=True)
     quantity = models.IntegerField()
 
     def __str__(self):

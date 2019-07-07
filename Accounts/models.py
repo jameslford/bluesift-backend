@@ -100,17 +100,26 @@ class User(AbstractBaseUser):
     def get_profile(self):
         return BaseProfile.subclasses.get_subclass(user=self)
 
-    def get_locations(self):
-        locations = None
-        # pylint: disable=no-member
-        if not self.is_supplier:
-            # pylint: disable=no-member
-            locations = self.customer_profile.projects
-        # pylint: disable=no-member
-        elif self.employee_profile:
-            # pylint: disable=no-member
-            locations = self.employee_profile.company_account.shipping_locations
-        return locations
+    def get_group(self):
+        profile = self.get_profile()
+        if self.is_supplier or self.is_pro:
+            return profile.company
+        return profile.library
+
+    def get_collections(self):
+        from UserProductCollections.models import RetailerLocation, ProProject, ConsumerProject
+        group = self.get_group()
+        if self.is_supplier:
+            return RetailerLocation.objects.select_related(
+                'product',
+            ).filter(company=group)
+        if self.is_pro:
+            return ProProject.objects.select_related(
+                'product'
+            ).filter(owner=group)
+        return ConsumerProject.objects.select_related(
+            'product'
+        ).filter(owner=group)
 
     @property
     def is_staff(self):

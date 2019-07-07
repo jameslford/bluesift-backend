@@ -1,20 +1,14 @@
 from model_utils.managers import InheritanceManager
+from model_utils.choices import Choices
 from django.db import models
 from Addresses.models import Address
-from Plans.models import SupplierPlan
+from Plans.models import RetailerPlan, ProPlan
 
 
-class BaseGroup(models.Model):
-
-    subclasses = InheritanceManager()
-
-
-
-class Company(BaseGroup):
+class Company(models.Model):
     name = models.CharField(max_length=40, unique=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
     business_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
-    plan = models.ForeignKey(SupplierPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
     email_verified = models.BooleanField(default=False)
     slug = models.SlugField(null=True, blank=True)
 
@@ -25,14 +19,15 @@ class Company(BaseGroup):
         # pylint: disable=no-member
         return self.employees
 
-    def shipping_location_count(self):
-        try:
-            count = self.shipping_locations.count()
-            return count
-        except:
-            return 0
+
+class RetailerCompany(Company):
+    plan = models.ForeignKey(RetailerPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
 
 
+class ServiceType(models.Model):
+    label = models.CharField(max_length=40)
 
-class Library(BaseGroup):
-    pass
+
+class ProCompany(Company):
+    service = models.ForeignKey(ServiceType, null=True, on_delete=models.SET_NULL)
+    plan = models.ForeignKey(ProPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')

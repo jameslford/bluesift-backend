@@ -2,7 +2,7 @@ import webcolors
 import scipy
 import scipy.cluster
 import numpy as np
-from FinishSurfaces.models import FinishSurface
+from SpecializedProducts.models import FinishSurface
 
 def hex_to_rgb(hex_val):
     hex_val = hex_val.strip('#')

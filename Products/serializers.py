@@ -1,7 +1,7 @@
 import serpy
-from uuid import UUID
-from rest_framework import serializers
-from .models import Product, Manufacturer
+from .models import Product
+# from uuid import UUID
+# from rest_framework import serializers
 
 
 class SerpyManufacturer(serpy.Serializer):
@@ -38,29 +38,27 @@ class SerpyProduct(serpy.Serializer):
         return str(prod_obj.bb_sku)
 
 
-class ProductDetailSerializer(serializers.ModelSerializer):
+# class ProductDetailSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Product
-        fields = (
-            'id',
-            'name',
-            'unit',
-            'actual_color',
+#     class Meta:
+#         model = Product
+#         fields = (
+#             'id',
+#             'name',
+#             'unit',
+#             'actual_color',
 
-            'manufacturer',
-            'manufacturer_url',
-            'manufacturer_sku',
-            'manu_collection',
-            'manufacturer_style',
-            'manufacturer_name',
-            'finish',
+#             'manufacturer',
+#             'manufacturer_url',
+#             'manufacturer_sku',
+#             'manu_collection',
+#             'manufacturer_style',
+#             'manufacturer_name',
+#             'finish',
 
-            'lowest_price',
+#             'lowest_price',
 
-            'room_scene',
-            'swatch_image',
-            'tiling_image',
-
-        )
-
+#             'room_scene',
+#             'swatch_image',
+#             'tiling_image',
+#         )

@@ -1,8 +1,10 @@
+import datetime
 from django.db import models
+from Products.models import Product
+from UserProductCollections.models import BaseProject, RetailerLocation
 
 
-
-class CustomerProduct(models.Model):
+class ProjectProduct(models.Model):
     product = models.ForeignKey(
         Product,
         null=True,
@@ -10,7 +12,7 @@ class CustomerProduct(models.Model):
         related_name='customer_products'
         )
     project = models.ForeignKey(
-        CustomerProject,
+        BaseProject,
         on_delete=models.CASCADE,
         related_name='products'
         )
@@ -22,20 +24,17 @@ class CustomerProduct(models.Model):
         unique_together = ('product', 'project')
 
 
-
-class SupplierProduct(models.Model):
-
+class RetailerProduct(models.Model):
     product = models.ForeignKey(
         Product,
         null=True,
         on_delete=models.SET_NULL,
         related_name='priced'
         )
-
-    supplier = models.ForeignKey(
-        CompanyShippingLocation,
+    retailer = models.ForeignKey(
+        RetailerLocation,
         on_delete=models.CASCADE,
-        related_name='priced_products'
+        related_name='products'
         )
 
     units_available_in_store = models.IntegerField(default=0, null=True)
@@ -58,10 +57,10 @@ class SupplierProduct(models.Model):
     banner_item = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('product', 'supplier')
+        unique_together = ('product', 'retailer')
 
     def __str__(self):
-        return str(self.supplier) + ' ' + str(self.product.name)
+        return str(self.retailer) + ' ' + str(self.product.name)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.check_approvals()
@@ -70,10 +69,10 @@ class SupplierProduct(models.Model):
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def location_address(self):
-        return self.supplier.address.city_state()
+        return self.retailer.address.city_state()
 
     def location_id(self):
-        return self.supplier.id
+        return self.retailer.pk
 
     def percentage_off(self):
         if not self.on_sale and self.sale_price and self.in_store_ppu:
@@ -90,21 +89,21 @@ class SupplierProduct(models.Model):
     def set_banner(self):
         if not self.banner_item:
             return
-        location_banner_item_count = self.supplier.priced_products.filter(banner_item=True).count()
+        location_banner_item_count = self.retailer.products.filter(banner_item=True).count()
         if location_banner_item_count >= 3:
             self.banner_item = False
             return
 
     def company_name(self):
-        return self.supplier.company_account.name
+        return self.retailer.company.name
 
     def coordinates(self):
-        coordinates = self.supplier.address.coordinates
+        coordinates = self.retailer.address.coordinates
         return [coordinates.lat, coordinates.lng]
 
-    def set_online_price(self):
-        if self.in_store_ppu:
-            self.online_ppu = Decimal(self.in_store_ppu) * Decimal(settings.MARKUP)
+    # def set_online_price(self):
+    #     if self.in_store_ppu:
+    #         self.online_ppu = Decimal(self.in_store_ppu) * Decimal(settings.MARKUP)
 
     def set_self_bb_sku(self):
         bb_sku = self.product.bb_sku
@@ -119,8 +118,8 @@ class SupplierProduct(models.Model):
             self.publish_in_store_price = False
 
     def check_approvals(self):
-        if not self.supplier.approved_online_seller:
+        if not self.retailer.approved_online_seller:
             self.publish_online_price = False
-        if not self.supplier.approved_in_store_seller:
+        if not self.retailer.approved_in_store_seller:
             self.publish_in_store_price = False
             self.publish_in_store_availability = False

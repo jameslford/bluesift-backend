@@ -43,8 +43,8 @@ INSTALLED_APPS = [
     'Carts',
     'Cards',
     'config',
-    'CustomerProfiles',
-    'SpecializedProducts',
+    # 'CustomerProfiles',
+    'Groups',
     'MailingList',
     'Orders',
     'Plans',
@@ -54,7 +54,10 @@ INSTALLED_APPS = [
     'Ratings',
     'Scraper',
     'Scraper.ScraperFinishSurface',
-    'Scraper.ScraperCleaner'
+    'Scraper.ScraperCleaner',
+    'SpecializedProducts',
+    'UserProductCollections',
+    'UserProducts'
 ]
 
 # CELERY STUFF
@@ -105,8 +108,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-
 
 
 LANGUAGE_CODE = 'en-us'
