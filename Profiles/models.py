@@ -20,6 +20,7 @@ class ProfileManager(models.Manager):
             company = kwargs.get('company', None)
             owner = kwargs.get('owner', False)
             admin = kwargs.get('admin', False)
+            title = kwargs.get('title', None)
             if not company:
                 raise ValueError('must provide company')
             if user.is_pro:
@@ -27,12 +28,14 @@ class ProfileManager(models.Manager):
                     user=user,
                     company=company,
                     owner=owner,
+                    title=title,
                     admin=admin)
             else:
                 profile = RetailerEmployeeProfile(
                     user=user,
                     company=company,
                     owner=owner,
+                    title=title,
                     admin=admin)
         else:
             plan = kwargs.get('plan', None)
@@ -94,6 +97,11 @@ class ProEmployeeProfile(EmployeeBaseProfile):
         related_name='employees'
         )
 
+    def save(self, *args, **kwargs):
+        if not self.user.is_pro:
+            raise ValueError('user is not pro')
+        super(ProEmployeeProfile, self).save(*args, **kwargs)
+
 
 class RetailerEmployeeProfile(EmployeeBaseProfile):
     company = models.ForeignKey(
@@ -101,6 +109,11 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
         on_delete=models.CASCADE,
         related_name='employees'
     )
+
+    def save(self, *args, **kwargs):
+        if not self.user.is_supplier:
+            raise ValueError('user is not retailer')
+        super(RetailerEmployeeProfile, self).save(*args, **kwargs)
 
     # def __str__(self):
     #     return self.user.email

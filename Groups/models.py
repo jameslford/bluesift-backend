@@ -5,6 +5,23 @@ from Addresses.models import Address
 from Plans.models import RetailerPlan, ProPlan
 
 
+class CompanyManager(models.Manager):
+    def create_company(self, user, **kwargs):
+        if user.is_pro:
+            return ProCompany.objects.create(**kwargs)
+        if user.is_supplier:
+            del kwargs['service']
+            return RetailerCompany.objects.create(**kwargs)
+        raise ValueError('user is not pro or supplier')
+
+        # name = kwargs.get('name', None)
+        # phone_number = kwargs.get('phone_number', None)
+        # address = kwargs.get('business_address', None)
+        # email_verified = kwargs.get('email_verified', False)
+        # slug = kwargs.get('slug', None)
+        # service_type = kwargs.get('service_type', None)
+
+
 class Company(models.Model):
     name = models.CharField(max_length=40, unique=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
@@ -18,6 +35,9 @@ class Company(models.Model):
     def get_employees(self):
         # pylint: disable=no-member
         return self.employees
+
+    objects = CompanyManager()
+    subclasses = InheritanceManager()
 
 
 class RetailerCompany(Company):

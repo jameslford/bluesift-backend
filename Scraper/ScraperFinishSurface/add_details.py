@@ -1,6 +1,6 @@
 import decimal
 from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
-from FinishSurfaces.models import FinishSurface
+from SpecializedProducts.models import FinishSurface
 from django.contrib.postgres.fields import DecimalRangeField
 from config.scripts.measurements import char_dec_range_conversion
 

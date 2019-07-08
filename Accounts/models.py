@@ -37,6 +37,7 @@ class UserManager(BaseUserManager):
         user_obj.admin = is_admin
         user_obj.is_active = is_active
         user_obj.is_supplier = is_supplier
+        user_obj.is_pro = is_pro
         user_obj.save(using=self.db)
         Token.objects.get_or_create(user=user_obj)
         return user_obj

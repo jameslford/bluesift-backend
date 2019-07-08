@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from Addresses.models import Address
 from Groups.models import ProCompany, RetailerCompany
-from Profiles.models import ConsumerProfile, RetailerEmployeeProfile
+from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile
 from model_utils.managers import InheritanceManager
 
 
@@ -89,8 +89,7 @@ class RetailerLocation(models.Model):
             return super().clean()
         if self.local_admin.company == self.company:
             return super().clean()
-        else:
-            raise ValidationError('Employee not a company employee')
+        raise ValidationError('Employee not a company employee')
 
     def save(self, *args, **kwargs):
         if not self.address:
@@ -105,8 +104,8 @@ class RetailerLocation(models.Model):
 
 
 class BaseProject(models.Model):
-    nickname = models.CharField(max_length=60)
-    collaborators = models.ManyToManyField(settings.AUTH_USER_MODEL)
+    pro_collaborator = models.ManyToManyField(ProEmployeeProfile)
+    collaborators = models.ManyToManyField(ConsumerProfile)
     deadline = models.DateTimeField(null=True, blank=True)
     template = models.BooleanField(default=False)
     address = models.ForeignKey(
@@ -117,24 +116,8 @@ class BaseProject(models.Model):
         related_name='projects'
     )
 
-
-class ProProject(BaseProject):
-    owner = models.ForeignKey(
-        ProCompany,
-        on_delete=models.CASCADE,
-        related_name='projects'
-    )
-
-
-class ConsumerProject(BaseProject):
-    owner = models.ForeignKey(
-        ConsumerProfile,
-        on_delete=models.CASCADE,
-        related_name='projects'
-        )
-
-    def __str__(self):
-        return self.nickname
+    objects = models.Manager()
+    subclasses = InheritanceManager()
 
     def product_count(self):
         return self.products.count()
@@ -145,6 +128,40 @@ class ConsumerProject(BaseProject):
             return self.applications.count()
         return 0
 
+
+class ProProject(BaseProject):
+    nickname = models.CharField(max_length=60)
+    owner = models.ForeignKey(
+        ProCompany,
+        on_delete=models.CASCADE,
+        related_name='projects'
+    )
+
+    class Meta:
+        unique_together = ('nickname', 'owner')
+
+    def save(self, *args, **kwargs):
+        if not self.nickname:
+            count = self.owner.projects.count() + 1
+            self.nickname = 'Project ' + str(count)
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+
+class ConsumerProject(BaseProject):
+    nickname = models.CharField(max_length=60)
+    owner = models.ForeignKey(
+        ConsumerProfile,
+        on_delete=models.CASCADE,
+        related_name='projects'
+        )
+
+    class Meta:
+        unique_together = ('nickname', 'owner')
+
+    def __str__(self):
+        return self.nickname
+
     def clean(self):
         # pylint: disable=no-member
         projects_allowed = self.owner.plan.project_theshhold if self.owner.plan else 10
@@ -154,9 +171,8 @@ class ConsumerProject(BaseProject):
         raise ValidationError("Already at plan's project quota")
 
     def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save()
         if not self.nickname:
             count = self.owner.projects.count() + 1
             self.nickname = 'Project ' + str(count)
+        self.full_clean()
         return super().save(*args, **kwargs)
