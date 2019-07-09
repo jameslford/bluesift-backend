@@ -3,6 +3,7 @@ import decimal
 import random
 from django.db import transaction
 from django.core.management.base import BaseCommand
+from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 from config.scripts import lists
@@ -44,11 +45,10 @@ class Command(BaseCommand):
                 user = user_model.objects.create_user(email=email, is_supplier=True, password=password)
             else:
                 user = user_model.objects.create_user(email=email, is_pro=True, password=password)
-
             zipcode = Zipcode.objects.get(code=address['postalCode'])
             location_address = Address.objects.create(
                 address_line_1=address['address1'],
-                city=address['city'],
+                city=address.get('city', None),
                 state=address['state'],
                 postal_code=zipcode
             )
@@ -62,13 +62,19 @@ class Command(BaseCommand):
                 business_address=location_address,
                 service=service_object
             )
+            BaseProfile.objects.create_profile(
+                user,
+                company=company,
+                owner=True,
+                title='CEO'
+                )
             addresses = [location_address]
-            for x_ad in range(random.randint(0,2)):
+            for x_ad in range(random.randint(0, 2)):
                 new_add = random.choice(ADDRESSES)
                 new_zip = Zipcode.objects.get(code=new_add['postalCode'])
                 new_add_object = Address.objects.create(
                     address_line_1=new_add['address1'],
-                    city=new_add['city'],
+                    city=new_add.get('city', None),
                     state=new_add['state'],
                     postal_code=new_zip
                     )
@@ -108,18 +114,18 @@ class Command(BaseCommand):
                         sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
                         sup_prod.offer_installation = offer_install
                         sup_prod.save()
-                    return
-            project = ProProject.objects.create(
-                owner=company,
-                address=addie
-                )
-            range_int = random.randint(10, 30)
-            project_prod_ids = list(product_ids)
-            for x in range(range_int):
-                prod_id = random.choice(project_prod_ids)
-                product = Product.objects.get(pk=prod_id)
-                del project_prod_ids[project_prod_ids.index(prod_id)]
-                ProjectProduct.objects.create(
-                    project=project,
-                    product=product
-                )
+                else:
+                    project = ProProject.objects.create(
+                        owner=company,
+                        address=addie
+                        )
+                    range_int = random.randint(10, 30)
+                    project_prod_ids = list(product_ids)
+                    for x in range(range_int):
+                        prod_id = random.choice(project_prod_ids)
+                        product = Product.objects.get(pk=prod_id)
+                        del project_prod_ids[project_prod_ids.index(prod_id)]
+                        ProjectProduct.objects.create(
+                            project=project,
+                            product=product
+                        )

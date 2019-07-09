@@ -25,7 +25,7 @@ class CompanyManager(models.Manager):
 class Company(models.Model):
     name = models.CharField(max_length=40, unique=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
-    business_address = models.ForeignKey(Address, null=True, on_delete=models.CASCADE)
+    business_address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
     email_verified = models.BooleanField(default=False)
     slug = models.SlugField(null=True, blank=True)
 

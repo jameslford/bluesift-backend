@@ -234,7 +234,7 @@ class ProductFilter(models.Model):
     products: QuerySet = None
     sub_product = models.OneToOneField(
         ContentType,
-        # limit_choices_to=subclass_content_types(),
+        limit_choices_to={'app_label': 'SpecializedProducts'},
         on_delete=models.CASCADE,
         null=True
         )

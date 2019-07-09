@@ -74,11 +74,11 @@ def get_short_lib(request, pk=None):
     if not user.is_authenticated:
         blank_slib = ShortLib(0, [], [])
         return Response(asdict(blank_slib), status=status.HTTP_200_OK)
-    collections = user.get_collections
+    collections = user.get_collections()
     collection = collections.get(pk=pk) if pk else collections.first()
     selected_proj_loc = PLShort(collection.nickname, collection.pk)
     pl_list = collections.values('nickname', 'pk')
-    product_ids = collection.products.values_list('product__id', flat=True)
+    product_ids = collection.products.values_list('product__pk', flat=True)
     short_lib = ShortLib(
         count=collections.count(),
         product_ids=product_ids,
@@ -86,7 +86,6 @@ def get_short_lib(request, pk=None):
         selected_location=selected_proj_loc
         )
     return Response(asdict(short_lib), status=status.HTTP_200_OK)
-
 
 
 @api_view(['GET'])
@@ -103,11 +102,12 @@ def pl_status_for_product(request: HttpRequest, pk):
     return Response(asdict(pl_list), status=status.HTTP_200_OK)
 
 
-
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
-def profile(request: HttpRequest):
-    pass
+def get_profile(request: HttpRequest):
+
+    if request.method == 'GET':
+        profile = request.user.get_profile()
 
 # from django.conf import settings
 # from django.contrib.postgres.search import SearchVector

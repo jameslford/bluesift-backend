@@ -111,15 +111,15 @@ class User(AbstractBaseUser):
         from UserProductCollections.models import RetailerLocation, ProProject, ConsumerProject
         group = self.get_group()
         if self.is_supplier:
-            return RetailerLocation.objects.select_related(
-                'product',
+            return RetailerLocation.objects.prefetch_related(
+                'products'
             ).filter(company=group)
         if self.is_pro:
-            return ProProject.objects.select_related(
-                'product'
+            return ProProject.objects.prefetch_related(
+                'products'
             ).filter(owner=group)
-        return ConsumerProject.objects.select_related(
-            'product'
+        return ConsumerProject.objects.prefetch_related(
+            'products'
         ).filter(owner=group)
 
     @property

@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path, include, reverse
 from django.views.generic.base import RedirectView
+from .views import get_header
 # from .views import landing, get_short_lib, pl_status_for_product
 
 
@@ -10,9 +11,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('Accounts.urls')),
     path('bbadmin/', include('BBadmin.urls')),
+    path('header-list', get_header),
     path('specialized-products/', include('SpecializedProducts.urls')),
     path('mailing-list/', include('MailingList.urls')),
     path('orders/', include('Orders.urls')),
+    path('profiles/', include('Profiles.urls')),
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),
     # path('', landing),

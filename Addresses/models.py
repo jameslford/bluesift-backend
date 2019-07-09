@@ -43,7 +43,7 @@ class Zipcode(models.Model):
 class Address(models.Model):
     address_line_1 = models.CharField(max_length=120)
     address_line_2 = models.CharField(max_length=120, null=True, blank=True)
-    city = models.CharField(max_length=120)
+    city = models.CharField(max_length=120, null=True, blank=True)
     country = models.CharField(
         max_length=120,
         blank=True,

@@ -1,5 +1,6 @@
 # ''' profiles.urls.py '''
-# from django.urls import path
+from django.urls import path
+from .views import get_short_lib, pl_status_for_product
 # from .views import (
 #     company_account,
 #     supplier_list,
@@ -8,6 +9,11 @@
 #     sv_supplier_location,
 #     supplier_product
 #     )
+
+urlpatterns = [
+    path('shortLib', get_short_lib),
+    path('shortLib/<str:pk>', get_short_lib)
+]
 
 # urlpatterns = [
 #     path('company-account', company_account),

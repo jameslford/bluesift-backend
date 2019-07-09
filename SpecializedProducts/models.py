@@ -50,6 +50,9 @@ class FinishSurface(ProductSubClass):
     sqft_per_carton = models.CharField(max_length=70, null=True)
     slip_resistant = models.BooleanField(default=False)
 
+    class Meta:
+        verbose_name = 'finish surfaces'
+
 
     def set_size(self):
         if not self.size:
