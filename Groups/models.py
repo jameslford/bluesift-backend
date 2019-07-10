@@ -14,13 +14,6 @@ class CompanyManager(models.Manager):
             return RetailerCompany.objects.create(**kwargs)
         raise ValueError('user is not pro or supplier')
 
-        # name = kwargs.get('name', None)
-        # phone_number = kwargs.get('phone_number', None)
-        # address = kwargs.get('business_address', None)
-        # email_verified = kwargs.get('email_verified', False)
-        # slug = kwargs.get('slug', None)
-        # service_type = kwargs.get('service_type', None)
-
 
 class Company(models.Model):
     name = models.CharField(max_length=40, unique=True)
@@ -29,6 +22,9 @@ class Company(models.Model):
     email_verified = models.BooleanField(default=False)
     slug = models.SlugField(null=True, blank=True)
 
+    objects = CompanyManager()
+    subclasses = InheritanceManager()
+
     def __str__(self):
         return self.name
 
@@ -36,8 +32,15 @@ class Company(models.Model):
         # pylint: disable=no-member
         return self.employees
 
-    objects = CompanyManager()
-    subclasses = InheritanceManager()
+    def company_name(self):
+        return self.name
+
+    def nickname(self):
+        return self.name
+
+    def address(self):
+        return self.business_address
+
 
 
 class RetailerCompany(Company):
@@ -51,3 +54,8 @@ class ServiceType(models.Model):
 class ProCompany(Company):
     service = models.ForeignKey(ServiceType, null=True, on_delete=models.SET_NULL)
     plan = models.ForeignKey(ProPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
+
+    def service_type(self):
+        if self.service:
+            return self.service.label
+        return None

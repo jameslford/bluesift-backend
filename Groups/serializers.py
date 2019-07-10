@@ -1,15 +1,45 @@
+import serpy
 from rest_framework import serializers
-# from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
+from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
+from .models import RetailerCompany, ProCompany
+from UserProductCollections.models import RetailerLocation
 # from Addresses.models import Address, Zipcode
 # from Groups.models import CompanyAccount
 
+DEFAULT_BUSINESS_LIST_FIELDS = [
+    'pk',
+    'address',
+    'phone_number',
+    'company_name',
+    'nickname',
+    ]
+
+RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count']
+PRO_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['service_type']
 
 
-# class CompanyAccountSerializer(serializers.ModelSerializer):
+class RetailerListSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+
+    class Meta:
+        model = RetailerLocation
+        fields = tuple(RETAILER_LIST)
+
+
+class ProListSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+
+    class Meta:
+        model = ProCompany
+        fields = tuple(PRO_LIST)
+
+
+
+# class RetailerCompanySerializer(serializers.ModelSerializer):
 #     address = AddressSerializer(read_only=True)
 
 #     class Meta:
-#         model = CompanyAccount
+#         model = RetailerCompany
 #         fields = ('name', 'phone_number', 'address')
 
 

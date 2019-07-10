@@ -4,15 +4,16 @@ from rest_framework.response import Response
 from Groups.models import ServiceType
 from Products.models import ProductSubClass
 
+
 def convert(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    s1 = re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    return s1.replace('_', '-')
 
 
 @api_view(['GET'])
-def get_header(request):
+def get_header_list(request):
     pro_types = list(ServiceType.objects.values_list('label', flat=True))
-    pro_types.append('All')
     departments = [convert(cls.__name__) for cls in ProductSubClass.__subclasses__()]
     print(f'departments={sorted(departments)}')
     return Response({

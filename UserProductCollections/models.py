@@ -73,7 +73,7 @@ class RetailerLocation(models.Model):
         return num
 
     def product_count(self):
-        return self.priced_products.count()
+        return self.products.count()
 
     def address_string(self):
         if self.address:
