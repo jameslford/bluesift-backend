@@ -19,7 +19,7 @@ def availability_getter(query_term, location_pk=None):
     from UserProducts.models import RetailerProduct
     term = {query_term: True}
     if location_pk:
-        term['supplier_id'] = location_pk
+        term['retailer_id'] = location_pk
     return RetailerProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
 
 
@@ -55,9 +55,9 @@ class ProductAvailabilityQuerySet(models.QuerySet):
             return pks
         return self.filter(pk__in=Subquery(pks))
 
-    def supplier_products(self, location_pk):
+    def retailer_products(self, location_pk):
         from UserProducts.models import RetailerProduct
-        sup_prods = RetailerProduct.objects.filter(supplier__id=location_pk).filter(product__in=Subquery(self.values('pk')))
+        sup_prods = RetailerProduct.objects.filter(retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
         return sup_prods
 
     def filter_availability(self, commands, location_pk=None, pk_only=False):
@@ -87,7 +87,7 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         from UserProducts.models import RetailerProduct
         term = {'product__pk': OuterRef('pk')}
         if location_pk:
-            term['supplier__pk'] = location_pk
+            term['retailer__pk'] = location_pk
         sup_prods = (
             RetailerProduct
             .objects
@@ -108,7 +108,7 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         from UserProducts.models import RetailerProduct
         term = {'product__in': self.values('pk')}
         if location_pk:
-            term['supplier__pk'] = location_pk
+            term['retailer__pk'] = location_pk
         sup_prods = RetailerProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
             min_price=Least('in_store_ppu', 'online_ppu')
         )
@@ -128,19 +128,19 @@ class ProductPricingManager(models.Manager):
     def available_in_store(self, location_pk=None):
         return self.get_queryset().available_in_store(location_pk)
 
-    def supplier_products(self, location_pk):
-        return self.get_queryset().supplier_products(location_pk)
+    def retailer_products(self, location_pk):
+        return self.get_queryset().retailer_products(location_pk)
 
     def safe_availability_commands(self):
         return self.get_queryset().safe_availability_commands()
 
     def product_prices(self, location_pk=None):
         return self.get_queryset().product_prices(location_pk)
-    #     from Profiles.models import SupplierProduct, CompanyShippingLocation
+    #     from Profiles.models import retailerProduct, CompanyShippingLocation
     #     term = {'product__in': self.get_queryset().values('pk')}
     #     if location_pk:
-    #         term['supplier__pk'] = location_pk
-    #     sup_prods = SupplierProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
+    #         term['retailer__pk'] = location_pk
+    #     sup_prods = retailerProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
     #         min_price=Least('in_store_ppu', 'online_ppu')
     #     )
     #     return list(sup_prods.values('min_price', 'product__pk'))
@@ -206,29 +206,29 @@ class Product(models.Model):
 
     def get_in_store(self):
         return self.priced.select_related(
-            'supplier',
-            'supplier__company_account',
-            'supplier__address',
-            'supplier__address__coordinates',
-            'supplier__address__postal_code'
+            'retailer',
+            'retailer__company_account',
+            'retailer__address',
+            'retailer__address__coordinates',
+            'retailer__address__postal_code'
         ).filter(publish_in_store_availability=True)
 
     def get_online_priced(self):
         return self.priced.select_related(
-            'supplier',
-            'supplier__company_account',
-            'supplier__address',
-            'supplier__address__coordinates',
-            'supplier__address__postal_code'
+            'retailer',
+            'retailer__company_account',
+            'retailer__address',
+            'retailer__address__coordinates',
+            'retailer__address__postal_code'
             ).filter(publish_online_price=True)
 
     def get_in_store_priced(self):
         return self.priced.select_related(
-            'supplier',
-            'supplier__company_account',
-            'supplier__address',
-            'supplier__address__coordinates',
-            'supplier__address__postal_code'
+            'retailer',
+            'retailer__company_account',
+            'retailer__address',
+            'retailer__address__coordinates',
+            'retailer__address__postal_code'
         ).filter(publish_in_store_price=True)
 
     # def set_prices(self):

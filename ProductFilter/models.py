@@ -192,10 +192,26 @@ class QueryIndex(models.Model):
         pks = self.products.all().values_list('pk', flat=True)
         return model.objects.filter(pk__in=pks)
 
+    @classmethod
+    def get_all_paths(cls):
+        from UserProductCollections.models import RetailerLocation
+        base = 'specialized-products/filter/'
+        paths = [base + cls.__name__ for cls in ProductSubClass.__subclasses__()]
+        locations = RetailerLocation.objects.all()
+        for location in locations:
+            location_list = [f'{base}{product_type["name"]}/{location.pk}' for product_type in location.product_types]
+            paths = paths + location_list
+        print(paths)
+        return paths
+
     # need to write this method to create all possible queries for a given view
     @classmethod
     def get_all_combinations(cls):
-        pass
+        paths = cls.get_all_paths()
+
+
+
+        
 
 
 class FacetOthersCollection(models.Model):
@@ -497,7 +513,7 @@ class Sorter:
         qterms = stripped_fields.pop('availability') if 'availability' in stripped_fields else []
         avail_facet.qterms = [term for term in qterms if term in Product.objects.safe_availability_commands()]
         if self.location_pk:
-            self.facets.append(Facet('supplier price', PRICE_FACET, 'in_store_ppu', total_count=1, order=2))
+            self.facets.append(Facet('retailer price', PRICE_FACET, 'in_store_ppu', total_count=1, order=2))
             return True
         if not avail_facet.qterms:
             return False
@@ -507,7 +523,7 @@ class Sorter:
 
     def get_products(self):
         if self.location_pk:
-            pks = RetailerProduct.objects.filter(supplier__pk=self.location_pk).values_list('product__pk', flat=True)
+            pks = RetailerProduct.objects.filter(retailer__pk=self.location_pk).values_list('product__pk', flat=True)
             return self.product_type.objects.all().prefetch_related(
                 'priced'
             ).filter(pk__in=pks)
@@ -803,7 +819,7 @@ class Sorter:
         if not price_indices:
             return _products
         if self.location_pk:
-            sup_prods = products.supplier_products(self.location_pk)
+            sup_prods = products.retailer_products(self.location_pk)
             sup_prods = self.__range_iterator(sup_prods, price_indices[0])
             return self.product_type.objects.filter(pk__in=Subquery(sup_prods.values('product__pk')))
         return self.__range_iterator(_products, price_indices[0])

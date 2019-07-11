@@ -1,4 +1,5 @@
 import datetime
+from model_utils.managers import InheritanceManager
 from django.db import models
 from Products.models import Product
 from UserProductCollections.models import BaseProject, RetailerLocation
@@ -55,6 +56,9 @@ class RetailerProduct(models.Model):
     lead_time_ts = models.DurationField(blank=True, null=True, default=datetime.timedelta(days=0))
     offer_installation = models.BooleanField(default=False)
     banner_item = models.BooleanField(default=False)
+
+    objects = models.Manager()
+    subclasses = InheritanceManager()
 
     class Meta:
         unique_together = ('product', 'retailer')

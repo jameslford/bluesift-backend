@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import fs_products_list
+from .views import products_list
 
 urlpatterns = [
-    path('finish-surface', fs_products_list),
+    path('filter/<str:product_type>', products_list),
+    path('filter/<str:product_type>/<int:location_pk>', products_list),
 ]

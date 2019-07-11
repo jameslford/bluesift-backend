@@ -32,7 +32,6 @@ class RetailerLocation(models.Model):
     phone_number = models.CharField(max_length=10)
     email = models.EmailField(null=True, blank=True)
     number = models.IntegerField(null=True, blank=True)
-    info = models.CharField(max_length=200, blank=True, null=True)
     website = models.URLField(max_length=300, blank=True, null=True)
     image = models.ImageField(null=True, blank=True, upload_to='storefronts/')
     slug = models.SlugField(null=True, blank=True)
@@ -60,7 +59,7 @@ class RetailerLocation(models.Model):
     def assign_number(self):
         num_list = []
         num = None
-        all_locations = self.company.shipping_locations.all()
+        all_locations = RetailerLocation.objects.filter(company=self.company)
         for loc in all_locations:
             if loc.number:
                 num_list.append(loc.number)
@@ -74,6 +73,21 @@ class RetailerLocation(models.Model):
 
     def product_count(self):
         return self.products.count()
+
+    def product_types(self):
+        from Products.models import ProductSubClass
+        retailer_pks = list(self.products.values_list('product__pk', flat=True))
+        classes = [cls for cls in ProductSubClass.__subclasses__()]
+        content = []
+        for cls in classes:
+            count = cls.objects.filter(pk__in=retailer_pks).count()
+            if count > 0:
+                cont_dict = {
+                    'name': cls.__name__,
+                    'count': count
+                }
+                content.append(cont_dict)
+        return content
 
     def address_string(self):
         if self.address:

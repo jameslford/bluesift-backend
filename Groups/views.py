@@ -44,12 +44,13 @@ def retailer_detail_header(request: HttpRequest, pk):
         'address',
         'address__postal_code',
         'address__coordinates',
-        'company'
+        'company',
         ).prefetch_related('products').get(pk=pk)
     return Response(
         RetailerListSerializer(retailer).data,
         status=status.HTTP_200_OK
         )
+
 
 @api_view(['GET'])
 def service_detail_header(request: HttpRequest, pk):

@@ -20,6 +20,7 @@ class Company(models.Model):
     phone_number = models.CharField(max_length=12, null=True, blank=True)
     business_address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
     email_verified = models.BooleanField(default=False)
+    info = models.TextField(null=True, blank=True)
     slug = models.SlugField(null=True, blank=True)
 
     objects = CompanyManager()
@@ -40,7 +41,6 @@ class Company(models.Model):
 
     def address(self):
         return self.business_address
-
 
 
 class RetailerCompany(Company):

@@ -103,13 +103,13 @@ class Command(BaseCommand):
                         product = Product.objects.get(pk=select_id)
                         lead_time = random.randint(1, 14)
                         offer_install = random.choice([True, False])
-                        sup_prod = RetailerProduct.objects.get_or_create(
+                        sup_prod: RetailerProduct = RetailerProduct.objects.get_or_create(
                             product=product,
                             retailer=location,
                             )[0]
                         sup_prod.units_available_in_store = units_available
                         sup_prod.units_per_order = units_per_order
-                        sup_prod.priced_in_store = True
+                        sup_prod.publish_in_store_price = True
                         sup_prod.in_store_ppu = price
                         sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
                         sup_prod.offer_installation = offer_install

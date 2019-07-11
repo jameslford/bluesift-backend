@@ -11,7 +11,7 @@ urlpatterns = [
     path('accounts/', include('Accounts.urls')),
     path('bbadmin/', include('BBadmin.urls')),
     path('groups/', include('Groups.urls')),
-    # path('collections/', include('UserProductCollections.urls')),
+    path('collections/', include('UserProductCollections.urls')),
     path('header-list', get_header_list),
     path('specialized-products/', include('SpecializedProducts.urls')),
     path('mailing-list/', include('MailingList.urls')),

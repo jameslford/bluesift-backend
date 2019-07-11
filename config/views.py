@@ -14,7 +14,7 @@ def convert(name):
 @api_view(['GET'])
 def get_header_list(request):
     pro_types = list(ServiceType.objects.values_list('label', flat=True))
-    departments = [convert(cls.__name__) for cls in ProductSubClass.__subclasses__()]
+    departments = [cls.__name__ for cls in ProductSubClass.__subclasses__()]
     print(f'departments={sorted(departments)}')
     return Response({
         'pros': sorted(pro_types),
