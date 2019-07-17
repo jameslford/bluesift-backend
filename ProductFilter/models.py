@@ -1,3 +1,4 @@
+
 import uuid
 from decimal import Decimal
 from dataclasses import dataclass, asdict
@@ -209,9 +210,6 @@ class QueryIndex(models.Model):
     def get_all_combinations(cls):
         paths = cls.get_all_paths()
 
-
-
-        
 
 
 class FacetOthersCollection(models.Model):
