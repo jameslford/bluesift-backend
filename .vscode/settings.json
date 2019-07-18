@@ -4,7 +4,7 @@
     "window.zoomLevel": 0,
     "python.linting.flake8CategorySeverity.F": "Warning",
     "python.linting.flake8CategorySeverity.E": "Warning",
-    "python.linting.pylintUseMinimalCheckers": false,
+    "python.linting.pylintUseMinimalCheckers": true,
     "python.linting.pylintArgs": [
         "--load-plugins=pylint_django",
         "--max-line-length=130",

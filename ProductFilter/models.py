@@ -1,4 +1,3 @@
-
 import uuid
 from decimal import Decimal
 from dataclasses import dataclass, asdict
@@ -80,7 +79,7 @@ class Facet:
     total_count: int = 0
     qterms: List[str] = None
     queryset: QuerySet = None
-    collection_pk: uuid = None
+    collection_pk: str = None
     return_values: List = dfield(default_factory=lambda: [])
 
 

@@ -1,4 +1,5 @@
 import base64
+import serpy
 from rest_framework import serializers
 from django.contrib.postgres.search import SearchVector
 from django.core.files.base import ContentFile
@@ -31,6 +32,11 @@ class AllRetailerLocationSerializer(serializers.ModelSerializer):
             'address_string',
             'product_count',
             )
+
+
+class ProjectSerializer(serpy.Serializer):
+    nickname = serpy.Field()
+    deadline = serpy.Field()
 
 
 # class SVLocationSerializer(serializers.ModelSerializer):
