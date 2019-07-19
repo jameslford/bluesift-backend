@@ -79,7 +79,8 @@ class RetailerLocation(models.Model):
         self_pks = self.products.values('product__pk')
         products = Product.subclasses.filter(pk__in=self_pks).select_subclasses()
         # products = self.products.products.subclasses.all().select_subclasses()
-        classes = products.values_list('class.__name__').distinct()
+        # classes = products.values_list('class.__name__').distinct()
+        classes = set(product.__class__.__name__ for product in products)
         return classes
         # retailer_pks = list(self.products.values_list('product__pk', flat=True))
         # classes = [cls for cls in ProductSubClass.__subclasses__()]

@@ -55,9 +55,12 @@ class ProductAvailabilityQuerySet(models.QuerySet):
             return pks
         return self.filter(pk__in=Subquery(pks))
 
-    def retailer_products(self, location_pk):
+    def retailer_products(self, location_pk=None):
         from UserProducts.models import RetailerProduct
-        sup_prods = RetailerProduct.objects.filter(retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
+        if location_pk:
+            sup_prods = RetailerProduct.objects.filter(retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
+        else:
+            sup_prods = RetailerProduct.objects.filter(product__in=Subquery(self.values('pk')))
         return sup_prods
 
     def filter_availability(self, commands, location_pk=None, pk_only=False):
@@ -128,7 +131,7 @@ class ProductPricingManager(models.Manager):
     def available_in_store(self, location_pk=None):
         return self.get_queryset().available_in_store(location_pk)
 
-    def retailer_products(self, location_pk):
+    def retailer_products(self, location_pk=None):
         return self.get_queryset().retailer_products(location_pk)
 
     def safe_availability_commands(self):
@@ -277,3 +280,16 @@ class ProductSubClass(Product):
         if hasattr(cls, 'special_method'):
             special_method = getattr(cls, 'special_method')
             special_method()
+
+    @classmethod
+    def validate_sub(cls, sub:str):
+        return bool(sub.lower() in [klas.__name__.lower() for klas in cls.__subclasses__()])
+
+    @classmethod
+    def return_sub(cls, sub:str):
+        classes = [klas for klas in cls.__subclasses__() if klas.__name__.lower() == sub.lower()]
+        if classes:
+            return classes[0]
+        return None
+
+

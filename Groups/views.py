@@ -11,7 +11,7 @@ from .models import RetailerCompany, ProCompany
 
 
 @api_view(['GET'])
-def retailer_list_all(request: HttpRequest):
+def retailer_list_all(request: HttpRequest, prod_type='all'):
     retailers = RetailerLocation.objects.select_related(
         'address',
         'address__postal_code',
@@ -21,10 +21,19 @@ def retailer_list_all(request: HttpRequest):
             'products',
             'products__product'
             ).all().annotate(prod_count=Count('products'))
+    if prod_type.lower() != 'all':
+        from Products.models import ProductSubClass
+        prod_class = ProductSubClass.return_sub(prod_type)
+        if prod_class is None:
+            return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
+        retailer_product_pks = prod_class.objects.retailer_products().values('retailer__pk')
+        retailers = retailers.filter(pk__in=retailer_product_pks)
     return Response(
         RetailerListSerializer(retailers, many=True).data,
         status=status.HTTP_200_OK
-        )
+    )
+    # retail_prod_pk = RetailerLocation.filter(products__product__pk)
+    # retailers = retailers.filter.()
 
 
 @api_view(['GET'])
@@ -34,7 +43,7 @@ def services_list_all(request: HttpRequest, cat='all'):
         'business_address__postal_code',
         'business_address__coordinates'
     ).all()
-    if cat != 'all':
+    if cat.lower() != 'all':
         services = services.filter(service__label__iexact=cat)
     return Response(
         ProListSerializer(services, many=True).data,

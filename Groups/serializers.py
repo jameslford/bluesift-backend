@@ -14,7 +14,7 @@ DEFAULT_BUSINESS_LIST_FIELDS = [
     'nickname',
     ]
 
-RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count', 'product_types']
+RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count']
 # RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['prod_count', 'product_types']
 PRO_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['service_type']
 

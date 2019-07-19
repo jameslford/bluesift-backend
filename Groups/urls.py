@@ -7,7 +7,7 @@ from .views import (
     )
 
 urlpatterns = [
-    path('retailers', retailer_list_all),
+    path('retailers/<str:prod_type>', retailer_list_all),
     path('services/<str:cat>', services_list_all),
     path('retailers/detail/<int:pk>', retailer_detail_header),
     path('services/detail/<int:pk>', service_detail_header)
