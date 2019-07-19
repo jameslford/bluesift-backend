@@ -117,10 +117,10 @@ class User(AbstractBaseUser):
         if self.is_pro:
             return ProProject.objects.prefetch_related(
                 'products'
-            ).filter(owner=group).select_subclasses()
+            ).filter(owner=group)
         return ConsumerProject.subclasses.prefetch_related(
             'products'
-        ).filter(owner=group).select_subclasses()
+        ).filter(owner=group)
 
     @property
     def is_staff(self):

@@ -104,12 +104,6 @@ def pl_status_for_product(request: HttpRequest, pk):
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
-def get_library(request: HttpRequest):
-    collection = request.user.get_collections()
-
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
 def get_profile(request: HttpRequest):
 
     if request.method == 'GET':

@@ -1,3 +1,4 @@
+""" blah blah """
 from django.contrib import admin
 from django.contrib.postgres import fields as pg_fields
 from django_json_widget.widgets import JSONEditorWidget

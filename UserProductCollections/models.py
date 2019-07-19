@@ -1,10 +1,10 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from model_utils.managers import InheritanceManager
 from Addresses.models import Address
 from Groups.models import ProCompany, RetailerCompany
 from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile
-from model_utils.managers import InheritanceManager
 
 
 class RetailerLocation(models.Model):
@@ -75,19 +75,24 @@ class RetailerLocation(models.Model):
         return self.products.count()
 
     def product_types(self):
-        from Products.models import ProductSubClass
-        retailer_pks = list(self.products.values_list('product__pk', flat=True))
-        classes = [cls for cls in ProductSubClass.__subclasses__()]
-        content = []
-        for cls in classes:
-            count = cls.objects.filter(pk__in=retailer_pks).count()
-            if count > 0:
-                cont_dict = {
-                    'name': cls.__name__,
-                    'count': count
-                }
-                content.append(cont_dict)
-        return content
+        from Products.models import Product
+        self_pks = self.products.values('product__pk')
+        products = Product.subclasses.filter(pk__in=self_pks).select_subclasses()
+        # products = self.products.products.subclasses.all().select_subclasses()
+        classes = products.values_list('class.__name__').distinct()
+        return classes
+        # retailer_pks = list(self.products.values_list('product__pk', flat=True))
+        # classes = [cls for cls in ProductSubClass.__subclasses__()]
+        # content = []
+        # for cls in classes:
+        #     count = cls.objects.filter(pk__in=retailer_pks).count()
+        #     if count > 0:
+        #         cont_dict = {
+        #             'name': cls.__name__,
+        #             'count': count
+        #         }
+        #         content.append(cont_dict)
+        # return content
 
     def address_string(self):
         if self.address:

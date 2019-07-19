@@ -15,6 +15,7 @@ DEFAULT_BUSINESS_LIST_FIELDS = [
     ]
 
 RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count', 'product_types']
+# RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['prod_count', 'product_types']
 PRO_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['service_type']
 
 
@@ -24,6 +25,15 @@ class RetailerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = RetailerLocation
         fields = tuple(RETAILER_LIST)
+
+# class RetailerListSerializer(serpy.Serializer):
+#     pk = serpy.Field()
+#     address = AddressSerializer()
+#     phone_number = serpy.Field()
+#     company_name = serpy.Field()
+#     nickname = serpy.Field()
+#     prod_count = serpy.Field()
+
 
 
 class ProListSerializer(serializers.ModelSerializer):

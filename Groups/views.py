@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpRequest
+from django.db.models import Count
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -16,7 +17,10 @@ def retailer_list_all(request: HttpRequest):
         'address__postal_code',
         'address__coordinates',
         'company'
-        ).prefetch_related('products').all()
+        ).prefetch_related(
+            'products',
+            'products__product'
+            ).all().annotate(prod_count=Count('products'))
     return Response(
         RetailerListSerializer(retailers, many=True).data,
         status=status.HTTP_200_OK

@@ -82,6 +82,13 @@ class ConsumerProfile(BaseProfile):
 
 
 class EmployeeBaseProfile(BaseProfile):
+    """
+    shared fields for pro-employees and retailer-employees
+
+    owners can delete/edit company objects
+
+    owners and admins can add, delete, and edit projects/retailer locations
+    """
     owner = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     title = models.CharField(max_length=100, null=True)
@@ -100,6 +107,9 @@ class ProEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_pro:
             raise ValueError('user is not pro')
+        owner_count = self.company.employees.filter(owner=True).count()
+        if owner_count > 0:
+            raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(ProEmployeeProfile, self).save(*args, **kwargs)
 
 
@@ -113,6 +123,9 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
+        owner_count = self.company.employees.filter(owner=True).count()
+        if owner_count > 0:
+            raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(RetailerEmployeeProfile, self).save(*args, **kwargs)
 
     # def __str__(self):

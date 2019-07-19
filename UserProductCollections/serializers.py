@@ -34,9 +34,12 @@ class AllRetailerLocationSerializer(serializers.ModelSerializer):
             )
 
 
-class ProjectSerializer(serpy.Serializer):
-    nickname = serpy.Field()
-    deadline = serpy.Field()
+class ProjectSerializer(serializers.Serializer):
+    nickname = serializers.CharField()
+    deadline = serializers.DateTimeField()
+    address = AddressSerializer()
+    product_count = serializers.IntegerField()
+    # application_count = serializers.IntegerField()
 
 
 # class SVLocationSerializer(serializers.ModelSerializer):

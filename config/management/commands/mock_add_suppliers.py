@@ -31,15 +31,17 @@ class Command(BaseCommand):
     @transaction.atomic()
     def handle(self, *args, **options):
         product_ids = Product.objects.all().values_list('pk', flat=True)
+        random_names = RANDOM_NAMES
+        random_addresses = ADDRESSES
         for comp_name in COMP_NAMES:
             user_model = get_user_model()
             password = '0gat_surfer'
-            name = random.choice(RANDOM_NAMES)
-            del RANDOM_NAMES[RANDOM_NAMES.index(name)]
+            name = random.choice(random_names)
+            del random_names[random_names.index(name)]
             email = name.replace(' ', '') + '@hotgmail.com'
             company_name = comp_name + '_demo_test'
-            address = random.choice(ADDRESSES)
-            del ADDRESSES[ADDRESSES.index(address)]
+            address = random.choice(random_addresses)
+            del random_addresses[random_addresses.index(address)]
             company_type = random.choice((RETAILER, PRO))
             if company_type == RETAILER:
                 user = user_model.objects.create_user(email=email, is_supplier=True, password=password)
