@@ -1,8 +1,8 @@
-import serpy
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
-from .models import RetailerCompany, ProCompany
 from UserProductCollections.models import RetailerLocation
+from .models import RetailerCompany, ProCompany
+# import serpy
 # from Addresses.models import Address, Zipcode
 # from Groups.models import CompanyAccount
 
@@ -15,7 +15,7 @@ DEFAULT_BUSINESS_LIST_FIELDS = [
     ]
 
 RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count']
-# RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['prod_count', 'product_types']
+RETAILER_HEADER = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count', 'product_types']
 PRO_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['service_type']
 
 
@@ -26,14 +26,24 @@ class RetailerListSerializer(serializers.ModelSerializer):
         model = RetailerLocation
         fields = tuple(RETAILER_LIST)
 
-# class RetailerListSerializer(serpy.Serializer):
-#     pk = serpy.Field()
-#     address = AddressSerializer()
-#     phone_number = serpy.Field()
-#     company_name = serpy.Field()
-#     nickname = serpy.Field()
-#     prod_count = serpy.Field()
 
+class RetailerLocationHeaderSerializer(RetailerListSerializer):
+
+    class Meta:
+        model = RetailerLocation
+        fields = tuple(RETAILER_HEADER)
+
+
+class RetailerCompanyHeaderSerializer(serializers.ModelSerializer):
+    business_address = AddressSerializer()
+
+    class Meta:
+        model = RetailerCompany
+        fields = (
+            'pk',
+            'name',
+            'address_serializer',
+        )
 
 
 class ProListSerializer(serializers.ModelSerializer):
@@ -43,6 +53,14 @@ class ProListSerializer(serializers.ModelSerializer):
         model = ProCompany
         fields = tuple(PRO_LIST)
 
+
+# class RetailerListSerializer(serpy.Serializer):
+#     pk = serpy.Field()
+#     address = AddressSerializer()
+#     phone_number = serpy.Field()
+#     company_name = serpy.Field()
+#     nickname = serpy.Field()
+#     prod_count = serpy.Field()
 
 
 # class RetailerCompanySerializer(serializers.ModelSerializer):

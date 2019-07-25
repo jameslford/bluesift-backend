@@ -210,7 +210,7 @@ class Product(models.Model):
     def get_in_store(self):
         return self.priced.select_related(
             'retailer',
-            'retailer__company_account',
+            'retailer__company',
             'retailer__address',
             'retailer__address__coordinates',
             'retailer__address__postal_code'
@@ -219,7 +219,7 @@ class Product(models.Model):
     def get_online_priced(self):
         return self.priced.select_related(
             'retailer',
-            'retailer__company_account',
+            'retailer__company',
             'retailer__address',
             'retailer__address__coordinates',
             'retailer__address__postal_code'
@@ -228,7 +228,7 @@ class Product(models.Model):
     def get_in_store_priced(self):
         return self.priced.select_related(
             'retailer',
-            'retailer__company_account',
+            'retailer__company',
             'retailer__address',
             'retailer__address__coordinates',
             'retailer__address__postal_code'

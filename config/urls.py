@@ -18,6 +18,7 @@ urlpatterns = [
     path('profiles/', include('Profiles.urls')),
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),
+    path('user-products/', include('UserProducts.urls'))
     # path('specialized-products/', include('SpecializedProducts.urls')),
     # path('', landing),
     # path('get_short_lib/<int:pk>', get_short_lib),

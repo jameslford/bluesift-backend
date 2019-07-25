@@ -105,7 +105,7 @@ class User(AbstractBaseUser):
         profile = self.get_profile()
         if self.is_supplier or self.is_pro:
             return profile.company
-        return profile.library
+        return profile
 
     def get_collections(self):
         from UserProductCollections.models import RetailerLocation, ProProject, ConsumerProject
@@ -118,9 +118,15 @@ class User(AbstractBaseUser):
             return ProProject.objects.prefetch_related(
                 'products'
             ).filter(owner=group)
-        return ConsumerProject.subclasses.prefetch_related(
+        return ConsumerProject.objects.prefetch_related(
             'products'
         ).filter(owner=group)
+
+    def get_user_product_type(self):
+        from UserProducts.models import RetailerProduct, ProjectProduct
+        if self.is_supplier:
+            return RetailerProduct
+        return ProjectProduct
 
     @property
     def is_staff(self):

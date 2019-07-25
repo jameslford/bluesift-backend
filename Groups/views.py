@@ -1,4 +1,17 @@
-from django.shortcuts import render
+""" views for groups (companies). includes 5 main views:
+
+    - retailer_company_header
+    - retailer_location_list_all
+    - retailer_location_detail_header
+    - services_list_all
+    - services_detail_header
+
+    Retailer-location views should technically be in the UserProductCollections models since
+    they are instances of RetailerLocations instead of RetailerCompany's.
+    However, to keep the frontend calls simple, it makes more sense to have these essentially symmetrical
+    views in the same module, and therefore same root url
+"""
+
 from django.http import HttpRequest
 from django.db.models import Count
 from rest_framework.decorators import api_view, permission_classes
@@ -6,12 +19,28 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from UserProductCollections.models import RetailerLocation
-from .serializers import ProListSerializer, RetailerListSerializer
+from .serializers import (
+    ProListSerializer,
+    RetailerListSerializer,
+    RetailerCompanyHeaderSerializer,
+    RetailerLocationHeaderSerializer
+)
 from .models import RetailerCompany, ProCompany
 
 
 @api_view(['GET'])
-def retailer_list_all(request: HttpRequest, prod_type='all'):
+def retailer_company_header(request: HttpRequest, retailer_pk=None):
+    if retailer_pk:
+        company = RetailerCompany.objects.get(pk=retailer_pk)
+    else:
+        if not request.user.is_authenticated() and request.user.is_supplier:
+            return Response('No Company specified', status=status.HTTP_400_BAD_REQUEST)
+        company = request.user.get_group()
+    return Response(RetailerCompanyHeaderSerializer(company), status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def retailer_location_list_all(request: HttpRequest, prod_type='all'):
     retailers = RetailerLocation.objects.select_related(
         'address',
         'address__postal_code',
@@ -32,8 +61,20 @@ def retailer_list_all(request: HttpRequest, prod_type='all'):
         RetailerListSerializer(retailers, many=True).data,
         status=status.HTTP_200_OK
     )
-    # retail_prod_pk = RetailerLocation.filter(products__product__pk)
-    # retailers = retailers.filter.()
+
+
+@api_view(['GET'])
+def retailer_location_detail_header(request: HttpRequest, pk):
+    retailer = RetailerLocation.objects.select_related(
+        'address',
+        'address__postal_code',
+        'address__coordinates',
+        'company',
+        ).prefetch_related('products').get(pk=pk)
+    return Response(
+        RetailerLocationHeaderSerializer(retailer).data,
+        status=status.HTTP_200_OK
+        )
 
 
 @api_view(['GET'])
@@ -52,20 +93,6 @@ def services_list_all(request: HttpRequest, cat='all'):
 
 
 @api_view(['GET'])
-def retailer_detail_header(request: HttpRequest, pk):
-    retailer = RetailerLocation.objects.select_related(
-        'address',
-        'address__postal_code',
-        'address__coordinates',
-        'company',
-        ).prefetch_related('products').get(pk=pk)
-    return Response(
-        RetailerListSerializer(retailer).data,
-        status=status.HTTP_200_OK
-        )
-
-
-@api_view(['GET'])
 def service_detail_header(request: HttpRequest, pk):
     service = ProCompany.objects.select_related(
         'business_address',
@@ -76,5 +103,3 @@ def service_detail_header(request: HttpRequest, pk):
         ProListSerializer(service).data,
         status=status.HTTP_200_OK
         )
-
-

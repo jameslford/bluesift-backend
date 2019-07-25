@@ -5,6 +5,39 @@ from Products.models import Product
 from UserProductCollections.models import BaseProject, RetailerLocation
 
 
+# class UserProductManager(models.Manager):
+#     def add_user_product(self, user, product: Product, collection_pk=None):
+#         profile = user.get_profile()
+#         collections = user.get_collections()
+#         collection = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
+#         if not collection:
+#             return False
+#         if user.is_supplier:
+#             if not (profile.admin or
+#                     profile.owner or
+#                     collection.location_manager != profile):
+#                 return False
+#             RetailerProduct.objects.create(
+#                 product=product,
+#                 company=user.get_group()
+#             )
+#             return True
+
+class ProjectProductManager(models.Manager):
+    def add_product(self, user, product: Product, collection_pk=None):
+        collections = user.get_collections()
+        collection = collections.filter(pk=collection_pk) if collection_pk else collections.first()
+        self.get_or_create(product=product, project=collection)[0]
+        return True
+
+    def delete_product(self, user, product, collection_pk=None):
+        collections = user.get_collections()
+        collection = collections.filter(pk=collection_pk) if collection_pk else collections.first()
+        user_product = self.get(product=product, project=collection)
+        user_product.delete()
+        return True
+
+
 class ProjectProduct(models.Model):
     product = models.ForeignKey(
         Product,
@@ -18,11 +51,39 @@ class ProjectProduct(models.Model):
         related_name='products'
         )
 
+    objects = ProjectProductManager()
+
     def __str__(self):
         return self.product.name
 
     class Meta:
         unique_together = ('product', 'project')
+
+
+class RetailerProductManager(models.Manager):
+    def add_product(self, user, product, collection_pk=None):
+        collections = user.get_collections()
+        location = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
+        profile = user.get_profile()
+        if not (profile.admin or
+                profile.owner or
+                location.local_admin == profile):
+            return False
+        self.get_or_create(product=product, retailer=location)
+        return True
+
+    def delete_product(self, user, product, collection_pk):
+        collections = user.get_collections()
+        location = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
+        profile = user.get_profile()
+        if not (profile.admin or
+                profile.owner or
+                location.local_admin == profile):
+            return False
+        user_prod = self.get(product=product, retailer=location)
+        user_prod.delete()
+
+        
 
 
 class RetailerProduct(models.Model):
@@ -57,7 +118,7 @@ class RetailerProduct(models.Model):
     offer_installation = models.BooleanField(default=False)
     banner_item = models.BooleanField(default=False)
 
-    objects = models.Manager()
+    objects = RetailerProductManager()
     subclasses = InheritanceManager()
 
     class Meta:

@@ -52,6 +52,7 @@ class BaseProfile(models.Model):
         settings.AUTH_USER_MODEL,
         null=True,
         on_delete=models.CASCADE,
+        related_name='profile'
         )
     objects = ProfileManager()
     subclasses = InheritanceManager()

@@ -18,7 +18,7 @@ COMMON_RETAILER_LOCATION_FIELDS = [
     'product_count',
     ]
 
-class AllRetailerLocationSerializer(serializers.ModelSerializer):
+class RetailerLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
 
     class Meta:
@@ -34,12 +34,20 @@ class AllRetailerLocationSerializer(serializers.ModelSerializer):
             )
 
 
+class RetailerLocationDetailSerializer(serializers.ModelSerializer):
+    pass
+
+
 class ProjectSerializer(serializers.Serializer):
     nickname = serializers.CharField()
     deadline = serializers.DateTimeField()
     address = AddressSerializer()
     product_count = serializers.IntegerField()
     # application_count = serializers.IntegerField()
+
+
+class ProjectDetailSerilizer(serializers.ModelSerializer):
+    pass
 
 
 # class SVLocationSerializer(serializers.ModelSerializer):
