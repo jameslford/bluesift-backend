@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from UserProducts.models import RetailerProduct
 from Products.models import Product, ProductSubClass
-from .serializers import AllRetailerLocationSerializer, ProjectSerializer
+from .serializers import RetailerLocationListSerializer, ProjectSerializer
 # from .models import RetailerLocation
 
 
@@ -15,7 +15,7 @@ def get_library(request: HttpRequest):
     collection = request.user.get_collections()
     if request.user.is_supplier:
         return Response(
-            AllRetailerLocationSerializer(collection, many=True).data,
+            RetailerLocationListSerializer(collection, many=True).data,
             status=status.HTTP_200_OK
         )
     return Response(

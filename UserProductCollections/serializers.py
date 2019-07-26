@@ -39,6 +39,7 @@ class RetailerLocationDetailSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.Serializer):
+    pk = serializers.IntegerField()
     nickname = serializers.CharField()
     deadline = serializers.DateTimeField()
     address = AddressSerializer()
