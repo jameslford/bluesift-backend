@@ -5,34 +5,16 @@ from Products.models import Product
 from UserProductCollections.models import BaseProject, RetailerLocation
 
 
-# class UserProductManager(models.Manager):
-#     def add_user_product(self, user, product: Product, collection_pk=None):
-#         profile = user.get_profile()
-#         collections = user.get_collections()
-#         collection = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
-#         if not collection:
-#             return False
-#         if user.is_supplier:
-#             if not (profile.admin or
-#                     profile.owner or
-#                     collection.location_manager != profile):
-#                 return False
-#             RetailerProduct.objects.create(
-#                 product=product,
-#                 company=user.get_group()
-#             )
-#             return True
-
 class ProjectProductManager(models.Manager):
     def add_product(self, user, product: Product, collection_pk=None):
         collections = user.get_collections()
-        collection = collections.filter(pk=collection_pk) if collection_pk else collections.first()
+        collection = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
         self.get_or_create(product=product, project=collection)[0]
         return True
 
     def delete_product(self, user, product, collection_pk=None):
         collections = user.get_collections()
-        collection = collections.filter(pk=collection_pk) if collection_pk else collections.first()
+        collection = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
         user_product = self.get(product=product, project=collection)
         user_product.delete()
         return True
@@ -82,8 +64,6 @@ class RetailerProductManager(models.Manager):
             return False
         user_prod = self.get(product=product, retailer=location)
         user_prod.delete()
-
-        
 
 
 class RetailerProduct(models.Model):

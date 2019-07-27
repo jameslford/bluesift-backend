@@ -17,7 +17,7 @@ class SerpyProduct(serpy.Serializer):
     name = serpy.Field()
     swatch_image = serpy.MethodField()
     manufacturer = SerpyManufacturer()
-    low_price = serpy.Field()
+    low_price = serpy.MethodField()
     # lowest_price = serpy.MethodField()
 
     # def get_lowest_price(self, prod_obj: Product):
@@ -28,6 +28,10 @@ class SerpyProduct(serpy.Serializer):
     #     if not price:
     #         return None
     #     return float(price)
+    def get_low_price(self, prod_obj):
+        if hasattr(prod_obj, 'low_price'):
+            return prod_obj.low_price
+        return None
 
     def get_swatch_image(self, prod_obj):
         if prod_obj.swatch_image:

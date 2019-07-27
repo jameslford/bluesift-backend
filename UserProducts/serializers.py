@@ -1,6 +1,43 @@
 from rest_framework import serializers
-# from Products.serializers import SerpyProduct
 from UserProducts.models import RetailerProduct
+# from Products.serializers import SerpyProduct
+
+
+class RetailerProductDetailSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RetailerProduct
+        fields = (
+            'pk',
+            'in_store_ppu',
+            'online_ppu',
+            'units_available_in_store',
+            'units_per_order',
+            'location_address',
+            'location_id',
+            'company_name',
+            'lead_time_ts',
+            'offer_installation',
+            'publish_in_store_availability',
+            'publish_in_store_price',
+            'publish_online_price'
+        )
+
+
+class RetailerProductMiniSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RetailerProduct
+        fields = (
+            'pk',
+            'in_store_ppu',
+            'units_available_in_store',
+            'units_per_order',
+            'location_address',
+            'location_id',
+            'company_name',
+            'lead_time_ts'
+        )
 
 
 # class SupplierProductSerializer(serializers.ModelSerializer):
@@ -55,18 +92,3 @@ from UserProducts.models import RetailerProduct
 #         instance.save()
 #         return
 
-
-class RetailerProductMiniSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = RetailerProduct
-        fields = (
-            'pk',
-            'in_store_ppu',
-            'units_available_in_store',
-            'units_per_order',
-            'location_address',
-            'location_id',
-            'company_name',
-            'lead_time_ts'
-        )
