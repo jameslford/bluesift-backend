@@ -24,27 +24,27 @@ class ProfileManager(models.Manager):
             if not company:
                 raise ValueError('must provide company')
             if user.is_pro:
-                profile = ProEmployeeProfile(
+                return ProEmployeeProfile.objects.get_or_create(
                     user=user,
                     company=company,
                     owner=owner,
                     title=title,
-                    admin=admin)
+                    admin=admin)[0]
             else:
-                profile = RetailerEmployeeProfile(
+                return RetailerEmployeeProfile.objects.get_or_create(
                     user=user,
                     company=company,
                     owner=owner,
                     title=title,
-                    admin=admin)
+                    admin=admin)[0]
         else:
             plan = kwargs.get('plan', None)
             phone = kwargs.get('phone_number', None)
-            profile = ConsumerProfile(
+            return ConsumerProfile.objects.get_or_create(
                 user=user,
                 plan=plan,
-                phone_number=phone)
-        profile.save(using=self.db)
+                phone_number=phone)[0]
+        # profile.save(using=self.db)
 
 
 class BaseProfile(models.Model):

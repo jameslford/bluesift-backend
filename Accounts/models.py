@@ -8,39 +8,39 @@ from Profiles.models import BaseProfile
 
 class UserManager(BaseUserManager):
 
-    def create_user(
-            self,
-            email,
-            full_name=None,
-            password=None,
-            is_active=True,
-            is_staff=False,
-            is_admin=False,
-            is_supplier=False,
-            is_pro=False
-            ):
+    def create_user(self, email: str, password: str, **kwargs):
         if not email:
             raise ValueError("User must have an email address")
         if '@' not in email:
             raise ValueError("User must have valid email address")
         if not password:
             raise ValueError("Users must have a password")
+
+        is_supplier = kwargs.get('is_supplier', False)
+        is_pro = kwargs.get('is_pro', False)
         if is_supplier and is_pro:
             raise ValueError('User cannot be proffesional and supplier')
-        user_obj = self.model(
-            email=self.normalize_email(email),
-            full_name=full_name,
-        )
 
-        user_obj.set_password(password)
-        user_obj.staff = is_staff
-        user_obj.admin = is_admin
-        user_obj.is_active = is_active
-        user_obj.is_supplier = is_supplier
-        user_obj.is_pro = is_pro
-        user_obj.save(using=self.db)
-        Token.objects.get_or_create(user=user_obj)
-        return user_obj
+        user_check = self.model.objects.filter(email__iexact=email).first()
+        if user_check:
+            return user_check
+
+        user = self.model.objects.create(email=email)
+        user.set_password(password)
+        user.full_name = kwargs.get('full_name', False)
+        user.staff = kwargs.get('is_staff', False)
+        user.admin = kwargs.get('is_admin', False)
+        user.is_active = kwargs.get('is_active', False)
+        user.is_supplier = is_supplier
+        user.is_pro = is_pro
+        user.save(using=self.db)
+        Token.objects.get_or_create(user=user)
+        return user
+
+        # user_obj = self.model(
+        #     email=self.normalize_email(email),
+        #     full_name=full_name,
+        # )
 
     def create_staffuser(self, email, full_name=None, password=None):
         user = self.create_user(
@@ -99,7 +99,7 @@ class User(AbstractBaseUser):
         return self.token
 
     def get_profile(self):
-        return BaseProfile.subclasses.get_subclass(user=self)
+        return BaseProfile.subclasses.filter(user=self).select_subclasses().first()
 
     def get_group(self):
         profile = self.get_profile()

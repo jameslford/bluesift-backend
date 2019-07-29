@@ -8,10 +8,10 @@ from Plans.models import RetailerPlan, ProPlan
 class CompanyManager(models.Manager):
     def create_company(self, user, **kwargs):
         if user.is_pro:
-            return ProCompany.objects.create(**kwargs)
+            return ProCompany.objects.get_or_create(**kwargs)[0]
         if user.is_supplier:
             del kwargs['service']
-            return RetailerCompany.objects.create(**kwargs)
+            return RetailerCompany.objects.get_or_create(**kwargs)[0]
         raise ValueError('user is not pro or supplier')
 
 

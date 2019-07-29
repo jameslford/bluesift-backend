@@ -7,6 +7,7 @@ from .views import get_header_list
 
 
 urlpatterns = [
+    path('admin/doc/', include('django.contrib.admindocs.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('Accounts.urls')),
     path('bbadmin/', include('BBadmin.urls')),

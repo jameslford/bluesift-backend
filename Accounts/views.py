@@ -1,8 +1,9 @@
-# Accounts.views.py
+""" Accounts.views.py """
 
 import datetime
 import os
 from django.shortcuts import redirect
+from django.db import transaction
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password, make_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -13,36 +14,41 @@ from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
+from Profiles.models import BaseProfile
 from .serializers import (
     UserResponseSerializer,
     )
 
-# from rest_framework.permissions import IsAuthenticated
-# from Profiles.serializers import CompanyAccountSerializer
-# from CustomerProfiles.serializers import CustomerProfileSerializer
-# from Profiles.models import CompanyAccount, EmployeeProfile
-# from CustomerProfiles.models import CustomerProfile, CustomerProject
-
 
 @api_view(['POST'])
+@transaction.atomic()
 def create_user(request):
     full_name = request.data.get('full_name', None)
     email = request.data.get('email', None)
     password = request.data.get('password', None)
-    is_pro = request.data.get('is_pro', False)
-    is_supplier = request.data.get('is_pro', False)
+    user_type = request.data.get('user_type', None)
+    is_pro = False
+    is_supplier = False
+    if user_type == 'is_pro':
+        is_pro = True
+    elif user_type == 'is_supplier':
+        is_supplier = True
     user_model = get_user_model()
     user = None
     if not email or not password:
         return Response('Email and password required!', status=status.HTTP_400_BAD_REQUEST)
+    user_check = user_model.objects.filter(email__iexact=email).first()
+    if user_check:
+        return Response(f'{email.lower()} already exists', status=status.HTTP_400_BAD_REQUEST)
     hashed_password = make_password(password)
 
-    user = user_model.create_user(
+    user = user_model.objects.create_user(
         email=email,
         full_name=full_name,
         password=hashed_password,
@@ -59,7 +65,7 @@ def create_user(request):
     message = render_to_string('acc_activate_email.html', {
         'user': user,
         'domain': get_current_site(request).domain,
-        'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
         'token': token
     })
 
@@ -71,6 +77,26 @@ def create_user(request):
         )
     email_obj.send()
 
+    return Response(UserResponseSerializer(user).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def get_or_create_business(request):
+    from Groups.models import Company, ServiceType
+    user = request.user
+    if user.get_profile():
+        return Response(f'{user.email} already associated with business', status=status.HTTP_412_PRECONDITION_FAILED)
+    company_name = request.POST.get('company_name', None)
+    service_type = request.POST.get('company_type', None)
+    title = request.POST.get('role', None)
+    if not company_name:
+        return Response('No company name', status=status.HTTP_400_BAD_REQUEST)
+    service_type = ServiceType.objects.filter(label=service_type).first()
+    if user.is_pro and not service_type:
+        return Response('Invalid service type', status=status.HTTP_400_BAD_REQUEST)
+    company = Company.objects.create_company(user=user, name=company_name, service=service_type)
+    profile = BaseProfile.objects.create_profile(user, company=company, title=title, owner=True)
     return Response('Created', status=status.HTTP_201_CREATED)
 
 
@@ -98,11 +124,9 @@ def custom_login(request):
     if email is None or password is None:
         return Response('Email and Password Required!', status=status.HTTP_400_BAD_REQUEST)
     user = user_model.objects.filter(email__iexact=email).first()
-    if not user:
-        return Response('Invalid Credentials', status=status.HTTP_404_NOT_FOUND)
 
-    if not check_password(password, user.password):
-        return Response('Invalid Credentials password', status=status.HTTP_404_NOT_FOUND)
+    if not user and check_password(password, user.password):
+        return Response('Invalid Credentials', status=status.HTTP_400_BAD_REQUEST)
 
     if not user.is_active:
         return Response(
@@ -110,27 +134,17 @@ def custom_login(request):
             status=status.HTTP_400_BAD_REQUEST
             )
 
+    if not user.get_profile():
+        if user.is_pro or user.is_supplier:
+            return Response('Profile needed', status=status.HTTP_428_PRECONDITION_REQUIRED)
+        BaseProfile.objects.create_profile(user)
+
     if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging' and not user.is_staff:
         return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)
 
-    serialized_user = UserResponseSerializer(user)
-    return Response(serialized_user.data, status=status.HTTP_200_OK)
+    return Response(UserResponseSerializer(user).data, status=status.HTTP_200_OK)
 
 
-# @api_view(['GET'])
-# @permission_classes((IsAuthenticated,))
-# def user_details(request):
-#     user = request.user
-#     serialized_user = UserSerializer(user)
-#     if user.is_supplier:
-#         account = CompanyAccount.objects.get_or_create(account_owner=user)
-#         serialized_account = CompanyAccountSerializer(account)
-#     else:
-#         account = CustomerProfile.objects.get_or_create(user=user)
-#         serialized_account = CustomerProfileSerializer(user=user)
-
-#     context = {
-#         'user': serialized_user.data,
-#         'account': serialized_account.data
-#     }
-#     return Response(context)
+@api_view(['POST'])
+def reset_password(request):
+    pass
