@@ -2,6 +2,7 @@
 
 from django.urls import path
 from .views import (
+    get_or_create_business,
     retailer_company_header,
     retailer_location_list_all,
     retailer_location_detail_header,
@@ -10,6 +11,7 @@ from .views import (
     )
 
 urlpatterns = [
+    path('create-business', get_or_create_business),
     path('retailer/detail', retailer_company_header),
     path('retailer/detail/<int:retailer_pk>', retailer_company_header),
     path('retailer-locations/<str:prod_type>', retailer_location_list_all),

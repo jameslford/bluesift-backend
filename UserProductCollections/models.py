@@ -1,8 +1,9 @@
 from django.db import models
 from django.conf import settings
+from django.db import transaction
 from django.core.exceptions import ValidationError
 from model_utils.managers import InheritanceManager
-from Addresses.models import Address
+from Addresses.models import Address, Zipcode
 from Groups.models import ProCompany, RetailerCompany
 from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile
 
@@ -118,6 +119,33 @@ class RetailerLocation(models.Model):
         super(RetailerLocation, self).save(*args, **kwargs)
 
 
+class BaseProjectManager(models.Manager):
+    
+    @transaction.atomic()
+    def create_project(self, user, **kwargs):
+        nickname = kwargs.get('nickname')
+        deadline = kwargs.get('deadline')
+        address = kwargs.get('address')
+        project = None
+        group = user.get_group()
+        if user.is_pro:
+            project = ProProject.objects.create(owner=group, nickname=nickname, deadline=deadline)
+        else:
+            project = ConsumerProject.objects.create(owner=group, nickname=nickname, deadline=deadline)
+        if not address:
+            return project
+
+        postal_code = address.pop('postal_code', None)
+        code = postal_code.get('code')
+        zipcode = Zipcode.objects.filter(code=code).first()
+        if not zipcode:
+            raise ValidationError('Invalid zipcode')
+        address = Address.objects.create(postal_code=zipcode, **address)
+        project.address = address
+        project.save()
+        return project
+
+
 class BaseProject(models.Model):
     pro_collaborator = models.ManyToManyField(ProEmployeeProfile)
     collaborators = models.ManyToManyField(ConsumerProfile)
@@ -131,7 +159,7 @@ class BaseProject(models.Model):
         related_name='projects'
     )
 
-    objects = models.Manager()
+    objects = BaseProjectManager()
     subclasses = InheritanceManager()
 
     def product_count(self):

@@ -80,26 +80,6 @@ def create_user(request):
     return Response(UserResponseSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
-@api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-def get_or_create_business(request):
-    from Groups.models import Company, ServiceType
-    user = request.user
-    if user.get_profile():
-        return Response(f'{user.email} already associated with business', status=status.HTTP_412_PRECONDITION_FAILED)
-    company_name = request.POST.get('company_name', None)
-    service_type = request.POST.get('company_type', None)
-    title = request.POST.get('role', None)
-    if not company_name:
-        return Response('No company name', status=status.HTTP_400_BAD_REQUEST)
-    service_type = ServiceType.objects.filter(label=service_type).first()
-    if user.is_pro and not service_type:
-        return Response('Invalid service type', status=status.HTTP_400_BAD_REQUEST)
-    company = Company.objects.create_company(user=user, name=company_name, service=service_type)
-    profile = BaseProfile.objects.create_profile(user, company=company, title=title, owner=True)
-    return Response('Created', status=status.HTTP_201_CREATED)
-
-
 def activate(request, uidb64):
     user_model = get_user_model()
     try:
