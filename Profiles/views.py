@@ -71,11 +71,13 @@ class ShortLib:
 @api_view(['GET'])
 def get_short_lib(request, pk=None):
     user = request.user
+    blank_slib = ShortLib(0, [], [])
     if not user.is_authenticated:
-        blank_slib = ShortLib(0, [], [])
         return Response(asdict(blank_slib), status=status.HTTP_200_OK)
     collections = user.get_collections()
     collection = collections.get(pk=pk) if pk else collections.first()
+    if not collection:
+        return Response(asdict(blank_slib), status=status.HTTP_200_OK)
     selected_proj_loc = PLShort(collection.nickname, collection.pk)
     pl_list = collections.values('nickname', 'pk')
     product_ids = collection.products.values_list('product__pk', flat=True)

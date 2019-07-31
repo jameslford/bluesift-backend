@@ -6,24 +6,22 @@ from django.shortcuts import redirect
 from django.db import transaction
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password, make_password
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import get_user_model
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes, force_text
 from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_text, force_bytes
 from django.conf import settings
+
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from config.tasks import send_verification_email
 
 from Profiles.models import BaseProfile
-from .serializers import (
-    UserResponseSerializer,
-    )
+from .serializers import UserSerializer
 
 
 @api_view(['POST'])
@@ -52,6 +50,7 @@ def create_user(request):
         email=email,
         full_name=full_name,
         password=hashed_password,
+        is_active=True,
         is_pro=is_pro,
         is_supplier=is_supplier,
         date_registered=datetime.datetime.now()
@@ -60,24 +59,11 @@ def create_user(request):
     if not user:
         return Response('No user created', status=status.HTTP_400_BAD_REQUEST)
 
-    token = Token.objects.get_or_create(user=user)
-
-    message = render_to_string('acc_activate_email.html', {
-        'user': user,
-        'domain': get_current_site(request).domain,
-        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-        'token': token
-    })
-
-    email_obj = EmailMessage(
-        subject="Activate your Buildbook account",
-        body=message,
-        from_email='jford@bluesift.com',
-        to=[user.email]
-        )
-    email_obj.send()
-
-    return Response(UserResponseSerializer(user).data, status=status.HTTP_201_CREATED)
+    Token.objects.get_or_create(user=user)
+    site = get_current_site(request).domain
+    print(site)
+    send_verification_email.delay(site, user.pk)
+    return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
 def activate(request, uidb64):
@@ -88,7 +74,7 @@ def activate(request, uidb64):
     except (TypeError, ValueError, OverflowError, user_model.DoesNotExist):
         user = None
     if user is not None and user == Token.objects.get(user=user).user:
-        user.is_active = True
+        user.email_verified = True
         user.date_confirmed = datetime.datetime.now()
         user.save()
         return redirect(settings.REDIRECT_URL)
@@ -122,8 +108,13 @@ def custom_login(request):
     if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging' and not user.is_staff:
         return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)
 
-    return Response(UserResponseSerializer(user).data, status=status.HTTP_200_OK)
+    return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_user(request):
+    return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def reset_password(request):

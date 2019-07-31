@@ -1,10 +1,42 @@
 from __future__ import absolute_import, unicode_literals
+import logging
+from django.contrib.auth import get_user_model
+from django.template.loader import render_to_string
+from django.utils.encoding import force_text, force_bytes
+from django.core.mail import EmailMessage
+from django.utils.http import urlsafe_base64_encode
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from config.scripts.db_operations import backup_db, clean_backups, scrape, scraper_to_revised, initialize_data, run_stock_clean
 from config.scripts.images import get_images
+from config.celery import app
+
 
 logger = get_task_logger(__name__)
+
+
+@app.task
+def send_verification_email(site_domain, user_pk):
+    user_model = get_user_model()
+    try:
+        user = user_model.objects.get(pk=user_pk)
+        message = render_to_string('acc_activate_email.html', {
+            'user': user,
+            'domain': site_domain,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': user.auth_token
+        })
+
+        email_obj = EmailMessage(
+            subject="Activate your Buildbook account",
+            body=message,
+            from_email='jford@bluesift.com',
+            to=[user.email]
+            )
+        email_obj.send()
+    except user_model.DoesNotExist:
+        logging.warning("Tried to send verification email to non-existent user: '%s'" % user_pk)
+
 
 @shared_task
 def check_cache():

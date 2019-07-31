@@ -21,10 +21,6 @@ class UserManager(BaseUserManager):
         if is_supplier and is_pro:
             raise ValueError('User cannot be proffesional and supplier')
 
-        user_check = self.model.objects.filter(email__iexact=email).first()
-        if user_check:
-            return user_check
-
         user = self.model.objects.create(email=email)
         user.set_password(password)
         user.full_name = kwargs.get('full_name', False)
@@ -36,11 +32,6 @@ class UserManager(BaseUserManager):
         user.save(using=self.db)
         Token.objects.get_or_create(user=user)
         return user
-
-        # user_obj = self.model(
-        #     email=self.normalize_email(email),
-        #     full_name=full_name,
-        # )
 
     def create_staffuser(self, email, full_name=None, password=None):
         user = self.create_user(
@@ -76,6 +67,7 @@ class User(AbstractBaseUser):
     is_supplier = models.BooleanField(default=False)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
+    email_verified = models.BooleanField(default=False)
 
     objects = UserManager()
 

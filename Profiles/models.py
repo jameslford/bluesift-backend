@@ -30,20 +30,18 @@ class ProfileManager(models.Manager):
                     owner=owner,
                     title=title,
                     admin=admin)[0]
-            else:
-                return RetailerEmployeeProfile.objects.get_or_create(
-                    user=user,
-                    company=company,
-                    owner=owner,
-                    title=title,
-                    admin=admin)[0]
-        else:
-            plan = kwargs.get('plan', None)
-            phone = kwargs.get('phone_number', None)
-            return ConsumerProfile.objects.get_or_create(
+            return RetailerEmployeeProfile.objects.get_or_create(
                 user=user,
-                plan=plan,
-                phone_number=phone)[0]
+                company=company,
+                owner=owner,
+                title=title,
+                admin=admin)[0]
+        plan = kwargs.get('plan', None)
+        phone = kwargs.get('phone_number', None)
+        return ConsumerProfile.objects.get_or_create(
+            user=user,
+            plan=plan,
+            phone_number=phone)[0]
         # profile.save(using=self.db)
 
 

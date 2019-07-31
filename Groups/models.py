@@ -1,5 +1,4 @@
 from model_utils.managers import InheritanceManager
-from model_utils.choices import Choices
 from django.db import models
 from Addresses.models import Address
 from Plans.models import RetailerPlan, ProPlan
