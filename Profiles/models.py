@@ -55,13 +55,6 @@ class BaseProfile(models.Model):
     objects = ProfileManager()
     subclasses = InheritanceManager()
 
-    # def get_group(self):
-    #     subclass = BaseProfile.subclasses.get_subclass(self.pk)
-    # psuedo if subclass == customerprofile:
-    # return subclass.library
-    # else:
-    # return subclass.company
-
 
 class ConsumerProfile(BaseProfile):
     phone_number = models.CharField(max_length=20, null=True, blank=True)
@@ -130,10 +123,8 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     # def __str__(self):
     #     return self.user.email
 
-
     # def get_plan(self):
     #     plan = company.plan
-
 
     # def clean(self):
     #     # makes sure company owners/admins do not exceed quota
@@ -149,7 +140,6 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     #         if existing_owners >= owners_allowed:
     #             raise ValidationError('Maximum owners, ' + str(owners_allowed) + ' already exist')
     #     return super().clean()
-
 
     # def save(self, *args, **kwargs):
     #     # calling full_clean() which executes clean() above

@@ -1,8 +1,63 @@
 import serpy
+from rest_framework import serializers
+from Accounts.serializers import UserSerializer
+from Groups.serializers import ProListSerializer, RetailerCompanyHeaderSerializer
+from .models import BaseProfile, RetailerEmployeeProfile, ProEmployeeProfile, ConsumerProfile
 
 
-class ProfileSerializer(serpy.Serializer):
-    pass
+class BaseProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = BaseProfile
+        fields = (
+            'pk',
+            'user'
+        )
+
+
+class ConsumerProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = ConsumerProfile
+        fields = (
+            'pk',
+            'user',
+            'plan'
+        )
+
+
+class ProEmployeeProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    company = ProListSerializer()
+
+    class Meta:
+        model = ProEmployeeProfile
+        fields = (
+            'pk',
+            'user',
+            'company',
+            'owner',
+            'admin',
+            'title'
+        )
+
+
+class RetailerEmployeeProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    company = RetailerCompanyHeaderSerializer()
+
+    class Meta:
+        model = RetailerEmployeeProfile
+        fields = (
+            'pk',
+            'user',
+            'company',
+            'owner',
+            'admin',
+            'title'
+        )
 
 
 

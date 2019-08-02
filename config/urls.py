@@ -9,6 +9,7 @@ from .views import get_header_list
 urlpatterns = [
     path('admin/doc/', include('django.contrib.admindocs.urls')),
     path('admin/', admin.site.urls),
+    path('addresses/', include('Addresses.urls')),
     path('accounts/', include('Accounts.urls')),
     path('bbadmin/', include('BBadmin.urls')),
     path('groups/', include('Groups.urls')),
@@ -20,15 +21,6 @@ urlpatterns = [
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),
     path('user-products/', include('UserProducts.urls'))
-    # path('specialized-products/', include('SpecializedProducts.urls')),
-    # path('', landing),
-    # path('get_short_lib/<int:pk>', get_short_lib),
-    # path('get_short_lib/', get_short_lib),
-    # path('grappelli/', include('grappelli.urls')),
-    # path('carts/', include('Carts.urls')),
-    # path('customerProfiles/', include('CustomerProfiles.urls'), name='customer_profiles'),
-    # path('pl_status/<str:pk>', pl_status_for_product),
-    # path('supplierProfiles/', include('Profiles.urls'), name='profiles'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

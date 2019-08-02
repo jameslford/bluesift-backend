@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from Products.models import Product
+from .serializers import ProEmployeeProfileSerializer, RetailerEmployeeProfileSerializer, ConsumerProfileSerializer
+
 
 @dataclass
 class PLShort:
@@ -31,41 +33,6 @@ class ShortLib:
     product_ids: List[str]
     pl_short_list: List[PLShort]
     selected_location: PLShort = None
-
-
-# def get_proj_or_loc(user):
-#     if user.is_supplier:
-#         employee = EmployeeProfile.objects.filter(user=user).first()
-#         return employee.company_account.shipping_locations.all()
-#     if not CustomerProject.objects.filter(owner=user.customer_profile).exists():
-#         CustomerProject.objects.create(owner=user.customer_profile, nickname='First Project')
-#     return CustomerProject.objects.filter(owner=user.customer_profile).all()
-
-
-
-# def get_user_product_model(user):
-#     if user.is_suppler:
-#         return SupplierProduct
-#     return CustomerProduct
-
-
-# def get_pl_products(user, location) -> [str]:
-#     if user.is_supplier:
-#         return location.priced_products.values_list('product__pk', flat=True)
-#     return location.products.values_list('product__pk', flat=True)
-
-
-# def locations_list(locations) -> List[PLShort]:
-#     pl_list = []
-#     for location in locations:
-#         nickname = location.nickname
-#         pk = location.pk
-#         pl_list.append(PLShort(nickname, pk))
-#     return pl_list
-
-
-# def landing(request: HttpRequest):
-#     return HttpResponseRedirect('admin/')
 
 
 @api_view(['GET'])
@@ -110,6 +77,11 @@ def get_profile(request: HttpRequest):
 
     if request.method == 'GET':
         profile = request.user.get_profile()
+        if request.user.is_pro:
+            return Response(ProEmployeeProfileSerializer(profile).data, status=status.HTTP_200_OK)
+        if request.user.is_supplier:
+            return Response(RetailerEmployeeProfileSerializer(profile).data, status=status.HTTP_200_OK)
+        return Response(ConsumerProfileSerializer(profile).data, status=status.HTTP_200_OK)
 
 # from django.conf import settings
 # from django.contrib.postgres.search import SearchVector
@@ -133,6 +105,41 @@ def get_profile(request: HttpRequest):
 #     ShippingLocationUpdateSerializer,
 #     SupplierProductUpdateSerializer
 #     )
+
+
+# def get_proj_or_loc(user):
+#     if user.is_supplier:
+#         employee = EmployeeProfile.objects.filter(user=user).first()
+#         return employee.company_account.shipping_locations.all()
+#     if not CustomerProject.objects.filter(owner=user.customer_profile).exists():
+#         CustomerProject.objects.create(owner=user.customer_profile, nickname='First Project')
+#     return CustomerProject.objects.filter(owner=user.customer_profile).all()
+
+
+
+# def get_user_product_model(user):
+#     if user.is_suppler:
+#         return SupplierProduct
+#     return CustomerProduct
+
+
+# def get_pl_products(user, location) -> [str]:
+#     if user.is_supplier:
+#         return location.priced_products.values_list('product__pk', flat=True)
+#     return location.products.values_list('product__pk', flat=True)
+
+
+# def locations_list(locations) -> List[PLShort]:
+#     pl_list = []
+#     for location in locations:
+#         nickname = location.nickname
+#         pk = location.pk
+#         pl_list.append(PLShort(nickname, pk))
+#     return pl_list
+
+
+# def landing(request: HttpRequest):
+#     return HttpResponseRedirect('admin/')
 
 
 # ''' supplier side views  '''

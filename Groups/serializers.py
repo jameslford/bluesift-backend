@@ -53,6 +53,13 @@ class ProListSerializer(serializers.ModelSerializer):
         model = ProCompany
         fields = tuple(PRO_LIST)
 
+class ProCompanyDetailSerializers(serializers.ModelSerializer):
+    address = AddressSerializer()
+
+    class Meta:
+        model = ProCompany
+        fields = tuple(PRO_LIST)
+
 
 # class RetailerListSerializer(serpy.Serializer):
 #     pk = serpy.Field()

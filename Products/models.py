@@ -139,14 +139,6 @@ class ProductPricingManager(models.Manager):
 
     def product_prices(self, location_pk=None):
         return self.get_queryset().product_prices(location_pk)
-    #     from Profiles.models import retailerProduct, CompanyShippingLocation
-    #     term = {'product__in': self.get_queryset().values('pk')}
-    #     if location_pk:
-    #         term['retailer__pk'] = location_pk
-    #     sup_prods = retailerProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
-    #         min_price=Least('in_store_ppu', 'online_ppu')
-    #     )
-    #     return list(sup_prods.values('min_price', 'product__pk'))
 
 
 class Product(models.Model):
@@ -233,16 +225,6 @@ class Product(models.Model):
             'retailer__address__coordinates',
             'retailer__address__postal_code'
         ).filter(publish_in_store_price=True)
-
-    # def set_prices(self):
-    #     self.in_store = self.priced.all().filter(publish_in_store_availability=True).exist()
-    #     self.in_store_and_priced = self.priced.all().filter(publish_in_store_price=True).exist()
-    #     self.online_and_priced = self.priced.all().filter(publish_online_price=True).exist()
-    #     if self.in_store_and_priced or self.online_and_priced:
-    #         price = self.priced.all().aggregate(Min('in_store_ppu'), Avg('in_store_ppu'))
-    #         self.lowest_price = price["in_store_ppu__min"]
-    #         self.average_price = price['in_store_ppu__avg']
-    #     self.save()
 
     def set_locations(self):
         self.locations = None

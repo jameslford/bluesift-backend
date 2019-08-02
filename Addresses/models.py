@@ -1,9 +1,14 @@
+"""
+Addresses.models
+    - Coordinate
+    - Zipcode
+    - Address
+
+"""
 from django.conf import settings
-# from django.db import models
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 import googlemaps
-from .choices import states
 
 
 class Coordinate(models.Model):
@@ -21,13 +26,15 @@ class Coordinate(models.Model):
             update_fields=update_fields
             )
 
+    class Meta:
+        unique_together = ('lat', 'lng')
+
 
 class CentroidManager(models.Manager):
     def get_centroid(self, code):
         coords = self.filter(code=code).first().centroid.point
         if coords:
             return coords
-
 
 
 class Zipcode(models.Model):
@@ -44,6 +51,7 @@ class Address(models.Model):
     address_line_1 = models.CharField(max_length=120)
     address_line_2 = models.CharField(max_length=120, null=True, blank=True)
     city = models.CharField(max_length=120, null=True, blank=True)
+    gmaps_id = models.CharField(max_length=200, null=True, blank=True)
     country = models.CharField(
         max_length=120,
         blank=True,
@@ -75,9 +83,52 @@ class Address(models.Model):
                 )
         return '%s, %s, %s, %s' % (self.address_line_1, self.city, self.state, self.postal_code)
 
+    def assign_google_response(self):
+        response = self.get_gmaps_address()
+        address_components = response.get('address_components')
+
+        def get_value(value: str, alt_response=None):
+            for component in address_components:
+                types = component.get('types')
+                if not types:
+                    continue
+                if value in types:
+                    return component['short_name']
+                continue
+            return alt_response
+
+        if not response:
+            return False
+        zipcode = get_value('postal_code', 0)
+        postal_code = Zipcode.objects.filter(code=zipcode).first()
+        if not postal_code:
+            return False
+        self.postal_code = postal_code
+        lat = response['geometry']['location']['lat']
+        lng = response['geometry']['location']['lng']
+        coordinate = Coordinate.objects.filter(lat=lat, lng=lng).first()
+        if not coordinate:
+            coordinate = Coordinate.objects.create(lat=lat, lng=lng)
+        self.coordinates = coordinate
+        street_number = get_value('street_number')
+        route = get_value('route')
+        self.address_line_1 = f'{street_number} {route}'
+        self.state = get_value('administrative_area_level_1')
+        self.city = get_value('locality')
+        return True
+
+    def get_gmaps_address(self):
+        gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
+        response = None
+        if self.gmaps_id:
+            response = gmaps.reverse_geocode(self.gmaps_id)
+        else:
+            response = gmaps.geocode(self.address_string())
+        if response:
+            return response[0]
+
     def address_string(self):
         al1 = self.address_line_1
-        al2 = self.address_line_2
         city = self.city
         state = self.state
         return f'{al1}, {city}, {state}, {self.postal_code}'
@@ -85,20 +136,8 @@ class Address(models.Model):
     def city_state(self):
         return f'{self.city}, {self.state}'
 
-    def get_latlng(self):
-        key = settings.GMAPS_API_KEY
-        gmaps = googlemaps.Client(key=key)
-        add = self.address_string()
-        location = gmaps.geocode(add)[0]['geometry']['location']
-        lat = location['lat']
-        lng = location['lng']
-        return [lat, lng]
-
-
-    def save(self, *args, **kwargs):
-        if not self.coordinates:
-            lat_long = self.get_latlng()
-            if lat_long:
-                coordinate = Coordinate.objects.create(lat=lat_long[0], lng=lat_long[1])
-                self.coordinates = coordinate
-                super(Address, self).save(*args, **kwargs)
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        passed = self.assign_google_response()
+        if not passed:
+            return None
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)

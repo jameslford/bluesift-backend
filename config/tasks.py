@@ -1,6 +1,11 @@
+"""
+celery tasks - these are all asynchronous that exist for this project
+"""
 from __future__ import absolute_import, unicode_literals
 import logging
+import googlemaps
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.encoding import force_text, force_bytes
 from django.core.mail import EmailMessage
@@ -13,6 +18,15 @@ from config.celery import app
 
 
 logger = get_task_logger(__name__)
+
+
+@app.task
+def verify_address(address_pk):
+    from Addresses.models import Address
+    address = Address.objects.get(pk=address_pk)
+
+
+
 
 
 @app.task
@@ -34,8 +48,10 @@ def send_verification_email(site_domain, user_pk):
             to=[user.email]
             )
         email_obj.send()
+        return f'{user.email} email sent'
     except user_model.DoesNotExist:
         logging.warning("Tried to send verification email to non-existent user: '%s'" % user_pk)
+        return f'{user.email} email failed'
 
 
 @shared_task

@@ -120,12 +120,12 @@ class RetailerLocation(models.Model):
 
 
 class BaseProjectManager(models.Manager):
-    
+
     @transaction.atomic()
     def create_project(self, user, **kwargs):
         nickname = kwargs.get('nickname')
         deadline = kwargs.get('deadline')
-        address = kwargs.get('address')
+        address = kwargs.get('address_pk')
         project = None
         group = user.get_group()
         if user.is_pro:
@@ -134,16 +134,19 @@ class BaseProjectManager(models.Manager):
             project = ConsumerProject.objects.create(owner=group, nickname=nickname, deadline=deadline)
         if not address:
             return project
-
-        postal_code = address.pop('postal_code', None)
-        code = postal_code.get('code')
-        zipcode = Zipcode.objects.filter(code=code).first()
-        if not zipcode:
-            raise ValidationError('Invalid zipcode')
-        address = Address.objects.create(postal_code=zipcode, **address)
+        address = Address.objects.filter(pk=address).first()
+        if not address:
+            return project
         project.address = address
         project.save()
         return project
+        # postal_code = address.pop('postal_code', None)
+        # code = postal_code.get('code')
+        # zipcode = Zipcode.objects.filter(code=code).first()
+        # if not zipcode:
+        #     raise ValidationError('Invalid zipcode')
+        # address = Address.objects.create(postal_code=zipcode, **address)
+        # project.address = address
 
 
 class BaseProject(models.Model):

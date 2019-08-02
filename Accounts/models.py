@@ -83,8 +83,18 @@ class User(AbstractBaseUser):
             return first_name
         return self.email
 
+    def get_full_name(self):
+        if self.full_name:
+            return self.full_name
+        return self.email
+
     def get_short_name(self):
         return self.email
+
+    def get_initials(self):
+        full_name = self.get_full_name()
+        inits = [word[0].upper() for word in full_name.split()]
+        return ''.join(inits)
 
     def get_token(self):
         # pylint: disable=no-member

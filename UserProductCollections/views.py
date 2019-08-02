@@ -33,9 +33,9 @@ def get_library(request: Request):
     )
 
 
-@api_view(['POST'])
+@api_view(['POST', 'DELETE'])
 @permission_classes((IsAuthenticated,))
-def add_project(request: Request):
+def crud_project(request: Request, project_pk=None):
     """
     sole endpoint to add a project - model manager will differentiate between user and pro_user
     """
@@ -45,6 +45,13 @@ def add_project(request: Request):
             project = BaseProject.objects.create_project(request.user, **request.data)
             return Response(status=status.HTTP_201_CREATED)
         except ValidationError as error:
-            return Response(error.message, status=status.HTTP_400_BAD_REQUEST)
+            return Response(error.messages[1], status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'DELETE':
+        project = request.user.get_collections().filter(pk=project_pk).first()
+        if not project:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        project.delete()
+        return Response(status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
