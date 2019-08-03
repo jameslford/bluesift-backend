@@ -116,12 +116,19 @@ def services_list_all(request: HttpRequest, cat='all'):
 
 
 @api_view(['GET'])
-def service_detail_header(request: HttpRequest, pk):
-    service = ProCompany.objects.select_related(
+def service_detail_header(request: HttpRequest, pk=None):
+    user = request.user
+    if not pk:
+        if user.is_authenticated and user.is_pro:
+            pk = user.get_group().pk
+        else:
+            return Response('No company verified', status=status.HTTP_400_BAD_REQUEST)
+    service: ProCompany = ProCompany.objects.select_related(
         'business_address',
         'business_address__postal_code',
         'business_address__coordinates'
     ).get(pk=pk)
+
     return Response(
         ProListSerializer(service).data,
         status=status.HTTP_200_OK

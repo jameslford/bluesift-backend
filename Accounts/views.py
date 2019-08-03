@@ -90,9 +90,12 @@ def custom_login(request):
     if email is None or password is None:
         return Response('Email and Password Required!', status=status.HTTP_400_BAD_REQUEST)
     user = user_model.objects.filter(email__iexact=email).first()
+    print('user password = ', user.password)
 
-    if not user and check_password(password, user.password):
-        return Response('Invalid Credentials', status=status.HTTP_400_BAD_REQUEST)
+    if not user:
+        return Response('Invalid credentials', status=status.HTTP_400_BAD_REQUEST)
+    if not check_password(password, user.password):
+        return Response(f'Invalid password = {user.password}', status=status.HTTP_400_BAD_REQUEST)
 
     if not user.is_active:
         return Response(

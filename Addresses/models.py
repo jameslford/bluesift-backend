@@ -32,9 +32,10 @@ class Coordinate(models.Model):
 
 class CentroidManager(models.Manager):
     def get_centroid(self, code):
-        coords = self.filter(code=code).first().centroid.point
-        if coords:
-            return coords
+        coords = self.filter(code=code).first()
+        if not coords:
+            return None
+        return coords.centroid.point
 
 
 class Zipcode(models.Model):

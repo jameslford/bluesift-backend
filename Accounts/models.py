@@ -1,4 +1,6 @@
-# Accounts.models.py
+"""
+Accounts.models.py
+"""
 
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
@@ -23,7 +25,7 @@ class UserManager(BaseUserManager):
 
         user = self.model.objects.create(email=email)
         user.set_password(password)
-        user.full_name = kwargs.get('full_name', False)
+        user.full_name = kwargs.get('full_name', None)
         user.staff = kwargs.get('is_staff', False)
         user.admin = kwargs.get('is_admin', False)
         user.is_active = kwargs.get('is_active', False)

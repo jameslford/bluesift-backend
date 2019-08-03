@@ -44,9 +44,23 @@ class Command(BaseCommand):
             del random_addresses[random_addresses.index(address)]
             company_type = random.choice((RETAILER, PRO))
             if company_type == RETAILER:
-                user = user_model.objects.create_user(email=email, is_supplier=True, password=password)
+                user = user_model.objects.create_user(
+                    email=email,
+                    full_name=name,
+                    email_verified=True,
+                    is_supplier=True,
+                    is_active=True,
+                    password=password,
+                    )
             else:
-                user = user_model.objects.create_user(email=email, is_pro=True, password=password)
+                user = user_model.objects.create_user(
+                    email=email,
+                    full_name=name,
+                    email_verified=True,
+                    is_pro=True,
+                    is_active=True,
+                    password=password
+                    )
             zipcode = Zipcode.objects.get(code=address['postalCode'])
             location_address = Address.objects.create(
                 address_line_1=address['address1'],
