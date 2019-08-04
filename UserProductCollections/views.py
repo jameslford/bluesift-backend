@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from config.custom_permissions import OwnerOrAdmin
 from .models import BaseProject
 from .serializers import RetailerLocationListSerializer, ProjectSerializer
 
@@ -22,6 +23,7 @@ def get_library(request: Request):
     will return projects that the user is included on as colloborator - which is noted
     """
     collections = request.user.get_collections()
+    print('getting library = ', collections)
     if request.user.is_supplier:
         return Response(
             RetailerLocationListSerializer(collections, many=True).data,
@@ -34,7 +36,7 @@ def get_library(request: Request):
 
 
 @api_view(['POST', 'DELETE'])
-@permission_classes((IsAuthenticated,))
+@permission_classes((IsAuthenticated, OwnerOrAdmin))
 def crud_project(request: Request, project_pk=None):
     """
     sole endpoint to add a project - model manager will differentiate between user and pro_user

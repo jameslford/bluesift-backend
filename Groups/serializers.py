@@ -2,6 +2,7 @@ from rest_framework import serializers
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from UserProductCollections.models import RetailerLocation
 from .models import RetailerCompany, ProCompany
+from Profiles.serializers import RetailerEmployeeShortSerializer
 # import serpy
 # from Addresses.models import Address, Zipcode
 # from Groups.models import CompanyAccount
@@ -36,13 +37,15 @@ class RetailerLocationHeaderSerializer(RetailerListSerializer):
 
 class RetailerCompanyHeaderSerializer(serializers.ModelSerializer):
     business_address = AddressSerializer()
+    employees = RetailerEmployeeShortSerializer()
 
     class Meta:
         model = RetailerCompany
         fields = (
             'pk',
             'name',
-            'address_serializer',
+            'employees',
+            'business_address'
         )
 
 
@@ -52,6 +55,7 @@ class ProListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProCompany
         fields = tuple(PRO_LIST)
+
 
 class ProCompanyDetailSerializers(serializers.ModelSerializer):
     address = AddressSerializer()

@@ -56,10 +56,10 @@ def retailer_company_header(request: HttpRequest, retailer_pk=None):
     if retailer_pk:
         company = RetailerCompany.objects.get(pk=retailer_pk)
     else:
-        if not request.user.is_authenticated() and request.user.is_supplier:
+        if not request.user.is_authenticated or not request.user.is_supplier:
             return Response('No Company specified', status=status.HTTP_400_BAD_REQUEST)
         company = request.user.get_group()
-    return Response(RetailerCompanyHeaderSerializer(company), status=status.HTTP_200_OK)
+    return Response(RetailerCompanyHeaderSerializer(company).data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

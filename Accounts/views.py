@@ -5,11 +5,11 @@ import os
 from django.shortcuts import redirect
 from django.db import transaction
 from django.http import HttpResponse
-from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_text, force_bytes
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_text
 from django.conf import settings
 
 
@@ -44,12 +44,11 @@ def create_user(request):
     user_check = user_model.objects.filter(email__iexact=email).first()
     if user_check:
         return Response(f'{email.lower()} already exists', status=status.HTTP_400_BAD_REQUEST)
-    hashed_password = make_password(password)
 
     user = user_model.objects.create_user(
         email=email,
         full_name=full_name,
-        password=hashed_password,
+        password=password,
         is_active=True,
         is_pro=is_pro,
         is_supplier=is_supplier,
@@ -95,7 +94,7 @@ def custom_login(request):
     if not user:
         return Response('Invalid credentials', status=status.HTTP_400_BAD_REQUEST)
     if not check_password(password, user.password):
-        return Response(f'Invalid password = {user.password}', status=status.HTTP_400_BAD_REQUEST)
+        return Response(f'Invalid password', status=status.HTTP_400_BAD_REQUEST)
 
     if not user.is_active:
         return Response(
@@ -118,6 +117,7 @@ def custom_login(request):
 @permission_classes((IsAuthenticated,))
 def get_user(request):
     return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
 def reset_password(request):
