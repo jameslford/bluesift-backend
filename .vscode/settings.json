@@ -3,7 +3,6 @@
     "window.zoomLevel": 0,
     "python.linting.flake8CategorySeverity.F": "Warning",
     "python.linting.flake8CategorySeverity.E": "Warning",
-    "python.linting.pylintUseMinimalCheckers": true,
     "python.linting.pylintArgs": [
         "--load-plugins=pylint_django",
         "--max-line-length=130",
@@ -16,7 +15,9 @@
     // "python.pythonPath": "C:/Users/james/Documents/Code/BuildingBook/envs/env/Scripts/python.exe",
     "python.linting.pylintPath": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Scripts\\pylint.exe",
     "python.linting.flake8Path": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Scripts\\flake8.exe",
-    "python.linting.pylintCategorySeverity.error": "Information",
-    "python.linting.pylintCategorySeverity.fatal": "Information",
-    "python.linting.pylintCategorySeverity.warning": "Error"
+    "python.linting.pylintCategorySeverity.error": "Warning",
+    "python.linting.pylintCategorySeverity.fatal": "Warning",
+    "python.linting.pylintCategorySeverity.warning": "Warning",
+    "python.linting.flake8Enabled": false,
+    "python.linting.pylintEnabled": true
 }

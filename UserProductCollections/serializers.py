@@ -5,6 +5,7 @@ from django.contrib.postgres.search import SearchVector
 from django.core.files.base import ContentFile
 from Addresses.models import Address, Zipcode
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
+from Profiles.serializers import RetailerEmployeeShortSerializer
 from .models import RetailerLocation
 
 
@@ -17,6 +18,7 @@ COMMON_RETAILER_LOCATION_FIELDS = [
     'address_string',
     'product_count',
     ]
+
 
 class RetailerLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
@@ -35,7 +37,14 @@ class RetailerLocationListSerializer(serializers.ModelSerializer):
 
 
 class RetailerLocationDetailSerializer(serializers.ModelSerializer):
-    pass
+    address = AddressSerializer()
+    # location_manager = RetailerEmployeeShortSerializer()
+
+    class Meta:
+        model = RetailerLocation
+        fields = tuple(COMMON_RETAILER_LOCATION_FIELDS + [
+            'local_admin',
+            ])
 
 
 class ProjectSerializer(serializers.Serializer):

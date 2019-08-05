@@ -45,8 +45,8 @@ class Company(models.Model):
 class RetailerCompany(Company):
     plan = models.ForeignKey(RetailerPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
 
-    def employees(self):
-        return self.employees
+    def get_employees(self):
+        return self.employees.select_related('user').all()
 
 
 class ServiceType(models.Model):

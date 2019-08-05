@@ -37,7 +37,7 @@ class RetailerLocationHeaderSerializer(RetailerListSerializer):
 
 class RetailerCompanyHeaderSerializer(serializers.ModelSerializer):
     business_address = AddressSerializer()
-    employees = RetailerEmployeeShortSerializer()
+    employees = serializers.SerializerMethodField()
 
     class Meta:
         model = RetailerCompany
@@ -47,6 +47,11 @@ class RetailerCompanyHeaderSerializer(serializers.ModelSerializer):
             'employees',
             'business_address'
         )
+
+    def get_employees(self, instance):
+        # employees = instance.prefetch_related('employees').employees.all()
+        employees = instance.get_employees()
+        return RetailerEmployeeShortSerializer(employees, many=True).data
 
 
 class ProListSerializer(serializers.ModelSerializer):

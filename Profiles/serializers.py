@@ -48,6 +48,7 @@ class RetailerEmployeeShortSerializer(serializers.ModelSerializer):
         fields = (
             'pk',
             'owner',
+            'name',
             'admin',
             'title'
         )
@@ -63,5 +64,5 @@ class RetailerEmployeeProfileSerializer(serializers.ModelSerializer):
             'user',
             'owner',
             'admin',
-            'title'
+            'title',
         )

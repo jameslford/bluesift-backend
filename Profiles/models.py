@@ -3,15 +3,6 @@ from django.db import models
 from django.conf import settings
 from Groups.models import ProCompany, RetailerCompany
 from Plans.models import ConsumerPlan
-# from django.core.exceptions import ValidationError
-# from Groups.models import Company, Library
-# from Plans.models import CustomerPlan
-# from decimal import Decimal
-# from django.db.models import QuerySet
-# from django.db.models import Avg
-# from django.db.models.functions import Cast, Coalesce, Least
-# from Products.models import Product
-# from Addresses.models import Address
 
 
 class ProfileManager(models.Manager):
@@ -55,6 +46,9 @@ class BaseProfile(models.Model):
     objects = ProfileManager()
     subclasses = InheritanceManager()
 
+    def name(self):
+        return self.user.get_full_name()
+
 
 class ConsumerProfile(BaseProfile):
     phone_number = models.CharField(max_length=20, null=True, blank=True)
@@ -67,6 +61,7 @@ class ConsumerProfile(BaseProfile):
     def __str__(self):
         return self.user.get_first_name() + "'s library"
 
+    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         if self.user.is_pro or self.user.is_supplier:
             raise ValueError('user should not be pro or supplier')
@@ -96,6 +91,7 @@ class ProEmployeeProfile(EmployeeBaseProfile):
         related_name='employees'
         )
 
+    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         if not self.user.is_pro:
             raise ValueError('user is not pro')
@@ -112,10 +108,15 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
         related_name='employees'
     )
 
+    def __str__(self):
+        return self.user.get_full_name()
+
+    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
-        owner_count = self.company.employees.filter(owner=True).count()
+            # pylint: disable=no-member
+        owner_count = self.company.employees.all().filter(owner=True).count()
         if owner_count > 0:
             raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(RetailerEmployeeProfile, self).save(*args, **kwargs)

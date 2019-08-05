@@ -54,7 +54,10 @@ def get_or_create_business(request):
 @api_view(['GET'])
 def retailer_company_header(request: HttpRequest, retailer_pk=None):
     if retailer_pk:
-        company = RetailerCompany.objects.get(pk=retailer_pk)
+        company = RetailerCompany.objects.prefetch_related(
+            'employees',
+            'employees__user'
+        ).get(pk=retailer_pk)
     else:
         if not request.user.is_authenticated or not request.user.is_supplier:
             return Response('No Company specified', status=status.HTTP_400_BAD_REQUEST)

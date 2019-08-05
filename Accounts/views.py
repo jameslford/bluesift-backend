@@ -119,6 +119,7 @@ def get_user(request):
     return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
 
+
 @api_view(['POST'])
 def reset_password(request):
     pass

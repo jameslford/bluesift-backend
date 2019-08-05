@@ -6,9 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from config.custom_permissions import OwnerOrAdmin
-from .models import BaseProject
-from .serializers import RetailerLocationListSerializer, ProjectSerializer
+from config.custom_permissions import OwnerOrAdmin, RetailerPermission
+from .models import BaseProject, RetailerLocation
+from .serializers import RetailerLocationListSerializer, ProjectSerializer, RetailerLocationDetailSerializer
 
 
 @api_view(['GET'])
@@ -26,7 +26,8 @@ def get_library(request: Request):
     print('getting library = ', collections)
     if request.user.is_supplier:
         return Response(
-            RetailerLocationListSerializer(collections, many=True).data,
+            RetailerLocationDetailSerializer(collections, many=True).data,
+            # RetailerLocationListSerializer(collections, many=True).data,
             status=status.HTTP_200_OK
         )
     return Response(
@@ -57,3 +58,16 @@ def crud_project(request: Request, project_pk=None):
         return Response(status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['POST', 'DELETE'])
+@permission_classes((IsAuthenticated, RetailerPermission))
+def crud_location(request: Request):
+    user = request.user
+
+    if request.method == 'POST':
+        data = request.data
+        RetailerLocation.objects.create_location(user, **data)
+        return Response(status=status.HTTP_201_CREATED)
+
+    return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
