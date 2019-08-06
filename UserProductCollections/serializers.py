@@ -20,23 +20,18 @@ COMMON_RETAILER_LOCATION_FIELDS = [
     ]
 
 
-class RetailerLocationListSerializer(serializers.ModelSerializer):
+class RetailerLocationDetailSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
 
     class Meta:
         model = RetailerLocation
-        fields = (
-            'pk',
-            'company_name',
-            'address',
-            'phone_number',
-            'nickname',
-            'address_string',
-            'product_count',
-            )
+        fields = tuple(COMMON_RETAILER_LOCATION_FIELDS + [
+            'local_admin',
+            'product_types'
+            ])
 
 
-class RetailerLocationDetailSerializer(serializers.ModelSerializer):
+class RetailerLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     # location_manager = RetailerEmployeeShortSerializer()
 

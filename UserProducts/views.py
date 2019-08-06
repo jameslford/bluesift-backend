@@ -1,3 +1,12 @@
+"""
+    UserProduct.views
+
+    - generic_add
+    - generic_delete
+    - get_project_products
+    - retailer_products
+
+"""
 from django.http import HttpRequest
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -7,7 +16,7 @@ from config.custom_permissions import RetailerPermission
 from Products.models import Product
 from Products.serializers import SerpyProduct
 from .models import ProjectProduct, RetailerProduct
-from .serializers import RetailerProductDetailSerializer
+from .serializers import FullRetailerProductSerializer
 
 
 @api_view(['POST'])
@@ -51,18 +60,28 @@ def get_project_products(request: HttpRequest, project_pk):
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, RetailerPermission))
-def retailer_products(request: HttpRequest, location_pk):
-    location = request.user.get_collections().filter(pk=location_pk).first()
-    if not location:
-        return Response('Invalid project pk', status=status.HTTP_400_BAD_REQUEST)
+def retailer_products(request: HttpRequest, location_pk, product_type):
+    from Products.models import ProductSubClass
+    prod_type = ProductSubClass().return_sub(product_type)
+    location = request.user.get_collections().filter(pk=location_pk).first().pk
+    prods = prod_type.objects.all().values('pk')
     location_products = RetailerProduct.objects.select_related(
         'product',
         'product__manufacturer'
-    ).filter(retailer=location)
+        ).filter(product__pk__in=prods, retailer__pk=location)
     return Response(
-        RetailerProductDetailSerializer(location_products, many=True).data,
+        FullRetailerProductSerializer(location_products, many=True).data,
         status=status.HTTP_200_OK)
 
+            # ).annotate(
+            #     manufacturer=F('product__manufacturer__label'),
+            #     product_pk=F('product__pk'),
+            #     unit=F('product__unit'),
+            #     manufacturer_style=F('product__manufacturer_style'),
+            #     manufacturer_collection=F('product__manu_collection'),
+            #     manufacturer_sku=F('product__manufacturer_sku'),
+            #     swatch_image=F('product__swatch_image')
+            #     )
 
 # @api_view(['GET'])
 # def retailer_location_products(request, product_type: str, location_pk):

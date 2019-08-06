@@ -15,5 +15,5 @@ urlpatterns = [
     path('delete/<str:product_pk>', generic_delete),
     path('delete/<str:product_pk>/<int:collection_pk>', generic_delete),
     path('project-products/<int:project_pk>', get_project_products),
-    path('retailer-products/<int:location_pk>', retailer_products)
+    path('retailer-products/<int:location_pk>/<str:product_type>', retailer_products)
 ]

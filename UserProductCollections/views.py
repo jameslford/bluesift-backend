@@ -26,8 +26,7 @@ def get_library(request: Request):
     print('getting library = ', collections)
     if request.user.is_supplier:
         return Response(
-            RetailerLocationDetailSerializer(collections, many=True).data,
-            # RetailerLocationListSerializer(collections, many=True).data,
+            RetailerLocationListSerializer(collections, many=True).data,
             status=status.HTTP_200_OK
         )
     return Response(

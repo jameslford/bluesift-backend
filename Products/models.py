@@ -264,14 +264,12 @@ class ProductSubClass(Product):
             special_method()
 
     @classmethod
-    def validate_sub(cls, sub:str):
+    def validate_sub(cls, sub: str):
         return bool(sub.lower() in [klas.__name__.lower() for klas in cls.__subclasses__()])
 
     @classmethod
-    def return_sub(cls, sub:str):
+    def return_sub(cls, sub: str):
         classes = [klas for klas in cls.__subclasses__() if klas.__name__.lower() == sub.lower()]
         if classes:
             return classes[0]
         return None
-
-
