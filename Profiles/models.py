@@ -111,6 +111,9 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     def __str__(self):
         return self.user.get_full_name()
 
+    def locations_managed(self):
+        return [location.pk for location in self.managed_locations.all()]
+
     # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:

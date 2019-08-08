@@ -1,4 +1,5 @@
 """ Profiles.serializers """
+import serpy
 from rest_framework import serializers
 from Accounts.serializers import UserSerializer
 from .models import BaseProfile, RetailerEmployeeProfile, ProEmployeeProfile, ConsumerProfile
@@ -65,4 +66,16 @@ class RetailerEmployeeProfileSerializer(serializers.ModelSerializer):
             'owner',
             'admin',
             'title',
+            'locations_managed'
         )
+
+
+# class RetailerEmployeeProfileSerializer(serpy.Serializers):
+#     user = UserSerializer()
+#     pk = serpy.Field()
+#     user = serpy.Field()
+#     owner = serpy.Field()
+#     admin = serpy.Field()
+#     title = serpy.Field()
+
+

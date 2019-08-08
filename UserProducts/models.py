@@ -1,6 +1,7 @@
 import datetime
 from model_utils.managers import InheritanceManager
 from django.db import models
+from django.core.exceptions import PermissionDenied
 from Products.models import Product
 from UserProductCollections.models import BaseProject, RetailerLocation
 
@@ -8,13 +9,15 @@ from UserProductCollections.models import BaseProject, RetailerLocation
 class ProjectProductManager(models.Manager):
     def add_product(self, user, product: Product, collection_pk=None):
         collections = user.get_collections()
-        collection = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
+        collection = collections.filter(
+            pk=collection_pk).first() if collection_pk else collections.first()
         self.get_or_create(product=product, project=collection)[0]
         return True
 
     def delete_product(self, user, product, collection_pk=None):
         collections = user.get_collections()
-        collection = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
+        collection = collections.filter(
+            pk=collection_pk).first() if collection_pk else collections.first()
         user_product = self.get(product=product, project=collection)
         user_product.delete()
         return True
@@ -45,7 +48,8 @@ class ProjectProduct(models.Model):
 class RetailerProductManager(models.Manager):
     def add_product(self, user, product, collection_pk=None):
         collections = user.get_collections()
-        location = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
+        location = collections.filter(
+            pk=collection_pk).first() if collection_pk else collections.first()
         profile = user.get_profile()
         if not (profile.admin or
                 profile.owner or
@@ -56,7 +60,8 @@ class RetailerProductManager(models.Manager):
 
     def delete_product(self, user, product, collection_pk):
         collections = user.get_collections()
-        location = collections.filter(pk=collection_pk).first() if collection_pk else collections.first()
+        location = collections.filter(
+            pk=collection_pk).first() if collection_pk else collections.first()
         profile = user.get_profile()
         if not (profile.admin or
                 profile.owner or
@@ -64,6 +69,24 @@ class RetailerProductManager(models.Manager):
             return False
         user_prod = self.get(product=product, retailer=location)
         user_prod.delete()
+
+    def update_product(self, user, **kwargs):
+        product_pk = kwargs.get('pk')
+        locations = [location.pk for location in user.get_collections()]
+        profile = user.get_profile()
+        if not (profile.admin or profile.owner):
+            locations = profile.locations_managed()
+        product: RetailerProduct = RetailerProduct.objects.filter(pk=product_pk, retailer__pk__in=locations)
+        in_store_ppu = kwargs.get('in_store_ppu' )
+        units_available_in_store = kwargs.get('units_available_in_store')
+        lead_time_ts = kwargs.get('lead_time_ts')
+        lead_time_ts = datetime.timedelta(days=lead_time_ts)
+        updates = product.update(
+            in_store_ppu=in_store_ppu,
+            units_available_in_store=units_available_in_store,
+            lead_time_ts=lead_time_ts
+            )
+        return updates
 
 
 class RetailerProduct(models.Model):
@@ -111,7 +134,12 @@ class RetailerProduct(models.Model):
         self.check_approvals()
         self.check_availability()
         self.product.set_locations()
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
+            )
 
     def location_address(self):
         return self.retailer.address.city_state()

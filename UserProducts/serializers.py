@@ -1,4 +1,3 @@
-import datetime
 import serpy
 from rest_framework import serializers
 from UserProducts.models import RetailerProduct
