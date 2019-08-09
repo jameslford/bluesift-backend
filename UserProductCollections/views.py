@@ -23,19 +23,30 @@ def get_library(request: Request):
     will return projects that the user is included on as colloborator - which is noted
     """
     collections = request.user.get_collections()
-    print('getting library = ', collections)
-    if request.user.is_supplier:
+    user = request.user
+    if user.is_supplier:
         return Response(
             RetailerLocationListSerializer(collections, many=True).data,
             status=status.HTTP_200_OK
         )
+    profile = user.get_profile()
+    collaborations = None
+    if user.is_pro:
+        collaborations = BaseProject.subclasses.filter(pro_collaborator=profile).select_subclasses()
+    else:
+        collaborations = BaseProject.subclasses.filter(collaborators=profile).select_subclasses()
+    profile = user.get_profile()
+    content = {
+        'my_projects': ProjectSerializer(collections, many=True).data,
+        'collaborations': ProjectSerializer(collaborations, many=True).data
+    }
     return Response(
-        ProjectSerializer(collections, many=True).data,
+        content,
         status=status.HTTP_200_OK
     )
 
 
-@api_view(['POST', 'DELETE'])
+@api_view(['POST', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated, OwnerOrAdmin))
 def crud_project(request: Request, project_pk=None):
     """
@@ -56,17 +67,30 @@ def crud_project(request: Request, project_pk=None):
         project.delete()
         return Response(status=status.HTTP_200_OK)
 
+    if request.method == 'PUT':
+        user = request.user
+        data = request.data
+        project = BaseProject.objects.update_project(user, **data)
+        return Response(ProjectSerializer(project).data, status=status.HTTP_200_OK)
+
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['POST', 'DELETE'])
+@api_view(['POST', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated, RetailerPermission))
 def crud_location(request: Request):
+    """
+    create, update, delete endpoint for RetailerLocation objects
+    """
     user = request.user
-
     if request.method == 'POST':
         data = request.data
         RetailerLocation.objects.create_location(user, **data)
         return Response(status=status.HTTP_201_CREATED)
+
+    if request.method == 'PUT':
+        data = request.data
+        location = RetailerLocation.objects.update_location(user, **data)
+        return Response(RetailerLocationListSerializer(location).data, status=status.HTTP_200_OK)
 
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)

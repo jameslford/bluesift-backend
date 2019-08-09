@@ -33,7 +33,7 @@ class RetailerLocationDetailSerializer(serializers.ModelSerializer):
 
 class RetailerLocationListSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
-    # location_manager = RetailerEmployeeShortSerializer()
+    local_admin = RetailerEmployeeShortSerializer()
 
     class Meta:
         model = RetailerLocation
@@ -48,7 +48,6 @@ class ProjectSerializer(serializers.Serializer):
     deadline = serializers.DateTimeField()
     address = AddressSerializer()
     product_count = serializers.IntegerField()
-    # application_count = serializers.IntegerField()
 
 
 class ProjectDetailSerilizer(serializers.ModelSerializer):

@@ -13,5 +13,6 @@ class OwnerOrAdmin(BasePermission):
 
     def has_permission(self, request, view):
         if request.user.is_pro or request.user.is_admin:
-            return bool(request.user.is_owner | request.user.is_admin)
+            profile = request.user.get_profile()
+            return bool(profile.owner | profile.admin)
         return True

@@ -6,6 +6,7 @@ Addresses.models
 
 """
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 import googlemaps
@@ -47,12 +48,69 @@ class Zipcode(models.Model):
     def __str__(self):
         return self.code
 
+class AddressManager(models.Manager):
+
+    def get_or_create_address(self, **kwargs):
+
+        def get_value(value: str, alt_response=None):
+            for component in address_components:
+                types = component.get('types')
+                if not types:
+                    continue
+                if value in types:
+                    return component['short_name']
+                continue
+            return alt_response
+
+        gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
+        gmap_id = kwargs.get('gmaps_id')
+        street = kwargs.get('address_line_1')
+        street_2 = kwargs.get('address_line_2')
+        city = kwargs.get('city')
+        state = kwargs.get('state')
+        postal_code = kwargs.get('postal_code')
+        response = None
+        if gmap_id:
+            add_obj = self.model.objects.filter(gmaps_id=gmap_id).fist()
+            if add_obj:
+                return add_obj
+            response = gmaps.reverse_geocode(self.gmaps_id)[0]
+        else:
+            address_string = f'{street} {street_2}, {city}, {state}, {postal_code}'
+            response = gmaps.geocode(address_string)[0]
+
+        gmap_id = response.get('place_id')
+        add_obj = self.model.objects.filter(gmaps_id=gmap_id).first()
+        if add_obj:
+            return add_obj
+        address_components = response.get('address_components')
+        zipcode = get_value('postal_code', 0)
+        postal_code = Zipcode.objects.filter(code=zipcode).first()
+        if not postal_code:
+            raise ValidationError('Invalid address')
+        add_obj: Address = self.model()
+        add_obj.gmaps_id = gmap_id
+        add_obj.postal_code = postal_code
+        lat = response['geometry']['location']['lat']
+        lng = response['geometry']['location']['lng']
+        coordinate = Coordinate.objects.filter(lat=lat, lng=lng).first()
+        if not coordinate:
+            coordinate = Coordinate.objects.create(lat=lat, lng=lng)
+        add_obj.coordinates = coordinate
+        street_number = get_value('street_number')
+        route = get_value('route')
+        add_obj.address_line_1 = f'{street_number} {route}'
+        add_obj.state = get_value('administrative_area_level_1')
+        add_obj.city = get_value('locality')
+        add_obj.save()
+        return add_obj
+
 
 class Address(models.Model):
     address_line_1 = models.CharField(max_length=120)
     address_line_2 = models.CharField(max_length=120, null=True, blank=True)
     city = models.CharField(max_length=120, null=True, blank=True)
-    gmaps_id = models.CharField(max_length=200, null=True, blank=True)
+    gmaps_id = models.CharField(max_length=200, unique=True)
     country = models.CharField(
         max_length=120,
         blank=True,
@@ -73,72 +131,17 @@ class Address(models.Model):
         blank=True
         )
 
+    objects = AddressManager()
+
     def __str__(self):
-        if self.address_line_2:
-            return '%s, %s, %s, %s, %s' % (
-                self.address_line_1,
-                self.address_line_2,
-                self.city,
-                self.state,
-                self.postal_code
-                )
-        return '%s, %s, %s, %s' % (self.address_line_1, self.city, self.state, self.postal_code)
-
-    def assign_google_response(self):
-        response = self.get_gmaps_address()
-        address_components = response.get('address_components')
-
-        def get_value(value: str, alt_response=None):
-            for component in address_components:
-                types = component.get('types')
-                if not types:
-                    continue
-                if value in types:
-                    return component['short_name']
-                continue
-            return alt_response
-
-        if not response:
-            return False
-        zipcode = get_value('postal_code', 0)
-        postal_code = Zipcode.objects.filter(code=zipcode).first()
-        if not postal_code:
-            return False
-        self.postal_code = postal_code
-        lat = response['geometry']['location']['lat']
-        lng = response['geometry']['location']['lng']
-        coordinate = Coordinate.objects.filter(lat=lat, lng=lng).first()
-        if not coordinate:
-            coordinate = Coordinate.objects.create(lat=lat, lng=lng)
-        self.coordinates = coordinate
-        street_number = get_value('street_number')
-        route = get_value('route')
-        self.address_line_1 = f'{street_number} {route}'
-        self.state = get_value('administrative_area_level_1')
-        self.city = get_value('locality')
-        return True
-
-    def get_gmaps_address(self):
-        gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
-        response = None
-        if self.gmaps_id:
-            response = gmaps.reverse_geocode(self.gmaps_id)
-        else:
-            response = gmaps.geocode(self.address_string())
-        if response:
-            return response[0]
+        return self.address_string()
 
     def address_string(self):
         al1 = self.address_line_1
+        al2 = self.address_line_2
         city = self.city
         state = self.state
-        return f'{al1}, {city}, {state}, {self.postal_code}'
+        return f'{al1} {al2}, {city}, {state}, {self.postal_code}'
 
     def city_state(self):
         return f'{self.city}, {self.state}'
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        passed = self.assign_google_response()
-        if not passed:
-            return None
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)

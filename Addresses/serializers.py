@@ -37,6 +37,7 @@ class AddressUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = (
+            'pk',
             'address_line_1',
             'city',
             'country',
@@ -54,10 +55,12 @@ class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = (
+            'pk',
             'address_line_1',
             'city',
             'country',
             'state',
+            'gmaps_id',
             'postal_code',
             'coordinates',
             'address_string'

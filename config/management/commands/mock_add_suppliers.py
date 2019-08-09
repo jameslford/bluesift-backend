@@ -62,7 +62,7 @@ class Command(BaseCommand):
                     password=password
                     )
             zipcode = Zipcode.objects.get(code=address['postalCode'])
-            location_address = Address.objects.create(
+            location_address = Address.objects.get_or_create_address(
                 address_line_1=address['address1'],
                 city=address.get('city', None),
                 state=address['state'],
@@ -88,7 +88,7 @@ class Command(BaseCommand):
             for x_ad in range(random.randint(0, 2)):
                 new_add = random.choice(ADDRESSES)
                 new_zip = Zipcode.objects.get(code=new_add['postalCode'])
-                new_add_object = Address.objects.create(
+                new_add_object = Address.objects.get_or_create_address(
                     address_line_1=new_add['address1'],
                     city=new_add.get('city', None),
                     state=new_add['state'],

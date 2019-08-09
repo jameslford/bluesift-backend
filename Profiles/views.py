@@ -66,7 +66,7 @@ def pl_status_for_product(request: HttpRequest, pk):
     product = Product.objects.get(pk=pk)
     collections = request.user.get_collections()
     for collection in collections:
-        remove = product.pk in collection.values_list('product__product__pk', flat=True)
+        remove = product.pk in collection.products.values_list('product__pk', flat=True)
         plmed = PLMedium(collection.nickname, collection.pk, remove)
         pl_list.pl_list.append(plmed)
     return Response(asdict(pl_list), status=status.HTTP_200_OK)

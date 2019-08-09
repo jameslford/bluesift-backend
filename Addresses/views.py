@@ -30,5 +30,6 @@ def add_address(request: Request):
     gmaps_id = data.get('gmaps_id')
     if not gmaps_id:
         return Response(None, status=status.HTTP_400_BAD_REQUEST)
-    address = Address.objects.get_or_create(gmaps_id=gmaps_id)[0]
+    address, created = Address.objects.get_or_create_address(gmaps_id=gmaps_id)
+    print(f'address was created = {created}. address gmap = {address.gmaps_id}')
     return Response(address.pk, status=status.HTTP_201_CREATED)

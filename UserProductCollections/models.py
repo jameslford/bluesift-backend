@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 # from django.conf import settings
 from django.db import transaction
@@ -27,6 +28,25 @@ class RetailerLocationManager(models.Manager):
             address=address,
             company=company
             )
+        return location
+
+    def update_location(self, user, **kwargs):
+        pk = kwargs.get('pk')
+        profile = user.get_profile()
+        if not (profile.owner or profile.admin):
+            raise PermissionError(f'{user.email} does not have permission to edit this object')
+        location: RetailerLocation = user.get_collections().get(pk=pk)
+        address_pk = kwargs.get('address_pk', location.address.pk)
+        address = Address.objects.get(pk=address_pk)
+        location_manager = kwargs.get('location_manager')
+        phone_number = kwargs.get('phone_number', location.phone_number)
+        nickname = kwargs.get('nickname', location.nickname)
+        location.phone_number = phone_number
+        location.nickname = nickname
+        location.address = address
+        if location_manager:
+            location.local_admin = location.company.get_employees().get(pk=location_manager)
+        location.save()
         return location
 
 
@@ -83,22 +103,6 @@ class RetailerLocation(models.Model):
             # return [sys_admin.id, sys_admin.user.get_first_name()]
         owner = self.company.employees.filter(company_account_owner=True).first()
         return owner
-        # return [owner.id, owner.user.get_first_name()]
-
-    # def assign_number(self):
-    #     num_list = []
-    #     num = None
-    #     all_locations = RetailerLocation.objects.filter(company=self.company)
-    #     for loc in all_locations:
-    #         if loc.number:
-    #             num_list.append(loc.number)
-    #         else:
-    #             num_list.append(0)
-    #     if num_list:
-    #         num = max(set(num_list)) + 1
-    #     else:
-    #         num = 1
-    #     return num
 
     def product_count(self):
         return self.products.count()
@@ -174,6 +178,31 @@ class BaseProjectManager(models.Manager):
         project.address = address
         project.save()
         return project
+
+    def update_project(self, user, **kwargs):
+        """ update method """
+        project_pk = kwargs.get('pk')
+        collections = user.get_collections()
+        collection = collections.get(pk=project_pk)
+        nickname = kwargs.get('nickname')
+        deadline = kwargs.get('deadline')
+        deadline = deadline.split('T')[0]
+        deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d')
+        address = kwargs.get('address')
+        address = Address.objects.get(pk=address)
+        pro_collaborators = kwargs.get('pro_collaborators')
+        collaborators = kwargs.get('collaborators')
+        collection.nickname = nickname
+        collection.deadline = deadline
+        collection.address = address
+        if pro_collaborators:
+            collection.pro_collaborator = ProEmployeeProfile.objects.filter(
+                pk__in=pro_collaborators)
+        if collaborators:
+            collection.collaborators = ConsumerProfile.objects.filter(
+                pk__in=collaborators)
+        collection.save()
+        return collection
 
 
 class BaseProject(models.Model):
