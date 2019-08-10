@@ -872,6 +872,9 @@ class DetailResponse:
     unit: str = None
     manufacturer: str = None
     manufacturer_url: str = None
+    manufacturer_sku: str = None
+    manufacturer_collection: str = None
+    manufacturer_style: str = None
     swatch_image: str = None
     room_scene: str = None
     priced: List = None
@@ -936,7 +939,7 @@ class DetailBuilder:
             group_attrs = group.get('values', None)
             group_name = group.get('name', None)
             if group_attrs and group_name:
-                group_vals = [{'term': attr, 'value': getattr(self.product, attr)} for attr in group_attrs]
+                group_vals = [{'term': attr, 'value': getattr(self.product, attr)} for attr in group_attrs if getattr(self.product, attr)]
                 groups_list.append(DetailListItem(group_name, group_vals))
         return groups_list
 
@@ -947,6 +950,9 @@ class DetailBuilder:
         self.response.priced = self.get_priced()
         self.response.manufacturer = self.product.manufacturer_name()
         self.response.manufacturer_url = self.product.manufacturer_url
+        self.response.manufacturer_sku = self.product.manufacturer_sku
+        self.response.manufacturer_collection = self.product.manu_collection
+        self.response.manufacturer_style = self.product.manufacturer_style
         self.response.swatch_image = self.product.swatch_image.url if self.product.swatch_image else None
         self.response.room_scene = self.product.room_scene.url if self.product.room_scene else None
         self.response.unit = self.product.unit
