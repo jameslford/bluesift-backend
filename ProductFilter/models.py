@@ -939,7 +939,9 @@ class DetailBuilder:
             group_attrs = group.get('values', None)
             group_name = group.get('name', None)
             if group_attrs and group_name:
-                group_vals = [{'term': attr, 'value': getattr(self.product, attr)} for attr in group_attrs if getattr(self.product, attr)]
+                group_vals = [
+                    {'term': attr, 'value': getattr(self.product, attr)} for attr in group_attrs if getattr(self.product, attr)
+                    ]
                 groups_list.append(DetailListItem(group_name, group_vals))
         return groups_list
 
