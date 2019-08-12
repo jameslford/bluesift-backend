@@ -12,13 +12,14 @@
     views in the same module, and therefore same root url
 """
 
-from django.http import HttpRequest
 from django.db.models import Count
 from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework import status
+from config.custom_permissions import RetailerPermission, OwnerDeleteAdminEdit
 from UserProductCollections.models import RetailerLocation
 from Profiles.models import BaseProfile
 from .serializers import (
@@ -52,7 +53,7 @@ def get_or_create_business(request):
 
 
 @api_view(['GET'])
-def retailer_company_header(request: HttpRequest, retailer_pk=None):
+def retailer_company_header(request: Request, retailer_pk=None):
     if retailer_pk:
         company = RetailerCompany.objects.prefetch_related(
             'employees',
@@ -66,7 +67,7 @@ def retailer_company_header(request: HttpRequest, retailer_pk=None):
 
 
 @api_view(['GET'])
-def retailer_location_list_all(request: HttpRequest, prod_type='all'):
+def retailer_location_list_all(request: Request, prod_type='all'):
     retailers = RetailerLocation.objects.select_related(
         'address',
         'address__postal_code',
@@ -90,7 +91,7 @@ def retailer_location_list_all(request: HttpRequest, prod_type='all'):
 
 
 @api_view(['GET'])
-def retailer_location_detail_header(request: HttpRequest, pk):
+def retailer_location_detail_header(request: Request, pk):
     retailer = RetailerLocation.objects.select_related(
         'address',
         'address__postal_code',
@@ -104,7 +105,7 @@ def retailer_location_detail_header(request: HttpRequest, pk):
 
 
 @api_view(['GET'])
-def services_list_all(request: HttpRequest, cat='all'):
+def services_list_all(request: Request, cat='all'):
     services = ProCompany.objects.select_related(
         'business_address',
         'business_address__postal_code',
@@ -119,7 +120,7 @@ def services_list_all(request: HttpRequest, cat='all'):
 
 
 @api_view(['GET'])
-def service_detail_header(request: HttpRequest, pk=None):
+def service_detail_header(request: Request, pk=None):
     user = request.user
     if not pk:
         if user.is_authenticated and user.is_pro:
@@ -136,3 +137,11 @@ def service_detail_header(request: HttpRequest, pk=None):
         ProListSerializer(service).data,
         status=status.HTTP_200_OK
         )
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes((IsAuthenticated, OwnerDeleteAdminEdit))
+def company_edit_delete(request: Request, company_pk=None):
+    if request.method == 'DELETE':
+        Company.objects.delete_company(request.user)
+        return Response(status=status.HTTP_200_OK)

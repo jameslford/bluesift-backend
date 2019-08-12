@@ -5,6 +5,7 @@ from Plans.models import RetailerPlan, ProPlan
 
 
 class CompanyManager(models.Manager):
+
     def create_company(self, user, **kwargs):
         if user.is_pro:
             return ProCompany.objects.get_or_create(**kwargs)[0]
@@ -12,6 +13,27 @@ class CompanyManager(models.Manager):
             del kwargs['service']
             return RetailerCompany.objects.get_or_create(**kwargs)[0]
         raise ValueError('user is not pro or supplier')
+
+    def delete_company(self, user):
+        if not (user.is_supplier or user.is_pro):
+            return
+        profile = user.get_profile()
+        if profile.owner:
+            group = user.get_group()
+            group.delete()
+        return
+
+    def edit_company(self, user, **kwargs):
+        if not (user.is_pro or user.is_supplier):
+            return
+        profile = user.get_profile()
+        if not (profile.owner or profile.admin):
+            return
+        company = user.get_group()
+        name = kwargs.get('name')
+
+
+
 
 
 class Company(models.Model):
