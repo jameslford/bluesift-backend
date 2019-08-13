@@ -481,7 +481,7 @@ class Sorter:
         self.product_type = product_type
         self.product_filter: ProductFilter = get_filter(product_type)
         self.location_pk = location_pk
-        self.page_size = 40
+        self.page_size = 6000
         self.update = update
         self.response: FilterResponse = FilterResponse()
         self.facets: List[Facet] = []
