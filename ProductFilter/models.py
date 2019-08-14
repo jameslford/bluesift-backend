@@ -481,7 +481,7 @@ class Sorter:
         self.product_type = product_type
         self.product_filter: ProductFilter = get_filter(product_type)
         self.location_pk = location_pk
-        self.page_size = 6000
+        # self.page_size = 6000
         self.update = update
         self.response: FilterResponse = FilterResponse()
         self.facets: List[Facet] = []
@@ -688,16 +688,16 @@ class Sorter:
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
             return []
-        start_page = self.response.page - 1
-        product_start = start_page * self.page_size
-        product_end = self.response.page * self.page_size
-        if product_end > self.response.product_count:
-            print('under page size. Product start = ' + str(product_start))
-            self.response.load_more = False
-            _products = products[product_start:]
-            return SerpyProduct(_products, many=True, label=self.location_pk).data
-        _products = products.all()[product_start:product_end]
-        return SerpyProduct(_products, many=True).data
+        # start_page = self.response.page - 1
+        # product_start = start_page * self.page_size
+        # product_end = self.response.page * self.page_size
+        # if product_end > self.response.product_count:
+        #     print('under page size. Product start = ' + str(product_start))
+        #     self.response.load_more = False
+        #     _products = products[product_start:]
+        #     return SerpyProduct(_products, many=True, label=self.location_pk).data
+        # _products = products.all()[product_start:product_end]
+        return SerpyProduct(products, many=True).data
 
     def __set_filter_dict(self):
         for facet in self.facets:
