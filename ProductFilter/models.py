@@ -869,6 +869,7 @@ class DetailListItem:
 
 @dataclass
 class DetailResponse:
+    pk: str
     unit: str = None
     manufacturer: str = None
     manufacturer_url: str = None
@@ -886,7 +887,7 @@ class DetailBuilder:
     def __init__(self, pk: str):
         self.bb_sku = pk
         self.product = self.get_subclass_instance()
-        self.response: DetailResponse = DetailResponse()
+        self.response: DetailResponse = DetailResponse(pk=str(self.product.pk))
 
     def get_subclass_instance(self):
         product = Product.subclasses.filter(pk=self.bb_sku).select_subclasses().first()
