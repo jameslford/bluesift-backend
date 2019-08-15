@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.postgres import fields as pg_fields
 from django_json_widget.widgets import JSONEditorWidget
-from ProductFilter.models import ProductFilter, QueryIndex
+from ProductFilter.models import ProductFilter, QueryIndex, FacetOthersCollection
 
 # Register your models here.
 
@@ -24,6 +24,7 @@ class ProductFilterAdmin(admin.ModelAdmin):
         pg_fields.JSONField: {'widget': JSONEditorWidget},
     }
 
+
 @admin.register(QueryIndex)
 class QueryIndexAdmin(admin.ModelAdmin):
     fields = (
@@ -40,3 +41,6 @@ class QueryIndexAdmin(admin.ModelAdmin):
     formfield_overrides = {
         pg_fields.JSONField: {'widget': JSONEditorWidget},
     }
+
+
+admin.site.register(FacetOthersCollection)

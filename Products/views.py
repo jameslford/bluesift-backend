@@ -9,7 +9,7 @@ from .models import ProductSubClass
 
 
 @api_view(['GET'])
-def products_list(request: HttpRequest, product_type: str, location_pk: int = None, update=False):
+def products_list(request: HttpRequest, product_type: str, location_pk: int = None, update=True):
     pt = [cls for cls in ProductSubClass.__subclasses__() if cls.__name__.lower() == product_type.lower()]
     if not pt:
         return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
