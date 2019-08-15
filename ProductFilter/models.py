@@ -474,6 +474,7 @@ class FilterResponse:
     message: Message = None
     product_count: int = 0
     filter_dict: List[dict] = None
+    enabled_values: List[str] = None
     products: List[dict] = None
 
 
@@ -487,6 +488,7 @@ class Sorter:
         self.product_type = product_type
         self.product_filter: ProductFilter = get_filter(product_type)
         self.location_pk = location_pk
+        self.update = update
         # self.page_size = 6000
         self.update = update
         self.response: FilterResponse = FilterResponse()
@@ -659,7 +661,7 @@ class Sorter:
                 )
 
             # gets intersection between all other facets
-            if created:
+            if created or self.update:
                 other_qsets = [self.facets[q].queryset for q in indices if q != index]
                 intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
                 new_prods = self.product_type.objects.filter(pk__in=intersection)
@@ -711,12 +713,14 @@ class Sorter:
         return SerpyProduct(products, many=True).data
 
     def __set_filter_dict(self):
+        self.response.enabled_values = []
         for facet in self.facets:
             facet.queryset = None
             facet.values = []
             if facet.qterms:
                 for term in facet.qterms:
                     self.response.legit_queries = [q for q in self.response.legit_queries] + [f'{facet.quer_value}={term}']
+                    self.response.enabled_values.append([f'{facet.quer_value}={term}', facet.return_values[0].value])
         self.facets.sort(key=lambda x: x.order)
         self.response.filter_dict = [asdict(qfacet) for qfacet in self.facets]
 
