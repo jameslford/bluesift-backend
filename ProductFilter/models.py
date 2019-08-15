@@ -658,7 +658,7 @@ class Sorter:
                 facet_name=facet.name
                 )
 
-            # gets intersection between all other facets, which it uses to count against current facet.values
+            # gets intersection between all other facets
             if created:
                 other_qsets = [self.facets[q].queryset for q in indices if q != index]
                 intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
@@ -667,6 +667,9 @@ class Sorter:
             else:
                 new_prods = products.filter(pk__in=foc.get_product_pks())
 
+            # counts other-intersections against current facet qset for bool groups
+            # & against input products for multi-groups
+            # bool groups need to be self exclusive, while multis are self inclusive
             return_values = []
             if facet.facet_type == BOOLGROUP_FACET:
                 args = {value: Count(value, filter=Q(**{value: True})) for value in facet.values}
