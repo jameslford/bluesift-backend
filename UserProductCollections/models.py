@@ -107,7 +107,7 @@ class RetailerLocation(models.Model):
     def product_count(self):
         return self.products.count()
 
-    def product_types(self):
+    def product_types(self, include_class=False):
         from Products.models import Product
         self_pks = self.products.values('product__pk')
         products = Product.subclasses.filter(pk__in=self_pks).select_subclasses()
@@ -118,8 +118,10 @@ class RetailerLocation(models.Model):
             if count > 0:
                 cont_dict = {
                     'name': cls.__name__,
-                    'count': count
+                    'count': count,
                 }
+                if include_class:
+                    cont_dict['cls'] = cls
                 content.append(cont_dict)
         return content
 

@@ -6,6 +6,7 @@
         "--load-plugins=pylint_django",
         "--max-line-length=130",
     ],
+    "python.pythonPath": "C:/Users/james/Documents/Code/BuildingBook/envs/benv/Scripts/python.exe",
 }
 
 // {
@@ -21,10 +22,9 @@
 //         "--max-line-length=130",
 //     ],
 //     "python.linting.enabled": true,
-//     "python.pythonPath": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Scripts\\python.exe",
 //     // "python.pythonPath": "C:/Users/james/Documents/Code/BuildingBook/envs/env/Scripts/python.exe",
-//     "python.linting.pylintPath": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Scripts\\pylint.exe",
-//     "python.linting.flake8Path": "C:\\Users\\james\\Documents\\Code\\BuildingBook\\envs\\benv\\Scripts\\flake8.exe",
+//     "python.linting.pylintPath": "C:/Users/james/Documents/Code/BuildingBook/envs/benv/Scripts/pylint.exe",
+//     "python.linting.flake8Path": "C:/Users/james/Documents/Code/BuildingBook/envs/benv/Scripts/flake8.exe",
 //     "python.linting.pylintCategorySeverity.error": "Warning",
 //     "python.linting.pylintCategorySeverity.fatal": "Warning",
 //     "python.linting.pylintCategorySeverity.warning": "Warning",

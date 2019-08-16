@@ -45,16 +45,13 @@ class ScraperDepartment(models.Model):
         return importlib.import_module(f'Scraper.{self.name}.add_details')
 
     def get_stripped_name(self):
-        if self.name.startswith('Scraper'):
-            return self.name[7:]
-        return None
+        return self.name[7:] if self.name.startswith('Scraper') else None
 
     def corresponding_class(self):
-        from config.scripts.globals import PRODUCT_SUBCLASSES
+        from Products.models import ProductSubClass
         stripped_name = self.get_stripped_name()
-        if stripped_name:
-            return PRODUCT_SUBCLASSES.get(stripped_name, None)
-        return None
+        matching_class = [cls for cls in ProductSubClass.__subclasses__() if cls.__name__ == stripped_name]
+        return matching_class[0] if matching_class else None
 
     def name_check(self):
         if self.corresponding_class():

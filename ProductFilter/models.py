@@ -1,10 +1,14 @@
-
 import uuid
+import numpy
+import functools
+import itertools
+import urllib
 from decimal import Decimal
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List, Tuple
 from django.db import models, transaction
+from django.core.exceptions import FieldError
 # from django.db.models.functions import Upper, Lower, Least, Cast, Coalesce
 from django.db.models import Min, Max, Subquery, Count, Q
 from django.urls import resolve as dj_resolve
@@ -22,6 +26,7 @@ from Products.serializers import SerpyProduct
 from Products.models import Product, ProductSubClass
 from UserProducts.serializers import RetailerProductMiniSerializer
 from UserProducts.models import RetailerProduct
+from UserProductCollections.models import RetailerLocation
 
 
 AVAILABILITY_FACET = 'AvailabilityFacet'
@@ -112,14 +117,6 @@ def complete_range(products: QuerySet, quer_value, query, direction: str):
     return products.filter(**argument)
 
 
-def get_filter(model: models.Model):
-    content_type = ContentType.objects.get_for_model(model)
-    prod_filter = ProductFilter.objects.filter(sub_product=content_type).first()
-    if not prod_filter:
-        raise Exception('No filter for this class')
-    return prod_filter
-
-
 def construct_range_facet(products: QuerySet, facet: Facet):
     if not facet.return_values:
         facet = get_absolute_range(products, facet)
@@ -158,6 +155,12 @@ class QueryIndex(models.Model):
     query_path = models.CharField(max_length=500)
     response = pg_fields.JSONField(null=True)
     dirty = models.BooleanField(default=True)
+    retailer_location = models.ForeignKey(
+        RetailerLocation,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='qis'
+        )
     product_filter = models.ForeignKey(
         'ProductFilter',
         on_delete=models.CASCADE,
@@ -197,19 +200,32 @@ class QueryIndex(models.Model):
     def get_all_paths(cls):
         from UserProductCollections.models import RetailerLocation
         base = 'specialized-products/filter/'
-        paths = [base + cls.__name__ for cls in ProductSubClass.__subclasses__()]
+        paths = [
+            {'product_type': pt, 'path': base + pt.__name__}
+            for pt in ProductSubClass.__subclasses__()
+            ]
         locations = RetailerLocation.objects.all()
         for location in locations:
-            location_list = [f'{base}{product_type["name"]}/{location.pk}' for product_type in location.product_types]
+            location_list = [
+                {'product_type': product_type['cls'],
+                'path': f'{base}{product_type["name"]}/{location.pk}'}
+                for product_type in location.product_types(True)
+                ]
             paths = paths + location_list
-        print(paths)
         return paths
+        # location_list = [f'{base}{product_type["name"]}/{location.pk}' for product_type in location.product_types]
+        # paths = [base + cls.__name__ for cls in ProductSubClass.__subclasses__()]
+
+    @classmethod
+    def get_all_queries(cls):
+        product_types = [pt for pt in ProductSubClass.__subclasses__()]
+        for p_type in product_types:
+            p_filter = ProductFilter.get_filter(p_type)
 
     # need to write this method to create all possible queries for a given view
     @classmethod
     def get_all_combinations(cls):
         paths = cls.get_all_paths()
-
 
 
 class FacetOthersCollection(models.Model):
@@ -275,6 +291,52 @@ class ProductFilter(models.Model):
         )
     filter_dictionary = pg_fields.JSONField(blank=True, null=True)
 
+    @classmethod
+    def get_filter(cls, model: models.Model):
+        content_type = ContentType.objects.get_for_model(model)
+        prod_filter = cls.objects.filter(sub_product=content_type).first()
+        if not prod_filter:
+            raise Exception('No filter for this class')
+        return prod_filter
+
+    def produce_base_queries(self):
+
+        def format_range(range_list):
+            ranges = [range_list[0:i] for i in range(len(range_list))]
+            return [urllib.parse.quote('&&'.join(r)) for r in ranges]
+
+        all_queries = []
+        multi_group_fields = [
+            *self.independent_multichoice_fields,
+            # *self.dependent_fields,
+            # self.key_field,
+            # self.color_field
+            ]
+        for group in self.bool_groups:
+            group_vals = format_range(
+                [f'{group["name"]}={value}' for value in group["values"]])
+            all_queries.append(group_vals)
+        for field in multi_group_fields:
+            values = self.get_model_products().values_list(field, flat=True).distinct()
+            group_val = format_range(
+                [f'{field}={value}' for value in values if value])
+            all_queries.append(group_val)
+        all_queries = list(filter(None, all_queries))
+        # full_list = list(itertools.product(*all_queries))
+        total_queries = []
+        for bar in all_queries:
+            total_number = len(bar)
+            example = bar[-1]
+            triangle = sum(range(total_number))
+            total_queries.append(triangle)
+            print('total_number = ', str(total_number))
+            print('example = ', example)
+            print('triangle = ', str(triangle))
+        total_queries = functools.reduce(lambda x, y: x*y, total_queries) 
+        # 20,785,981,783,727,160 - thats how many queries exist. 20 quadrillion - have to improve
+        print('all queries = ', str(total_queries))
+
+
     def get_content_model(self):
         """returns model associated with the ContentType instance in self.subproduct
 
@@ -291,7 +353,7 @@ class ProductFilter(models.Model):
         print(self.independent_range_fields)
         return ['low_price', 'in_store_ppu', 'location', 'search', 'availability'] + self.independent_range_fields
 
-    def get_model_products(self):
+    def get_model_products(self) -> QuerySet:
         """ Returns a queryset containing all product subclasses of model type for
         self.sub_product
 
@@ -353,24 +415,37 @@ class ProductFilter(models.Model):
         self.facets = self.facets + valid_groups
 
     def check_keyterm(self):
-        check = self.check_value(self.key_field)
-        if not check:
+        try:
+            values = self.get_model_products().values_list(self.key_field, flat=True).distinct()
+            self.facets.append(
+                Facet(
+                    self.key_field,
+                    KEYTERM_FACET,
+                    self.key_field,
+                    key=True,
+                    values=list(filter(None, values)),
+                    order=5
+                    ))
+        except FieldError:
             self.key_field = None
             return
-        products = self.get_model_products().values_list(self.key_field, flat=True).distinct()
-        products = [v for v in products if v]
-        self.facets.append(Facet(self.key_field, KEYTERM_FACET, self.key_field, key=True, values=products, order=5))
 
     def check_mc_fields(self):
         indices = sorted(enumerate(self.independent_multichoice_fields), reverse=True)
         for count, standalone in indices:
-            check = self.check_value(standalone)[0]
-            if not check:
+            try:
+                values = self.get_model_products().values_list(standalone, flat=True).distinct()
+                self.facets.append(
+                    Facet(
+                        standalone,
+                        MULTITEXT_FACET,
+                        standalone,
+                        values=list(filter(None, values)),
+                        order=6
+                        ))
+            except FieldError:
                 del self.independent_multichoice_fields[count]
                 continue
-            products = self.get_model_products().values_list(standalone, flat=True).distinct()
-            products = [v for v in products if v]
-            self.facets.append(Facet(standalone, MULTITEXT_FACET, standalone, values=products, order=6))
 
     def check_range_fields(self):
         range_fields = [pg_fields.IntegerRangeField, pg_fields.DecimalRangeField]
@@ -420,11 +495,6 @@ class ProductFilter(models.Model):
         manu_values = self.get_model_products().values_list('manufacturer__label', flat=True).distinct()
         self.facets.append(Facet('manufacturer', MANUFACTURER_FACET, 'manufacturer__label', list(manu_values), order=8))
 
-    def check_content_model(self):
-        if self.sub_product in valid_subclasses():
-            return False
-        return True
-
     def check_fields(self):
         self.add_product_facets()
         self.check_bools()
@@ -444,9 +514,6 @@ class ProductFilter(models.Model):
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
-        if not self.check_content_model():
-            self.delete()
-            return
         self.facets = []
         self.filter_dictionary = None
         self.check_fields()
@@ -457,5 +524,3 @@ class ProductFilter(models.Model):
 
     def __str__(self):
         return self.get_content_model().__name__ + ' Filter'
-
-
