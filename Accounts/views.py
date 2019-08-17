@@ -60,7 +60,6 @@ def create_user(request):
 
     Token.objects.get_or_create(user=user)
     site = get_current_site(request).domain
-    print(site)
     send_verification_email.delay(site, user.pk)
     return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 

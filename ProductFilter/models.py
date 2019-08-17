@@ -85,6 +85,7 @@ class Facet:
     total_count: int = 0
     qterms: List[str] = None
     queryset: QuerySet = None
+    intersection: QuerySet = None
     collection_pk: str = None
     return_values: List = dfield(default_factory=lambda: [])
 
@@ -191,9 +192,14 @@ class QueryIndex(models.Model):
         request.GET = QueryDict(self.query_dict)
         view(request, update=True, *args, **kwargs)
 
-    def get_products(self):
+    def get_product_pks(self):
+        return self.products.values_list('pk', flat=True)
+
+    def get_products(self, select_related=None):
         model = self.product_filter.get_content_model()
         pks = self.products.all().values_list('pk', flat=True)
+        if select_related:
+            return model.objects.select_related(select_related).filter(pk__in=pks)
         return model.objects.filter(pk__in=pks)
 
     @classmethod
@@ -208,7 +214,7 @@ class QueryIndex(models.Model):
         for location in locations:
             location_list = [
                 {'product_type': product_type['cls'],
-                'path': f'{base}{product_type["name"]}/{location.pk}'}
+                 'path': f'{base}{product_type["name"]}/{location.pk}'}
                 for product_type in location.product_types(True)
                 ]
             paths = paths + location_list
@@ -243,7 +249,7 @@ class FacetOthersCollection(models.Model):
     def __str__(self):
         return f'{self.facet_name} {str(self.query_index)}'
 
-    def assign_new_products(self, products: QuerySet):
+    def assign_new_products(self, products):
         self.products.clear()
         self.products.add(*products)
         self.save()
