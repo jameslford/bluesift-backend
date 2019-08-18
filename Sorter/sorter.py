@@ -13,6 +13,7 @@ from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
+from config.tasks import add_facet_others_delay
 from Products.serializers import SerpyProduct
 from Products.models import Product, ProductSubClass
 from UserProducts.serializers import RetailerProductMiniSerializer
@@ -74,10 +75,11 @@ class Sorter:
         self.product_filter: ProductFilter = ProductFilter.get_filter(model=product_type)
         self.location_pk = location_pk
         self.update = update
-        self.update = update
         self.response: FilterResponse = FilterResponse()
         self.facets: List[Facet] = [Facet(**f_dict) for f_dict in self.product_filter.filter_dictionary]
         self.query_index: QueryIndex = None
+        for facet in self.facets:
+            print(facet.intersection)
 
 ### Main thread is the next 4 functions. Everything below are functions used in their execution ###
 
@@ -120,7 +122,7 @@ class Sorter:
             qterms = request_dict.getlist(facet.quer_value, [])
             facet.qterms = [term for term in qterms if term in facet.values]
 
-    def build_query_index(self):
+    def build_query_index(self, full_build=True):
         """
         Populates query index with products and json response.
         The products it stores come from values that are not subject to much change,
@@ -131,16 +133,17 @@ class Sorter:
         self.__filter_bools(products)
         self.__filter_multi(products)
         self.assign_facet_others(products)
-        self.__count_objects(products)
-        indices = self.__get_counted_facet_indices()
-        qsets = [self.facets[q].queryset for q in indices]
-        products = products.intersection(*qsets)
-        self.__set_filter_dict()
-        self.query_index.products.clear()
-        self.query_index.products.add(*products)
-        self.query_index.response = asdict(self.response)
-        self.query_index.dirty = False
-        self.query_index.save()
+        if full_build:
+            self.__count_objects(products)
+            indices = self.__get_counted_facet_indices()
+            qsets = [self.facets[q].queryset for q in indices]
+            products = products.intersection(*qsets)
+            self.__set_filter_dict()
+            self.query_index.products.clear()
+            self.query_index.products.add(*products)
+            self.query_index.response = asdict(self.response)
+            self.query_index.dirty = False
+            self.query_index.save()
 
 
     def filter_floating(self, stripped_fields: dict):
@@ -219,23 +222,37 @@ class Sorter:
         indices = self.__get_counted_facet_indices()
         for index in indices:
             facet: Facet = self.facets[index]
-            foc, created = FacetOthersCollection.objects.get_or_create(query_index=self.query_index, facet_name=facet.name)
-            if created or self.update:
-                if facet.facet_type == BOOLGROUP_FACET:
-                    other_qsets = [self.facets[q].queryset for q in indices]
-                else:
-                    other_qsets = [self.facets[q].queryset for q in indices if q != index]
-                facet.intersection = products.intersection(*other_qsets)
-                foc.assign_new_products(facet.intersection.values_list('pk', flat=True))
+            if facet.facet_type == BOOLGROUP_FACET:
+                other_qsets = [self.facets[q].queryset for q in indices]
+            else:
+                other_qsets = [self.facets[q].queryset for q in indices if q != index]
+            facet.intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
+            add_facet_others_delay.delay(self.query_index.pk, facet.name, list(facet.intersection))
 
+            # foc, created = FacetOthersCollection.objects.get_or_create(query_index=self.query_index, facet_name=facet.name)
+            # if created or self.update:
+                # if facet.facet_type == BOOLGROUP_FACET:
+                #     other_qsets = [self.facets[q].queryset for q in indices]
+                # else:
+                #     other_qsets = [self.facets[q].queryset for q in indices if q != index]
+                # facet.intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
+                # foc.assign_new_products(facet.intersection.values_list('pk', flat=True))
 
     def __count_objects(self, products: QuerySet):
         indices = self.__get_counted_facet_indices()
         for index in indices:
             facet: Facet = self.facets[index]
-            foc = FacetOthersCollection.objects.filter(query_index=self.query_index, facet_name=facet.name).first()
-            print(facet.name)
-            new_prods = products.filter(pk__in=foc.get_product_pks())
+            if facet.intersection:
+                foc = facet.intersection
+                new_prods = products.filter(pk__in=foc)
+            else:
+                print('no facet intersection')
+                foc = FacetOthersCollection.objects.filter(query_index=self.query_index, facet_name=facet.name).first()
+                if foc:
+                    new_prods = products.filter(pk__in=foc.get_product_pks())
+                else:
+                    self.build_query_index(False)
+                    new_prods = products.filter(pk__in=facet.intersection)
             return_values = []
             if facet.facet_type == BOOLGROUP_FACET:
                 args = {value: models.Count(value, filter=models.Q(**{value: True})) for value in facet.values}

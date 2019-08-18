@@ -333,9 +333,9 @@ class ProductFilter(models.Model):
         all_queries = []
         multi_group_fields = [
             *self.independent_multichoice_fields,
-            # *self.dependent_fields,
-            # self.key_field,
-            # self.color_field
+            *self.dependent_fields,
+            self.key_field,
+            self.color_field
             ]
         for group in self.bool_groups:
             group_vals = format_range(
@@ -357,7 +357,7 @@ class ProductFilter(models.Model):
             print('total_number = ', str(total_number))
             print('example = ', example)
             print('triangle = ', str(triangle))
-        total_queries = functools.reduce(lambda x, y: x*y, total_queries) 
+        total_queries = functools.reduce(lambda x, y: x*y, total_queries)
         # 20,785,981,783,727,160 - thats how many queries exist. 20 quadrillion - have to improve
         print('all queries = ', str(total_queries))
 

@@ -21,10 +21,17 @@ logger = get_task_logger(__name__)
 
 
 @app.task
-def verify_address(address_pk):
-    from Addresses.models import Address
-    address = Address.objects.get(pk=address_pk)
-
+def add_facet_others_delay(qi_pk, facet_name, intersection_pks):
+    from ProductFilter.models import FacetOthersCollection, QueryIndex
+    query_index = QueryIndex.objects.filter(pk=qi_pk).first()
+    if not query_index:
+        return f'No QueryIndex for {query_index}'
+    facet: FacetOthersCollection = FacetOthersCollection.objects.get_or_create(
+        query_index=query_index,
+        facet_name=facet_name
+        )
+    facet.assign_new_products(intersection_pks)
+    return f'FacetOthersCollection created for facet: {facet_name}, and QueryIndex: {qi_pk}'
 
 
 
