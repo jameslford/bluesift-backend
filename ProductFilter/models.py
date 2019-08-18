@@ -89,35 +89,6 @@ class Facet:
     collection_pk: str = None
     return_values: List = dfield(default_factory=lambda: [])
 
-
-def get_absolute_range(products: QuerySet, facet: Facet):
-    values = products.aggregate(Min(facet.quer_value), Max(facet.quer_value))
-    print(values)
-    min_val = values.get(f'{facet.quer_value}__min', None)
-    max_val = values.get(f'{facet.quer_value}__max', None)
-    print(min_val, max_val)
-    if not (min_val or max_val):
-        return facet
-    if min_val == max_val:
-        return facet
-    return_value = RangeFacetValue()
-    return_value.count = 1
-    return_value.value = facet.name
-    return_value.abs_max = str(max_val)
-    return_value.selected_max = str(max_val)
-    return_value.abs_min = str(min_val)
-    return_value.selected_min = str(min_val)
-    facet.return_values = [return_value]
-    return facet
-
-
-def complete_range(products: QuerySet, quer_value, query, direction: str):
-    qrange = Decimal(query[-1])
-    direction_transform = {'min': 'gte', 'max': 'lte'}
-    argument = {f'{quer_value}__{direction_transform[direction]}': qrange}
-    return products.filter(**argument)
-
-
 def construct_range_facet(products: QuerySet, facet: Facet):
     if not facet.return_values:
         facet = get_absolute_range(products, facet)
@@ -146,6 +117,32 @@ def construct_range_facet(products: QuerySet, facet: Facet):
         facet.selected = True
     facet.return_values = [facet_value]
     return (products, facet, True)
+
+
+def get_absolute_range(products: QuerySet, facet: Facet):
+    values = products.aggregate(Min(facet.quer_value), Max(facet.quer_value))
+    min_val = values.get(f'{facet.quer_value}__min', None)
+    max_val = values.get(f'{facet.quer_value}__max', None)
+    if not (min_val or max_val):
+        return facet
+    if min_val == max_val:
+        return facet
+    return_value = RangeFacetValue()
+    return_value.count = 1
+    return_value.value = facet.name
+    return_value.abs_max = str(max_val)
+    return_value.selected_max = str(max_val)
+    return_value.abs_min = str(min_val)
+    return_value.selected_min = str(min_val)
+    facet.return_values = [return_value]
+    return facet
+
+def complete_range(products: QuerySet, quer_value, query, direction: str):
+    qrange = Decimal(query[-1])
+    direction_transform = {'min': 'gte', 'max': 'lte'}
+    argument = {f'{quer_value}__{direction_transform[direction]}': qrange}
+    return products.filter(**argument)
+
 
 class QueryIndexManager(models.Manager):
     def get_or_create_qi(self, **kwargs):

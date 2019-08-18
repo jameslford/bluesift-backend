@@ -2,8 +2,6 @@
 Primarily 2 classes that return product (not subclassed) instances
 """
 
-import pdb
-import copy
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List
@@ -39,6 +37,7 @@ from ProductFilter.models import (
     COLOR_FACET
 )
 
+
 @dataclass
 class EnabledValue:
     query_value: str = None
@@ -67,7 +66,6 @@ class FilterResponse:
 class Sorter:
     """
     Confusing af class - all functions are basically just steps used for the __call__ function:
-
     """
     def __init__(self, product_type: ProductSubClass, request: HttpRequest, update=False, location_pk=None):
         self.request: HttpRequest = request
@@ -83,7 +81,7 @@ class Sorter:
 
 ### Main thread is the next 4 functions. Everything below are functions used in their execution ###
 
-    # @transaction.atomic()
+    @transaction.atomic()
     def __call__(self):
         return self.__process_request()
 
@@ -229,15 +227,6 @@ class Sorter:
             facet.intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
             add_facet_others_delay.delay(self.query_index.pk, facet.name, list(facet.intersection))
 
-            # foc, created = FacetOthersCollection.objects.get_or_create(query_index=self.query_index, facet_name=facet.name)
-            # if created or self.update:
-                # if facet.facet_type == BOOLGROUP_FACET:
-                #     other_qsets = [self.facets[q].queryset for q in indices]
-                # else:
-                #     other_qsets = [self.facets[q].queryset for q in indices if q != index]
-                # facet.intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
-                # foc.assign_new_products(facet.intersection.values_list('pk', flat=True))
-
     def __count_objects(self, products: QuerySet):
         indices = self.__get_counted_facet_indices()
         for index in indices:
@@ -318,7 +307,6 @@ class Sorter:
             return []
         return SerpyProduct(products, many=True).data
 
-
     def __filter_bools(self, products: QuerySet):
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET)
         for index in bool_indices:
@@ -381,11 +369,11 @@ class Sorter:
             facet.queryset = products.filter(q_object)
 
     def __filter_location(self, products: QuerySet):
-        loc_facet_index = self.get_indices_by_ft(LOCATION_FACET)
+        loc_facet_index = self.get_index_by_qv('location')
         if not loc_facet_index:
             return products
-        loc_facet: Facet = self.facets[loc_facet_index[0]]
-        self.facets[loc_facet_index[0]].return_values = [LocationFacet(value='location', default_radii=return_radii())]
+        self.facets[loc_facet_index].return_values = [LocationFacet(value='location', default_radii=return_radii())]
+        loc_facet = self.facets[loc_facet_index]
         if not loc_facet.qterms:
             return products
         return_facet: LocationFacet = loc_facet.return_values[0]
