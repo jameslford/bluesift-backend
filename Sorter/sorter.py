@@ -38,6 +38,10 @@ from ProductFilter.models import (
     COLOR_FACET
 )
 
+@dataclass
+class EnabledValue:
+    query_value: str = None
+    read_value: str = None
 
 
 @dataclass
@@ -55,7 +59,7 @@ class FilterResponse:
     message: Message = None
     product_count: int = 0
     filter_dict: List[dict] = None
-    enabled_values: List[str] = dfield(default_factory=list)
+    enabled_values: List[EnabledValue] = dfield(default_factory=list)
     products: List[dict] = None
 
 
@@ -77,7 +81,7 @@ class Sorter:
 
 ### Main thread is the next 4 functions. Everything below are functions used in their execution ###
 
-    @transaction.atomic()
+    # @transaction.atomic()
     def __call__(self):
         return self.__process_request()
 
@@ -88,10 +92,11 @@ class Sorter:
             if field in query_dict:
                 values = query_dict.pop(field)
                 stripped_fields[field] = values
-        query_index, created = QueryIndex.objects.get_or_create(
+        query_index, created = QueryIndex.objects.get_or_create_qi(
             query_path=self.request.path,
             query_dict=query_dict.urlencode(),
-            product_filter=self.product_filter
+            product_filter=self.product_filter,
+            retailer_location=self.location_pk
             )
         self.query_index = query_index
         self.__parse_querydict(query_dict)
@@ -103,6 +108,12 @@ class Sorter:
         return self.return_static_response()
 
     def __parse_querydict(self, request_dict: QueryDict = None):
+        """
+        Associates query parameters with their respective facet,
+        this makes sure that all query parameters values are in the facet.values,
+        which has been instantiated from self.product_filter.filter_dict.
+        Keeps arbitrary user values from entering any farther into the code.
+        """
         if not request_dict:
             request_dict = QueryDict(self.query_index.query_dict)
         for facet in self.facets:
@@ -115,6 +126,7 @@ class Sorter:
         The products it stores come from values that are not subject to much change,
         so are used as a base for floating fields filtering
         """
+        print('building full')
         products = self.get_products()
         self.__filter_bools(products)
         self.__filter_multi(products)
@@ -149,13 +161,11 @@ class Sorter:
         products = self.__filter_search_terms(products, search_terms) if search_terms else products
         products = self.__filter_location(products)
         products = self.__filter_range(products)
-        #!! need to fix line below - filtering correctly, but counting objects before they've been filtered by
-        #!! qi intersection - either optionally include availability count in count objects or
-        #!! mkae seperate count_availability function
         products = self.__filter_availability(products)
         self.__count_objects(products)
         qi_pks = self.query_index.get_product_pks()
         products = products.filter(pk__in=qi_pks)
+        self.__count_availability(products)
         self.response.product_count = products.count()
         self.response.products = self.__serialize_products(products)
         self.__set_filter_dict()
@@ -170,7 +180,7 @@ class Sorter:
         """
         print('returning static')
         products = self.query_index.get_products('manufacturer').product_prices(self.location_pk)
-        products = self.__filter_availability(products)
+        self.__count_availability(products)
         availability_facet = self.facets[self.get_index_by_qv('availability')]
         self.response.product_count = products.count()
         serialized_prods = self.__serialize_products(products)
@@ -190,11 +200,6 @@ class Sorter:
                 for term in facet.qterms:
                     query_expression = f'{facet.quer_value}={term}'
                     legit_queries.append(query_expression)
-                    value_index = [count for count, item in enumerate(facet.return_values) if item.value == term]
-                    if not value_index:
-                        value_index = [0]
-                    enabled_display_values = facet.return_values[value_index[0]].value
-                    enabled_values.append(tuple([query_expression, enabled_display_values]))
         self.response.legit_queries = list(set(legit_queries))
         self.response.enabled_values = list(set(enabled_values))
         self.facets.sort(key=lambda x: x.order)
@@ -214,16 +219,14 @@ class Sorter:
         indices = self.__get_counted_facet_indices()
         for index in indices:
             facet: Facet = self.facets[index]
-            if not facet.queryset:
-                continue
             foc, created = FacetOthersCollection.objects.get_or_create(query_index=self.query_index, facet_name=facet.name)
             if created or self.update:
-                other_qsets = [self.facets[q].queryset for q in indices if q and q != index]
+                if facet.facet_type == BOOLGROUP_FACET:
+                    other_qsets = [self.facets[q].queryset for q in indices]
+                else:
+                    other_qsets = [self.facets[q].queryset for q in indices if q != index]
                 facet.intersection = products.intersection(*other_qsets)
                 foc.assign_new_products(facet.intersection.values_list('pk', flat=True))
-
-        ###!!!  replace with function below to FacetOthersCollection on a celery delay !!!###
-                # foc.assign_new_products_delay(new_prods.values_list('pk', flat=True))
 
 
     def __count_objects(self, products: QuerySet):
@@ -231,6 +234,7 @@ class Sorter:
         for index in indices:
             facet: Facet = self.facets[index]
             foc = FacetOthersCollection.objects.filter(query_index=self.query_index, facet_name=facet.name).first()
+            print(facet.name)
             new_prods = products.filter(pk__in=foc.get_product_pks())
             return_values = []
             if facet.facet_type == BOOLGROUP_FACET:
@@ -308,19 +312,16 @@ class Sorter:
                 continue
             facet.qterms = [term for term in facet.qterms if term in facet.values]
             facet.selected = True
-            # q_object = models.Q()
             terms = {}
             for term in facet.qterms:
                 terms[term] = True
-                # q_object |= models.Q(**{term: True})
                 facet.selected = True
-            # facet.queryset = products.filter(q_object)
             facet.queryset = products.filter(**terms)
 
-    def __filter_availability(self, products: QuerySet):
+    def __count_availability(self, products: QuerySet):
         index = self.get_index_by_qv('availability')
         if index is None:
-            return products
+            return
         facet: Facet = self.facets[index]
         return_values = []
         for value in facet.values:
@@ -328,6 +329,12 @@ class Sorter:
             facet.total_count += count
             return_values.append(FacetValue(value, count, bool(facet.qterms and value in facet.qterms)))
         facet.return_values = return_values
+
+    def __filter_availability(self, products: QuerySet):
+        index = self.get_index_by_qv('availability')
+        if index is None:
+            return products
+        facet: Facet = self.facets[index]
         if facet.qterms:
             facet.selected = True
             products = products.filter_availability(facet.qterms, self.location_pk, True)

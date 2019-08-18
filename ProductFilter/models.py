@@ -147,10 +147,27 @@ def construct_range_facet(products: QuerySet, facet: Facet):
     facet.return_values = [facet_value]
     return (products, facet, True)
 
+class QueryIndexManager(models.Manager):
+    def get_or_create_qi(self, **kwargs):
+        query_dict = kwargs.get('query_dict')
+        query_path = kwargs.get('query_path')
+        product_filter = kwargs.get('product_filter')
+        retailer_location = kwargs.get('retailer_location')
+        args = {
+            'query_dict': query_dict,
+            'query_path': query_path,
+            'product_filter': product_filter
+            }
+        if retailer_location:
+            location = RetailerLocation.objects.get(pk=retailer_location)
+            args['retailer_location'] = location
+        query_index = self.model.objects.get_or_create(**args)
+        return query_index
+
 
 class QueryIndex(models.Model):
-    """ cache relating query strings to json responses
-
+    """
+    cache relating query strings to json responses
     """
     query_dict = models.CharField(max_length=1000)
     query_path = models.CharField(max_length=500)
@@ -174,6 +191,8 @@ class QueryIndex(models.Model):
     created = models.DateTimeField(auto_now=True)
     last_retrieved = models.DateTimeField(auto_now_add=True, null=True)
     times_accessed = models.PositiveIntegerField(null=True, default=1)
+
+    objects = QueryIndexManager()
 
     class Meta:
         unique_together = ('query_dict', 'query_path')
