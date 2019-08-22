@@ -1,33 +1,3 @@
 {
-    "python.linting.pylintPath": "C:/Users/james/Documents/Code/BuildingBook/envs/benv/Scripts/pylint.exe",
-    "python.linting.pylintCategorySeverity.warning": "Information",
-    "python.linting.pylintCategorySeverity.fatal": "Error",
-    "python.linting.pylintArgs": [
-        "--load-plugins=pylint_django",
-        "--max-line-length=130",
-    ],
-    "python.pythonPath": "C:/Users/james/Documents/Code/BuildingBook/envs/benv/Scripts/python.exe",
+    "python.pythonPath": "/home/james/benv/bin/python"
 }
-
-// {
-//     "git.ignoreLimitWarning": true,
-//     "window.zoomLevel": 0,
-//     "python.linting.flake8CategorySeverity.F": "Warning",
-//     "python.linting.flake8CategorySeverity.E": "Warning",
-//     "python.linting.pylintArgs": [
-//         "--load-plugins=pylint_django",
-//         "--max-line-length=130",
-//     ],
-//     "python.linting.flake8Args": [
-//         "--max-line-length=130",
-//     ],
-//     "python.linting.enabled": true,
-//     // "python.pythonPath": "C:/Users/james/Documents/Code/BuildingBook/envs/env/Scripts/python.exe",
-//     "python.linting.pylintPath": "C:/Users/james/Documents/Code/BuildingBook/envs/benv/Scripts/pylint.exe",
-//     "python.linting.flake8Path": "C:/Users/james/Documents/Code/BuildingBook/envs/benv/Scripts/flake8.exe",
-//     "python.linting.pylintCategorySeverity.error": "Warning",
-//     "python.linting.pylintCategorySeverity.fatal": "Warning",
-//     "python.linting.pylintCategorySeverity.warning": "Warning",
-//     "python.linting.flake8Enabled": false,
-//     "python.linting.pylintEnabled": true
-// }

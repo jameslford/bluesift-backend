@@ -53,6 +53,7 @@ class FacetValue:
     value: str = None
     count: int = None
     enabled: bool = False
+    remove_full: bool = True
 
 
 @dataclass

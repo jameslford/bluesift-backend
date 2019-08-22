@@ -76,8 +76,6 @@ class Sorter:
         self.response: FilterResponse = FilterResponse()
         self.facets: List[Facet] = [Facet(**f_dict) for f_dict in self.product_filter.filter_dictionary]
         self.query_index: QueryIndex = None
-        for facet in self.facets:
-            print(facet.intersection)
 
 ### Main thread is the next 4 functions. Everything below are functions used in their execution ###
 
@@ -201,6 +199,10 @@ class Sorter:
                 for term in facet.qterms:
                     query_expression = f'{facet.quer_value}={term}'
                     legit_queries.append(query_expression)
+                    if facet.facet_type in (PRICE_FACET, LOCATION_FACET):
+                        enabled_value = EnabledValue(f'{facet.quer_value}=', facet.quer_value)
+                    else:
+                        enabled_value = EnabledValue(query_expression, term)
         self.response.legit_queries = list(set(legit_queries))
         self.response.enabled_values = list(set(enabled_values))
         self.facets.sort(key=lambda x: x.order)
@@ -235,7 +237,6 @@ class Sorter:
                 foc = facet.intersection
                 new_prods = products.filter(pk__in=foc)
             else:
-                print('no facet intersection')
                 foc = FacetOthersCollection.objects.filter(query_index=self.query_index, facet_name=facet.name).first()
                 if foc:
                     new_prods = products.filter(pk__in=foc.get_product_pks())
@@ -284,15 +285,15 @@ class Sorter:
 
     def __check_availability_facet(self, stripped_fields):
         if self.location_pk:
-            self.facets.append(Facet('retailer price', PRICE_FACET, 'in_store_ppu', total_count=1, order=2))
+            self.facets.append(Facet('retailer price', PRICE_FACET, 'in_store_ppu', total_count=1, remove_full=False, order=2))
             return
         avail_facet: Facet = self.facets[self.get_indices_by_ft(AVAILABILITY_FACET)[0]]
         qterms = stripped_fields.pop('availability') if 'availability' in stripped_fields else []
         avail_facet.qterms = [term for term in qterms if term in Product.objects.safe_availability_commands()]
         if not avail_facet.qterms:
             return
-        self.facets.append(Facet('location', LOCATION_FACET, 'location', total_count=1, order=3))
-        self.facets.append(Facet('price', PRICE_FACET, 'low_price', total_count=1, order=2))
+        self.facets.append(Facet('location', LOCATION_FACET, 'location', remove_full=False, total_count=1, order=3))
+        self.facets.append(Facet('price', PRICE_FACET, 'low_price', remove_full=False, total_count=1, order=2))
 
     def __check_dependents(self):
         kt_facet = self.get_indices_by_ft(KEYTERM_FACET)
