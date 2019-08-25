@@ -1,9 +1,14 @@
-from .base import *
-from .passwords import *
+import dj_database_url
 from celery.schedules import crontab
+from .base import *
+# from .passwords import *
+from .passwords import STAGING_DB_URI, SECRET_KEY, LOCAL_DB_PASSWORD
+
 
 DEBUG = True
 ENVIRONMENT = 'local'
+
+SECRET_KEY = SECRET_KEY
 
 CELERY_BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'django-db'
@@ -69,6 +74,13 @@ DATABASES = {
         }
     },
 }
+
+DATABASES['staging_scraper_default'] = dj_database_url.config(default=STAGING_DB_URI)
+DATABASES['staging_scraper_default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
+DATABASES['staging_scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_default'}
+DATABASES['staging_scraper_revised'] = dj_database_url.config(default=STAGING_DB_URI)
+DATABASES['staging_scraper_revised']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
+DATABASES['staging_scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
 
 
 MIDDLEWARE = [

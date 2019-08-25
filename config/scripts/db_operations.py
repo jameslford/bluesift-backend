@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import transaction
 from django.core.management import call_command
 from config.settings.custom_storage import MediaStorage
+from config.settings.local import DATABASES as local_dbs
 from Scraper.models import (
     ScraperBaseProduct,
     ScraperCategory,
@@ -18,9 +19,8 @@ from Scraper.ScraperCleaner.models import ScraperCleaner
 from Products.models import Product
 from ProductFilter.models import ProductFilter
 from .lists import MODS
-from .check_settings import exclude_production, check_staging
+from .check_settings import exclude_production, check_staging, check_local
 from .colors import assign_label_color
-from config.settings.local import DATABASES as local_dbs
 
 
 @transaction.atomic(using='scraper_revised')
@@ -73,13 +73,13 @@ def run_scraper_cleaners():
         cleaner.run_clean()
 
 
-def delete_scraper_revised():
-    ScraperManufacturer.objects.all().delete()
-    ScraperDepartment.objects.all().delete()
-    ScraperCategory.objects.all().delete()
-    ScraperSubgroup.objects.all().delete()
-    ScraperBaseProduct.objects.all().delete()
-    ScraperAggregateProductRating.objects.all().delete()
+# def delete_scraper_revised():
+#     ScraperManufacturer.objects.all().delete()
+#     ScraperDepartment.objects.all().delete()
+#     ScraperCategory.objects.all().delete()
+#     ScraperSubgroup.objects.all().delete()
+#     ScraperBaseProduct.objects.all().delete()
+#     ScraperAggregateProductRating.objects.all().delete()
 
 
 def initialize_data():
@@ -181,3 +181,8 @@ def load_from_backup():
     backups = glob.glob(path)
     latest = max(backups, key=os.path.getctime)
     call_command('loaddata', latest, '--database=scraper_default')
+
+
+@transaction.atomic()
+def staging_revised_to_local_revised():
+    check_local()
