@@ -187,3 +187,20 @@ def load_from_backup():
 @transaction.atomic()
 def staging_revised_to_local_revised():
     check_local()
+    departments = ScraperDepartment.objects.using('staging_scraper_revised').all()
+    manufacturers = ScraperManufacturer.objects.using('staging_scraper_revised').all()
+    categories = ScraperCategory.objects.using('staging_scraper_revised').all()
+    subgroups = ScraperSubgroup.objects.using('staging_scraper_revised').all()
+    products = ScraperBaseProduct.objects.using('staging_scraper_revised').all().select_subclasses()
+    for department in departments:
+        print(department.name)
+        department.save(using='scraper_revised')
+        print(department.name + ' saved')
+    for manufacturer in manufacturers:
+        manufacturer.save(using='scraper_revised')
+    for category in categories:
+        category.save(using='scraper_revised')
+    for group in subgroups:
+        group.save(using='scraper_revised')
+    for product in products:
+        product.save(using='scraper_revised')
