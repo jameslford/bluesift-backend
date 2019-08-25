@@ -113,7 +113,8 @@ def backup_db():
     dt_string = now.strftime('%Y-%m-%d-%H-%M-%S')
     environment = settings.ENVIRONMENT
     current_path = os.getcwd()
-    for database in local_dbs:
+    # for database in local_dbs:
+    for database in ['default', 'scraper_default', 'scraper_revised']:
         env_path = f'{current_path}\\z_backups\\{environment}\\{database}\\'
         if not os.path.exists(env_path):
             os.makedirs(env_path)
