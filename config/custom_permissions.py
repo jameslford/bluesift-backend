@@ -17,6 +17,7 @@ class OwnerOrAdmin(BasePermission):
             return bool(profile.owner | profile.admin)
         return False
 
+
 class OwnerDeleteAdminEdit(BasePermission):
 
     def has_permission(self, request, view):
@@ -31,4 +32,3 @@ class OwnerDeleteAdminEdit(BasePermission):
             if profile.owner or profile.admin:
                 return True
         return False
-

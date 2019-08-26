@@ -29,7 +29,7 @@ def add_facet_others_delay(qi_pk, facet_name, intersection_pks):
     facet: FacetOthersCollection = FacetOthersCollection.objects.get_or_create(
         query_index=query_index,
         facet_name=facet_name
-        )
+        )[0]
     facet.assign_new_products(intersection_pks)
     return f'FacetOthersCollection created for facet: {facet_name}, and QueryIndex: {qi_pk}'
 
