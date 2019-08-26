@@ -4,4 +4,5 @@ from config.scripts.db_operations import staging_to_production
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        staging_to_production()
+        print('method currently disabled for safety')
+        # staging_to_production()

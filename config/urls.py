@@ -16,7 +16,7 @@ urlpatterns = [
     path('collections/', include('UserProductCollections.urls')),
     path('header-list', get_header_list),
     path('mailing-list/', include('MailingList.urls')),
-    path('orders/', include('Orders.urls')),
+    # path('orders/', include('Orders.urls')),
     path('profiles/', include('Profiles.urls')),
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),

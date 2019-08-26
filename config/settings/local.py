@@ -40,7 +40,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'OPTIONS': {
-            'options': '-c search_path=bluesift_default,public'
+            'options': '-c search_path=default,public'
         },
         'NAME': 'buildbook',
         'USER': 'postgres',

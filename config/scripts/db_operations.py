@@ -12,10 +12,10 @@ from Scraper.models import (
     ScraperCategory,
     ScraperSubgroup,
     ScraperManufacturer,
-    ScraperDepartment,
-    ScraperAggregateProductRating
+    ScraperDepartment
     )
 from Scraper.ScraperCleaner.models import ScraperCleaner
+from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 from Products.models import Product
 from ProductFilter.models import ProductFilter
 from .lists import MODS
@@ -191,16 +191,20 @@ def staging_revised_to_local_revised():
     manufacturers = ScraperManufacturer.objects.using('staging_scraper_revised').all()
     categories = ScraperCategory.objects.using('staging_scraper_revised').all()
     subgroups = ScraperSubgroup.objects.using('staging_scraper_revised').all()
-    products = ScraperBaseProduct.objects.using('staging_scraper_revised').all().select_subclasses()
+    fs_products = ScraperFinishSurface.objects.using('staging_scraper_revised').all()
+
     for department in departments:
-        print(department.name)
         department.save(using='scraper_revised')
-        print(department.name + ' saved')
-    for manufacturer in manufacturers:
-        manufacturer.save(using='scraper_revised')
-    for category in categories:
-        category.save(using='scraper_revised')
-    for group in subgroups:
-        group.save(using='scraper_revised')
-    for product in products:
-        product.save(using='scraper_revised')
+    ScraperManufacturer.objects.db_manager('scraper_revised').bulk_create(list(manufacturers))
+    ScraperCategory.objects.db_manager('scraper_revised').bulk_create(list(categories))
+    ScraperSubgroup.objects.db_manager('scraper_revised').bulk_create(list(subgroups))
+    ScraperFinishSurface.objects.db_manager('scraper_revised').bulk_create(list(fs_products))
+
+    # for manufacturer in manufacturers:
+    #     manufacturer.save(using='scraper_revised')
+    # for category in categories:
+    #     category.save(using='scraper_revised')
+    # for group in subgroups:
+    #     group.save(using='scraper_revised')
+    # for product in products:
+    #     product.save(using='scraper_revised')
