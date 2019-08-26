@@ -9,7 +9,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         cwd = os.getcwd()
-        path = f'{cwd}\\config\\management\\zips\\zipcodes.csv'
+        if os.name == 'nt':
+            path = f'{cwd}\\config\\management\\zips\\zipcodes.csv'
+        else:
+            path = f'{cwd}/config/management/zips/zipcodes.csv'
         # print(path)
         with open(path) as readfile:
             reader = csv.reader(readfile, delimiter=",")
