@@ -130,11 +130,13 @@ class Sorter:
         self.__filter_multi(products)
         self.assign_facet_others(products)
         if full_build:
+            print('full build')
             self.__count_objects(products)
             indices = self.__get_counted_facet_indices()
             qsets = [self.facets[q].queryset for q in indices]
             products = products.intersection(*qsets)
             self.__set_filter_dict()
+            print('filter_dict_set')
             self.query_index.products.clear()
             self.query_index.products.add(*products)
             self.query_index.response = asdict(self.response)
@@ -203,6 +205,7 @@ class Sorter:
                         enabled_value = EnabledValue(f'{facet.quer_value}=', facet.quer_value)
                     else:
                         enabled_value = EnabledValue(query_expression, term)
+                    # enabled_values.append(enabled_value)
         self.response.legit_queries = list(set(legit_queries))
         self.response.enabled_values = list(set(enabled_values))
         self.facets.sort(key=lambda x: x.order)
@@ -222,11 +225,14 @@ class Sorter:
         indices = self.__get_counted_facet_indices()
         for index in indices:
             facet: Facet = self.facets[index]
+            print(facet.name)
             if facet.facet_type == BOOLGROUP_FACET:
                 other_qsets = [self.facets[q].queryset for q in indices]
             else:
+                print('else')
                 other_qsets = [self.facets[q].queryset for q in indices if q != index]
             facet.intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
+            print('facet intersection added')
             add_facet_others_delay.delay(self.query_index.pk, facet.name, list(facet.intersection))
 
     def __count_objects(self, products: QuerySet):
@@ -285,15 +291,15 @@ class Sorter:
 
     def __check_availability_facet(self, stripped_fields):
         if self.location_pk:
-            self.facets.append(Facet('retailer price', PRICE_FACET, 'in_store_ppu', total_count=1, remove_full=False, order=2))
+            self.facets.append(Facet('retailer price', PRICE_FACET, 'in_store_ppu', total_count=1, order=2))
             return
         avail_facet: Facet = self.facets[self.get_indices_by_ft(AVAILABILITY_FACET)[0]]
         qterms = stripped_fields.pop('availability') if 'availability' in stripped_fields else []
         avail_facet.qterms = [term for term in qterms if term in Product.objects.safe_availability_commands()]
         if not avail_facet.qterms:
             return
-        self.facets.append(Facet('location', LOCATION_FACET, 'location', remove_full=False, total_count=1, order=3))
-        self.facets.append(Facet('price', PRICE_FACET, 'low_price', remove_full=False, total_count=1, order=2))
+        self.facets.append(Facet('location', LOCATION_FACET, 'location', total_count=1, order=3))
+        self.facets.append(Facet('price', PRICE_FACET, 'low_price', total_count=1, order=2))
 
     def __check_dependents(self):
         kt_facet = self.get_indices_by_ft(KEYTERM_FACET)
@@ -309,6 +315,7 @@ class Sorter:
         return SerpyProduct(products, many=True).data
 
     def __filter_bools(self, products: QuerySet):
+        print('filtering bools')
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET)
         for index in bool_indices:
             facet = self.facets[index]

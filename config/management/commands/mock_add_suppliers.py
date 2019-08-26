@@ -34,6 +34,7 @@ class Command(BaseCommand):
         random_names = RANDOM_NAMES
         random_addresses = ADDRESSES
         for comp_name in COMP_NAMES:
+            print(comp_name)
             user_model = get_user_model()
             password = '0gat_surfer'
             name = random.choice(random_names)
