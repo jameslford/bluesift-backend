@@ -12,7 +12,7 @@ from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
 from config.tasks import add_facet_others_delay
-from Products.serializers import SerpyProduct
+from Products.serializers import SerpyProduct, serialize_product
 from Products.models import Product, ProductSubClass
 from UserProducts.serializers import RetailerProductMiniSerializer
 from UserProducts.models import RetailerProduct
@@ -312,7 +312,8 @@ class Sorter:
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
             return []
-        return SerpyProduct(products, many=True).data
+        return [serialize_product(product) for product in products]
+
 
     def __filter_bools(self, products: QuerySet):
         print('filtering bools')

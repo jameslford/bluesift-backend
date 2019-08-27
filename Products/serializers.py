@@ -1,4 +1,5 @@
 import serpy
+from typing import Dict
 from .models import Product
 
 
@@ -11,6 +12,20 @@ class TitleField(serpy.Field):
 class SerpyManufacturer(serpy.Serializer):
     pk = serpy.Field('id')
     label = serpy.Field()
+
+
+def serialize_product(product: Product) -> Dict[str, any]:
+    return {
+        'pk': product.pk,
+        'unit': product.unit,
+        'manufacturer_style': product.manufacturer_style,
+        'manu_collection': product.manu_collection,
+        'manufacturer_sku': product.manufacturer_sku,
+        'name': product.name,
+        'swatch_image': product.swatch_image.url if product.swatch_image else None,
+        'manufacturer': product.manufacturer.label,
+        'low_price': product.low_price
+        } 
 
 
 class SerpyProduct(serpy.Serializer):

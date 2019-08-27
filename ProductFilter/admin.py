@@ -20,9 +20,9 @@ class ProductFilterAdmin(admin.ModelAdmin):
         'filter_dictionary'
     )
     # readonly_fields = ('filter_dictionary',)
-    formfield_overrides = {
-        pg_fields.JSONField: {'widget': JSONEditorWidget},
-    }
+    # formfield_overrides = {
+    #     pg_fields.JSONField: {'widget': JSONEditorWidget},
+    # }
 
 
 @admin.register(QueryIndex)
