@@ -315,11 +315,14 @@ class Sorter:
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
             return []
-        start_index = self.page * 300
-        end_index = (self.page + 1) * 300
+        start_index = (self.page - 1) * 300
+        end_index = self.page * 300
+        if self.response.product_count < end_index:
+            end_index = None
         try:
             return [serialize_product(product) for product in products[start_index:end_index]]
         except IndexError:
+            print('response count = ', self.response.product_count, ' ', start_index, end_index)
             return []
 
 
