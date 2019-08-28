@@ -317,7 +317,10 @@ class Sorter:
             return []
         start_index = (self.page - 1) * 300
         end_index = self.page * 300
-        if self.response.product_count < end_index:
+        if start_index > self.response.product_count:
+            return []
+        if end_index > self.response.product_count:
+            self.response.load_more = False
             end_index = None
         try:
             return [serialize_product(product) for product in products[start_index:end_index]]
