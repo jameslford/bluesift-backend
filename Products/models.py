@@ -107,15 +107,15 @@ class ProductAvailabilityQuerySet(models.QuerySet):
             )
         )
 
-    def get_lowest(self, location_pk=None):
-        from UserProducts.models import RetailerProduct
-        term = {'product__in': self.values('pk')}
-        if location_pk:
-            term['retailer__pk'] = location_pk
-        sup_prods = RetailerProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
-            min_price=Least('in_store_ppu', 'online_ppu')
-        )
-        return list(sup_prods.values('min_price', 'product__pk'))
+    # def get_lowest(self, location_pk=None):
+    #     from UserProducts.models import RetailerProduct
+    #     term = {'product__in': self.values('pk')}
+    #     if location_pk:
+    #         term['retailer__pk'] = location_pk
+    #     sup_prods = RetailerProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
+    #         min_price=Least('in_store_ppu', 'online_ppu')
+    #     )
+    #     return list(sup_prods.values('min_price', 'product__pk'))
 
 
 class ProductPricingManager(models.Manager):

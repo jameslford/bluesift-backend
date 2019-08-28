@@ -344,6 +344,7 @@ class Sorter:
             return_values.append(FacetValue(value, count, bool(facet.qterms and value in facet.qterms)))
         facet.return_values = return_values
 
+
     def __filter_availability(self, products: QuerySet):
         index = self.get_index_by_qv('availability')
         if index is None:
