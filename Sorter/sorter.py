@@ -76,6 +76,7 @@ class Sorter:
         self.response: FilterResponse = FilterResponse()
         self.facets: List[Facet] = [Facet(**f_dict) for f_dict in self.product_filter.filter_dictionary]
         self.query_index: QueryIndex = None
+        self.page = 1
 
 ### Main thread is the next 4 functions. Everything below are functions used in their execution ###
 
@@ -90,6 +91,8 @@ class Sorter:
             if field in query_dict:
                 values = query_dict.pop(field)
                 stripped_fields[field] = values
+        if 'page' in query_dict:
+            self.page = query_dict.pop('page', self.page)
         query_index, created = QueryIndex.objects.get_or_create_qi(
             query_path=self.request.path,
             query_dict=query_dict.urlencode(),
@@ -312,7 +315,12 @@ class Sorter:
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
             return []
-        return [serialize_product(product) for product in products]
+        start_index = self.page * 300
+        end_index = (self.page + 1) * 300
+        try:
+            return [serialize_product(product) for product in products[start_index:end_index]]
+        except IndexError:
+            return []
 
 
     def __filter_bools(self, products: QuerySet):
@@ -519,13 +527,13 @@ class DetailBuilder:
 
     def get_stock_details(self) -> DetailListItem:
         return [
-                {'term': 'manufacturer', 'value': self.product.manufacturer_name()},
-                {'term': 'manufacturer collection', 'value': self.product.manu_collection},
-                {'term': 'manufacturer style', 'value': self.product.manufacturer_style},
-                {'term': 'manufacturer sku', 'value': self.product.manufacturer_sku},
-                {'term': 'residential_warranty', 'value': self.product.residential_warranty},
-                {'term': 'commercial_warranty', 'value': self.product.commercial_warranty},
-                {'term': 'light_commercial_warranty', 'value': self.product.light_commercial_warranty}
+            {'term': 'manufacturer', 'value': self.product.manufacturer_name()},
+            {'term': 'manufacturer collection', 'value': self.product.manu_collection},
+            {'term': 'manufacturer style', 'value': self.product.manufacturer_style},
+            {'term': 'manufacturer sku', 'value': self.product.manufacturer_sku},
+            {'term': 'residential_warranty', 'value': self.product.residential_warranty},
+            {'term': 'commercial_warranty', 'value': self.product.commercial_warranty},
+            {'term': 'light_commercial_warranty', 'value': self.product.light_commercial_warranty}
             ]
 
     def get_subclass_remaining(self):
