@@ -240,17 +240,6 @@ class Product(models.Model):
             return None
         return self.manufacturer.label
 
-    def attribute_list(self):
-        return [
-            ['manufacturer', self.manufacturer_name()],
-            ['manufacturer collection', self.manu_collection],
-            ['manufacturer style', self.manufacturer_style],
-            ['manufacturer sku', self.manufacturer_sku],
-            ['residential_warranty', self.residential_warranty],
-            ['commercial_warranty', self.commercial_warranty],
-            ['light_commercial_warranty', self.light_commercial_warranty]
-        ]
-
 
 class ProductSubClass(Product):
 

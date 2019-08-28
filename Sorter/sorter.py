@@ -504,6 +504,7 @@ class DetailBuilder:
         self.bb_sku = pk
         self.product = self.get_subclass_instance()
         self.response: DetailResponse = DetailResponse(pk=str(self.product.pk))
+        self.product_filter = ProductFilter.get_filter(self.product)
 
     def get_subclass_instance(self):
         product = Product.subclasses.filter(pk=self.bb_sku).select_subclasses().first()
@@ -511,17 +512,21 @@ class DetailBuilder:
             raise Exception('no product found for ' + self.bb_sku)
         return product
 
-    def get_product_filter(self) -> ProductFilter:
-        return ProductFilter.get_filter(self.product)
-
     def get_priced(self):
         if self.product.get_in_store_priced():
             return list(RetailerProductMiniSerializer(self.product.get_in_store_priced(), many=True).data)
         return []
 
     def get_stock_details(self) -> DetailListItem:
-        details_list = [{'term': attr[0], 'value': attr[1]} for attr in self.product.attribute_list() if attr[1]]
-        return details_list
+        return [
+                {'term': 'manufacturer', 'value': self.product.manufacturer_name()},
+                {'term': 'manufacturer collection', 'value': self.product.manu_collection},
+                {'term': 'manufacturer style', 'value': self.product.manufacturer_style},
+                {'term': 'manufacturer sku', 'value': self.product.manufacturer_sku},
+                {'term': 'residential_warranty', 'value': self.product.residential_warranty},
+                {'term': 'commercial_warranty', 'value': self.product.commercial_warranty},
+                {'term': 'light_commercial_warranty', 'value': self.product.light_commercial_warranty}
+            ]
 
     def get_subclass_remaining(self):
         remaining_list = []
@@ -541,7 +546,7 @@ class DetailBuilder:
 
     def get_bool_attributes(self):
         attributes = []
-        filter_bools = self.get_product_filter().bool_groups
+        filter_bools = self.product_filter.bool_groups
         for group in filter_bools:
             group_attrs = group.get('values', None)
             if group_attrs:
@@ -549,7 +554,7 @@ class DetailBuilder:
         return attributes
 
     def get_bool_groups(self):
-        filter_bools = self.get_product_filter().bool_groups
+        filter_bools = self.product_filter.bool_groups
         groups_list = []
         for group in filter_bools:
             group_attrs = group.get('values', None)
