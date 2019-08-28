@@ -338,8 +338,10 @@ class Sorter:
             return
         facet: Facet = self.facets[index]
         return_values = []
+        # getting pks means the full set does not evaluate for each iteration below
+        product_pks = products.values_list('pk')
         for value in facet.values:
-            count = products.filter_availability(value, self.location_pk).count()
+            count = Product.objects.filter(pk__in=product_pks).filter_availability(value, self.location_pk).count()
             facet.total_count += count
             return_values.append(FacetValue(value, count, bool(facet.qterms and value in facet.qterms)))
         facet.return_values = return_values
