@@ -23,7 +23,7 @@ from .random_data.random_names import RANDOM_NAMES
 
 RETAILER = 'retailer'
 PRO = 'pro'
-SERVICE_TYPES = ('Architech', 'Contractor', 'Interior Designer', 'Carpenter', 'Engineer')
+SERVICE_TYPES = ('Architect', 'Contractor', 'Interior Designer', 'Carpenter', 'Engineer')
 
 
 class Command(BaseCommand):
@@ -51,6 +51,7 @@ class Command(BaseCommand):
                     email_verified=True,
                     is_supplier=True,
                     is_active=True,
+                    demo=True,
                     password=password,
                     )
             else:
@@ -60,6 +61,7 @@ class Command(BaseCommand):
                     email_verified=True,
                     is_pro=True,
                     is_active=True,
+                    demo=True,
                     password=password
                     )
             zipcode = Zipcode.objects.get(code=address['postalCode'])

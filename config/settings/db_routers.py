@@ -1,3 +1,6 @@
+from django.conf import settings
+
+
 class ScraperRouter:
 
     def db_for_read(self, model, **hints):
@@ -27,6 +30,10 @@ class ScraperRouter:
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
 
+        if 'production' in db:
+            return False
+        if 'staging' in db:
+            return False
         if app_label == 'ScraperCleaner':
             if db == 'scraper_default':
                 return True

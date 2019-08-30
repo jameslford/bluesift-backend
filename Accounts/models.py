@@ -28,9 +28,11 @@ class UserManager(BaseUserManager):
         user.full_name = kwargs.get('full_name', None)
         user.staff = kwargs.get('is_staff', False)
         user.admin = kwargs.get('is_admin', False)
+        user.demo = kwargs.get('demo', False)
         user.is_active = kwargs.get('is_active', False)
         user.is_supplier = is_supplier
         user.is_pro = is_pro
+        user.demo = True
         user.save(using=self.db)
         Token.objects.get_or_create(user=user)
         return user
@@ -69,6 +71,7 @@ class User(AbstractBaseUser):
     is_supplier = models.BooleanField(default=False)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
+    demo = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
 
     objects = UserManager()
