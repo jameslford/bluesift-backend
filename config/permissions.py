@@ -20,7 +20,7 @@ class StagingorLocalAdmin(permissions.BasePermission):
         return bool(
             bool(settings.ENVIRONMENT == 'staging' or settings.ENVIRONMENT == 'local')
             and request.user
-            and request.user.is_admin
+            and request.user.admin
         )
 
 class AllowAllExceptStaging(permissions.BasePermission):
@@ -29,6 +29,6 @@ class AllowAllExceptStaging(permissions.BasePermission):
         if settings.ENVIRONMENT == 'staging':
             return bool(
                 request.user and
-                request.user.is_admin
+                request.user.admin
             )
         return True
