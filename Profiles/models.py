@@ -1,6 +1,8 @@
-from model_utils.managers import InheritanceManager
+import datetime
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from model_utils.managers import InheritanceManager
 from Groups.models import ProCompany, RetailerCompany
 from Plans.models import ConsumerPlan
 
@@ -33,7 +35,6 @@ class ProfileManager(models.Manager):
             user=user,
             plan=plan,
             phone_number=phone)[0]
-        # profile.save(using=self.db)
 
 
 class BaseProfile(models.Model):
@@ -43,6 +44,7 @@ class BaseProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='profile'
         )
+    date_create = models.DateTimeField(auto_now_add=True)
     objects = ProfileManager()
     subclasses = InheritanceManager()
 
@@ -91,7 +93,6 @@ class ProEmployeeProfile(EmployeeBaseProfile):
         related_name='employees'
         )
 
-    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         if not self.user.is_pro:
             raise ValueError('user is not pro')
@@ -114,11 +115,9 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     def locations_managed(self):
         return [location.pk for location in self.managed_locations.all()]
 
-    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
-            # pylint: disable=no-member
         owner_count = self.company.employees.all().filter(owner=True).count()
         if owner_count > 0:
             raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')

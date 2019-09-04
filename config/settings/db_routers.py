@@ -5,7 +5,7 @@ class ScraperRouter:
 
     def db_for_read(self, model, **hints):
 
-        if 'ScraperCleaner' == model._meta.app_label:
+        if model._meta.app_label == 'ScraperCleaner':
             return 'scraper_default'
         if 'Scraper' in model._meta.app_label:
             instance = hints.get('instance', None)

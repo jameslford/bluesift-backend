@@ -1,3 +1,7 @@
 from django.db import models
+from model_utils import Choices
 
-# Create your models here.
+# class SalesLeads(models.Model):
+#     USERTYPE = Choices('pro', 'retailer', 'user')
+#     STATUS = Choices('prospect', 'contacted', 'pitched', '')
+

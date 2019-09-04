@@ -1,5 +1,7 @@
-from model_utils.managers import InheritanceManager
+import datetime
 from django.db import models
+from django.utils import timezone
+from model_utils.managers import InheritanceManager
 from Addresses.models import Address
 from Plans.models import RetailerPlan, ProPlan
 
@@ -34,8 +36,6 @@ class CompanyManager(models.Manager):
 
 
 
-
-
 class Company(models.Model):
     name = models.CharField(max_length=40, unique=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
@@ -43,6 +43,7 @@ class Company(models.Model):
     email_verified = models.BooleanField(default=False)
     info = models.TextField(null=True, blank=True)
     slug = models.SlugField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     objects = CompanyManager()
     subclasses = InheritanceManager()
@@ -64,11 +65,17 @@ class Company(models.Model):
         return self.business_address
 
 
+
 class RetailerCompany(Company):
     plan = models.ForeignKey(RetailerPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
 
     def get_employees(self):
         return self.employees.select_related('user').all()
+
+    def save(self, *args, **kwargs):
+        if not self.plan:
+            self.plan = RetailerPlan.objects.get_or_create_default()
+        super().save(*args, **kwargs)
 
 
 class ServiceType(models.Model):
@@ -83,3 +90,8 @@ class ProCompany(Company):
         if self.service:
             return self.service.label
         return None
+
+    def save(self, *args, **kwargs):
+        if not self.plan:
+            self.plan = ProPlan.objects.get_or_create_default()
+        super().save(*args, **kwargs)

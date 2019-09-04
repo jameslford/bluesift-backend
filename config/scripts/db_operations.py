@@ -187,18 +187,20 @@ def load_from_backup():
 @transaction.atomic()
 def staging_revised_to_local_revised():
     check_local()
-    departments = ScraperDepartment.objects.using('staging_scraper_revised').all()
-    manufacturers = ScraperManufacturer.objects.using('staging_scraper_revised').all()
-    categories = ScraperCategory.objects.using('staging_scraper_revised').all()
-    subgroups = ScraperSubgroup.objects.using('staging_scraper_revised').all()
-    fs_products = ScraperFinishSurface.objects.using('staging_scraper_revised').all()
+    # departments = ScraperDepartment.objects.using('staging_scraper_default').all()
+    # manufacturers = ScraperManufacturer.objects.using('staging_scraper_default').all()
+    # categories = ScraperCategory.objects.using('staging_scraper_default').all()
+    # subgroups = ScraperSubgroup.objects.using('staging_scraper_default').all()
+    # fs_products = ScraperFinishSurface.objects.using('staging_scraper_default').all()
+    # scraper_cleaners = ScraperCleaner.objects.using('staging_scraper_default').all()
 
-    for department in departments:
-        department.save(using='scraper_revised')
-    ScraperManufacturer.objects.db_manager('scraper_revised').bulk_create(list(manufacturers))
-    ScraperCategory.objects.db_manager('scraper_revised').bulk_create(list(categories))
-    ScraperSubgroup.objects.db_manager('scraper_revised').bulk_create(list(subgroups))
-    ScraperFinishSurface.objects.db_manager('scraper_revised').bulk_create(list(fs_products))
+    # for department in departments:
+    #     department.save(using='scraper_default')
+    # ScraperManufacturer.objects.db_manager('scraper_default').bulk_create(list(manufacturers))
+    # ScraperCategory.objects.db_manager('scraper_default').bulk_create(list(categories))
+    # ScraperSubgroup.objects.db_manager('scraper_default').bulk_create(list(subgroups))
+    # ScraperFinishSurface.objects.db_manager('scraper_default').bulk_create(list(fs_products))
+    # ScraperCleaner.objects.db_manager('scraper_default').bulk_create(list(scraper_cleaners))
 
     # for manufacturer in manufacturers:
     #     manufacturer.save(using='scraper_revised')
