@@ -59,6 +59,7 @@ class FilterResponse:
     message: Message = None
     product_count: int = 0
     filter_dict: List[dict] = None
+    request_path: str = None
     enabled_values: List[EnabledValue] = dfield(default_factory=list)
     products: List[dict] = None
 
@@ -74,6 +75,7 @@ class Sorter:
         self.location_pk = location_pk
         self.update = update
         self.response: FilterResponse = FilterResponse()
+        self.response.request_path = self.request.get_full_path()
         self.facets: List[Facet] = [Facet(**f_dict) for f_dict in self.product_filter.filter_dictionary]
         self.query_index: QueryIndex = None
         self.page = 1
