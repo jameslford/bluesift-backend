@@ -160,6 +160,7 @@ class QueryIndexManager(models.Manager):
             location = RetailerLocation.objects.get(pk=retailer_location)
             args['retailer_location'] = location
         query_index = self.model.objects.get_or_create(**args)
+        
         return query_index
 
 

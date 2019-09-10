@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django_json_widget',
     'django_celery_beat',
     'storages',
+    'ipware',
     # 'grappelli',
 
     'debug_toolbar',
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
 
     'Accounts',
     'Addresses',
+    'Analytics',
     'Cards',
     'Carts',
     'config',

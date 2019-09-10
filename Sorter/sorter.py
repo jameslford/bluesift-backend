@@ -5,13 +5,14 @@ Primarily 2 classes that return product (not subclassed) instances
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List
+from ipware import get_client_ip
 from django.db import models, transaction
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
-from config.tasks import add_facet_others_delay
+from config.tasks import add_facet_others_delay, create_product_view_record
 from Products.serializers import SerpyProduct, serialize_product
 from Products.models import Product, ProductSubClass
 from UserProducts.serializers import RetailerProductMiniSerializer
@@ -59,7 +60,6 @@ class FilterResponse:
     message: Message = None
     product_count: int = 0
     filter_dict: List[dict] = None
-    request_path: str = None
     enabled_values: List[EnabledValue] = dfield(default_factory=list)
     products: List[dict] = None
 
@@ -75,7 +75,6 @@ class Sorter:
         self.location_pk = location_pk
         self.update = update
         self.response: FilterResponse = FilterResponse()
-        self.response.request_path = self.request.get_full_path()
         self.facets: List[Facet] = [Facet(**f_dict) for f_dict in self.product_filter.filter_dictionary]
         self.query_index: QueryIndex = None
         self.page = 1
@@ -94,7 +93,10 @@ class Sorter:
                 values = query_dict.pop(field)
                 stripped_fields[field] = values
         if 'page' in query_dict:
-            self.page = query_dict.pop('page', self.page)
+            page = query_dict.pop('page', None)
+            if page:
+                self.page = int(page[0])
+            print('page = ', self.page)
         query_index, created = QueryIndex.objects.get_or_create_qi(
             query_path=self.request.path,
             query_dict=query_dict.urlencode(),
@@ -102,6 +104,14 @@ class Sorter:
             retailer_location=self.location_pk
             )
         self.query_index = query_index
+        user_pk = self.request.user.pk if self.request.user.is_authenticated else None
+        client_ip = get_client_ip(self.request)[0]
+        create_product_view_record.delay(
+            qi_pk=self.query_index.pk,
+            user_pk=user_pk,
+            ip_address=str(client_ip),
+            floating_fields=stripped_fields,
+            )
         self.__parse_querydict(query_dict)
         self.__check_dependents()
         if query_index.dirty or self.update or created:

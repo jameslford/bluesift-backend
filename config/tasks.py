@@ -12,17 +12,25 @@ from django.core.mail import EmailMessage
 from django.utils.http import urlsafe_base64_encode
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from config.scripts.db_operations import backup_db, clean_backups, scrape, scraper_to_revised, initialize_data, run_stock_clean
+from Analytics.models import ProductViewRecord, PlansRecord
+from ProductFilter.models import QueryIndex, FacetOthersCollection
+from Addresses.models import Coordinate
 from config.scripts.images import get_images
 from config.celery import app
-
+from config.scripts.db_operations import(
+    backup_db,
+    clean_backups,
+    scrape,
+    scraper_to_revised,
+    initialize_data,
+    run_stock_clean
+    )
 
 logger = get_task_logger(__name__)
 
 
 @app.task
 def add_facet_others_delay(qi_pk, facet_name, intersection_pks):
-    from ProductFilter.models import FacetOthersCollection, QueryIndex
     query_index = QueryIndex.objects.filter(pk=qi_pk).first()
     if not query_index:
         return f'No QueryIndex for {query_index}'
@@ -32,8 +40,6 @@ def add_facet_others_delay(qi_pk, facet_name, intersection_pks):
         )[0]
     facet.assign_new_products(intersection_pks)
     return f'FacetOthersCollection created for facet: {facet_name}, and QueryIndex: {qi_pk}'
-
-
 
 
 @app.task
@@ -57,13 +63,56 @@ def send_verification_email(site_domain, user_pk):
         email_obj.send()
         return f'{user.email} email sent'
     except user_model.DoesNotExist:
-        logging.warning("Tried to send verification email to non-existent user: '%s'" % user_pk)
+        # logging.warning("Tried to send verification email to non-existent user: '%s'" % user_pk)
         return f'{user.email} email failed'
+
+
+@app.task
+def create_product_view_record(
+        qi_pk: int = None,
+        user_pk: str = None,
+        ip_address: str = None,
+        floating_fields: dict = None,
+        lat=None,
+        lng=None
+        ):
+    user_type = None
+    try:
+        if user_pk:
+            user = get_user_model().objects.get(pk=user_pk)
+            if user.admin:
+                return
+            if user.is_pro:
+                user_type = 'pro'
+            if user.is_supplier:
+                user_type = 'retailer'
+        pv_record = ProductViewRecord()
+        if qi_pk:
+            query_index = QueryIndex.objects.filter(pk=qi_pk).first()
+            if query_index:
+                pv_record.query_index = query_index
+        pv_record.user_type = user_type
+        pv_record.ip_address = ip_address
+        pv_record.floating_fields = floating_fields
+        if lat and lng:
+            coord = Coordinate.objects.get_or_create(
+                lat=lat,
+                lng=lng
+            )
+            pv_record.location = coord
+        pv_record.save()
+        return 'ProductViewRecord Created'
+    except Exception as exception:
+        return str(exception)
+
+
+@shared_task
+def gather_plan_analytics():
+    plan_record: PlansRecord = PlansRecord.objects.create()
 
 
 @shared_task
 def check_cache():
-    from ProductFilter.models import QueryIndex
     dirty_qis = QueryIndex.objects.filter(dirty=True)
     dirty_count = dirty_qis.count()
     cleaned = 0

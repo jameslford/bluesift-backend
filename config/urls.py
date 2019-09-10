@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('addresses/', include('Addresses.urls')),
     path('accounts/', include('Accounts.urls')),
+    path('analytics/', include('Analytics.urls')),
     path('bbadmin/', include('BBadmin.urls')),
     path('groups/', include('Groups.urls')),
     path('collections/', include('UserProductCollections.urls')),
