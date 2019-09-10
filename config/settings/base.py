@@ -77,6 +77,20 @@ SITE_ID = 1
 
 GMAPS_API_KEY = 'AIzaSyD1ehaLv6OBqN3m_qjif2N7Gge0PDP5ams'
 
+IPWARE_META_PRECEDENCE_ORDER = (
+        'HTTP_X_FORWARDED_FOR',
+        'X_FORWARDED_FOR',
+        'CF-Connecting-IP',
+        'HTTP_CLIENT_IP',
+        'HTTP_X_REAL_IP',
+        'HTTP_X_FORWARDED',
+        'HTTP_X_CLUSTER_CLIENT_IP',
+        'HTTP_FORWARDED_FOR',
+        'HTTP_FORWARDED',
+        'HTTP_VIA',
+        'REMOTE_ADDR',
+    )
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
