@@ -12,4 +12,5 @@ def plan_views(request):
 
 
 @api_view(['GET'])
-def department_view
+def department_view(request):
+    pass
