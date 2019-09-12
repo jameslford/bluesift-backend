@@ -16,7 +16,7 @@ from rest_framework.request import Request
 from rest_framework import status
 from config.custom_permissions import RetailerPermission
 from Products.models import Product
-from Products.serializers import SerpyProduct
+from Products.serializers import SerpyProduct, serialize_product
 from .models import ProjectProduct, RetailerProduct
 from .serializers import FullRetailerProductSerializer
 
@@ -57,7 +57,8 @@ def get_project_products(request: HttpRequest, project_pk):
         'product__manufacturer'
         ).filter(project__pk=project_pk)
     products = [project_product.product for project_product in project_products]
-    return Response(SerpyProduct(products, many=True).data, status=status.HTTP_200_OK)
+    # return Response(SerpyProduct(products, many=True).data, status=status.HTTP_200_OK)
+    return Response([serialize_product(product) for product in products], status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

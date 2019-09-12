@@ -24,8 +24,8 @@ def serialize_product(product: Product) -> Dict[str, any]:
         'name': product.name,
         'swatch_image': product.swatch_image.url if product.swatch_image else None,
         'manufacturer': product.manufacturer.label,
-        'low_price': product.low_price
-        } 
+        'low_price': getattr(product, 'low_price', None)
+        }
 
 
 class SerpyProduct(serpy.Serializer):
