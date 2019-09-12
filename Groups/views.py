@@ -1,4 +1,5 @@
-""" views for groups (companies). includes 5 main views:
+"""
+    views for groups (companies). includes 5 main views:
 
     - retailer_company_header
     - retailer_location_list_all
@@ -26,7 +27,8 @@ from .serializers import (
     ProListSerializer,
     RetailerListSerializer,
     RetailerCompanyHeaderSerializer,
-    RetailerLocationHeaderSerializer
+    RetailerLocationHeaderSerializer,
+    ProCompanyDetailSerializers
 )
 from .models import RetailerCompany, ProCompany, Company, ServiceType
 
@@ -122,19 +124,22 @@ def services_list_all(request: Request, cat='all'):
 @api_view(['GET'])
 def service_detail_header(request: Request, pk=None):
     user = request.user
+    serializer = ProListSerializer
     if not pk:
         if user.is_authenticated and user.is_pro:
             pk = user.get_group().pk
+            serializer = ProCompanyDetailSerializers
         else:
             return Response('No company verified', status=status.HTTP_400_BAD_REQUEST)
     service: ProCompany = ProCompany.objects.select_related(
         'business_address',
         'business_address__postal_code',
-        'business_address__coordinates'
+        'business_address__coordinates',
+        'plan'
     ).get(pk=pk)
 
     return Response(
-        ProListSerializer(service).data,
+        serializer(service).data,
         status=status.HTTP_200_OK
         )
 
