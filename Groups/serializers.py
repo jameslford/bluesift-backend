@@ -2,7 +2,7 @@ from rest_framework import serializers
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from UserProductCollections.models import RetailerLocation
 from .models import RetailerCompany, ProCompany
-from Profiles.serializers import RetailerEmployeeShortSerializer
+from Profiles.serializers import RetailerEmployeeShortSerializer, ProEmployeeProfileSerializer
 # import serpy
 # from Addresses.models import Address, Zipcode
 # from Groups.models import CompanyAccount
@@ -64,10 +64,15 @@ class ProListSerializer(serializers.ModelSerializer):
 
 class ProCompanyDetailSerializers(serializers.ModelSerializer):
     address = AddressSerializer()
+    employees = serializers.SerializerMethodField()
 
     class Meta:
         model = ProCompany
-        fields = tuple(PRO_LIST)
+        fields = tuple(PRO_LIST + ['plan', 'employees'])
+
+    def get_employees(self, instance):
+        employees = instance.get_employees()
+        return ProEmployeeProfileSerializer(employees, many=True).data
 
 
 # class RetailerListSerializer(serpy.Serializer):

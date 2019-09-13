@@ -1,15 +1,17 @@
+"""
+Main product class, very other type of product(specialized, project & retailer) is derived from Product class below
+"""
+
 import uuid
 from model_utils.managers import InheritanceManager
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
+from django.forms.models import model_to_dict
 from django.db.models import (
     Avg,
     Subquery,
     OuterRef,
     CharField
-    # Min,
-    # Count,
-    # FloatField,
 )
 from django.db.models.functions import Least
 from django.contrib.gis.geos import MultiPoint
@@ -58,7 +60,8 @@ class ProductAvailabilityQuerySet(models.QuerySet):
     def retailer_products(self, location_pk=None):
         from UserProducts.models import RetailerProduct
         if location_pk:
-            sup_prods = RetailerProduct.objects.filter(retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
+            sup_prods = RetailerProduct.objects.filter(
+                retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
         else:
             sup_prods = RetailerProduct.objects.filter(product__in=Subquery(self.values('pk')))
         return sup_prods
@@ -107,37 +110,34 @@ class ProductAvailabilityQuerySet(models.QuerySet):
             )
         )
 
-    # def get_lowest(self, location_pk=None):
-    #     from UserProducts.models import RetailerProduct
-    #     term = {'product__in': self.values('pk')}
-    #     if location_pk:
-    #         term['retailer__pk'] = location_pk
-    #     sup_prods = RetailerProduct.objects.filter(**term).only('in_store_ppu', 'online_ppu').annotate(
-    #         min_price=Least('in_store_ppu', 'online_ppu')
-    #     )
-    #     return list(sup_prods.values('min_price', 'product__pk'))
-
 
 class ProductPricingManager(models.Manager):
     def get_queryset(self):
+        """ just points to qset """
         return ProductAvailabilityQuerySet(self.model, using=self._db)
 
     def filter_availability(self, command, location_pk=None, pk_only=False):
+        """ just points to qset """
         return self.get_queryset().filter_availability(command, location_pk, pk_only)
 
     def priced_in_store(self, location_pk=None):
+        """ just points to qset """
         return self.get_queryset().priced_in_store(location_pk)
 
     def available_in_store(self, location_pk=None):
+        """ just points to qset """
         return self.get_queryset().available_in_store(location_pk)
 
     def retailer_products(self, location_pk=None):
+        """ just points to qset """
         return self.get_queryset().retailer_products(location_pk)
 
     def safe_availability_commands(self):
+        """ just points to qset """
         return self.get_queryset().safe_availability_commands()
 
     def product_prices(self, location_pk=None):
+        """ just points to qset """
         return self.get_queryset().product_prices(location_pk)
 
 
@@ -239,6 +239,23 @@ class Product(models.Model):
         if not self.manufacturer:
             return None
         return self.manufacturer.label
+
+    def set_name(self):
+        fields = [
+            'manufacturer',
+            'manufacturer_style',
+            'manu_collection',
+            'manufacturer_sku'
+            ]
+        sub = Product.subclasses.get_subclass(pk=self.pk)
+        fields = fields + sub.name_fields()
+        vals = list(model_to_dict(sub, fields=fields).values())
+        vals = [str(val) for val in vals]
+        self.name = '*$'.join(vals)
+
+    def save(self, *args, **kwargs):
+        self.set_name()
+        super(Product, self).save(*args, **kwargs)
 
 
 class ProductSubClass(Product):

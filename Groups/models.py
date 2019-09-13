@@ -91,6 +91,9 @@ class ProCompany(Company):
             return self.service.label
         return None
 
+    def get_employees(self):
+        return self.employees.select_related('user').all()
+
     def save(self, *args, **kwargs):
         if not self.plan:
             self.plan = ProPlan.objects.get_or_create_default()
