@@ -58,6 +58,15 @@ class FinishSurface(ProductSubClass):
         if not self.size:
             self.size = self.width + ' x ' + self.length
 
+    def name_fields(self):
+        return [
+            'material',
+            'look',
+            'finish',
+            'sub_material',
+            'surface_coating'
+        ]
+
     @classmethod
     def special_method(cls):
         print('hello world')

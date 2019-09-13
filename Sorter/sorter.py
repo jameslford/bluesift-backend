@@ -207,7 +207,7 @@ class Sorter:
         return response
 
     def __set_filter_dict(self):
-        enabled_values = []
+        # enabled_values = []
         legit_queries = []
         for facet in self.facets:
             facet.queryset = None
@@ -216,13 +216,13 @@ class Sorter:
                 for term in facet.qterms:
                     query_expression = f'{facet.quer_value}={term}'
                     legit_queries.append(query_expression)
-                    if facet.facet_type in (PRICE_FACET, LOCATION_FACET):
-                        enabled_value = EnabledValue(f'{facet.quer_value}=', facet.quer_value)
-                    else:
-                        enabled_value = EnabledValue(query_expression, term)
+                    # if facet.facet_type in (PRICE_FACET, LOCATION_FACET):
+                    #     enabled_value = EnabledValue(f'{facet.quer_value}=', facet.quer_value)
+                    # else:
+                    #     enabled_value = EnabledValue(query_expression, term)
                     # enabled_values.append(enabled_value)
         self.response.legit_queries = list(set(legit_queries))
-        self.response.enabled_values = list(set(enabled_values))
+        # self.response.enabled_values = list(set(enabled_values))
         self.facets.sort(key=lambda x: x.order)
         self.response.filter_dict = [asdict(qfacet) for qfacet in self.facets]
 
@@ -334,8 +334,9 @@ class Sorter:
         if end_index > self.response.product_count:
             self.response.load_more = False
             end_index = None
-        try:
             return [serialize_product(product) for product in products[start_index:end_index]]
+        try:
+            return [serialize_product(product) for product in products]
         except IndexError:
             print('response count = ', self.response.product_count, ' ', start_index, end_index)
             return []
