@@ -82,6 +82,9 @@ class RetailerLocation(models.Model):
 
     objects = RetailerLocationManager()
 
+    class Meta:
+        unique_together = ('nickname', 'company')
+
     def __str__(self):
         return str(self.company) + ' ' + str(self.number)
 
@@ -141,12 +144,18 @@ class RetailerLocation(models.Model):
             return super().clean()
         raise ValidationError('Employee not a company employee')
 
+    def assign_number(self):
+        numbers = self.company.shipping_locations.values_list('number', flat=True)
+        if not numbers:
+            return 1
+        return max(numbers) + 1
+
     def save(self, *args, **kwargs):
         if not self.address:
             self.approved_in_store_seller = False
             self.approved_online_seller = False
-        # if not self.number:
-        #     self.number = self.assign_number()
+        if not self.number:
+            self.number = self.assign_number()
         if not self.nickname:
             self.nickname = self.company.name + ' ' + str(self.number)
         self.full_clean()
