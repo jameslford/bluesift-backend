@@ -81,7 +81,7 @@ class Sorter:
 
 ### Main thread is the next 4 functions. Everything below are functions used in their execution ###
 
-    @transaction.atomic()
+    # @transaction.atomic()
     def __call__(self):
         return self.__process_request()
 
@@ -92,11 +92,11 @@ class Sorter:
             if field in query_dict:
                 values = query_dict.pop(field)
                 stripped_fields[field] = values
-        if 'page' in query_dict:
-            page = query_dict.pop('page', None)
-            if page:
-                self.page = int(page[0])
-            print('page = ', self.page)
+        # if 'page' in query_dict:
+        #     page = query_dict.pop('page', None)
+        #     if page:
+        #         self.page = int(page[0])
+        #     print('page = ', self.page)
         query_index, created = QueryIndex.objects.get_or_create_qi(
             query_path=self.request.path,
             query_dict=query_dict.urlencode(),
@@ -104,6 +104,7 @@ class Sorter:
             retailer_location=self.location_pk
             )
         self.query_index = query_index
+        print('self query index = ', self.query_index.pk)
         user_pk = self.request.user.pk if self.request.user.is_authenticated else None
         client_ip = get_client_ip(self.request)[0]
         create_product_view_record.delay(
@@ -247,7 +248,7 @@ class Sorter:
                 print('else')
                 other_qsets = [self.facets[q].queryset for q in indices if q != index]
             facet.intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
-            print('facet intersection added')
+            print('facet intersection query index = ', self.query_index.pk)
             add_facet_others_delay.delay(self.query_index.pk, facet.name, list(facet.intersection))
 
     def __count_objects(self, products: QuerySet):

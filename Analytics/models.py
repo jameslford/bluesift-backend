@@ -111,6 +111,7 @@ class ProductViewRecord(Record):
     user_type = models.CharField(max_length=100)
     ip_address = models.CharField(max_length=200, null=True)
     floating_fields = models.CharField(max_length=200, null=True)
+    created = models.DateTimeField(auto_now_add=True)
     query_index = models.ForeignKey(
         QueryIndex,
         on_delete=models.SET_NULL,
@@ -128,10 +129,9 @@ class CompanyInfoViewRecord(Record):
     pass
 
 
-
-
 class RetailerLocationRecord():
     pass
+
 
 class DepartmentQueryRecord():
     pass
