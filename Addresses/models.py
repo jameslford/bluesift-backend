@@ -137,7 +137,9 @@ class Address(models.Model):
     objects = AddressManager()
 
     def __str__(self):
-        return self.address_string()
+        if self.address_string:
+            return self.address_string
+        return self.get_address_string()
 
     def get_address_string(self):
         al1 = self.address_line_1

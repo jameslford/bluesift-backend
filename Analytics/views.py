@@ -4,8 +4,10 @@ Analytics.views
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+from rest_framework import status
 from config.custom_permissions import SupplierorAdmin
 from UserProductCollections.models import RetailerLocation
+from Groups.models import RetailerCompany
 from .models import PlansRecord, ProductViewRecord
 
 
@@ -26,15 +28,28 @@ def all_retailer_location_views(request, group_pk=None):
     locations = None
     user = request.user
     if user.admin:
-        if group_pk:
-            locations = RetailerLocation.objects.get(retailer_pk=group_pk)
-        else:
-            locations = RetailerLocation.objects.all()
+        if not group_pk:
+            return Response('no group specified')
+        locations = RetailerLocation.objects.filter(company__pk=group_pk)
     if user.is_supplier:
         locations = user.get_collections()
     res = ProductViewRecord.views_time_series(locations)
     return Response(res)
 
+
+@api_view(['GET'])
+@permission_classes((SupplierorAdmin,))
+def group_views(request):
+    groups = RetailerCompany.objects.all()
+    res = ProductViewRecord.views_time_series(groups)
+    return Response(res)
+
+
+@api_view(['GET'])
+def test(request, group_pk, interval='day'):
+    locations = RetailerLocation.objects.filter(company__pk=group_pk)
+    res = ProductViewRecord.views_time_series(locations, interval)
+    return Response(res)
 
 
 

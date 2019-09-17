@@ -2,16 +2,54 @@ from typing import List
 from pandas import date_range as pdate_range
 from datetime import date, timedelta, datetime
 from django.db import models
-from django.db.models import Min, Max, Count
-from django.db.models.functions import TruncWeek, TruncDay
+from django.db.models import Min, Max, Count, QuerySet
+from django.db.models.functions import TruncWeek, TruncDay, TruncMonth
 from Profiles.models import ConsumerProfile
 from Groups.models import ProCompany, RetailerCompany
 from UserProductCollections.models import RetailerLocation
 from ProductFilter.models import QueryIndex
 from Addresses.models import Coordinate
 
-        # labeled_result = LabeledResult([consumers, retailer_companies, pro_companies], label='plans')
-        # graph = GraphResponse([labeled_result], ['consumers', 'retailers', 'pros'])
+LOCATION_BIG_ARG = 'query_index__retailer_location__in'
+LOCATION_SMALL_ARG = 'query_index__retailer_location'
+LOCATION_LABEL = 'nickname'
+GROUP_BIG_ARG = 'query_index__retailer_location__company__in'
+GROUP_SMALL_ARG = 'query_index__retailer_location__company'
+GROUP_LABEL = 'name'
+
+INTERVAL_OTIONS = {
+    'day': [TruncDay, 'D', 'day'],
+    'week': [TruncWeek, 'W', 'week'],
+    'month': [TruncMonth, 'M', 'month']
+}
+
+
+
+class PRQueryMapper:
+    def __init__(self, queryset: QuerySet, interval: str = 'day'):
+        self.queryset: QuerySet = queryset
+        self.interval = interval
+        self.interval_func = None
+        self.int_alias = None
+        self.big_arg = None
+        self.dti_attr = None
+        self.small_arg = None
+        self.label = None
+        self.assign_values()
+
+    def assign_values(self):
+        self.interval_func, self.int_alias, self.dti_attr = INTERVAL_OTIONS[self.interval]
+        if self.queryset.model is RetailerLocation:
+            self.big_arg = LOCATION_BIG_ARG
+            self.small_arg = LOCATION_SMALL_ARG
+            self.label = LOCATION_LABEL
+        elif self.queryset.model is RetailerCompany:
+            self.big_arg = GROUP_BIG_ARG
+            self.small_arg = GROUP_SMALL_ARG
+            self.label = GROUP_LABEL
+        else:
+            raise ValueError('unsupported queryset type')
+
 
 class LabeledResult:
     def __init__(
@@ -127,27 +165,56 @@ class ProductViewRecord(Record):
     )
 
     @classmethod
-    def views_time_series(cls, locations):
-        location_pks = locations.values_list('pk', flat=True)
+    def views_time_series(cls, locations: QuerySet, interval='day'):
+        grargs = PRQueryMapper(locations, interval)
         records = cls.objects.select_related(
             'query_index',
             'query_index__retailer_location'
-        ).filter(query_index__retailer_location__pk__in=location_pks)
-        min_date = records.aggregate(Min('created'))
-        min_date = min_date['created__min'].date()
+        ).filter(**{grargs.big_arg: grargs.queryset})
         today = datetime.utcnow().date()
-        labels = pdate_range(start=min_date, end=today, tz='UTC')
+        min_date = records.aggregate(Min('created'))
+        min_date = min_date['created__min']
+        if not min_date:
+            min_date = today - timedelta(30)
+        else:
+            min_date = min_date.date()
+        all_dates = pdate_range(start=min_date, end=today, freq=grargs.int_alias, tz='UTC')
+        labels = [adat for adat in all_dates]
         results = []
-        for location in locations:
-            recs = records.filter(query_index__retailer_location__pk=location.pk).annotate(
-                date=TruncDay('created')
-                ).values('date').annotate(count=Count('id')).values('date', 'count')
-            new_recs = {rec['date']: rec['count'] for rec in recs}
+        for quer in grargs.queryset:
+            recs = records.filter(**{grargs.small_arg: quer}).annotate(
+                interval=grargs.interval_func('created')
+                ).values('interval').annotate(count=Count('id')).values('interval', 'count')
+            new_recs = {rec['interval']: rec['count'] for rec in recs}
+            print(new_recs)
             results.append({
-                'label': location.nickname,
+                'label': getattr(quer, grargs.label),
                 'data': [new_recs.get(label, 0) for label in labels]
                 })
         return {'labels': labels, 'results': results}
+
+
+        # location_pks = locations.values_list('pk', flat=True)
+        # records = cls.objects.select_related(
+        #     'query_index',
+        #     'query_index__retailer_location'
+        # ).filter(query_index__retailer_location__pk__in=location_pks)
+        # min_date = records.aggregate(Min('created'))
+        # min_date = min_date['created__min'].date()
+        # today = datetime.utcnow().date()
+        # labels = pdate_range(start=min_date, end=today, tz='UTC')
+        # results = []
+        # for location in locations:
+        #     recs = records.filter(query_index__retailer_location__pk=location.pk).annotate(
+        #         date=TruncDay('created')
+        #         ).values('date').annotate(count=Count('id')).values('date', 'count')
+        #     new_recs = {rec['date']: rec['count'] for rec in recs}
+        #     results.append({
+        #         'label': location.nickname,
+        #         'data': [new_recs.get(label, 0) for label in labels]
+        #         })
+        # return {'labels': labels, 'results': results}
+
 
 
 class CompanyInfoViewRecord(Record):

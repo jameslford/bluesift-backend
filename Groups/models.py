@@ -49,7 +49,7 @@ class Company(models.Model):
     subclasses = InheritanceManager()
 
     def __str__(self):
-        return self.name
+        return f'{self.name} {self.pk}'
 
     def get_employees(self):
         # pylint: disable=no-member
