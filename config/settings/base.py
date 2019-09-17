@@ -122,6 +122,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# CACHES = {
+
+# }
+
 
 LANGUAGE_CODE = 'en-us'
 

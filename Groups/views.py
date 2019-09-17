@@ -24,6 +24,7 @@ from config.custom_permissions import RetailerPermission, OwnerDeleteAdminEdit
 from UserProductCollections.models import RetailerLocation
 from Profiles.models import BaseProfile
 from .serializers import (
+    serialize_retail_locations,
     ProListSerializer,
     RetailerListSerializer,
     RetailerCompanyHeaderSerializer,
@@ -72,12 +73,9 @@ def retailer_company_header(request: Request, retailer_pk=None):
 def retailer_location_list_all(request: Request, prod_type='all'):
     retailers = RetailerLocation.objects.select_related(
         'address',
-        'address__postal_code',
-        'address__coordinates',
         'company'
         ).prefetch_related(
             'products',
-            'products__product'
             ).all().annotate(prod_count=Count('products'))
     if prod_type.lower() != 'all':
         from Products.models import ProductSubClass
@@ -87,7 +85,8 @@ def retailer_location_list_all(request: Request, prod_type='all'):
         retailer_product_pks = prod_class.objects.retailer_products().values('retailer__pk')
         retailers = retailers.filter(pk__in=retailer_product_pks)
     return Response(
-        RetailerListSerializer(retailers, many=True).data,
+        [serialize_retail_locations(ret) for ret in retailers],
+        # RetailerListSerializer(retailers, many=True).data,
         status=status.HTTP_200_OK
     )
 
@@ -98,8 +97,8 @@ def retailer_location_detail_header(request: Request, pk):
         'address',
         'address__postal_code',
         'address__coordinates',
-        'company',
-        ).prefetch_related('products').get(pk=pk)
+        'company'
+        ).prefetch_related('products', 'products__product').get(pk=pk)
     return Response(
         RetailerLocationHeaderSerializer(retailer).data,
         status=status.HTTP_200_OK

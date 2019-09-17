@@ -1,10 +1,12 @@
-from django.shortcuts import render
+"""
+Analytics.views
+"""
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+from config.custom_permissions import SupplierorAdmin
 from UserProductCollections.models import RetailerLocation
 from .models import PlansRecord, ProductViewRecord
-# from .serializers import ProductViewRecordSerializer
 
 
 @api_view(['GET'])
@@ -19,42 +21,28 @@ def department_view(request):
 
 
 @api_view(['GET'])
-def retailer_view_analytics(request):
-    locations = request.user.get_collections().values_list('pk', flat=True)
-    locations = RetailerLocation.objects.prefetch_related(
-        'qis',
-        'qis__record'
-    ).filter(pk__in=locations)
-    response = []
-    for location in locations:
-        loc_dict = {
-            'nickname': location.nickname,
-            'pk': location.pk,
-            'queries': []
-            }
-        for index in location.qis.all():
-            qi_dict = {
-                'query_dict': index.query_dict,
-                'accessed': [record.created for record in index.record.all()]
-            }
-            loc_dict['queries'].append(qi_dict)
-        response.append(loc_dict)
-    return Response(response)
+@permission_classes((SupplierorAdmin,))
+def all_retailer_location_views(request, group_pk=None):
+    locations = None
+    user = request.user
+    if user.admin:
+        if group_pk:
+            locations = RetailerLocation.objects.get(retailer_pk=group_pk)
+        else:
+            locations = RetailerLocation.objects.all()
+    if user.is_supplier:
+        locations = user.get_collections()
+    res = ProductViewRecord.views_time_series(locations)
+    return Response(res)
 
 
-    # records = ProductViewRecord.objects.select_related(
-    #     'query_index',
-    #     'query_index__retailer_location'
-    # ).filter(query_index__retailer_location__pk__in=location_pks)
-    # res = []
-    # for location in locations:
-    #     loc_recs = records.filter(query_index__retailer_location__pk=location.pk)
-    #     response = {
-    #         'location': location.nicname,
-    #         'queries': []
-    #         }
-    #     qis = location.qis.all()
-    #     for qi in qis:
 
-    #         for record in qi.record.all():
-    #             blah.append(record)
+
+@api_view(['GET'])
+def all_retailers_viewed(request):
+    locations = RetailerLocation.objects.all()
+    location_pks = locations.values_list('pk', flat=True)
+    records = ProductViewRecord.objects.select_related(
+        'query_index',
+        'query_index__retailer_location'
+    ).filter(query_index__retailer_location__pk__in=location_pks)

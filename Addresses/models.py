@@ -111,6 +111,9 @@ class Address(models.Model):
     address_line_2 = models.CharField(max_length=120, null=True, blank=True)
     city = models.CharField(max_length=120, null=True, blank=True)
     gmaps_id = models.CharField(max_length=200, unique=True)
+    address_string = models.CharField(max_length=1000, null=True, blank=True)
+    lat = models.DecimalField(decimal_places=7, max_digits=13, null=True, blank=True)
+    lng = models.DecimalField(decimal_places=7, max_digits=13, null=True, blank=True)
     country = models.CharField(
         max_length=120,
         blank=True,
@@ -136,7 +139,7 @@ class Address(models.Model):
     def __str__(self):
         return self.address_string()
 
-    def address_string(self):
+    def get_address_string(self):
         al1 = self.address_line_1
         al2 = self.address_line_2
         city = self.city
@@ -145,3 +148,9 @@ class Address(models.Model):
 
     def city_state(self):
         return f'{self.city}, {self.state}'
+
+    def save(self, *args, **kwargs):
+        self.lat = self.coordinates.lat
+        self.lng = self.coordinates.lng
+        self.address_string = self.get_address_string()
+        super(Address, self).save(*args, **kwargs)

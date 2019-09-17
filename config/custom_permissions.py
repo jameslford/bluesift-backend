@@ -1,14 +1,15 @@
-from rest_framework.permissions import BasePermission
+from rest_framework import permissions
+from django.conf import settings
 
 
-class RetailerPermission(BasePermission):
+class RetailerPermission(permissions.BasePermission):
     """ permission for suppliers only """
 
     def has_permission(self, request, view):
         return request.user.is_supplier
 
 
-class OwnerOrAdmin(BasePermission):
+class OwnerOrAdmin(permissions.BasePermission):
     """ permission for owner or admin - does not check for collection/owner association """
 
     def has_permission(self, request, view):
@@ -18,7 +19,7 @@ class OwnerOrAdmin(BasePermission):
         return False
 
 
-class OwnerDeleteAdminEdit(BasePermission):
+class OwnerDeleteAdminEdit(permissions.BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
@@ -31,4 +32,45 @@ class OwnerDeleteAdminEdit(BasePermission):
         if request.method == 'PUT':
             if profile.owner or profile.admin:
                 return True
+        return False
+
+class StagingAdminOnly(permissions.BasePermission):
+    """only allows view if user is admin and on staging server
+    """
+    def has_permission(self, request, view):
+        return bool(
+            settings.ENVIRONMENT == 'staging'
+            and request.user
+            and request.user.is_admin
+            )
+
+
+class StagingorLocalAdmin(permissions.BasePermission):
+    """only allows view if user is admin and on staging or local server
+    """
+    def has_permission(self, request, view):
+        return bool(
+            bool(settings.ENVIRONMENT == 'staging' or settings.ENVIRONMENT == 'local')
+            and request.user
+            and request.user.admin
+        )
+
+class AllowAllExceptStaging(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        if settings.ENVIRONMENT == 'staging':
+            return bool(
+                request.user and
+                request.user.admin
+            )
+        return True
+
+class SupplierorAdmin(permissions.IsAuthenticated):
+
+    def has_permission(self, request, view):
+        user = request.user
+        if user.admin:
+            return True
+        if user.is_supplier:
+            return True
         return False
