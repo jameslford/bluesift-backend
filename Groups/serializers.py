@@ -1,3 +1,4 @@
+from typing import Dict
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer, AddressUpdateSerializer
 from UserProductCollections.models import RetailerLocation
@@ -9,7 +10,9 @@ from Profiles.serializers import RetailerEmployeeShortSerializer, ProEmployeePro
 
 DEFAULT_BUSINESS_LIST_FIELDS = [
     'pk',
-    'address',
+    # 'address',
+    'coordinates',
+    'address_string',
     'phone_number',
     'company_name',
     'nickname',
@@ -19,9 +22,18 @@ RETAILER_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count']
 RETAILER_HEADER = DEFAULT_BUSINESS_LIST_FIELDS + ['product_count', 'product_types']
 PRO_LIST = DEFAULT_BUSINESS_LIST_FIELDS + ['service_type']
 
+def serialize_retail_locations(retail_location: RetailerLocation) -> Dict[str, any]:
+    return {
+        'pk': retail_location.pk,
+        'address_string': retail_location.address_string(),
+        'coordinates': retail_location.coordinates(),
+        'product_count': retail_location.product_count(),
+        'phone_number': retail_location.phone_number,
+        'company_name': retail_location.company_name()
+    }
+
 
 class RetailerListSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()
 
     class Meta:
         model = RetailerLocation

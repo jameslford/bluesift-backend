@@ -1,7 +1,12 @@
 from typing import List
+from pandas import date_range as pdate_range
+from datetime import date, timedelta, datetime
 from django.db import models
+from django.db.models import Min, Max, Count
+from django.db.models.functions import TruncWeek, TruncDay
 from Profiles.models import ConsumerProfile
 from Groups.models import ProCompany, RetailerCompany
+from UserProductCollections.models import RetailerLocation
 from ProductFilter.models import QueryIndex
 from Addresses.models import Coordinate
 
@@ -99,9 +104,6 @@ class PlansRecord(Record):
                 {'data': consumer_data, 'label': 'consumers'},
                 {'data': retailer_data, 'label': 'retailers'},
                 {'data': pro_data, 'label': 'pros'},
-                # {'data': np_con_data, 'label': 'consumers without plan'},
-                # {'data': np_ret_data, 'label': 'retailers without plan'},
-                # {'data': np_pro_data, 'label': 'pros without plan'},
                 ]
             }
 
@@ -123,6 +125,29 @@ class ProductViewRecord(Record):
         null=True,
         on_delete=models.SET_NULL,
     )
+
+    @classmethod
+    def views_time_series(cls, locations):
+        location_pks = locations.values_list('pk', flat=True)
+        records = cls.objects.select_related(
+            'query_index',
+            'query_index__retailer_location'
+        ).filter(query_index__retailer_location__pk__in=location_pks)
+        min_date = records.aggregate(Min('created'))
+        min_date = min_date['created__min'].date()
+        today = datetime.utcnow().date()
+        labels = pdate_range(start=min_date, end=today, tz='UTC')
+        results = []
+        for location in locations:
+            recs = records.filter(query_index__retailer_location__pk=location.pk).annotate(
+                date=TruncDay('created')
+                ).values('date').annotate(count=Count('id')).values('date', 'count')
+            new_recs = {rec['date']: rec['count'] for rec in recs}
+            results.append({
+                'label': location.nickname,
+                'data': [new_recs.get(label, 0) for label in labels]
+                })
+        return {'labels': labels, 'results': results}
 
 
 class CompanyInfoViewRecord(Record):

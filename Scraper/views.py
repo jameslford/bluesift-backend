@@ -1,5 +1,5 @@
-import os
 from django.db import transaction
+from django.http import HttpRequest
 from rest_framework.decorators import (
     api_view,
     permission_classes
@@ -7,11 +7,9 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from django.http import HttpRequest
 from Scraper.models import ScraperSubgroup, ScraperBaseProduct, ScraperDepartment
 from Scraper.ScraperCleaner.models import ScraperCleaner, CleanerUtility
-from config.scripts.db_operations import scrape, run_stock_clean
-from config.permissions import StagingAdminOnly, StagingorLocalAdmin
+from config.custom_permissions import StagingorLocalAdmin
 from config.tasks import subgroup_command as task_subgroup_command
 
 SCRAPE_NEW = 'scrape_new'
@@ -26,7 +24,8 @@ SUBGROUP_COMMANDS = [
 @api_view(['GET'])
 @permission_classes((StagingorLocalAdmin,))
 def subgroup_list(request):
-    default_subgroups = ScraperSubgroup.objects.using('scraper_default').select_related('category', 'manufacturer').all()
+    default_subgroups = ScraperSubgroup.objects.using(
+        'scraper_default').select_related('category', 'manufacturer').all()
 
     content = {
         'default_product_count': ScraperBaseProduct.objects.using('scraper_default').count(),

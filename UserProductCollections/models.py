@@ -96,6 +96,10 @@ class RetailerLocation(models.Model):
     def rating_count(self):
         return self.ratings.all().count()
 
+    def coordinates(self):
+        # coordinates = self.address.coordinates
+        return [self.address.lat, self.address.lng]
+
     def location_manager(self):
         if self.local_admin:
             return self.local_admin
@@ -130,7 +134,7 @@ class RetailerLocation(models.Model):
 
     def address_string(self):
         if self.address:
-            return self.address.address_string()
+            return self.address.address_string
         return 'No Address'
 
     def company_name(self):
