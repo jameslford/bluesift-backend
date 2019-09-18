@@ -6,7 +6,6 @@ from django.conf import settings
 from django.db import transaction
 from django.core.management import call_command
 from config.custom_storage import MediaStorage
-from config.settings.local import DATABASES as local_dbs
 from Scraper.models import (
     ScraperBaseProduct,
     ScraperCategory,
@@ -129,6 +128,7 @@ def clean_backups():
     and uploads to aws media. then deletes file from local
     """
     environment = settings.ENVIRONMENT
+    from config.settings.local import DATABASES as local_dbs
     current_path = os.getcwd()
     s3 = MediaStorage()
     for database in local_dbs:
@@ -145,6 +145,7 @@ def clean_backups():
 
 
 def migrate_all():
+    from config.settings.local import DATABASES as local_dbs
     for database in local_dbs:
         db_arg = f'--database={database}'
         call_command('migrate', db_arg)
