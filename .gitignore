@@ -8,7 +8,7 @@
 *.pyc
 __pycache__/
 setttings/local.py
-setttings/passwords.py
+config/passwords.py
 db.sqlite3
 media
 

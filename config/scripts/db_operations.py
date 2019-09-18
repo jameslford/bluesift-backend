@@ -5,7 +5,7 @@ from stat import S_ISREG, ST_CTIME, ST_MODE
 from django.conf import settings
 from django.db import transaction
 from django.core.management import call_command
-from config.settings.custom_storage import MediaStorage
+from config.custom_storage import MediaStorage
 from config.settings.local import DATABASES as local_dbs
 from Scraper.models import (
     ScraperBaseProduct,

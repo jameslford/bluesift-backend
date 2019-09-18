@@ -65,11 +65,10 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_TIMEZONE = 'US/Eastern'
 
 ROOT_URLCONF = 'config.urls'
 
-DATABASE_ROUTERS = ['config.settings.db_routers.ScraperRouter']
+DATABASE_ROUTERS = ['config.db_routers.ScraperRouter']
 
 SITE_ID = 1
 

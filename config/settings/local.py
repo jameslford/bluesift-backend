@@ -2,7 +2,7 @@ import dj_database_url
 from celery.schedules import crontab
 from .base import *
 # from .passwords import *
-from .passwords import *
+from ..passwords import *
 
 
 DEBUG = True

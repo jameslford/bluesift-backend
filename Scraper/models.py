@@ -3,14 +3,13 @@ import copy
 import io
 import importlib
 import requests
-from io import BytesIO
 from django.conf import settings
 from django.core.files import File
 from django.db import models, transaction
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
 from PIL import Image as pimage
-from config.settings.local_storage import get_local_storage
+from config.local_storage import get_local_storage
 from config.scripts.check_settings import exclude_production
 from Products.models import Manufacturer, Product
 
@@ -271,7 +270,7 @@ class ScraperBaseProduct(models.Model):
             image: pimage.Image = self.download_image(url)
             if not image:
                 continue
-            buffer = BytesIO()
+            buffer = io.BytesIO()
             image.save(buffer, 'PNG', optimize=True)
             destination.save(image_name, File(buffer), save=False)
             print('getting local for ' + self.name)
@@ -284,7 +283,7 @@ class ScraperBaseProduct(models.Model):
             print('bad request')
             return None
         try:
-            image: pimage.Image = pimage.open(BytesIO(respone.content))
+            image: pimage.Image = pimage.open(io.BytesIO(respone.content))
             image = image.convert('RGB')
         except (OSError, ValueError):
             print('cannot identify image file for ' + self.name)
