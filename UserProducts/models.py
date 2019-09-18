@@ -174,10 +174,6 @@ class RetailerProduct(models.Model):
         coordinates = self.retailer.address.coordinates
         return [coordinates.lat, coordinates.lng]
 
-    # def set_online_price(self):
-    #     if self.in_store_ppu:
-    #         self.online_ppu = Decimal(self.in_store_ppu) * Decimal(settings.MARKUP)
-
     def set_self_bb_sku(self):
         bb_sku = self.product.bb_sku
         self.product_bb_sku = bb_sku

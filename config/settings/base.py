@@ -11,10 +11,10 @@ AWS_MEDIA_BUCKET_NAME = "pixidesk-development-media"
 AWS_S3_REGION_NAME = 'us-east-1'
 
 STATICFILES_LOCATION = 'static'
-STATICFILES_STORAGE = 'config.settings.custom_storage.StaticStorage'
+STATICFILES_STORAGE = 'config.custom_storage.StaticStorage'
 
 MEDIAFILES_LOCATION = 'media'
-DEFAULT_FILE_STORAGE = 'config.settings.custom_storage.MediaStorage'
+DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
 
 
 INSTALLED_APPS = [
