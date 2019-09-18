@@ -1,6 +1,5 @@
 import datetime
 from django.db import models
-from django.utils import timezone
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
 from Plans.models import RetailerPlan, ProPlan
@@ -55,14 +54,13 @@ class Company(models.Model):
         # pylint: disable=no-member
         return self.employees
 
-    def company_name(self):
-        return self.name
 
-    def nickname(self):
-        return self.name
-
-    def address(self):
-        return self.business_address
+    def coordinates(self):
+        # coordinates = self.address.coordinates
+        return [
+            self.business_address.lat,
+            self.business_address.lng
+            ]
 
 
 

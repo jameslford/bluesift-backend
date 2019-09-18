@@ -67,20 +67,41 @@ class RetailerCompanyHeaderSerializer(serializers.ModelSerializer):
 
 
 class ProListSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()
+    company_name = serializers.SerializerMethodField()
+    address_string = serializers.SerializerMethodField()
 
     class Meta:
         model = ProCompany
-        fields = tuple(PRO_LIST)
+        fields = (
+            'pk',
+            'coordinates',
+            'service_type',
+            'phone_number',
+            'address_string',
+            'company_name',
+        )
+
+    def get_address_string(self, instance: ProCompany):
+        return instance.business_address.address_string
+
+    def get_company_name(self, instance: ProCompany):
+        return instance.name
 
 
 class ProCompanyDetailSerializers(serializers.ModelSerializer):
-    address = AddressSerializer()
+    business_address = AddressSerializer()
     employees = serializers.SerializerMethodField()
 
     class Meta:
         model = ProCompany
-        fields = tuple(PRO_LIST + ['plan', 'employees'])
+        fields = (
+            'pk',
+            'plan',
+            'employees',
+            'business_address',
+            'phone_number',
+            'name',
+            )
 
     def get_employees(self, instance):
         employees = instance.get_employees()
