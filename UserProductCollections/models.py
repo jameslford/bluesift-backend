@@ -97,17 +97,14 @@ class RetailerLocation(models.Model):
         return self.ratings.all().count()
 
     def coordinates(self):
-        # coordinates = self.address.coordinates
         return [self.address.lat, self.address.lng]
 
     def location_manager(self):
         if self.local_admin:
             return self.local_admin
-            # return [self.local_admin.id, self.local_admin.user.get_first_name()]
         sys_admin = self.company.employees.filter(company_account_admin=True).first()
         if sys_admin:
             return sys_admin
-            # return [sys_admin.id, sys_admin.user.get_first_name()]
         owner = self.company.employees.filter(company_account_owner=True).first()
         return owner
 
