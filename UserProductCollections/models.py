@@ -216,10 +216,26 @@ class BaseProjectManager(models.Manager):
         collection.save()
         return collection
 
+    def get_user_projects(self, user, project_pk=None):
+        """
+        returns correct subclass of BaseProject based on user
+        if project_pk is provided, returns a project instance, else returns a queryset
+        """
+        if user.is_admin or user.is_supplier:
+            raise ValueError('Unsupported user type')
+        if user.is_pro:
+            group = user.get_group()
+            projects = ProProject.objects.filter(owner=group)
+            if project_pk:
+                return projects.get(pk=project_pk)
+            return projects
+        projects = ConsumerProject.objects.filter(owner__user=user)
+        if project_pk:
+            return projects.get(pk=project_pk)
+        return projects
+
 
 class BaseProject(models.Model):
-    pro_collaborator = models.ManyToManyField(ProEmployeeProfile)
-    collaborators = models.ManyToManyField(ConsumerProfile)
     deadline = models.DateTimeField(null=True, blank=True)
     template = models.BooleanField(default=False)
     address = models.ForeignKey(

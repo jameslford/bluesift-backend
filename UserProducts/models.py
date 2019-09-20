@@ -1,24 +1,24 @@
 import datetime
 from model_utils.managers import InheritanceManager
 from django.db import models
-from django.core.exceptions import PermissionDenied
 from Products.models import Product
 from UserProductCollections.models import BaseProject, RetailerLocation
 
 
 class ProjectProductManager(models.Manager):
-    def add_product(self, user, product: Product, collection_pk=None):
+    def add_product(self, user, product_pk, collection_pk=None):
         collections = user.get_collections()
         collection = collections.filter(
             pk=collection_pk).first() if collection_pk else collections.first()
+        product = Product.objects.get(pk=product_pk)
         self.get_or_create(product=product, project=collection)[0]
         return True
 
-    def delete_product(self, user, product, collection_pk=None):
+    def delete_product(self, user, product_pk, collection_pk=None):
         collections = user.get_collections()
         collection = collections.filter(
             pk=collection_pk).first() if collection_pk else collections.first()
-        user_product = self.get(product=product, project=collection)
+        user_product = self.get(product__pk=product_pk, project=collection)
         user_product.delete()
         return True
 
@@ -46,7 +46,7 @@ class ProjectProduct(models.Model):
 
 
 class RetailerProductManager(models.Manager):
-    def add_product(self, user, product, collection_pk=None):
+    def add_product(self, user, product_pk, collection_pk=None):
         collections = user.get_collections()
         location = collections.filter(
             pk=collection_pk).first() if collection_pk else collections.first()
@@ -55,6 +55,7 @@ class RetailerProductManager(models.Manager):
                 profile.owner or
                 location.local_admin == profile):
             return False
+        product = Product.objects.get(pk=product_pk)
         self.get_or_create(product=product, retailer=location)
         return True
 
@@ -67,7 +68,7 @@ class RetailerProductManager(models.Manager):
                 profile.owner or
                 location.local_admin == profile):
             return False
-        user_prod = self.get(product=product, retailer=location)
+        user_prod = self.get(product__pk=product, retailer=location)
         user_prod.delete()
 
     def update_product(self, user, **kwargs):

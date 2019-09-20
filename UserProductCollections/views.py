@@ -94,3 +94,54 @@ def crud_location(request: Request):
         return Response(RetailerLocationListSerializer(location).data, status=status.HTTP_200_OK)
 
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def project_detail(request: Request, project_pk):
+    project = request.user.get_collections().get(pk=project_pk)
+    product_pks = project.customer_products.all().values_list('pk', flat=True)
+    assignments = project.product_assignments.all()
+    
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, RetailerPermission))
+def location_detail(request: Request, location_pk):
+    pass
+
+
+# @api_view(['GET'])
+# @permission_classes((IsAuthenticated,))
+# def get_project_products(request: HttpRequest, project_pk):
+#     project_exist = request.user.get_collections().filter(pk=project_pk).exists()
+#     if not project_exist:
+#         return Response('Invalid project pk', status=status.HTTP_400_BAD_REQUEST)
+#     project_products = ProjectProduct.objects.select_related(
+#         ).filter(project__pk=project_pk).values_list('product__pk', flat=True)
+#     products = Product.subclasses.select_related('manufacturer').filter(pk__in=project_products).select_subclasses()
+#     res = []
+#     for kls in ProductSubClass.__subclasses__():
+#         kls_res = {
+#             'name': kls.__name__,
+#             'products': [serialize_product(product) for product in products if type(product) == kls]
+#             }
+#         res.append(kls_res)
+#     return Response(res, status=status.HTTP_200_OK)
+
+
+# @api_view(['GET'])
+# @permission_classes((IsAuthenticated, RetailerPermission))
+# def retailer_products(request: Request, location_pk, product_type):
+#     prod_type = ProductSubClass().return_sub(product_type)
+#     location = request.user.get_collections().filter(pk=location_pk).first().pk
+#     prods = prod_type.objects.all().values('pk')
+#     location_products = RetailerProduct.objects.select_related(
+#         'product',
+#         'product__manufacturer'
+#         ).filter(product__pk__in=prods, retailer__pk=location)
+#     return Response(
+#         FullRetailerProductSerializer(location_products, many=True).data,
+#         status=status.HTTP_200_OK)

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'Scraper.ScraperFinishSurface',
     'Scraper.ScraperCleaner',
     'SpecializedProducts',
+    'Schedule',
     'UserProductCollections',
     'UserProducts'
 ]

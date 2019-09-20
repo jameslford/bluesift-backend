@@ -1,7 +1,5 @@
-import datetime
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
 from model_utils.managers import InheritanceManager
 from Groups.models import ProCompany, RetailerCompany
 from Plans.models import ConsumerPlan
@@ -73,9 +71,7 @@ class ConsumerProfile(BaseProfile):
 class EmployeeBaseProfile(BaseProfile):
     """
     shared fields for pro-employees and retailer-employees
-
     owners can delete/edit company objects
-
     owners and admins can add, delete, and edit projects/retailer locations
     """
     owner = models.BooleanField(default=False)
