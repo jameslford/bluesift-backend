@@ -26,14 +26,8 @@ class ProductAssignment(models.Model):
         null=True
         )
 
-class BaseCollaborator(models.Model):
 
-
-    class Meta:
-        abstract = True
-
-
-class ProCollaborator(BaseCollaborator):
+class ProCollaborator(models.Model):
     project = models.ForeignKey(
         BaseProject,
         on_delete=models.CASCADE,
@@ -58,7 +52,7 @@ class ProCollaborator(BaseCollaborator):
         super(ProCollaborator, self).save(*args, **kwargs)
 
 
-class ConsumerCollaborator(BaseCollaborator):
+class ConsumerCollaborator(models.Model):
     project = models.ForeignKey(
         BaseProject,
         on_delete=models.CASCADE,
@@ -78,15 +72,25 @@ class ProjectTask(models.Model):
     notes = models.TextField(null=True, blank=True)
     start_date = models.DateTimeField(null=True)
     duration = models.DurationField(null=True)
+    predecessor_type = models.CharField(choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    pro_collaborator = models.ForeignKey(
+        ProCollaborator,
+        null=True,
+        on_delete=models.SET_NULL
+        )
+    user_collaborator = models.ForeignKey(
+        ConsumerCollaborator,
+        null=True,
+        on_delete=models.SET_NULL
+        )
     predecessor = models.ForeignKey(
         'self',
         null=True,
         on_delete=models.SET_NULL,
         related_name='dependants'
         )
-    predecessor_type = models.CharField(choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
     parent = models.ForeignKey(
         'self',
         null=True,
@@ -112,6 +116,13 @@ class ProjectTask(models.Model):
                 if self.parent.parent.parent:
                     raise ValueError('Only 2 nested levels allowed')
 
+    def collaborator(self):
+        if self.pro_collaborator:
+            return self.pro_collaborator
+        return self.user_collaborator
+
     def save(self, *args, **kwargs):
         self.count_parents()
+        if self.user_collaborator and self.pro_collaborator:
+            raise ValueError('cannot have 2 collaborators')
         super(ProjectTask, self).save(*args, **kwargs)

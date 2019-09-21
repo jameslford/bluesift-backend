@@ -21,6 +21,7 @@ urlpatterns = [
     path('profiles/', include('Profiles.urls')),
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),
+    path('schedule/', include('Schedule.urls')),
     path('user-products/', include('UserProducts.urls'))
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

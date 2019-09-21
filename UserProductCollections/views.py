@@ -7,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin, RetailerPermission
+from Products.models import ProductSubClass, Product
+from Products.serializers import serialize_product
 from .models import BaseProject, RetailerLocation
 from .serializers import RetailerLocationListSerializer, ProjectSerializer, RetailerLocationDetailSerializer
 
@@ -29,16 +31,17 @@ def get_library(request: Request):
             RetailerLocationListSerializer(collections, many=True).data,
             status=status.HTTP_200_OK
         )
-    profile = user.get_profile()
-    collaborations = None
-    if user.is_pro:
-        collaborations = BaseProject.subclasses.filter(pro_collaborator=profile).select_subclasses()
-    else:
-        collaborations = BaseProject.subclasses.filter(collaborators=profile).select_subclasses()
-    profile = user.get_profile()
+    # profile = user.get_profile()
+    # group = user.get_group()
+    # collaborations = None
+    # if user.is_pro:
+    #     collaborations = BaseProject.subclasses.filter(pro_collaborator=profile).select_subclasses()
+    # else:
+    #     collaborations = BaseProject.subclasses.filter(collaborators=profile).select_subclasses()
+    # profile = user.get_profile()
     content = {
         'my_projects': ProjectSerializer(collections, many=True).data,
-        'collaborations': ProjectSerializer(collaborations, many=True).data
+        # 'collaborations': ProjectSerializer(group.collaborations, many=True).data
     }
     return Response(
         content,
@@ -101,11 +104,7 @@ def crud_location(request: Request):
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def project_detail(request: Request, project_pk):
-    project = request.user.get_collections().get(pk=project_pk)
-    product_pks = project.customer_products.all().values_list('pk', flat=True)
-    assignments = project.product_assignments.all()
-    
-
+    pass
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, RetailerPermission))

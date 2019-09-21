@@ -50,8 +50,8 @@ class ProjectSerializer(serializers.Serializer):
     product_count = serializers.IntegerField()
 
 
-class ProjectDetailSerilizer(serializers.ModelSerializer):
-    pass
+# class ProjectDetailSerilizer(serializers.ModelSerializer):
+#     pass
 
 
 # class SVLocationSerializer(serializers.ModelSerializer):
