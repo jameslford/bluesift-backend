@@ -1,9 +1,34 @@
-from django.db import models
+from django.db import models, transaction
 from model_utils import Choices
 from UserProductCollections.models import BaseProject, RetailerLocation
+from UserProducts.models import RetailerProduct
 from Profiles.models import ConsumerProfile, ProEmployeeProfile
 from Products.models import Product
 from Groups.models import ProCompany
+
+
+class ProductAssignmentManager(models.Manager):
+
+    @transaction.atomic()
+    def create_assignment(self, project, **kwargs):
+        name = kwargs.get('name')
+        product = kwargs.get('product')
+        product_pk = product.get('pk')
+        product = Product.objects.get(pk=product_pk)
+        quantity = kwargs.get('quantity_needed', 0)
+        supplier = kwargs.get('supplier')
+        assignment = self.model.objects.get_or_create(
+            name=name,
+            product=product,
+            project=project,
+            quantity_needed=quantity
+            )[0]
+        if supplier and supplier != 'auto':
+            supplier_pk = supplier.get('location_pk')
+            retailer_product = RetailerLocation.objects.filter(pk=supplier_pk).first()
+            assignment.supplier = retailer_product
+            assignment.save()
+        return assignment
 
 
 class ProductAssignment(models.Model):
@@ -25,6 +50,11 @@ class ProductAssignment(models.Model):
         related_name='project_assignments',
         null=True
         )
+
+    objects = ProductAssignmentManager()
+
+    class Meta:
+        unique_together = ('project', 'name')
 
 
 class ProCollaborator(models.Model):

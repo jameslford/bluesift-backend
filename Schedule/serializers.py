@@ -1,5 +1,7 @@
 from typing import Dict
+from Products.serializers import serialize_product_priced
 from .models import ProjectTask, ProductAssignment
+
 
 
 
@@ -19,13 +21,19 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
 
 
 def serializer_product_assignment(assignment: ProductAssignment) -> Dict[str, any]:
-    product = assignment.product
     return {
         'pk': assignment.pk,
         'name': assignment.name,
         'quantity': assignment.quantity_needed,
-        'product': {
-            'pk': product.pk,
-            'name': f'{product.manufacturer.name}, {product.manu_collection}, {product.manufacturer_style}'
-            }
+        'product': serialize_product_priced(assignment.product),
+        'supplier': {
+            'pk': assignment.supplier.pk,
+            'name': assignment.supplier.nickname
         }
+        }
+
+
+#  {
+#             'pk': product.pk,
+#             'name': f'{product.manufacturer}, {product.manu_collection}, {product.manufacturer_style}',
+#             },

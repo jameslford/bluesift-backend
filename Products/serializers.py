@@ -27,6 +27,19 @@ def serialize_product(product: Product) -> Dict[str, any]:
         'low_price': getattr(product, 'low_price', None)
         }
 
+def serialize_product_priced(product: Product) -> Dict[str, any]:
+    prod_dict = serialize_product(product)
+    prod_dict['suppliers'] = [
+        {
+            'pk': prod.pk,
+            'location_pk': prod.retailer.pk,
+            'name': prod.retailer.nickname,
+            'price': prod.in_store_ppu
+            }
+        for prod in product.priced.all()
+        ]
+    return prod_dict
+
 
 class SerpyProduct(serpy.Serializer):
     pk = serpy.MethodField()
