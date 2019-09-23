@@ -14,11 +14,16 @@ def tasks(request: Request, project_pk):
     project = BaseProject.objects.get_user_projects(request.user, project_pk)
     p_tasks = project.tasks.select_related(
         'product',
-        'collaborators',
-        'pro_collaborators'
+        'user_collaborator',
+        'pro_collaborator'
     ).all()
     res = [serialize_task(task) for task in p_tasks]
-    return Response(res)
+    project_node = [{
+        'name': project.nickname,
+        'root': True,
+        'children': res
+        }]
+    return Response(project_node)
 
 
 @api_view(['GET'])

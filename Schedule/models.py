@@ -148,8 +148,10 @@ class ProjectTask(models.Model):
 
     def collaborator(self):
         if self.pro_collaborator:
-            return self.pro_collaborator
-        return self.user_collaborator
+            return self.pro_collaborator.pk
+        if self.user_collaborator:
+            return self.user_collaborator.pk
+        return None
 
     def save(self, *args, **kwargs):
         self.count_parents()
