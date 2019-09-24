@@ -105,6 +105,7 @@ class ProjectTask(models.Model):
     predecessor_type = models.CharField(choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    progress = models.IntegerField(null=True)
     pro_collaborator = models.ForeignKey(
         ProCollaborator,
         null=True,

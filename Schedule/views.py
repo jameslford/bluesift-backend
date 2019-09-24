@@ -5,25 +5,50 @@ from rest_framework import status
 from Products.models import Product, ProductSubClass
 from Products.serializers import serialize_product_priced
 from UserProductCollections.models import BaseProject
-from .serializers import serialize_task, serializer_product_assignment
 from .models import ProductAssignment
+from .serializers import serializer_product_assignment, serialize_task, reserialize_task
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def tasks(request: Request, project_pk):
+    print(request.user)
     project = BaseProject.objects.get_user_projects(request.user, project_pk)
-    p_tasks = project.tasks.select_related(
-        'product',
-        'user_collaborator',
-        'pro_collaborator'
-    ).all()
-    res = [serialize_task(task) for task in p_tasks]
-    project_node = [{
-        'name': project.nickname,
-        'root': True,
-        'children': res
-        }]
-    return Response(project_node)
+
+    if request.method == 'GET':
+        p_tasks = project.tasks.select_related(
+            'product',
+            'user_collaborator',
+            'pro_collaborator'
+        ).all()
+        res = [serialize_task(task) for task in p_tasks]
+        assignments = project.product_assignments.select_related(
+            'product',
+            'product__manufacturer'
+            ).all()
+        project_node = {
+            'assignments': [serializer_product_assignment(assi) for assi in assignments],
+            'tasks': [{
+                'name': project.nickname,
+                'root': True,
+                'children': res
+                }]
+            }
+        return Response(project_node)
+
+    if request.method == 'POST':
+        data = request.data[0]
+        root = data.get('root', False)
+        if not root:
+            return Response('invalid structure - project not root')
+        project.nickname = data.get('name', project.nickname)
+        project.deadline = data.get('deadline', project.deadline)
+        project.save()
+        children = data.get('children', None)
+        if children:
+            for child in children:
+                reserialize_task(project, child)
+            return Response('children created', status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -73,3 +98,6 @@ def assignment_cud(request: Request, project_pk, assignment_pk=None):
         assignment = project.product_assignments.get(pk=assignment_pk)
         assignment.delete()
         return Response('deleted')
+
+
+
