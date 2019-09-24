@@ -9,9 +9,8 @@ from .models import ProductAssignment
 from .serializers import serializer_product_assignment, serialize_task, reserialize_task
 
 
-@api_view(['GET', 'POST'])
-def tasks(request: Request, project_pk):
-    print(request.user)
+@api_view(['GET', 'POST', 'DELETE'])
+def tasks(request: Request, project_pk, task_pk=None):
     project = BaseProject.objects.get_user_projects(request.user, project_pk)
 
     if request.method == 'GET':
@@ -48,6 +47,11 @@ def tasks(request: Request, project_pk):
             for child in children:
                 reserialize_task(project, child)
             return Response('children created', status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
+
+    if request.method == 'DELETE':
+        task = project.tasks.get(pk=task_pk)
+        task.delete()
         return Response(status=status.HTTP_200_OK)
 
 
