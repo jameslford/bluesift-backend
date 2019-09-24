@@ -106,6 +106,7 @@ class ProjectTask(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(null=True)
+    level = models.IntegerField(default=0)
     pro_collaborator = models.ForeignKey(
         ProCollaborator,
         null=True,
@@ -142,10 +143,14 @@ class ProjectTask(models.Model):
         )
 
     def count_parents(self):
+        level = 0
         if self.parent:
+            level = 1
             if self.parent.parent:
+                level = 2
                 if self.parent.parent.parent:
                     raise ValueError('Only 2 nested levels allowed')
+        self.level = level
 
     def collaborator(self):
         if self.pro_collaborator:

@@ -18,30 +18,31 @@ def tasks(request: Request, project_pk, task_pk=None):
             'product',
             'user_collaborator',
             'pro_collaborator'
-        ).all()
+        ).filter(level=0)
         res = [serialize_task(task) for task in p_tasks]
+        if not res:
+            res = [{
+                'name': 'New Major Task',
+                'children': []
+            }]
         assignments = project.product_assignments.select_related(
             'product',
             'product__manufacturer'
             ).all()
         project_node = {
             'assignments': [serializer_product_assignment(assi) for assi in assignments],
-            'tasks': [{
-                'name': project.nickname,
-                'root': True,
-                'children': res
-                }]
+            'project_name': project.nickname,
+            'project_deadle': project.deadline,
+            'tasks': res
             }
         return Response(project_node)
 
     if request.method == 'POST':
-        data = request.data[0]
-        root = data.get('root', False)
-        if not root:
-            return Response('invalid structure - project not root')
-        project.nickname = data.get('name', project.nickname)
-        project.deadline = data.get('deadline', project.deadline)
-        project.save()
+        data = request.data
+        if data.get('project_changed', False):
+            project.nickname = data.get('project_name', project.nickname)
+            project.deadline = data.get('project_deadline', project.deadline)
+            project.save()
         children = data.get('children', None)
         if children:
             for child in children:

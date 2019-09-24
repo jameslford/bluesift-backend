@@ -19,24 +19,22 @@ def reserialize_task(project, data, parent: ProjectTask = None):
     task_pk = data.get('pk', None)
     children = data.get('children', [])
     changed = data.get('changed', False)
-    if changed:
-        if task_pk:
-            task: ProjectTask = ProjectTask.objects.get(pk=task_pk)
-            task.name = data.get('name', task.name)
-            task.duration = data.get('duration', task.duration)
-            task.start_date = data.get('start_date', task.start_date)
-            task.progress = data.get('progress', task.progress)
-        else:
-            task = ProjectTask()
-            task.project = project
-            task.name = data.get('name')
-            task.duration = data.get('duration')
-            task.start_date = data.get('start_date')
-            task.progress = data.get('progress')
+    new = False
+    if task_pk:
+        task: ProjectTask = ProjectTask.objects.get(pk=task_pk)
+    else:
+        new = True
+        task = ProjectTask()
+        task.project = project
+    if changed or new:
+        task.name = data.get('name', task.name)
+        task.duration = data.get('duration', task.duration)
+        task.start_date = data.get('start_date', task.start_date)
+        task.progress = data.get('progress', task.progress)
         product_pk = None
         try:
             product_pk = data['assigned_product']['pk']
-        except KeyError:
+        except (KeyError, TypeError):
             pass
         if product_pk:
             product = project.product_assignments.get(pk=product_pk)
