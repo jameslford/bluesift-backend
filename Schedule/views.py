@@ -32,7 +32,7 @@ def tasks(request: Request, project_pk, task_pk=None):
         project_node = {
             'assignments': [serializer_product_assignment(assi) for assi in assignments],
             'project_name': project.nickname,
-            'project_deadle': project.deadline,
+            'project_deadline': project.deadline,
             'tasks': res
             }
         return Response(project_node)
