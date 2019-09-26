@@ -103,6 +103,3 @@ def assignment_cud(request: Request, project_pk, assignment_pk=None):
         assignment = project.product_assignments.get(pk=assignment_pk)
         assignment.delete()
         return Response('deleted')
-
-
-

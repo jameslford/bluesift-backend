@@ -2,6 +2,7 @@ from typing import Dict
 from Products.serializers import serialize_product_priced
 from .models import ProjectTask, ProductAssignment
 
+
 def serialize_task(task: ProjectTask) -> Dict[str, any]:
     return {
         'pk': task.pk,
@@ -9,6 +10,7 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
         'assigned_to': task.collaborator(),
         'assigned_product': serializer_product_assignment(task.product) if task.product else None,
         'progress': task.progress,
+        'saved': True,
         'start_date': task.start_date,
         'duration': task.duration,
         'children': [serialize_task(child) for child in task.children.all()],
@@ -47,17 +49,18 @@ def reserialize_task(project, data, parent: ProjectTask = None):
         reserialize_task(project, child, task)
 
 
-
 def serializer_product_assignment(assignment: ProductAssignment) -> Dict[str, any]:
+
+    priced_products = serialize_product_priced(assignment.product)
+    supplier = None
+    if assignment.supplier:
+        supplier = assignment.supplier.products.get(product__pk=assignment.product.pk)
+        supplier = supplier.get_priced()
+
     return {
         'pk': assignment.pk,
         'name': assignment.name,
-        'saved': True,
-        'root': False,
         'quantity': assignment.quantity_needed,
-        'product': serialize_product_priced(assignment.product),
-        'supplier': {
-            'pk': assignment.supplier.pk if assignment.supplier else None,
-            'name': assignment.supplier.nickname if assignment.supplier else None,
-            }
+        'product': priced_products,
+        'supplier': supplier
         }

@@ -5,6 +5,18 @@ from Products.models import Product
 from UserProductCollections.models import BaseProject, RetailerLocation
 
 
+def serialize_priced(prod):
+    return {
+        'pk': prod.pk,
+        'location_pk': prod.retailer.pk,
+        'name': prod.retailer.nickname,
+        'qty_in_store': prod.units_available_in_store,
+        'lead_time': prod.lead_time_ts,
+        'price': prod.in_store_ppu
+        }
+
+
+
 class ProjectProductManager(models.Manager):
     def add_product(self, user, product_pk, collection_pk=None):
         collections = user.get_collections()
@@ -147,6 +159,9 @@ class RetailerProduct(models.Model):
 
     def location_id(self):
         return self.retailer.pk
+
+    def get_priced(self):
+        return serialize_priced(self)
 
     def percentage_off(self):
         if not self.on_sale and self.sale_price and self.in_store_ppu:

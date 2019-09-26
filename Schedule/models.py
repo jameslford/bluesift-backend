@@ -1,7 +1,6 @@
 from django.db import models, transaction
 from model_utils import Choices
 from UserProductCollections.models import BaseProject, RetailerLocation
-from UserProducts.models import RetailerProduct
 from Profiles.models import ConsumerProfile, ProEmployeeProfile
 from Products.models import Product
 from Groups.models import ProCompany
