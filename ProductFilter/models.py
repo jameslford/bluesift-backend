@@ -1,31 +1,19 @@
 import uuid
-import numpy
 import functools
-import itertools
 import urllib
 from decimal import Decimal
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List, Tuple
 from django.db import models, transaction
+from django.db.models import Min, Max
 from django.core.exceptions import FieldError
-# from django.db.models.functions import Upper, Lower, Least, Cast, Coalesce
-from django.db.models import Min, Max, Subquery, Count, Q
 from django.urls import resolve as dj_resolve
-from django.contrib.postgres.search import SearchVector
-from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
-# from django.core import exceptions
-# from django.utils.timezone import now
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
-from config.scripts.globals import valid_subclasses
-from Addresses.models import Zipcode
-from Products.serializers import SerpyProduct
 from Products.models import Product, ProductSubClass
-from UserProducts.serializers import RetailerProductMiniSerializer
-from UserProducts.models import RetailerProduct
 from UserProductCollections.models import RetailerLocation
 
 
@@ -90,6 +78,7 @@ class Facet:
     collection_pk: str = None
     return_values: List = dfield(default_factory=lambda: [])
 
+
 def construct_range_facet(products: QuerySet, facet: Facet):
     if not facet.return_values:
         facet = get_absolute_range(products, facet)
@@ -137,6 +126,7 @@ def get_absolute_range(products: QuerySet, facet: Facet):
     return_value.selected_min = str(min_val)
     facet.return_values = [return_value]
     return facet
+
 
 def complete_range(products: QuerySet, quer_value, query, direction: str):
     qrange = Decimal(query[-1])
@@ -236,19 +226,18 @@ class QueryIndex(models.Model):
                 ]
             paths = paths + location_list
         return paths
-        # location_list = [f'{base}{product_type["name"]}/{location.pk}' for product_type in location.product_types]
-        # paths = [base + cls.__name__ for cls in ProductSubClass.__subclasses__()]
 
-    @classmethod
-    def get_all_queries(cls):
-        product_types = [pt for pt in ProductSubClass.__subclasses__()]
-        for p_type in product_types:
-            p_filter = ProductFilter.get_filter(p_type)
+    # @classmethod
+    # def get_all_queries(cls):
+    #     product_types = [pt for pt in ProductSubClass.__subclasses__()]
+    #     for p_type in product_types:
+    #         p_filter = ProductFilter.get_filter(p_type)
 
-    # need to write this method to create all possible queries for a given view
-    @classmethod
-    def get_all_combinations(cls):
-        paths = cls.get_all_paths()
+    # # need to write this method to create all
+    # possible queries for a given view
+    # @classmethod
+    # def get_all_combinations(cls):
+    #     paths = cls.get_all_paths()
 
 
 class FacetOthersCollection(models.Model):
@@ -358,7 +347,6 @@ class ProductFilter(models.Model):
         total_queries = functools.reduce(lambda x, y: x*y, total_queries)
         # 20,785,981,783,727,160 - thats how many queries exist. 20 quadrillion - have to improve
         print('all queries = ', str(total_queries))
-
 
     def get_content_model(self):
         """returns model associated with the ContentType instance in self.subproduct
@@ -487,7 +475,16 @@ class ProductFilter(models.Model):
             return
         min_val, max_val = values
         range_value = RangeFacetValue(value=name, abs_min=str(min_val), abs_max=str(max_val))
-        self.facets.append(Facet(name, facet_type, quer_value, order=order, total_count=1, return_values=[asdict(range_value)]))
+        self.facets.append(
+            Facet(
+                name,
+                facet_type,
+                quer_value,
+                order=order,
+                total_count=1,
+                return_values=[asdict(range_value)]
+                )
+                )
 
     def check_color_field(self):
         check, fieldtype = self.check_value(self.color_field)

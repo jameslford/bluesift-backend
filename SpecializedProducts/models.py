@@ -53,7 +53,6 @@ class FinishSurface(ProductSubClass):
     class Meta:
         verbose_name = 'finish surfaces'
 
-
     def set_size(self):
         if not self.size:
             self.size = self.width + ' x ' + self.length
@@ -73,7 +72,6 @@ class FinishSurface(ProductSubClass):
 
     def assign_shape(self):
         pass
-
 
     def set_actual_color(self):
         # pylint: disable=no-member

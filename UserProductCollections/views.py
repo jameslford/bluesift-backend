@@ -7,10 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin, RetailerPermission
-from Products.models import ProductSubClass, Product
-from Products.serializers import serialize_product
 from .models import BaseProject, RetailerLocation
-from .serializers import RetailerLocationListSerializer, ProjectSerializer, RetailerLocationDetailSerializer
+from .serializers import RetailerLocationListSerializer, ProjectListSerializer
 
 
 @api_view(['GET'])
@@ -31,17 +29,8 @@ def get_library(request: Request):
             RetailerLocationListSerializer(collections, many=True).data,
             status=status.HTTP_200_OK
         )
-    # profile = user.get_profile()
-    # group = user.get_group()
-    # collaborations = None
-    # if user.is_pro:
-    #     collaborations = BaseProject.subclasses.filter(pro_collaborator=profile).select_subclasses()
-    # else:
-    #     collaborations = BaseProject.subclasses.filter(collaborators=profile).select_subclasses()
-    # profile = user.get_profile()
     content = {
-        'my_projects': ProjectSerializer(collections, many=True).data,
-        # 'collaborations': ProjectSerializer(group.collaborations, many=True).data
+        'my_projects': ProjectListSerializer(collections, many=True).data,
     }
     return Response(
         content,
@@ -74,7 +63,7 @@ def crud_project(request: Request, project_pk=None):
         user = request.user
         data = request.data
         project = BaseProject.objects.update_project(user, **data)
-        return Response(ProjectSerializer(project).data, status=status.HTTP_200_OK)
+        return Response(ProjectListSerializer(project).data, status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -98,49 +87,3 @@ def crud_location(request: Request):
 
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
-
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def project_detail(request: Request, project_pk):
-    pass
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated, RetailerPermission))
-def location_detail(request: Request, location_pk):
-    pass
-
-
-# @api_view(['GET'])
-# @permission_classes((IsAuthenticated,))
-# def get_project_products(request: HttpRequest, project_pk):
-#     project_exist = request.user.get_collections().filter(pk=project_pk).exists()
-#     if not project_exist:
-#         return Response('Invalid project pk', status=status.HTTP_400_BAD_REQUEST)
-#     project_products = ProjectProduct.objects.select_related(
-#         ).filter(project__pk=project_pk).values_list('product__pk', flat=True)
-#     products = Product.subclasses.select_related('manufacturer').filter(pk__in=project_products).select_subclasses()
-#     res = []
-#     for kls in ProductSubClass.__subclasses__():
-#         kls_res = {
-#             'name': kls.__name__,
-#             'products': [serialize_product(product) for product in products if type(product) == kls]
-#             }
-#         res.append(kls_res)
-#     return Response(res, status=status.HTTP_200_OK)
-
-
-# @api_view(['GET'])
-# @permission_classes((IsAuthenticated, RetailerPermission))
-# def retailer_products(request: Request, location_pk, product_type):
-#     prod_type = ProductSubClass().return_sub(product_type)
-#     location = request.user.get_collections().filter(pk=location_pk).first().pk
-#     prods = prod_type.objects.all().values('pk')
-#     location_products = RetailerProduct.objects.select_related(
-#         'product',
-#         'product__manufacturer'
-#         ).filter(product__pk__in=prods, retailer__pk=location)
-#     return Response(
-#         FullRetailerProductSerializer(location_products, many=True).data,
-#         status=status.HTTP_200_OK)

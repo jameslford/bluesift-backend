@@ -34,7 +34,6 @@ class CompanyManager(models.Manager):
         name = kwargs.get('name')
 
 
-
 class Company(models.Model):
     name = models.CharField(max_length=40, unique=True)
     phone_number = models.CharField(max_length=12, null=True, blank=True)
@@ -61,7 +60,6 @@ class Company(models.Model):
             self.business_address.lat,
             self.business_address.lng
             ]
-
 
 
 class RetailerCompany(Company):

@@ -6,14 +6,14 @@ from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List
 from ipware import get_client_ip
-from django.db import models, transaction
+from django.db import models
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
 from config.tasks import add_facet_others_delay, create_product_view_record
-from Products.serializers import SerpyProduct, serialize_product
+from Products.serializers import serialize_product
 from Products.models import Product, ProductSubClass
 from UserProducts.serializers import RetailerProductMiniSerializer
 from UserProducts.models import RetailerProduct
@@ -79,7 +79,7 @@ class Sorter:
         self.query_index: QueryIndex = None
         self.page = 1
 
-### Main thread is the next 4 functions. Everything below are functions used in their execution ###
+# ## Main thread is the next 4 functions. Everything below are functions used in their execution ###
 
     # @transaction.atomic()
     def __call__(self):
@@ -160,7 +160,6 @@ class Sorter:
             self.query_index.response = asdict(self.response)
             self.query_index.dirty = False
             self.query_index.save()
-
 
     def filter_floating(self, stripped_fields: dict):
         """
@@ -284,7 +283,7 @@ class Sorter:
                 return_values.append(FacetValue(label, count, selected))
                 facet.return_values = return_values
 
-### utility functions below ###
+# ## utility functions below ###
 
     def get_index_by_qv(self, keyword: str):
         for count, facet in enumerate(self.facets):
@@ -337,7 +336,6 @@ class Sorter:
             print('response count = ', self.response.product_count, ' ', start_index, end_index)
             return []
 
-
     def __filter_bools(self, products: QuerySet):
         print('filtering bools')
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET)
@@ -368,7 +366,6 @@ class Sorter:
             facet.total_count += count
             return_values.append(FacetValue(value, count, bool(facet.qterms and value in facet.qterms)))
         facet.return_values = return_values
-
 
     def __filter_availability(self, products: QuerySet):
         index = self.get_index_by_qv('availability')
@@ -584,7 +581,9 @@ class DetailBuilder:
             group_name = group.get('name', None)
             if group_attrs and group_name:
                 group_vals = [
-                    {'term': attr, 'value': getattr(self.product, attr)} for attr in group_attrs if getattr(self.product, attr)
+                    {
+                        'term': attr,
+                        'value': getattr(self.product, attr)} for attr in group_attrs if getattr(self.product, attr)
                     ]
                 groups_list.append(DetailListItem(group_name, group_vals))
         return groups_list
@@ -616,7 +615,6 @@ class DetailBuilder:
         if detail_response and not update:
             return detail_response
         return self.assign_detail_response()
-
 
     # may need to use structure below:
     # if field_type in acceptable_fields[:2]:

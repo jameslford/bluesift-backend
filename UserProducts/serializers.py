@@ -8,10 +8,12 @@ class DurationField(serpy.Field):
     def to_value(self, value):
         return str(value.days)
 
+
 class TitleField(serpy.Field):
     """ turns string values to titlecase """
     def to_value(self, value: str):
         return value.lower().title()
+
 
 class FullRetailerProductSerializer(serpy.Serializer):
     pk = serpy.Field()
@@ -32,7 +34,6 @@ class FullRetailerProductSerializer(serpy.Serializer):
     manufacturer_sku = serpy.MethodField()
     swatch_image = serpy.MethodField()
     manufacturer = serpy.MethodField()
-
 
     def get_manufacturer_style(self, obj):
         """ gets manufacturer_style from retailer.product object """
@@ -128,7 +129,8 @@ class RetailerProductMiniSerializer(serializers.ModelSerializer):
 #         instance.units_per_order = validated_data.get('units_per_order', instance.units_per_order)
 #         instance.publish_in_store_availability = validated_data.get(
 #             'publish_in_store_availability', instance.publish_in_store_availability)
-#         instance.publish_in_store_price = validated_data.get('publish_in_store_price', instance.publish_in_store_price)
+#         instance.publish_in_store_price = validated_data.get('publish_in_store_price',
+#           instance.publish_in_store_price)
 #         instance.publish_online_price = validated_data.get('publish_online_price', instance.publish_online_price)
 #         instance.save()
 #         return

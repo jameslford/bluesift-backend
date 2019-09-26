@@ -20,13 +20,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
-from config.custom_permissions import RetailerPermission, OwnerDeleteAdminEdit
+from config.custom_permissions import OwnerDeleteAdminEdit
 from UserProductCollections.models import RetailerLocation
 from Profiles.models import BaseProfile
 from .serializers import (
     serialize_retail_locations,
     ProListSerializer,
-    RetailerListSerializer,
     RetailerCompanyHeaderSerializer,
     RetailerLocationHeaderSerializer,
     ProCompanyDetailSerializers
