@@ -54,13 +54,15 @@ def serializer_product_assignment(assignment: ProductAssignment) -> Dict[str, an
     priced_products = serialize_product_priced(assignment.product)
     supplier = None
     if assignment.supplier:
-        supplier = assignment.supplier.products.get(product__pk=assignment.product.pk)
-        supplier = supplier.get_priced()
+        supplier = assignment.supplier.products.filter(product__pk=assignment.product.pk).first()
+        if supplier:
+            supplier = supplier.get_priced()
 
     return {
         'pk': assignment.pk,
         'name': assignment.name,
         'quantity': assignment.quantity_needed,
         'product': priced_products,
+        'procured': assignment.procured,
         'supplier': supplier
         }

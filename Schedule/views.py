@@ -77,18 +77,17 @@ def product_assignments(request: Request, project_pk):
         'product__manufacturer'
         ).all()
     response = {
-        'assignments':[serializer_product_assignment(assi) for assi in assignments],
+        'assignments': [serializer_product_assignment(assi) for assi in assignments],
         'categories': [cat.__name__ for cat in categories],
         'groups': res
         }
     return Response(response)
 
 
-
-@api_view(['GET'])
-def collaborators(request: Request, project_pk):
-    project = BaseProject.objects.get_user_projects(request.user, project_pk)
-    pass
+# @api_view(['GET'])
+# def collaborators(request: Request, project_pk):
+#     project = BaseProject.objects.get_user_projects(request.user, project_pk)
+#     pass
 
 
 @api_view(['POST', 'PUT', 'DELETE'])
@@ -96,10 +95,12 @@ def assignment_cud(request: Request, project_pk, assignment_pk=None):
     project = BaseProject.objects.get_user_projects(request.user, project_pk)
 
     if request.method == 'POST':
-        assignment = ProductAssignment.objects.create_assignment(project, **request.data)
-        return Response(serializer_product_assignment(assignment))
+        ProductAssignment.objects.update_assignments(project, *request.data)
+        return Response(status=status.HTTP_201_CREATED)
 
     if request.method == 'DELETE':
         assignment = project.product_assignments.get(pk=assignment_pk)
         assignment.delete()
         return Response('deleted')
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

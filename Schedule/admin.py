@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import ProductAssignment, ProjectTask
 
-# Register your models here.
+
+admin.site.register(ProductAssignment)
+admin.site.register(ProjectTask)

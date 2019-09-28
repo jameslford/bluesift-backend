@@ -8,31 +8,55 @@ from Groups.models import ProCompany
 
 class ProductAssignmentManager(models.Manager):
 
+    # @transaction.atomic()
+    # def create_assignment(self, project, *args, **kwargs):
+    #     name = kwargs.get('name')
+    #     product = kwargs.get('product')
+    #     product_pk = product.get('pk')
+    #     product = Product.objects.get(pk=product_pk)
+    #     quantity = kwargs.get('quantity_needed', 0)
+    #     supplier = kwargs.get('supplier')
+    #     assignment = self.model.objects.get_or_create(
+    #         name=name,
+    #         product=product,
+    #         project=project,
+    #         quantity_needed=quantity
+    #         )[0]
+    #     if supplier and supplier != 'auto':
+    #         supplier_pk = supplier.get('location_pk')
+    #         retailer_product = RetailerLocation.objects.filter(pk=supplier_pk).first()
+    #         assignment.supplier = retailer_product
+    #         assignment.save()
+    #     return assignment
+
     @transaction.atomic()
-    def create_assignment(self, project, **kwargs):
-        name = kwargs.get('name')
-        product = kwargs.get('product')
-        product_pk = product.get('pk')
-        product = Product.objects.get(pk=product_pk)
-        quantity = kwargs.get('quantity_needed', 0)
-        supplier = kwargs.get('supplier')
-        assignment = self.model.objects.get_or_create(
-            name=name,
-            product=product,
-            project=project,
-            quantity_needed=quantity
-            )[0]
-        if supplier and supplier != 'auto':
-            supplier_pk = supplier.get('location_pk')
-            retailer_product = RetailerLocation.objects.filter(pk=supplier_pk).first()
-            assignment.supplier = retailer_product
+    def update_assignments(self, project, *args):
+        for arg in args:
+            pk = arg.get('pk')
+            assignment: ProductAssignment = self.model.objects.get(pk=pk) if pk else self.model()
+
+            assignment.project = project
+            assignment.name = arg.get('name')
+            assignment.quantity_needed = arg.get('quantity', 0)
+            assignment.procured = arg.get('procured', False)
+
+            supplier = arg.get('supplier')
+            product = arg.get('product')
+            if product:
+                product_pk = product.get('pk')
+                product = Product.objects.get(pk=product_pk)
+                assignment.product = product
+
+                if supplier:
+                    location_pk = supplier.get('location_pk')
+                    assignment.supplier = RetailerLocation.objects.get(pk=location_pk)
             assignment.save()
-        return assignment
 
 
 class ProductAssignment(models.Model):
     name = models.CharField(max_length=80)
     quantity_needed = models.IntegerField()
+    procured = models.BooleanField(default=False)
     project = models.ForeignKey(
         BaseProject,
         on_delete=models.CASCADE,
