@@ -48,6 +48,7 @@ class Zipcode(models.Model):
     def __str__(self):
         return self.code
 
+
 class AddressManager(models.Manager):
 
     def get_or_create_address(self, **kwargs):

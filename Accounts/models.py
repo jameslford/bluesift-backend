@@ -72,6 +72,7 @@ class User(AbstractBaseUser):
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     demo = models.BooleanField(default=False)
+    last_seen = models.DateTimeField()
     email_verified = models.BooleanField(default=False)
 
     objects = UserManager()
@@ -134,6 +135,9 @@ class User(AbstractBaseUser):
         if self.is_supplier:
             return RetailerProduct
         return ProjectProduct
+
+    def set_last_seen(self):
+        self.las
 
     @property
     def is_staff(self):

@@ -2,12 +2,11 @@
 celery tasks - these are all asynchronous that exist for this project
 """
 from __future__ import absolute_import, unicode_literals
-import logging
-import googlemaps
+# import logging
+import datetime
 from django.contrib.auth import get_user_model
-from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils.encoding import force_text, force_bytes
+from django.utils.encoding import force_bytes
 from django.core.mail import EmailMessage
 from django.utils.http import urlsafe_base64_encode
 from celery import shared_task
@@ -17,7 +16,7 @@ from ProductFilter.models import QueryIndex, FacetOthersCollection
 from Addresses.models import Coordinate
 from config.scripts.images import get_images
 from config.celery import app
-from config.scripts.db_operations import(
+from config.scripts.db_operations import (
     backup_db,
     clean_backups,
     scrape,
@@ -102,10 +101,16 @@ def create_product_view_record(
     pv_record.save()
     return 'ProductViewRecord Created'
 
+@app.task
+def mark_user_seen(user_pk):
+    user = get_user_model().objects.get(pk=user_pk)
+    user.last_seen = datetime.datetime.now()
+    user.save()
+
 
 @shared_task
 def gather_plan_analytics():
-    plan_record: PlansRecord = PlansRecord.objects.create()
+    PlansRecord.objects.create()
 
 
 @shared_task

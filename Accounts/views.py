@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import random
 from django.shortcuts import redirect
 from django.db import transaction
 from django.http import HttpResponse
@@ -22,6 +23,8 @@ from config.tasks import send_verification_email
 
 from Profiles.models import BaseProfile
 from .serializers import UserSerializer
+
+USER_TIMEOUT_MINUTES = 3
 
 
 @api_view(['POST'])
@@ -118,7 +121,22 @@ def get_user(request):
     return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
 def reset_password(request):
     pass
+
+
+@api_view(['GET'])
+def get_demo_user(request, user_type: str = 'user'):
+    time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=USER_TIMEOUT_MINUTES)
+    eligible_users = get_user_model().objects.filter(demo=True, last_seen__lt=time_threshold)
+    if user_type == 'pro':
+        eligible_users = eligible_users.filter(is_pro=True)
+    elif user_type == 'retailer':
+        eligible_users = eligible_users.filter(is_supplier=True)
+    else:
+        eligible_users = eligible_users.filter(is_pro=False, is_supplier=False)
+    pks = eligible_users.values_list('pk', flat=True)
+    choice_pk = random.choice(pks)
+    user = eligible_users.get(pk=choice_pk)
+    return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
