@@ -19,7 +19,7 @@ class RetailerLocationListSerializer(serializers.ModelSerializer):
             'address',
             'address_string',
             'company_name',
-            'local_admin'
+            'local_admin',
             'nickname',
             'phone_number',
             'product_count',

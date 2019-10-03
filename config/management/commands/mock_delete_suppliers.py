@@ -9,12 +9,13 @@ class Command(BaseCommand):
 
     @transaction.atomic()
     def handle(self, *args, **options):
+        user_model = get_user_model()
+        users = user_model.objects.filter(demo=True)
         accounts = None
         if settings.ENVIRONMENT != 'local':
             accounts = Company.objects.all()
         else:
-            accounts = Company.objects.filter(name__icontains='_test')
+            accounts = Company.objects.filter(name__icontains='demo')
         accounts.delete()
-        user_model = get_user_model()
-        users = user_model.objects.filter(email__icontains='hotgmail')
         users.delete()
+        # users = user_model.objects.filter(email__icontains='hotgmail')

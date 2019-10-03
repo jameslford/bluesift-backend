@@ -2,6 +2,7 @@
 Accounts.models.py
 """
 
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from rest_framework.authtoken.models import Token
@@ -29,10 +30,10 @@ class UserManager(BaseUserManager):
         user.staff = kwargs.get('is_staff', False)
         user.admin = kwargs.get('is_admin', False)
         user.demo = kwargs.get('demo', False)
+        user.email_verified = kwargs.get('email_verified', False)
         user.is_active = kwargs.get('is_active', False)
         user.is_supplier = is_supplier
         user.is_pro = is_pro
-        user.demo = True
         user.save(using=self.db)
         Token.objects.get_or_create(user=user)
         return user
@@ -72,7 +73,7 @@ class User(AbstractBaseUser):
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     demo = models.BooleanField(default=False)
-    last_seen = models.DateTimeField()
+    last_seen = models.DateTimeField(default=timezone.now())
     email_verified = models.BooleanField(default=False)
 
     objects = UserManager()
@@ -135,9 +136,6 @@ class User(AbstractBaseUser):
         if self.is_supplier:
             return RetailerProduct
         return ProjectProduct
-
-    def set_last_seen(self):
-        self.las
 
     @property
     def is_staff(self):

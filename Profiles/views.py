@@ -39,6 +39,7 @@ class ShortLib:
 @api_view(['GET'])
 def get_short_lib(request, pk=None):
     user = request.user
+    print('username = ', user.full_name)
     blank_slib = ShortLib(0, [], [])
     if not user.is_authenticated:
         return Response(asdict(blank_slib), status=status.HTTP_200_OK)

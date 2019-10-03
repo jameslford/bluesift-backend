@@ -51,7 +51,7 @@ class BaseProfile(models.Model):
 
 
 class ConsumerProfile(BaseProfile):
-    phone_number = models.CharField(max_length=20, null=True, blank=True)
+    phone_number = models.CharField(max_length=30, null=True, blank=True)
     plan = models.ForeignKey(
         ConsumerPlan,
         null=True,

@@ -1,7 +1,7 @@
 from typing import Dict
 from Products.serializers import serialize_product_priced
 from .models import ProjectTask, ProductAssignment
-
+DAY = 60*60*24*1000
 
 def serialize_task(task: ProjectTask) -> Dict[str, any]:
     return {
@@ -12,7 +12,7 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
         'progress': task.progress,
         'saved': True,
         'start_date': task.start_date,
-        'duration': task.duration,
+        'duration': task.duration / DAY if task.duration else None,
         'children': [serialize_task(child) for child in task.children.all()],
         'predecessor': serialize_task(task.predecessor) if task.predecessor else None
     }

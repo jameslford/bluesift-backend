@@ -198,8 +198,9 @@ class BaseProjectManager(models.Manager):
         collection = collections.get(pk=project_pk)
         nickname = kwargs.get('nickname')
         deadline = kwargs.get('deadline')
-        deadline = deadline.split('T')[0]
-        deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d')
+        if type(deadline) == str:
+            deadline = deadline.split('T')[0]
+            deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d')
         address = kwargs.get('address')
         address = Address.objects.get(pk=address)
         pro_collaborators = kwargs.get('pro_collaborators')

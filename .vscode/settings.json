@@ -2,7 +2,6 @@
     "python.pythonPath": "/home/james/benv/bin/python",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
-    "python.linting.flake8Enabled": true,
     "python.linting.pylintUseMinimalCheckers": false,
     "python.linting.flake8Args": [
         "--max-line-length=120"

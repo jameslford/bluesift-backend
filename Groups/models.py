@@ -11,7 +11,8 @@ class CompanyManager(models.Manager):
         if user.is_pro:
             return ProCompany.objects.get_or_create(**kwargs)[0]
         if user.is_supplier:
-            del kwargs['service']
+            if kwargs.get('service', False):
+                del kwargs['service']
             return RetailerCompany.objects.get_or_create(**kwargs)[0]
         raise ValueError('user is not pro or supplier')
 
@@ -36,7 +37,7 @@ class CompanyManager(models.Manager):
 
 class Company(models.Model):
     name = models.CharField(max_length=40, unique=True)
-    phone_number = models.CharField(max_length=12, null=True, blank=True)
+    phone_number = models.CharField(max_length=30, null=True, blank=True)
     business_address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
     email_verified = models.BooleanField(default=False)
     info = models.TextField(null=True, blank=True)

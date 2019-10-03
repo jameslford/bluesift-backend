@@ -100,7 +100,7 @@ class ProCollaborator(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        if self.contact != self.collaborator:
+        if self.contact.company != self.collaborator:
             raise ValueError('Contact does not belong to company')
         super(ProCollaborator, self).save(*args, **kwargs)
 
@@ -154,8 +154,7 @@ class ProjectTask(models.Model):
         )
     project = models.ForeignKey(
         BaseProject,
-        null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='tasks'
         )
     product = models.ForeignKey(
