@@ -254,6 +254,10 @@ class Product(models.Model):
         self.name = '*$'.join(vals)
 
     def save(self, *args, **kwargs):
+        # self.set_name()
+        manufacturer_name = self.manufacturer.label
+        self.name = f'{manufacturer_name}, {self.manu_collection}, {self.manufacturer_style}'
+        super(Product, self).save(*args, **kwargs)
         self.set_name()
         super(Product, self).save(*args, **kwargs)
 
