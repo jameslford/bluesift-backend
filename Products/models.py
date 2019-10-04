@@ -257,8 +257,6 @@ class Product(models.Model):
         # self.set_name()
         self.name = str(self.bb_sku)
         super(Product, self).save(*args, **kwargs)
-        self.set_name()
-        super(Product, self).save(*args, **kwargs)
 
 
 class ProductSubClass(Product):
