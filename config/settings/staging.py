@@ -21,13 +21,12 @@ CORS_ORIGIN_ALLOW_ALL = True
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
 
-PRODUCTION_DB_URL = os.environ['HEROKU_POSTGRESQL_WHITE_URL']
+# PRODUCTION_DB_URL = os.environ['HEROKU_POSTGRESQL_WHITE_URL']
 
 DATABASES = {
     'default': {},
     'scraper_default': {},
     'scraper_revised': {},
-    'production': {}
 }
 
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
@@ -41,10 +40,6 @@ DATABASES['scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_de
 DATABASES['scraper_revised'] = dj_database_url.config(conn_max_age=500)
 DATABASES['scraper_revised']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
 DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
-
-
-DATABASES['production'] = dj_database_url.config(default=PRODUCTION_DB_URL)
-DATABASES['production']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
 # WSGI_APPLICATION = 'config.wsgi.application'
 

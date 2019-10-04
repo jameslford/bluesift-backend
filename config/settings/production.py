@@ -15,8 +15,11 @@ CORS_ORIGIN_ALLOW_ALL = True
 REDIRECT_URL = 'https://www.bluesift.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
 
+STAGING_DB_URL = os.environ['STAGING_DB_URL']
+
 DATABASES = {
     'default': {},
+    'staging': {}
 }
 
 
@@ -24,6 +27,9 @@ DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 DATABASES['default']['OPTIONS'] = {'options': '-c search_path=default'}
 
+DATABASES['staging'] = dj_database_url.config(STAGING_DB_URL)
+DATABASES['staging']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,public'}
 
 # WSGI_APPLICATION = 'config.wsgi.application'
 

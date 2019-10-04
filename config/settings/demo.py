@@ -17,12 +17,17 @@ DEFAULT_ADDRESS_INSTANCE = 1
 
 DATABASES = {
     'default': {},
+    'staging': {}
 }
 
 
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 DATABASES['default']['OPTIONS'] = {'options': '-c search_path=demo,public'}
+
+DATABASES['staging'] = dj_database_url.config(conn_max_age=500)
+DATABASES['staging']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,public'}
 
 
 # WSGI_APPLICATION = 'config.wsgi.application'
