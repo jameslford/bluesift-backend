@@ -73,7 +73,7 @@ class User(AbstractBaseUser):
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     demo = models.BooleanField(default=False)
-    last_seen = models.DateTimeField(default=timezone.now())
+    last_seen = models.DateTimeField(default=timezone.now)
     email_verified = models.BooleanField(default=False)
 
     objects = UserManager()

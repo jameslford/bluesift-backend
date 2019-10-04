@@ -14,6 +14,8 @@ class StagingMiddleware:
     def __call__(self, request):
         if 'accounts/login' in request.path:
             return self.get_response(request)
+        if 'admin' in request.path:
+            return self.get_response(request)
         if settings.ENVIRONMENT != 'staging':
             return self.get_response(request)
         if request.user.is_authenticated:
