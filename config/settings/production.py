@@ -29,7 +29,7 @@ DATABASES['default']['OPTIONS'] = {'options': '-c search_path=default'}
 
 DATABASES['staging'] = dj_database_url.config(STAGING_DB_URL)
 DATABASES['staging']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,public'}
+DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
 
 # WSGI_APPLICATION = 'config.wsgi.application'
 
