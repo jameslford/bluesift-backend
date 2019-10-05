@@ -31,7 +31,7 @@ DATABASES = {
 
 DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-DATABASES['default']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
+DATABASES['default']['OPTIONS'] = {'options': '-c search_path=default,public'}
 
 DATABASES['scraper_default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['scraper_default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'

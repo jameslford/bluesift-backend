@@ -60,6 +60,14 @@ def staging_to_production():
     for staging_product in staging_products:
         staging_product.save(using='production')
 
+@transaction.atomic()
+def staging_to_demo():
+    if settings.ENVIRONMENT != 'demo':
+        raise Exception('can only be run in staging environment!')
+    staging_products = Product.objects.using('staging').all().select_subclasses()
+    for staging_product in staging_products:
+        staging_product.save(using='default')
+
 # @transaction.atomic()
 def run_stock_clean():
     for group in ScraperSubgroup.objects.filter(cleaned=False):
