@@ -3,7 +3,8 @@ from django.urls import path
 from .views import (
     generic_add,
     generic_delete,
-    edit_retailer_product
+    edit_retailer_product,
+    retailer_products
     )
 
 
@@ -13,4 +14,5 @@ urlpatterns = [
     path('delete/<str:product_pk>', generic_delete),
     path('delete/<str:product_pk>/<int:collection_pk>', generic_delete),
     path('edit-retailer-products', edit_retailer_product),
+    path('retailer-products<int:location_pk>', retailer_products),
 ]

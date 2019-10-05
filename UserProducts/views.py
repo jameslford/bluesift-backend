@@ -14,7 +14,7 @@ from rest_framework.request import Request
 from rest_framework import status
 from config.custom_permissions import RetailerPermission
 from .models import ProjectProduct, RetailerProduct
-
+from .serializers import FullRetailerProductSerializer
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
@@ -49,3 +49,11 @@ def edit_retailer_product(request: Request):
     except PermissionDenied:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     return Response(f'{updates} products updated', status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, RetailerPermission))
+def retailer_products(request, location_pk):
+    location = request.user.get_collections().get(pk=location_pk)
+    products = location.products.all()
+    return Response(FullRetailerProductSerializer(products, many=True).data, status=status.HTTP_200_OK)
