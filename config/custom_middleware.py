@@ -16,6 +16,8 @@ class StagingMiddleware:
             return self.get_response(request)
         if 'admin' in request.path:
             return self.get_response(request)
+        if 'get-demo' in request.path:
+            return self.get_response(request)
         if settings.ENVIRONMENT != 'staging':
             return self.get_response(request)
         if request.user.is_authenticated:
