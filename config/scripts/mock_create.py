@@ -208,6 +208,7 @@ def create_assignments_and_tasks(project: BaseProject, _product_ids):
             ProjectTask.objects.create(
                 name=child_name,
                 product=assignment,
+                project=project,
                 duration=datetime.timedelta(days=random.randint(3, 9)),
                 start_date=child_start,
                 parent=parent_task
