@@ -44,6 +44,12 @@ def scraper_to_revised():
         product.save(using='scraper_revised')
 
 
+def rename():
+    prods = Product.objects.all()
+    for prod in prods:
+        prod.set_name()
+
+
 @transaction.atomic()
 def revised_to_default():
     exclude_production()
