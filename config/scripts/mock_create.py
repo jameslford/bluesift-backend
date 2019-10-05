@@ -218,7 +218,8 @@ def create_assignments_and_tasks(project: BaseProject, _product_ids):
                     name=stask,
                     parent=parent_task,
                     duration=datetime.timedelta(days=random.randint(3, 9)),
-                    start_date=random_date(project.deadline)
+                    start_date=random_date(project.deadline),
+                    project=project
                     )
 
 
