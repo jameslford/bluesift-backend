@@ -254,8 +254,8 @@ class Product(models.Model):
         self.name = '*$'.join(vals)
 
     def save(self, *args, **kwargs):
-        # self.set_name()
-        self.name = str(self.bb_sku)
+        if not self.name:
+            self.name = str(self.bb_sku)
         super(Product, self).save(*args, **kwargs)
 
 
