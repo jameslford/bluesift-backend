@@ -459,6 +459,8 @@ class ProductFilter(models.Model):
                 continue
 
     def check_range_fields(self):
+        if not self.independent_range_fields:
+            return
         range_fields = [pg_fields.IntegerRangeField, pg_fields.DecimalRangeField]
         discreet_fields = [models.DecimalField, models.IntegerField]
         acceptable_field_types = [f.__name__ for f in range_fields + discreet_fields]
