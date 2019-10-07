@@ -48,6 +48,7 @@ def rename():
     prods = Product.objects.all()
     for prod in prods:
         prod.set_name()
+        prod.save()
 
 
 @transaction.atomic()
