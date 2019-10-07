@@ -442,6 +442,8 @@ class ProductFilter(models.Model):
             return
 
     def check_mc_fields(self):
+        if not self.independent_multichoice_fields:
+            return
         indices = sorted(enumerate(self.independent_multichoice_fields), reverse=True)
         for count, standalone in indices:
             try:
