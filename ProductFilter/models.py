@@ -361,8 +361,10 @@ class ProductFilter(models.Model):
     def floating_fields(self):
         """returns quer_values of facets that are never concretely set i.e price, location, ranges
         """
-        ir_fields = self.independent_range_fields if self.independent_range_fields else []
-        return ['low_price', 'in_store_ppu', 'location', 'search', 'availability'] + self.independent_range_fields
+        fixed = ['low_price', 'in_store_ppu', 'location', 'search', 'availability']
+        if self.independent_range_fields:
+            return fixed + self.independent_range_fields
+        return fixed
 
     def get_model_products(self) -> QuerySet:
         """ Returns a queryset containing all product subclasses of model type for
