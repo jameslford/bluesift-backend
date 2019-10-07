@@ -536,10 +536,12 @@ class ProductFilter(models.Model):
     def save(self, *args, **kwargs):
         self.facets = []
         self.filter_dictionary = None
-        self.check_fields()
-        self.add_filter_dictionary()
+        if self.bool_groups or self.independent_multichoice_fields:
+            self.check_fields()
+            self.add_filter_dictionary()
         qis = self.query_indexes.all()
-        qis.delete()
+        if qis:
+            qis.delete()
         super().save(*args, **kwargs)
 
     def __str__(self):
