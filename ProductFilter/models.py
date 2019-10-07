@@ -437,7 +437,7 @@ class ProductFilter(models.Model):
                     values=list(filter(None, values)),
                     order=5
                     ))
-        except FieldError:
+        except (FieldError, AttributeError):
             self.key_field = None
             return
 
