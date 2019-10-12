@@ -6,6 +6,7 @@ from Plans.models import ConsumerPlan
 
 
 class ProfileManager(models.Manager):
+
     def create_profile(self, user, **kwargs):
         if user.is_supplier or user.is_pro:
             company = kwargs.get('company', None)
@@ -34,6 +35,37 @@ class ProfileManager(models.Manager):
             plan=plan,
             phone_number=phone)[0]
 
+    def update_profile(self, user, **kwargs):
+        profile: BaseProfile = user.get_profile()
+        pk = kwargs.get('pk')
+        if pk and pk != profile.pk:
+            return self.update_employees_profile(user, **kwargs)
+
+        avatar = kwargs.get('avatar')
+        if avatar:
+            if avatar == 'clear':
+                profile.avatar = None
+            else:
+                try:
+                    image = avatar[0]
+                    profile.avatar.save(image.name, image)
+                except IndexError:
+                    pass
+        profile.user.name = kwargs.get('user_name', profile.user.full_name)
+        email = kwargs.get('email')
+        if email:
+            profile.user.email = email
+            profile.user.email_verified = False
+        user.save()
+        profile.save()
+        return profile
+
+
+    def update_employees_profile(self, user, **kwargs):
+        return None
+
+
+
 
 class BaseProfile(models.Model):
     user = models.OneToOneField(
@@ -43,6 +75,7 @@ class BaseProfile(models.Model):
         related_name='profile'
         )
     date_create = models.DateTimeField(auto_now_add=True)
+    avatar = models.ImageField(null=True, blank=True, upload_to='profiles/')
     objects = ProfileManager()
     subclasses = InheritanceManager()
 

@@ -4,12 +4,16 @@
 from typing import List
 from dataclasses import dataclass, asdict
 from django.http import HttpRequest
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework import status
 from Products.models import Product
-from .serializers import ProEmployeeProfileSerializer, RetailerEmployeeProfileSerializer, ConsumerProfileSerializer
+from Profiles.models import BaseProfile
+from .serializers import serialize_profile
+# from .serializers import ProEmployeeProfileSerializer, RetailerEmployeeProfileSerializer, ConsumerProfileSerializer
 
 
 @dataclass
@@ -72,14 +76,26 @@ def pl_status_for_product(request: HttpRequest, pk):
     return Response(asdict(pl_list), status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT'])
 @permission_classes((IsAuthenticated,))
-def get_profile(request: HttpRequest):
+# @parser_classes([FileUploadParser])
+def profile_crud(request: Request):
 
     if request.method == 'GET':
-        profile = request.user.get_profile()
-        if request.user.is_pro:
-            return Response(ProEmployeeProfileSerializer(profile).data, status=status.HTTP_200_OK)
-        if request.user.is_supplier:
-            return Response(RetailerEmployeeProfileSerializer(profile).data, status=status.HTTP_200_OK)
-        return Response(ConsumerProfileSerializer(profile).data, status=status.HTTP_200_OK)
+        return Response(serialize_profile(request.user), status=status.HTTP_200_OK)
+
+    if request.method == 'PUT':
+        data = request.data
+        BaseProfile.objects.update_profile(request.user, **data)
+        return Response(serialize_profile(request.user))
+
+    return Response('unsupported method')
+
+
+
+        # profile = request.user.get_profile()
+        # if request.user.is_pro:
+        #     return Response(ProEmployeeProfileSerializer(profile).data, status=status.HTTP_200_OK)
+        # if request.user.is_supplier:
+        #     return Response(RetailerEmployeeProfileSerializer(profile).data, status=status.HTTP_200_OK)
+        # return Response(ConsumerProfileSerializer(profile).data, status=status.HTTP_200_OK)

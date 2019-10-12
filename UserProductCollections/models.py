@@ -99,6 +99,9 @@ class RetailerLocation(models.Model):
     def coordinates(self):
         return [self.address.lat, self.address.lng]
 
+    def company_info(self):
+        return self.company.info
+
     def location_manager(self):
         if self.local_admin:
             return self.local_admin

@@ -1,8 +1,9 @@
 from typing import Dict
 from rest_framework import serializers
 from Addresses.serializers import AddressSerializer
-from Profiles.serializers import RetailerEmployeeShortSerializer, ProEmployeeProfileSerializer
 from UserProductCollections.models import RetailerLocation
+from Profiles.serializers import serialize_profile
+from Plans.serializers import PlanSerializer
 from .models import RetailerCompany, ProCompany
 
 
@@ -58,7 +59,9 @@ class RetailerLocationHeaderSerializer(RetailerListSerializer):
             'nickname',
             'phone_number',
             'product_count',
-            'product_types'
+            'product_types',
+            'company_info',
+            'email'
             ]
 
 
@@ -77,7 +80,7 @@ class RetailerCompanyHeaderSerializer(serializers.ModelSerializer):
 
     def get_employees(self, instance):
         employees = instance.get_employees()
-        return RetailerEmployeeShortSerializer(employees, many=True).data
+        return [serialize_profile(employee.user) for employee in employees]
 
 
 class ProListSerializer(serializers.ModelSerializer):
@@ -105,6 +108,7 @@ class ProListSerializer(serializers.ModelSerializer):
 class ProCompanyDetailSerializers(serializers.ModelSerializer):
     business_address = AddressSerializer()
     employees = serializers.SerializerMethodField()
+    plan = PlanSerializer()
 
     class Meta:
         model = ProCompany
@@ -112,6 +116,7 @@ class ProCompanyDetailSerializers(serializers.ModelSerializer):
             'pk',
             'business_address',
             'employees',
+            'info',
             'name',
             'phone_number',
             'plan',
@@ -119,4 +124,4 @@ class ProCompanyDetailSerializers(serializers.ModelSerializer):
 
     def get_employees(self, instance):
         employees = instance.get_employees()
-        return ProEmployeeProfileSerializer(employees, many=True).data
+        return [serialize_profile(employee.user) for employee in employees]
