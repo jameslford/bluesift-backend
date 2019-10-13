@@ -19,6 +19,7 @@ class BusinessSerializer:
         self.email = None
         self.employees = []
         self.info = None
+        self.image = None
         self.locations = []
         self.location_manager = None
         self.name: str = None
@@ -43,6 +44,7 @@ class BusinessSerializer:
             self.product_count = business.product_count()
             self.phone_number = business.phone_number
             self.name = business.nickname
+            self.image = business.image
             self.address_string = business.address_string()
             if self.full:
                 self.info = business.company.info
@@ -59,6 +61,7 @@ class BusinessSerializer:
             self.phone_number = ret_company.phone_number
             self.address_string = ret_company.business_address.address_string
             self.info = ret_company.info
+            self.image = ret_company.image
             self.plan = PlanSerializer(ret_company.plan).data
             if self.full:
                 locations = RetailerLocation.objects.select_related(
@@ -74,6 +77,7 @@ class BusinessSerializer:
             self.address = AddressSerializer(pro_comp.business_address).data
             self.address_string = pro_comp.business_address.address_string
             self.phone_number = pro_comp.phone_number
+            self.image = pro_comp.image
             self.info = pro_comp.info
             self.plan = PlanSerializer(pro_comp.plan).data
             self.employees = [serialize_profile(employee.user) for employee in pro_comp.get_employees()]
