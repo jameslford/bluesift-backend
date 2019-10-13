@@ -271,6 +271,7 @@ def create_demo_users():
     pro_count = 14
     addresses_response = requests.get(ADDRESS_URL).json()
     addresses = addresses_response.get('addresses', [])
+    addresses = list(set(addresses))
     random.shuffle(addresses)
     print('addresses length = ', len(addresses))
     product_ids = Product.objects.values_list('pk', flat=True)

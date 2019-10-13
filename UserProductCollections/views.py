@@ -7,8 +7,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin, RetailerPermission
+from Groups.serializers import BusinessSerializer
 from .models import BaseProject, RetailerLocation
-from .serializers import RetailerLocationListSerializer, ProjectListSerializer
+from .serializers import ProjectListSerializer
 
 
 @api_view(['GET'])
@@ -22,13 +23,13 @@ def get_library(request: Request):
     If user.is_pro or regular user, will return all projects that the user owns, or
     will return projects that the user is included on as colloborator - which is noted
     """
-    collections = request.user.get_collections()
     user = request.user
     if user.is_supplier:
         return Response(
-            RetailerLocationListSerializer(collections, many=True).data,
+            BusinessSerializer(user.get_group()).getData(),
             status=status.HTTP_200_OK
         )
+    collections = request.user.get_collections()
     content = {
         'my_projects': ProjectListSerializer(collections, many=True).data,
     }
@@ -83,7 +84,6 @@ def crud_location(request: Request):
     if request.method == 'PUT':
         data = request.data
         location = RetailerLocation.objects.update_location(user, **data)
-        return Response(RetailerLocationListSerializer(location).data, status=status.HTTP_200_OK)
+        return Response(BusinessSerializer(location).getData(), status=status.HTTP_200_OK)
 
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
-

@@ -1,6 +1,5 @@
 import datetime
 from django.db import models
-# from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from model_utils.managers import InheritanceManager

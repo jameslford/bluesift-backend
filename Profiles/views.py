@@ -78,7 +78,6 @@ def pl_status_for_product(request: HttpRequest, pk):
 
 @api_view(['GET', 'PUT'])
 @permission_classes((IsAuthenticated,))
-# @parser_classes([FileUploadParser])
 def profile_crud(request: Request):
 
     if request.method == 'GET':

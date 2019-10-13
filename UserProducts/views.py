@@ -55,5 +55,8 @@ def edit_retailer_product(request: Request):
 @permission_classes((IsAuthenticated, RetailerPermission))
 def retailer_products(request, location_pk):
     location = request.user.get_collections().get(pk=location_pk)
-    products = location.products.all()
+    products = location.products.select_related(
+        'product',
+        'product__manufacturer'
+    ).all()
     return Response(FullRetailerProductSerializer(products, many=True).data, status=status.HTTP_200_OK)

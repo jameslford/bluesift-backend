@@ -23,13 +23,7 @@ from rest_framework import status
 from config.custom_permissions import OwnerDeleteAdminEdit
 from UserProductCollections.models import RetailerLocation
 from Profiles.models import BaseProfile
-from .serializers import (
-    serialize_retail_locations,
-    ProListSerializer,
-    RetailerCompanyHeaderSerializer,
-    RetailerLocationHeaderSerializer,
-    ProCompanyDetailSerializers
-)
+from .serializers import BusinessSerializer
 from .models import RetailerCompany, ProCompany, Company, ServiceType
 
 
@@ -65,7 +59,7 @@ def retailer_company_header(request: Request, retailer_pk=None):
         if not request.user.is_authenticated or not request.user.is_supplier:
             return Response('No Company specified', status=status.HTTP_400_BAD_REQUEST)
         company = request.user.get_group()
-    return Response(RetailerCompanyHeaderSerializer(company).data, status=status.HTTP_200_OK)
+    return Response(BusinessSerializer(company).getData(), status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -84,10 +78,10 @@ def retailer_location_list_all(request: Request, prod_type='all'):
         retailer_product_pks = prod_class.objects.retailer_products().values('retailer__pk')
         retailers = retailers.filter(pk__in=retailer_product_pks)
     return Response(
-        [serialize_retail_locations(ret) for ret in retailers],
-        # RetailerListSerializer(retailers, many=True).data,
+        [BusinessSerializer(ret, False).getData() for ret in retailers],
         status=status.HTTP_200_OK
-    )
+        )
+
 
 
 @api_view(['GET'])
@@ -99,7 +93,7 @@ def retailer_location_detail_header(request: Request, pk):
         'company'
         ).prefetch_related('products', 'products__product').get(pk=pk)
     return Response(
-        RetailerLocationHeaderSerializer(retailer).data,
+        BusinessSerializer(retailer).getData(),
         status=status.HTTP_200_OK
         )
 
@@ -114,7 +108,7 @@ def services_list_all(request: Request, cat='all'):
     if cat.lower() != 'all':
         services = services.filter(service__label__iexact=cat)
     return Response(
-        ProListSerializer(services, many=True).data,
+        [BusinessSerializer(serv).getData() for serv in services],
         status=status.HTTP_200_OK
     )
 
@@ -122,11 +116,9 @@ def services_list_all(request: Request, cat='all'):
 @api_view(['GET'])
 def service_detail_header(request: Request, pk=None):
     user = request.user
-    serializer = ProListSerializer
     if not pk:
         if user.is_authenticated and user.is_pro:
             pk = user.get_group().pk
-            serializer = ProCompanyDetailSerializers
         else:
             return Response('No company verified', status=status.HTTP_400_BAD_REQUEST)
     service: ProCompany = ProCompany.objects.select_related(
@@ -137,7 +129,7 @@ def service_detail_header(request: Request, pk=None):
     ).get(pk=pk)
 
     return Response(
-        serializer(service).data,
+        BusinessSerializer(service).getData(),
         status=status.HTTP_200_OK
         )
 
