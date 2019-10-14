@@ -303,6 +303,11 @@ class ProductFilter(models.Model):
         )
     filter_dictionary = pg_fields.JSONField(blank=True, null=True)
 
+    # fields not used for filtering, but relevant to content type
+    sub_product_description = models.CharField(max_length=500, default='')
+    sub_product_image = models.ImageField(null=True, blank=True, upload_to='misc/')
+
+
     @classmethod
     def get_filter(cls, model: models.Model):
         content_type = ContentType.objects.get_for_model(model)
@@ -311,42 +316,13 @@ class ProductFilter(models.Model):
             raise Exception('No filter for this class')
         return prod_filter
 
-    def produce_base_queries(self):
+    def serialize_pt_attributes(self):
+        return {
+            'label': self.get_content_model()._meta.verbose_name_plural.title(),
+            'description': self.sub_product_description,
+            'image': self.sub_product_image.url if self.sub_product_image else None
+            }
 
-        def format_range(range_list):
-            ranges = [range_list[0:i] for i in range(len(range_list))]
-            return [urllib.parse.quote('&&'.join(r)) for r in ranges]
-
-        all_queries = []
-        multi_group_fields = [
-            *self.independent_multichoice_fields,
-            *self.dependent_fields,
-            self.key_field,
-            self.color_field
-            ]
-        for group in self.bool_groups:
-            group_vals = format_range(
-                [f'{group["name"]}={value}' for value in group["values"]])
-            all_queries.append(group_vals)
-        for field in multi_group_fields:
-            values = self.get_model_products().values_list(field, flat=True).distinct()
-            group_val = format_range(
-                [f'{field}={value}' for value in values if value])
-            all_queries.append(group_val)
-        all_queries = list(filter(None, all_queries))
-        # full_list = list(itertools.product(*all_queries))
-        total_queries = []
-        for bar in all_queries:
-            total_number = len(bar)
-            example = bar[-1]
-            triangle = sum(range(total_number))
-            total_queries.append(triangle)
-            print('total_number = ', str(total_number))
-            print('example = ', example)
-            print('triangle = ', str(triangle))
-        total_queries = functools.reduce(lambda x, y: x*y, total_queries)
-        # 20,785,981,783,727,160 - thats how many queries exist. 20 quadrillion - have to improve
-        print('all queries = ', str(total_queries))
 
     def get_content_model(self):
         """returns model associated with the ContentType instance in self.subproduct

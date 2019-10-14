@@ -12,7 +12,7 @@ def serialize_profile(user):
         'avatar': profile.avatar.url if profile.avatar else None
         }
     if not (user.is_pro or user.is_supplier):
-        ret_dict['plan'] = PlanSerializer(profile.plan).data
+        ret_dict['plan'] = PlanSerializer(profile.plan).data if profile.plan else None
         return ret_dict
     ret_dict['owner'] = profile.owner
     ret_dict['admin'] = profile.admin

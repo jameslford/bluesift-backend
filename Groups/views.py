@@ -21,6 +21,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 from config.custom_permissions import OwnerDeleteAdminEdit
+from config.views import check_department_string
 from UserProductCollections.models import RetailerLocation
 from Profiles.models import BaseProfile
 from .serializers import BusinessSerializer
@@ -71,8 +72,7 @@ def retailer_location_list_all(request: Request, prod_type='all'):
             'products',
             ).all().annotate(prod_count=Count('products'))
     if prod_type.lower() != 'all':
-        from Products.models import ProductSubClass
-        prod_class = ProductSubClass.return_sub(prod_type)
+        prod_class = check_department_string(prod_type)
         if prod_class is None:
             return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
         retailer_product_pks = prod_class.objects.retailer_products().values('retailer__pk')
@@ -81,7 +81,6 @@ def retailer_location_list_all(request: Request, prod_type='all'):
         [BusinessSerializer(ret, False).getData() for ret in retailers],
         status=status.HTTP_200_OK
         )
-
 
 
 @api_view(['GET'])

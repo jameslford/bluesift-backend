@@ -62,7 +62,7 @@ class BusinessSerializer:
             self.address_string = ret_company.business_address.address_string
             self.info = ret_company.info
             self.image = ret_company.image
-            self.plan = PlanSerializer(ret_company.plan).data
+            self.plan = PlanSerializer(ret_company.plan).data if ret_company.plan else None
             if self.full:
                 locations = RetailerLocation.objects.select_related(
                     'address',
@@ -79,8 +79,7 @@ class BusinessSerializer:
             self.phone_number = pro_comp.phone_number
             self.image = pro_comp.image
             self.info = pro_comp.info
-            self.plan = PlanSerializer(pro_comp.plan).data
+            self.plan = PlanSerializer(pro_comp.plan).data if pro_comp.plan else None
             self.employees = [serialize_profile(employee.user) for employee in pro_comp.get_employees()]
             return self.serialize()
         raise AttributeError('invalid model for business argument')
-
