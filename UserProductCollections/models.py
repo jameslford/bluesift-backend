@@ -3,6 +3,7 @@ from django.db import models
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from model_utils.managers import InheritanceManager
+from config.views import get_departments
 from Addresses.models import Address
 from Groups.models import ProCompany, RetailerCompany
 from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile
