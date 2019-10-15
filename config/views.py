@@ -13,7 +13,7 @@ def get_departments():
 def check_department_string(department_string: str):
     department_string = unquote(department_string)
     departments = get_departments()
-    department = [dep for dep in departments if dep._meta.verbose_name_plural.title() == department_string]
+    department = [dep for dep in departments if dep._meta.verbose_name_plural.lower() == department_string.lower()]
     if department:
         return department[0]
     return None

@@ -3,7 +3,6 @@ from django.db import models
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from model_utils.managers import InheritanceManager
-from config.views import get_departments
 from Addresses.models import Address
 from Groups.models import ProCompany, RetailerCompany
 from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile
@@ -115,22 +114,29 @@ class RetailerLocation(models.Model):
         return self.products.count()
 
     def product_types(self, include_class=False):
-        from Products.models import Product
+        from config.views import get_departments
         self_pks = self.products.values('product__pk')
-        products = Product.subclasses.filter(pk__in=self_pks).select_subclasses()
-        classes = set(product.__class__ for product in products)
-        content = []
-        for cls in classes:
-            count = cls.objects.filter(pk__in=self_pks).count()
-            if count > 0:
-                cont_dict = {
-                    'name': cls.__name__,
-                    'count': count,
-                }
-                if include_class:
-                    cont_dict['cls'] = cls
-                content.append(cont_dict)
-        return content
+        ret_dict = [{
+            'name': dep._meta.verbose_name_plural.title(),
+            'count': dep.objects.filter(pk__in=self_pks).count()
+        } for dep in get_departments()]
+        return ret_dict
+        # from Products.models import Product
+        # self_pks = self.products.values('product__pk')
+        # products = Product.subclasses.filter(pk__in=self_pks).select_subclasses()
+        # classes = set(product.__class__ for product in products)
+        # content = []
+        # for cls in classes:
+        #     count = cls.objects.filter(pk__in=self_pks).count()
+        #     if count > 0:
+        #         cont_dict = {
+        #             'name': cls.__name__,
+        #             'count': count,
+        #         }
+        #         if include_class:
+        #             cont_dict['cls'] = cls
+        #         content.append(cont_dict)
+        # return content
 
     def address_string(self):
         if self.address:

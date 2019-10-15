@@ -74,8 +74,14 @@ class BusinessSerializer:
             return self.serialize()
         if isinstance(self.business, ProCompany):
             pro_comp: ProCompany = self.business
+            self.name = pro_comp.name
+            self.service_type = pro_comp.service.label
             self.address = AddressSerializer(pro_comp.business_address).data
             self.address_string = pro_comp.business_address.address_string
+            self.coordinates = [
+                pro_comp.business_address.lat,
+                pro_comp.business_address.lng
+                ]
             self.phone_number = pro_comp.phone_number
             self.image = pro_comp.image
             self.info = pro_comp.info

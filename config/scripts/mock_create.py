@@ -317,6 +317,6 @@ def create_demo_users():
         for x in range(0, 3):
             loc_add = addresses.pop()
             loc_add = create_address(**loc_add)
-            location = create_locations(ret_company, ret_address)
+            location = create_locations(ret_company, loc_add)
             create_retailer_products(location, product_ids)
         print(ret_user.full_name)

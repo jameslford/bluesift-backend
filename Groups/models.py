@@ -78,7 +78,7 @@ class RetailerCompany(Company):
 
 class ServiceType(models.Model):
     label = models.CharField(max_length=40)
-    description = models.CharField(max_length=500, default='')
+    description = models.CharField(max_length=500, blank=True, default='')
     image = models.ImageField(null=True, blank=True, upload_to='misc/')
 
     def serialize(self):
@@ -87,6 +87,9 @@ class ServiceType(models.Model):
             'description': self.description,
             'image': self.image.url if self.image else None
             }
+
+    def __str__(self):
+        return self.label
 
 
 class ProCompany(Company):

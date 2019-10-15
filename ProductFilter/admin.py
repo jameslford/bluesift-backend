@@ -6,7 +6,6 @@ from ProductFilter.models import ProductFilter, QueryIndex, FacetOthersCollectio
 
 # Register your models here.
 
-# admin.site.register(ProductFilter)
 @admin.register(ProductFilter)
 class ProductFilterAdmin(admin.ModelAdmin):
     fields = (
@@ -17,7 +16,9 @@ class ProductFilterAdmin(admin.ModelAdmin):
         'independent_multichoice_fields',
         'independent_range_fields',
         'dependent_fields',
-        'filter_dictionary'
+        'filter_dictionary',
+        'sub_product_description',
+        'sub_product_image'
     )
     # readonly_fields = ('filter_dictionary',)
     # formfield_overrides = {

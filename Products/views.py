@@ -14,6 +14,7 @@ def products_list(request: Request, product_type: str, location_pk: int = None, 
         return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
     content = Sorter(product_type, request=request, location_pk=location_pk, update=update)
     return Response(content(), status=status.HTTP_200_OK)
+    # return Response('got', status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
