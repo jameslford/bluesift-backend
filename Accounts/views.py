@@ -128,11 +128,12 @@ def reset_password(request):
 
 @api_view(['GET'])
 def get_demo_user(request, user_type: str = 'user'):
+    user_type = user_type.lower()
     time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=USER_TIMEOUT_MINUTES)
     eligible_users = get_user_model().objects.filter(demo=True, last_seen__lt=time_threshold)
-    if user_type == 'pro':
+    if user_type in ('pro', 'pros'):
         eligible_users = eligible_users.filter(is_pro=True)
-    elif user_type == 'retailer':
+    elif user_type in ('retailer', 'retailers'):
         eligible_users = eligible_users.filter(is_supplier=True)
     else:
         eligible_users = eligible_users.filter(is_pro=False, is_supplier=False)
