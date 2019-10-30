@@ -305,7 +305,7 @@ class ProductFilter(models.Model):
 
     # fields not used for filtering, but relevant to content type
     sub_product_description = models.CharField(max_length=500, default='')
-    sub_product_image = models.ImageField(null=True, blank=True, upload_to='misc/')
+    sub_product_image = models.FileField(null=True, blank=True, upload_to='misc/')
 
 
     @classmethod
