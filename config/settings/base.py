@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'Accounts',
     'Addresses',
     'Analytics',
+    'BBadmin',
     'Cards',
     'Carts',
     'config',

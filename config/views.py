@@ -2,9 +2,9 @@ from urllib.parse import unquote
 from django.apps import apps
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from BBadmin.models import LibraryLink
 from ProductFilter.models import ProductFilter
 from Groups.models import ServiceType
-
 
 def get_departments():
     return apps.get_app_config('SpecializedProducts').get_models()
@@ -23,10 +23,19 @@ def check_department_string(department_string: str):
 def get_expanded_header(request):
     pro_types = [serv.serialize() for serv in ServiceType.objects.all()]
     deps = [dep.serialize_pt_attributes() for dep in ProductFilter.objects.all()]
-    return Response({
+    response_dict = {
         'pros': sorted(pro_types, key=lambda k: k['label']),
-        'departments': sorted(deps, key=lambda k: k['label'])
-        })
+        'departments': sorted(deps, key=lambda k: k['label']),
+        }
+    if request.user:
+        if request.user.is_supplier:
+            term = {'for_supplier': True}
+        elif request.user.is_pro:
+            term = {'for_pro': True}
+        else:
+            term = {'for_user': True}
+        response_dict['libraryLinks'] = [link.serialize() for link in LibraryLink.objects.filter(**term)]
+    return Response(response_dict)
 
 
 @api_view(['GET'])
