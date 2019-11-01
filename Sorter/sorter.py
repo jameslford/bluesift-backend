@@ -534,6 +534,7 @@ class DetailBuilder:
 
     def get_priced(self):
         if self.product.get_in_store_priced():
+            print('is priced')
             return list(RetailerProductMiniSerializer(self.product.get_in_store_priced(), many=True).data)
         return []
 
@@ -580,12 +581,16 @@ class DetailBuilder:
             group_attrs = group.get('values', None)
             group_name = group.get('name', None)
             if group_attrs and group_name:
-                group_vals = [
-                    {
+                term_dict = {
+                    'name': group_name,
+                    'terms': [
+                        {
                         'term': attr,
-                        'value': getattr(self.product, attr)} for attr in group_attrs if getattr(self.product, attr)
-                    ]
-                groups_list.append(DetailListItem(group_name, group_vals))
+                        'value': getattr(self.product, attr)
+                        }
+                        for attr in group_attrs if getattr(self.product, attr) ]
+                        }
+                groups_list.append(term_dict)
         return groups_list
 
     def assign_response(self):
@@ -602,6 +607,8 @@ class DetailBuilder:
         self.response.room_scene = self.product.room_scene.url if self.product.room_scene else None
         self.response.unit = self.product.unit
 
+
+
     def assign_detail_response(self):
         self.assign_response()
         detail_dict = asdict(self.response)
@@ -616,6 +623,22 @@ class DetailBuilder:
             return detail_response
         return self.assign_detail_response()
 
+
+
+        # def blah():
+        #     return {
+        #         'pk': ,
+        #         'unit': ,
+        #         'manufacturer': ,
+        #         'manufacturer_url': ,
+        #         'manufacturer_sku': ,
+        #         'manufacturer_collection': ,
+        #         'manufacturer_style': ,
+        #         'swatch_image': ,
+        #         'room_scene': ,
+        #         'priced': ,
+        #         'lists': ,
+        #         }
     # may need to use structure below:
     # if field_type in acceptable_fields[:2]:
     #     values = self.get_model_products().aggregate(Min(Lower(standalone)), Max(Upper(standalone)))

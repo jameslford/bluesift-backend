@@ -63,7 +63,6 @@ class AddressManager(models.Manager):
                 continue
             return alt_response
 
-        gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
         gmap_id = kwargs.get('gmaps_id')
         street = kwargs.get('address_line_1')
         street_2 = kwargs.get('address_line_2')
@@ -71,10 +70,11 @@ class AddressManager(models.Manager):
         state = kwargs.get('state')
         postal_code = kwargs.get('postal_code')
         response = None
+        add_obj = self.model.objects.filter(gmaps_id=gmap_id).fist() if gmap_id else None
+        if add_obj:
+            return add_obj
+        gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)
         if gmap_id:
-            add_obj = self.model.objects.filter(gmaps_id=gmap_id).fist()
-            if add_obj:
-                return add_obj
             response = gmaps.reverse_geocode(self.gmaps_id)[0]
         else:
             address_string = f'{street} {street_2}, {city}, {state}, {postal_code}'

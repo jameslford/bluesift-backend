@@ -78,6 +78,9 @@ class RetailerProductMiniSerializer(serializers.ModelSerializer):
             'location_address',
             'location_id',
             'company_name',
-            'lead_time_ts'
+            'lead_time_ts',
+            'publish_online_price',
+            'publish_in_store_price',
+            'publish_in_store_availability'
         )
 

@@ -229,6 +229,7 @@ def create_locations(company: RetailerCompany, address: Address):
     location = RetailerLocation.objects.create(
         company=company,
         address=address,
+        approved_in_store_seller=True,
         phone_number=u_phone[:16] if len(u_phone) > 16 else u_phone
         )
     return location
@@ -271,7 +272,7 @@ def create_demo_users():
     pro_count = 14
     addresses_response = requests.get(ADDRESS_URL).json()
     addresses = addresses_response.get('addresses', [])
-    addresses = list(set(addresses))
+    addresses = list(addresses)
     random.shuffle(addresses)
     print('addresses length = ', len(addresses))
     product_ids = Product.objects.values_list('pk', flat=True)

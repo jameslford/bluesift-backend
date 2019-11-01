@@ -91,7 +91,7 @@ class ProductAvailabilityQuerySet(models.QuerySet):
 
     def product_prices(self, location_pk=None):
         from UserProducts.models import RetailerProduct
-        term = {'product__pk': OuterRef('pk')}
+        term = {'product__pk': OuterRef('pk'), 'publish_in_store_price': True}
         if location_pk:
             term['retailer__pk'] = location_pk
         sup_prods = (
@@ -215,7 +215,7 @@ class Product(models.Model):
             'retailer__address',
             'retailer__address__coordinates',
             'retailer__address__postal_code'
-            ).filter(publish_online_price=True)
+            ).all().filter(publish_online_price=True)
 
     def get_in_store_priced(self):
         return self.priced.select_related(
@@ -224,7 +224,7 @@ class Product(models.Model):
             'retailer__address',
             'retailer__address__coordinates',
             'retailer__address__postal_code'
-        ).filter(publish_in_store_price=True)
+        ).all(publish_in_store_price=True)
 
     def set_locations(self):
         self.locations = None

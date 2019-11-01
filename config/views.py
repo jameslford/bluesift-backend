@@ -27,7 +27,7 @@ def get_expanded_header(request):
         'pros': sorted(pro_types, key=lambda k: k['label']),
         'departments': sorted(deps, key=lambda k: k['label']),
         }
-    if request.user:
+    if request.user.is_authenticated:
         if request.user.is_supplier:
             term = {'for_supplier': True}
         elif request.user.is_pro:
