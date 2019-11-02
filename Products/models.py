@@ -224,7 +224,7 @@ class Product(models.Model):
             'retailer__address',
             'retailer__address__coordinates',
             'retailer__address__postal_code'
-        ).all(publish_in_store_price=True)
+        ).all().filter(publish_in_store_price=True)
 
     def set_locations(self):
         self.locations = None

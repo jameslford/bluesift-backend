@@ -74,7 +74,8 @@ DATABASE_ROUTERS = ['config.db_routers.ScraperRouter']
 
 SITE_ID = 1
 
-GMAPS_API_KEY = 'AIzaSyD1ehaLv6OBqN3m_qjif2N7Gge0PDP5ams'
+# GMAPS_API_KEY = 'AIzaSyD1ehaLv6OBqN3m_qjif2N7Gge0PDP5ams'
+GMAPS_API_KEY = 'AIzaSyDbKyu6xpEWC4dru8criw83Ume3Q8tag1Q'
 
 IPWARE_META_PRECEDENCE_ORDER = (
         'HTTP_X_FORWARDED_FOR',
