@@ -3,7 +3,7 @@ from xml.dom import minidom
 from model_utils import Choices
 
 class LibraryLink(models.Model):
-    TYPES = Choices('Analytics', 'Projects', 'Locations', 'Profile', 'Company Info')
+    TYPES = Choices('Analytics', 'Projects', 'Locations', 'Profile', 'Company_Info')
     label = models.CharField(choices=TYPES, max_length=18, unique=True)
     description = models.CharField(max_length=60, blank=True, null=True)
     draw_path = models.TextField(blank=True, null=True)

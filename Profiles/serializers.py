@@ -9,14 +9,20 @@ def serialize_profile(user):
     ret_dict = {
         'pk': profile.pk,
         'user': UserSerializer(user).data,
-        'avatar': profile.avatar.url if profile.avatar else None
+        'avatar': profile.avatar.url if profile.avatar else None,
+        'links': ['profile']
         }
-    if not (user.is_pro or user.is_supplier):
+    if user.is_pro:
+        ret_dict['links'] = ret_dict['links'] + ['projects', 'metrics', 'company_info']
+    elif user.is_supplier:
+        ret_dict['locations_managed'] = profile.locations_managed()
+        ret_dict['links'] = ret_dict['links'] + ['locations', 'metrics', 'company_info']
+    else:
         ret_dict['plan'] = PlanSerializer(profile.plan).data if profile.plan else None
+        ret_dict['links'].append('projects')
+    if not (user.is_pro or user.is_supplier):
         return ret_dict
     ret_dict['owner'] = profile.owner
     ret_dict['admin'] = profile.admin
     ret_dict['title'] = profile.title
-    if user.is_supplier:
-        ret_dict['locations_managed'] = profile.locations_managed()
     return ret_dict

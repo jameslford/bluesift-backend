@@ -26,7 +26,7 @@ def get_library(request: Request):
     user = request.user
     if user.is_supplier:
         return Response(
-            BusinessSerializer(user.get_group()).getData(),
+            [BusinessSerializer(loc).getData() for loc in user.get_collections()],
             status=status.HTTP_200_OK
         )
     collections = request.user.get_collections()
