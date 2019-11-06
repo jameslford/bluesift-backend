@@ -39,12 +39,15 @@ def get_library(request: Request):
     )
 
 
-@api_view(['POST', 'DELETE', 'PUT'])
+@api_view(['GET', 'POST', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated, OwnerOrAdmin))
 def crud_project(request: Request, project_pk=None):
     """
     sole endpoint to add a project - model manager will differentiate between user and pro_user
     """
+    if request.method == 'GET':
+        project = request.user.get_collections().filter(pk=project_pk).first()
+        return Response(ProjectListSerializer(project).data)
 
     if request.method == 'POST':
         try:
@@ -69,13 +72,18 @@ def crud_project(request: Request, project_pk=None):
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['POST', 'DELETE', 'PUT'])
+@api_view(['GET', 'POST', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated, RetailerPermission))
-def crud_location(request: Request):
+def crud_location(request: Request, location_pk: int = None):
     """
     create, update, delete endpoint for RetailerLocation objects
     """
     user = request.user
+
+    if request.method == 'GET':
+        location = RetailerLocation.objects.get(pk=location_pk)
+        return Response(BusinessSerializer(location, True).getData(), status=status.HTTP_200_OK)
+
     if request.method == 'POST':
         data = request.data
         RetailerLocation.objects.create_location(user, **data)

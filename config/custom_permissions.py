@@ -15,6 +15,8 @@ class OwnerOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_pro or request.user.is_supplier:
             profile = request.user.get_profile()
+            if request.method == 'GET':
+                return True
             return bool(profile.owner | profile.admin)
         return False
 
