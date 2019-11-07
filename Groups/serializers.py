@@ -45,10 +45,10 @@ class BusinessSerializer:
             self.phone_number = business.phone_number
             self.name = business.nickname
             self.image = business.image
+            self.address = AddressSerializer(business.address).data
             self.address_string = business.address_string()
             if self.full:
                 self.info = business.company.info
-                self.address = AddressSerializer(business.address).data
                 self.product_types = business.product_types()
                 if business.local_admin:
                     self.location_manager = serialize_profile(business.local_admin.user)

@@ -67,6 +67,7 @@ def retailer_company_header(request: Request, retailer_pk=None):
 def retailer_location_list_all(request: Request, prod_type='all'):
     retailers = RetailerLocation.objects.select_related(
         'address',
+        'address__postal_code',
         'address__coordinates',
         ).prefetch_related(
             'products',
