@@ -130,9 +130,8 @@ def reset_password(request):
 
 @api_view(['GET'])
 def get_demo_user(request, user_type: str = 'user', auth_type=None):
-    if auth_type not in ('owner', 'admin'):
-        auth_type = None
-    auth_term = {auth_type: True}
+    if auth_type in ('owner', 'admin'):
+        auth_term = {auth_type: True}
     user_type = user_type.lower()
     time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=USER_TIMEOUT_MINUTES)
     eligible_users = get_user_model().objects.filter(demo=True, last_seen__lt=time_threshold)

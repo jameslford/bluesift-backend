@@ -10,6 +10,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
+CSRF_TRUSTED_ORIGINS = ['https://www.bluesift.com/', 'https://www.bluesift.com']
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 REDIRECT_URL = 'https://www.bluesift.com/'
