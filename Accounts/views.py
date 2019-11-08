@@ -21,7 +21,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from config.tasks import send_verification_email
 
-from Profiles.models import BaseProfile
+from Profiles.models import BaseProfile, RetailerEmployeeProfile, ProEmployeeProfile
 from .serializers import UserSerializer
 
 USER_TIMEOUT_MINUTES = .2
@@ -129,16 +129,26 @@ def reset_password(request):
 
 
 @api_view(['GET'])
-def get_demo_user(request, user_type: str = 'user'):
+def get_demo_user(request, user_type: str = 'user', auth_type=None):
+    if auth_type not in ('owner', 'admin'):
+        auth_type = None
+    auth_term = {auth_type: True}
     user_type = user_type.lower()
     time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=USER_TIMEOUT_MINUTES)
     eligible_users = get_user_model().objects.filter(demo=True, last_seen__lt=time_threshold)
-    if user_type in ('pro', 'pros'):
-        eligible_users = eligible_users.filter(is_pro=True)
-    elif user_type in ('retailer', 'retailers'):
-        eligible_users = eligible_users.filter(is_supplier=True)
-    else:
+    if user_type == 'user':
         eligible_users = eligible_users.filter(is_pro=False, is_supplier=False)
+    else:
+        if user_type in ('pro', 'pros'):
+            eligible_users = eligible_users.filter(is_pro=True)
+            if auth_type:
+                profiles = ProEmployeeProfile.objects.filter(**auth_term).values_list('pk', flat=True)
+                eligible_users = eligible_users.filter(pk__in=profiles)
+        if user_type in ('retailer', 'retailers'):
+            eligible_users = eligible_users.filter(is_supplier=True)
+            if auth_type:
+                profiles = RetailerEmployeeProfile.objects.filter(**auth_term).values_list('pk', flat=True)
+                eligible_users = eligible_users.filter(pk__in=profiles)
     pks = eligible_users.values_list('pk', flat=True)
     choice_pk = random.choice(pks)
     user = eligible_users.get(pk=choice_pk)

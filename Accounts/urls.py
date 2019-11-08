@@ -7,5 +7,6 @@ urlpatterns = [
     path('register-user/', create_user),
     path('activate/<uidb64>/<token>', activate, name='activate'),
     path('login/', custom_login),
-    path('get-demo/<str:user_type>', get_demo_user)
+    path('get-demo/<str:user_type>', get_demo_user),
+    path('get-demo/<str:user_type>/<str:auth_type>', get_demo_user)
 ]

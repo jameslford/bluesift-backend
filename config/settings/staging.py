@@ -2,7 +2,7 @@ import os
 import dj_database_url
 from .base import *
 
-DEBUG = True
+DEBUG = False
 ENVIRONMENT = 'staging'
 # BROKER_URL = 'PASS'
 CELERY_BROKER_URL = os.environ['REDIS_URL']
