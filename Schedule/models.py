@@ -99,8 +99,14 @@ class ProCollaborator(models.Model):
         related_name='collaborations'
         )
 
+    class Meta:
+        unique_together = ('project', 'collaborator')
+
+    def __str__(self):
+        return str(self.project.pk) + ' ' + str(self.collaborator.pk)
+
     def save(self, *args, **kwargs):
-        if self.contact.company != self.collaborator:
+        if self.contact and self.contact.company != self.collaborator:
             raise ValueError('Contact does not belong to company')
         super(ProCollaborator, self).save(*args, **kwargs)
 

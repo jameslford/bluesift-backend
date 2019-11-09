@@ -1,11 +1,13 @@
 from rest_framework.request import Request
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from Products.models import Product, ProductSubClass
 from Products.serializers import serialize_product_priced
 from UserProductCollections.models import BaseProject
-from .models import ProductAssignment
+from Groups.models import ProCompany
+from .models import ProductAssignment, ProCollaborator
 from .serializers import serializer_product_assignment, serialize_task, reserialize_task
 
 
@@ -69,7 +71,7 @@ def product_assignments(request: Request, project_pk):
     for kls in categories:
         kls_res = {
             'name': kls.__name__,
-            'products': [serialize_product_priced(product) for product in products if type(product) == kls]
+            'products': [serialize_product_priced(product) for product in products if isinstance(product, kls)]
             }
         res.append(kls_res)
     assignments = project.product_assignments.select_related(
@@ -83,11 +85,33 @@ def product_assignments(request: Request, project_pk):
         }
     return Response(response)
 
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def collabsForService(request: Request, service_pk: int):
+    projects = request.user.get_collections()
+    pro_collab = ProCollaborator.objects.filter(collaborator__pk=service_pk).values_list('project__pk', flat=True)
+    print('pro collab = ', list(pro_collab))
+    return Response(
+        [{'nickname': proj.nickname, 'pk': proj.pk, 'remove': proj.pk in pro_collab} for proj in projects],
+        status=status.HTTP_200_OK)
 
-# @api_view(['GET'])
-# def collaborators(request: Request, project_pk):
-#     project = BaseProject.objects.get_user_projects(request.user, project_pk)
-#     pass
+
+@api_view(['GET', 'POST', 'DELETE', 'PUT'])
+@permission_classes((IsAuthenticated,))
+def collaborators(request: Request, project_pk=None):
+
+    if request.method == 'GET':
+        project = BaseProject.objects.get_user_projects(request.user, project_pk)
+        pass
+
+    if request.method == 'POST':
+        project = BaseProject.objects.get_user_projects(request.user, project_pk)
+        service_pk = request.data.get('service_pk', None)
+        if service_pk:
+            collab = ProCompany.objects.get(pk=service_pk)
+            ProCollaborator.objects.create(project=project, collaborator=collab)
+            return Response(status=status.HTTP_201_CREATED)
+
 
 
 @api_view(['POST', 'PUT', 'DELETE'])
@@ -102,5 +126,9 @@ def assignment_cud(request: Request, project_pk, assignment_pk=None):
         assignment = project.product_assignments.get(pk=assignment_pk)
         assignment.delete()
         return Response('deleted')
+
+    # if request.method == 'PUT':
+    #     assignment = project.assignments.filter(pk=assignment_pk)
+
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

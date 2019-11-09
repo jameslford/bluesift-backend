@@ -53,6 +53,7 @@ def serializer_product_assignment(assignment: ProductAssignment) -> Dict[str, an
 
     priced_products = serialize_product_priced(assignment.product)
     supplier = None
+    # if a supplier is already assigned to the product assignment, find corresponsing retilaer product
     if assignment.supplier:
         supplier = assignment.supplier.products.filter(product__pk=assignment.product.pk).first()
         if supplier:

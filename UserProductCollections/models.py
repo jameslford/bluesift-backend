@@ -202,27 +202,25 @@ class BaseProjectManager(models.Manager):
 
     def update_project(self, user, **kwargs):
         """ update method """
-        project_pk = kwargs.get('pk')
+        project_pk = kwargs.get('pk')[0]
+        print('project_pk = ', project_pk)
         collections = user.get_collections()
         collection = collections.get(pk=project_pk)
-        nickname = kwargs.get('nickname')
+        nickname = kwargs.get('nickname', collection.nickname)
         deadline = kwargs.get('deadline')
-        if type(deadline) == str:
-            deadline = deadline.split('T')[0]
-            deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d')
+        if deadline:
+            deadline = deadline[0]
+            print('deadline = ', deadline)
+            collection.deadline = deadline
+            # if isinstance(deadline, str):
+            #     deadline = deadline.split('T')[0]
+                # deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d')
+                # deadline = datetime.datetime(deadline)
         address = kwargs.get('address')
-        address = Address.objects.get(pk=address)
-        pro_collaborators = kwargs.get('pro_collaborators')
-        collaborators = kwargs.get('collaborators')
+        if address:
+            address = Address.objects.get(pk=address)
+            collection.address = address
         collection.nickname = nickname
-        collection.deadline = deadline
-        collection.address = address
-        if pro_collaborators:
-            collection.pro_collaborator = ProEmployeeProfile.objects.filter(
-                pk__in=pro_collaborators)
-        if collaborators:
-            collection.collaborators = ConsumerProfile.objects.filter(
-                pk__in=collaborators)
         collection.save()
         return collection
 
