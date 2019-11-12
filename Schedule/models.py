@@ -4,6 +4,8 @@ from UserProductCollections.models import BaseProject, RetailerLocation
 from Profiles.models import ConsumerProfile, ProEmployeeProfile
 from Products.models import Product
 from Groups.models import ProCompany
+from Groups.serializers import BusinessSerializer
+from Profiles.serializers import serialize_profile
 
 
 class ProductAssignmentManager(models.Manager):
@@ -110,6 +112,13 @@ class ProCollaborator(models.Model):
             raise ValueError('Contact does not belong to company')
         super(ProCollaborator, self).save(*args, **kwargs)
 
+    def serialize(self):
+        return {
+            'business': BusinessSerializer(self.collaborator).getData(),
+            'contact': serialize_profile(profile=self.contact),
+            'role': self.role
+            }
+
 
 class ConsumerCollaborator(models.Model):
     project = models.ForeignKey(
@@ -124,6 +133,12 @@ class ConsumerCollaborator(models.Model):
         related_name='collaborations'
         )
 
+
+    def serialize(self):
+        return {
+            'collaborator': serialize_profile(self.collaborator),
+            'role': self.role
+            }
 
 class ProjectTask(models.Model):
     DEPENDENCIES = Choices(('FTS', 'Finish to Start'), ('STS', 'Start to Start'), ('FTF', 'Finish to Finish'))

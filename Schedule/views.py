@@ -102,7 +102,12 @@ def collaborators(request: Request, project_pk=None):
 
     if request.method == 'GET':
         project = BaseProject.objects.get_user_projects(request.user, project_pk)
-        pass
+        pro_collabs = project.pro_collaborators.all().select_related('collaborator', 'contact', 'contact__user')
+        user_collabs = project.collaborators.all().select_related('collaborator')
+        return Response({
+            'pro_collaborators': [col.serialize() for col in pro_collabs],
+            'user_collaborators': [col.serialize() for col in user_collabs]
+        }, status=status.HTTP_200_OK)
 
     if request.method == 'POST':
         project = BaseProject.objects.get_user_projects(request.user, project_pk)

@@ -4,8 +4,11 @@ from Accounts.serializers import UserSerializer
 from Plans.serializers import PlanSerializer
 
 
-def serialize_profile(user):
-    profile = user.get_profile()
+def serialize_profile(user=None, profile=None):
+    if not profile:
+        if not user:
+            return None
+        profile = user.get_profile()
     ret_dict = {
         'pk': profile.pk,
         'user': UserSerializer(user).data,
