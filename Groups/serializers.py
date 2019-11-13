@@ -44,7 +44,7 @@ class BusinessSerializer:
             self.product_count = business.product_count()
             self.phone_number = business.phone_number
             self.name = business.nickname
-            self.image = business.image
+            self.image = business.image.url if business.image else None
             self.address = AddressSerializer(business.address).data
             self.address_string = business.address_string()
             if self.full:

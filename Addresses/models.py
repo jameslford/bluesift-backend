@@ -70,7 +70,7 @@ class AddressManager(models.Manager):
         state = kwargs.get('state')
         postal_code = kwargs.get('postal_code')
         response = None
-        add_obj = self.model.objects.filter(gmaps_id=gmap_id).fist() if gmap_id else None
+        add_obj = self.model.objects.filter(gmaps_id=gmap_id).first() if gmap_id else None
         if add_obj:
             return add_obj
         gmaps = googlemaps.Client(key=settings.GMAPS_API_KEY)

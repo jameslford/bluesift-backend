@@ -202,25 +202,19 @@ class BaseProjectManager(models.Manager):
 
     def update_project(self, user, **kwargs):
         """ update method """
-        project_pk = kwargs.get('pk')[0]
-        print('project_pk = ', project_pk)
+        project_pk = kwargs.get('pk')
         collections = user.get_collections()
         collection = collections.get(pk=project_pk)
-        nickname = kwargs.get('nickname', collection.nickname)
+        nickname = kwargs.get('nickname')
         deadline = kwargs.get('deadline')
-        if deadline:
-            deadline = deadline[0]
-            print('deadline = ', deadline)
-            collection.deadline = deadline
-            # if isinstance(deadline, str):
-            #     deadline = deadline.split('T')[0]
-                # deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d')
-                # deadline = datetime.datetime(deadline)
         address = kwargs.get('address')
+        if deadline:
+            collection.deadline = deadline
         if address:
             address = Address.objects.get(pk=address)
             collection.address = address
-        collection.nickname = nickname
+        if nickname:
+            collection.nickname = nickname
         collection.save()
         return collection
 
