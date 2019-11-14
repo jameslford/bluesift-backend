@@ -17,26 +17,22 @@ from .serializers import ProjectListSerializer
 def get_library(request: Request):
     """
     returns projects or retail_locations that apply to user.
-
     If user.is_supplier will return all locations that apply to the users company.
-
     If user.is_pro or regular user, will return all projects that the user owns, or
     will return projects that the user is included on as colloborator - which is noted
     """
+
+    content = {
+        'my_locations': None,
+        'my_projects': None,
+        }
     user = request.user
     if user.is_supplier:
-        return Response(
-            [BusinessSerializer(loc).getData() for loc in user.get_collections()],
-            status=status.HTTP_200_OK
-        )
+        content['my_locations'] = [BusinessSerializer(loc).getData() for loc in user.get_collections()]
+        return Response(content, status=status.HTTP_200_OK)
     collections = request.user.get_collections()
-    content = {
-        'my_projects': ProjectListSerializer(collections, many=True).data,
-    }
-    return Response(
-        content,
-        status=status.HTTP_200_OK
-    )
+    content['my_projects'] = ProjectListSerializer(collections, many=True).data
+    return Response(content, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])

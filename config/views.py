@@ -6,6 +6,7 @@ from BBadmin.models import LibraryLink
 from ProductFilter.models import ProductFilter
 from Groups.models import ServiceType
 
+
 def get_departments():
     return apps.get_app_config('SpecializedProducts').get_models()
 
@@ -29,20 +30,12 @@ def get_expanded_header(request):
         }
     if request.user.is_authenticated:
         if request.user.is_supplier:
+            response_dict['business'] = request.user.get_group().serialize()
             term = {'for_supplier': True}
         elif request.user.is_pro:
+            response_dict['business'] = request.user.get_group().serialize()
             term = {'for_pro': True}
         else:
             term = {'for_user': True}
         response_dict['libraryLinks'] = [link.serialize() for link in LibraryLink.objects.filter(**term)]
     return Response(response_dict)
-
-
-@api_view(['GET'])
-def get_header_list(request):
-    pro_types = list(ServiceType.objects.values_list('label', flat=True))
-    departments = [model._meta.verbose_name_plural.title() for model in get_departments()]
-    return Response({
-        'pros': sorted(pro_types),
-        'departments': sorted(departments)
-        })

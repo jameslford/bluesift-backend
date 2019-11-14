@@ -75,6 +75,10 @@ class RetailerCompany(Company):
             self.plan = RetailerPlan.objects.get_or_create_default()
         super().save(*args, **kwargs)
 
+    def serialize(self, full=False):
+        from .serializers import BusinessSerializer
+        return BusinessSerializer(self, full).getData()
+
 
 class ServiceType(models.Model):
     label = models.CharField(max_length=40)
@@ -103,6 +107,10 @@ class ProCompany(Company):
 
     def get_employees(self):
         return self.employees.select_related('user').all()
+
+    def serialize(self, full=False):
+        from .serializers import BusinessSerializer
+        return BusinessSerializer(self, full).getData()
 
     def save(self, *args, **kwargs):
         if not self.plan:

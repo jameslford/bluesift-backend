@@ -9,19 +9,24 @@ class ProfileManager(models.Manager):
 
     def create_profile(self, user, **kwargs):
         if user.is_supplier or user.is_pro:
-            company = kwargs.get('company', None)
+            company = kwargs.get('company')
+            company_pk = kwargs.get('company_pk')
             owner = kwargs.get('owner', False)
             admin = kwargs.get('admin', False)
             title = kwargs.get('title', None)
-            if not company:
+            if not company or company_pk:
                 raise ValueError('must provide company')
             if user.is_pro:
+                if not company:
+                    company = ProCompany.objects.get(pk=company_pk)
                 return ProEmployeeProfile.objects.get_or_create(
                     user=user,
                     company=company,
                     owner=owner,
                     title=title,
                     admin=admin)[0]
+            if not company:
+                company = RetailerCompany.objects.get(pk=company_pk)
             return RetailerEmployeeProfile.objects.get_or_create(
                 user=user,
                 company=company,
@@ -36,10 +41,11 @@ class ProfileManager(models.Manager):
             phone_number=phone)[0]
 
     def update_profile(self, user, **kwargs):
+
         profile: BaseProfile = user.get_profile()
-        pk = kwargs.get('pk')
-        if pk and pk != profile.pk:
-            return self.update_employees_profile(user, **kwargs)
+        profile_pk = kwargs.get('pk')
+        if profile_pk and profile_pk != profile.pk:
+            return self.employee_update_by_owner(user, **kwargs)
 
         avatar = kwargs.get('avatar')
         if avatar:
@@ -51,19 +57,12 @@ class ProfileManager(models.Manager):
                     profile.avatar.save(image.name, image)
                 except IndexError:
                     pass
-        profile.user.name = kwargs.get('user_name', profile.user.full_name)
-        email = kwargs.get('email')
-        if email:
-            profile.user.email = email
-            profile.user.email_verified = False
-        user.save()
+
         profile.save()
         return profile
 
-
-    def update_employees_profile(self, user, **kwargs):
+    def employee_update_by_owner(self, user, **kwargs):
         return None
-
 
 
 
@@ -125,9 +124,10 @@ class ProEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_pro:
             raise ValueError('user is not pro')
-        owner_count = self.company.employees.filter(owner=True).count()
-        if owner_count > 0:
-            raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
+        if self.owner:
+            owner = self.company.employees.filter(owner=True).first()
+            if owner != self:
+                raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(ProEmployeeProfile, self).save(*args, **kwargs)
 
 
@@ -136,7 +136,7 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
         RetailerCompany,
         on_delete=models.CASCADE,
         related_name='employees'
-    )
+        )
 
     def __str__(self):
         return self.user.get_full_name()
@@ -147,10 +147,21 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
-        owner_count = self.company.employees.all().filter(owner=True).count()
-        if owner_count > 0:
-            raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
+        if self.owner:
+            owners = self.company.employees.filter(owner=True).first()
+            if owners != self:
+                raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(RetailerEmployeeProfile, self).save(*args, **kwargs)
+
+
+
+        # profile.user.name = kwargs.get('user_name', profile.user.full_name)
+        # email = kwargs.get('email')
+        # if email:
+        #     profile.user.email = email
+        #     profile.user.email_verified = False
+        # user.save()
+
 
     # def __str__(self):
     #     return self.user.email

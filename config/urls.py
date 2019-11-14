@@ -2,8 +2,7 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path, include
-from .views import get_header_list, get_expanded_header
-# from .views import landing, get_short_lib, pl_status_for_product
+from .views import get_expanded_header
 
 
 urlpatterns = [
@@ -15,7 +14,6 @@ urlpatterns = [
     # path('bbadmin/', include('BBadmin.urls')),
     path('groups/', include('Groups.urls')),
     path('collections/', include('UserProductCollections.urls')),
-    path('header-list', get_header_list),
     path('expanded-header', get_expanded_header),
     path('mailing-list/', include('MailingList.urls')),
     # path('orders/', include('Orders.urls')),

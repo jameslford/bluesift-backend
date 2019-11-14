@@ -129,26 +129,30 @@ def reset_password(request):
 
 
 @api_view(['GET'])
-def get_demo_user(request, user_type: str = 'user', auth_type=None):
-    if auth_type in ('owner', 'admin'):
-        auth_term = {auth_type: True}
-    user_type = user_type.lower()
+def get_demo_user(request, user_type='user', auth_type=None):
+
     time_threshold = datetime.datetime.now() - datetime.timedelta(minutes=USER_TIMEOUT_MINUTES)
     eligible_users = get_user_model().objects.filter(demo=True, last_seen__lt=time_threshold)
-    if user_type == 'user':
-        eligible_users = eligible_users.filter(is_pro=False, is_supplier=False)
+
+    auth_term = {}
+    if auth_type in ('owner', 'admin'):
+        auth_term[auth_type] = True
     else:
-        if user_type in ('pro', 'pros'):
-            eligible_users = eligible_users.filter(is_pro=True)
-            if auth_type:
-                profiles = ProEmployeeProfile.objects.filter(**auth_term).values_list('pk', flat=True)
-                eligible_users = eligible_users.filter(pk__in=profiles)
-        if user_type in ('retailer', 'retailers'):
-            eligible_users = eligible_users.filter(is_supplier=True)
-            if auth_type:
-                profiles = RetailerEmployeeProfile.objects.filter(**auth_term).values_list('pk', flat=True)
-                eligible_users = eligible_users.filter(pk__in=profiles)
+        auth_term['owner'] = False
+        auth_term['admin'] = False
+
+    user_type = user_type.lower()
+    if user_type in ('retailer', 'retailers'):
+        rpks = RetailerEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
+        eligible_users = eligible_users.filter(pk__in=rpks)
+    elif user_type in ('pro', 'pros'):
+        ppks = ProEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
+        eligible_users = eligible_users.filter(pk__in=ppks)
+    else:
+        eligible_users = eligible_users.filter(is_pro=False, is_supplier=False)
+
+
     pks = eligible_users.values_list('pk', flat=True)
     choice_pk = random.choice(pks)
-    user = eligible_users.get(pk=choice_pk)
+    user = get_user_model().objects.get(pk=choice_pk)
     return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
