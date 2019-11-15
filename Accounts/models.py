@@ -116,10 +116,14 @@ class User(AbstractBaseUser):
             return profile.company
         return profile
 
-    def get_collections(self):
+    def get_collections(self, *select_related):
         from UserProductCollections.models import RetailerLocation, ProProject, ConsumerProject
         group = self.get_group()
         if self.is_supplier:
+            if select_related:
+                return RetailerLocation.objects.prefetch_related(
+                    'products'
+                ).select_related(*select_related).filter(company=group)
             return RetailerLocation.objects.prefetch_related(
                 'products'
             ).filter(company=group)

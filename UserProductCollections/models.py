@@ -31,6 +31,11 @@ class RetailerLocationManager(models.Manager):
 
     def update_location(self, user, **kwargs):
         pk = kwargs.get('pk')
+        print('location pk = ', pk)
+        if isinstance(pk, list):
+            pk = pk[0]
+        if isinstance(pk, str):
+            pk = int(pk)
         profile = user.get_profile()
         if not (profile.owner or profile.admin):
             raise PermissionError(f'{user.email} does not have permission to edit this object')
@@ -40,6 +45,14 @@ class RetailerLocationManager(models.Manager):
         location_manager = kwargs.get('location_manager')
         phone_number = kwargs.get('phone_number', location.phone_number)
         nickname = kwargs.get('nickname', location.nickname)
+        image = kwargs.get('image')
+        if image:
+            try:
+                image = image[0]
+                location.image.save(image.name, image)
+                print('image saved')
+            except IndexError:
+                pass
         location.phone_number = phone_number
         location.nickname = nickname
         location.address = address
@@ -121,22 +134,6 @@ class RetailerLocation(models.Model):
             'count': dep.objects.filter(pk__in=self_pks).count()
         } for dep in get_departments()]
         return ret_dict
-        # from Products.models import Product
-        # self_pks = self.products.values('product__pk')
-        # products = Product.subclasses.filter(pk__in=self_pks).select_subclasses()
-        # classes = set(product.__class__ for product in products)
-        # content = []
-        # for cls in classes:
-        #     count = cls.objects.filter(pk__in=self_pks).count()
-        #     if count > 0:
-        #         cont_dict = {
-        #             'name': cls.__name__,
-        #             'count': count,
-        #         }
-        #         if include_class:
-        #             cont_dict['cls'] = cls
-        #         content.append(cont_dict)
-        # return content
 
     def address_string(self):
         if self.address:

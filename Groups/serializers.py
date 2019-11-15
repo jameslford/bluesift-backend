@@ -70,7 +70,7 @@ class BusinessSerializer:
                     'company',
                     'local_admin'
                 ).filter(company=ret_company)
-            self.locations = [BusinessSerializer(loc).getData() for loc in locations]
+                self.locations = [BusinessSerializer(loc).getData() for loc in locations]
             return self.serialize()
         if isinstance(self.business, ProCompany):
             pro_comp: ProCompany = self.business

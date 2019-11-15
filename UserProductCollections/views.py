@@ -28,7 +28,13 @@ def get_library(request: Request):
         }
     user = request.user
     if user.is_supplier:
-        content['my_locations'] = [BusinessSerializer(loc).getData() for loc in user.get_collections()]
+        content['my_locations'] = [BusinessSerializer(loc).getData() for loc in user.get_collections(
+            'address',
+            'address__postal_code',
+            'address__coordinates',
+            'company',
+            # 'local_admin'
+            )]
         return Response(content, status=status.HTTP_200_OK)
     collections = request.user.get_collections()
     content['my_projects'] = ProjectListSerializer(collections, many=True).data
