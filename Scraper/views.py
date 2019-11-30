@@ -1,3 +1,4 @@
+import itertools
 from django.db import transaction
 from django.http import HttpRequest
 from rest_framework.decorators import (
@@ -20,37 +21,6 @@ SUBGROUP_COMMANDS = [
     CLEAN_NEW
 ]
 
-
-@api_view(['GET'])
-@permission_classes((StagingorLocalAdmin,))
-def subgroup_list(request):
-    default_subgroups = ScraperSubgroup.objects.using(
-        'scraper_default').select_related('category', 'manufacturer').all()
-
-    content = {
-        'default_product_count': ScraperBaseProduct.objects.using('scraper_default').count(),
-        'revised_product_count': ScraperBaseProduct.objects.count(),
-        'commands': SUBGROUP_COMMANDS,
-        'groups': []
-    }
-
-    for group in default_subgroups:
-        category_name = group.category.name
-        manufacturer_name = group.manufacturer.name
-        revised_group: ScraperSubgroup = ScraperSubgroup.objects.filter(
-            category__name=category_name,
-            manufacturer__name=manufacturer_name
-            ).first()
-        group_dict = {
-            'name': group.__str__(),
-            'revised_pk': revised_group.pk if revised_group else None,
-            'scraped': group.scraped,
-            'cleaned': revised_group.cleaned if revised_group else 'no group',
-            'default_count': group.products.count(),
-            'revised_count': revised_group.products.count() if revised_group else 'no group'
-        }
-        content['groups'].append(group_dict)
-    return Response(content)
 
 @api_view(['GET'])
 @permission_classes((IsAdminUser,))
@@ -258,16 +228,31 @@ def stock_clean(request):
 @api_view(['GET'])
 @permission_classes((StagingorLocalAdmin,))
 def get_departments(request):
-    departments = ScraperDepartment.objects.using('scraper_default').all()
-    content = {'departments': [{'name': d.name, 'pk': d.pk} for d in departments]}
-    return Response(content, status=status.HTTP_200_OK)
+    default_departments = ScraperDepartment.objects.using('scraper_default').all()
+    dep_list = []
+    for dep in default_departments:
+        corresponding_class = dep.corresponding_class()
+        default_products = ScraperBaseProduct.objects.using(
+            'scraper_default').filter(subgroup__category__department=dep).count()
+        revised_products = ScraperBaseProduct.objects.using(
+            'scraper_revised').filter(subgroup__category__department__pk=dep.pk).count()
+        published_count = corresponding_class.objects.count()
+        dep_list.append(
+            {
+                'name': dep.name,
+                'pk': dep.pk,
+                'default_count': default_products,
+                'revised_count': revised_products,
+                'published_count': published_count
+                }
+            )
+    return Response(dep_list, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @permission_classes((StagingorLocalAdmin,))
-def department_detail(request, pk):
-    # revised_department = ScraperDepartment.objects.get(pk=pk)
-    default_department: ScraperDepartment = ScraperDepartment.objects.using('scraper_default').get(pk=pk)
+def department_values(request, dep: str):
+    default_department: ScraperDepartment = ScraperDepartment.objects.using('scraper_default').get(name=dep)
     corresponding_class = default_department.get_product_type()
     variable_fields = corresponding_class.variable_fields()
     content = {'fields': []}
@@ -275,7 +260,34 @@ def department_detail(request, pk):
         value = {
             'field_name': field,
             'revised_values': list(corresponding_class.objects.values_list(field, flat=True).distinct()),
-            'default_values': list(corresponding_class.objects.using('scraper_default').values_list(field, flat=True).distinct())
+            'default_values': list(corresponding_class.objects.using(
+                'scraper_default').values_list(field, flat=True).distinct())
         }
         content['fields'].append(value)
     return Response(content, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes((StagingorLocalAdmin,))
+def department_subgroups(request, department: str):
+    default_subgroups = ScraperSubgroup.objects.using(
+        'scraper_default').select_related('category', 'manufacturer').filter(category__department__name=department)
+    revised_subgroups = ScraperSubgroup.objects.select_related(
+        'category', 'manufacturer').filter(category__department__name=department)
+    groups = []
+    for default, revised in itertools.zip_longest(default_subgroups, revised_subgroups):
+        first = next((group for group in [default, revised]), None)
+        if not first:
+            continue
+        group_dict = {
+            'name': str(first),
+            'manufacturer': str(first.manufacturer),
+            'category': first.category.name,
+            'default_pk': default.pk if default else None,
+            'revised_pk': revised.pk if revised else None,
+            'scraped': default.scraped if default else 'not scraped',
+            'cleaned': revised.cleaned if revised else 'no group',
+            'default_count': default.products.count() if default else 'no group',
+            'revised_count': revised.products.count() if revised else 'no group'
+        }
+        groups.append(group_dict)
+    return Response(groups)

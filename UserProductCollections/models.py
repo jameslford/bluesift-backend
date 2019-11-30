@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
 from Groups.models import ProCompany, RetailerCompany
-from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile
+from Profiles.models import ConsumerProfile, RetailerEmployeeProfile
 
 
 class RetailerLocationManager(models.Manager):

@@ -12,20 +12,22 @@ class LibraryLink(models.Model):
     Holds svg paths (draw_path), descriptions and labels for user libraries.
     uses for_user/retailer/pro to serve the correct links per user accordingly
     '''
-    TYPES = Choices('Analytics', 'Projects', 'Locations', 'Profile', 'Company_Info')
+    TYPES = Choices('Analytics', 'Projects', 'Locations', 'Profile', 'Company_Info', 'Admin')
     label = models.CharField(choices=TYPES, max_length=18, unique=True)
     description = models.CharField(max_length=60, blank=True, null=True)
     draw_path = models.TextField(blank=True, null=True)
-    display = models.FileField(upload_to='misc/')
+    display = models.FileField(upload_to='misc/', blank=True, null=True)
     for_user = models.BooleanField(default=False)
     for_pro = models.BooleanField(default=False)
     for_supplier = models.BooleanField(default=False)
+    for_admin = models.BooleanField(default=False)
 
     def __str__(self):
         return self.label
 
     def save(self, *args, **kwargs):
         if not self.display:
+            super().save(*args, **kwargs)
             return
         o_file = self.display
         doc = minidom.parse(o_file)

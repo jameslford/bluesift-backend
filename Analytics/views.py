@@ -8,18 +8,17 @@ from rest_framework import status
 from config.custom_permissions import SupplierorAdmin
 from UserProductCollections.models import RetailerLocation
 from Groups.models import RetailerCompany
-from .models import PlansRecord, ProductViewRecord
-
-
-@api_view(['GET'])
-@permission_classes((IsAdminUser,))
-def plan_views(request):
-    return Response(PlansRecord.get_values())
+from .models import ProductViewRecord, PlansRecord
 
 
 @api_view(['GET'])
 def department_view(request):
     pass
+
+@api_view(['GET'])
+@permission_classes((IsAdminUser,))
+def plan_views(request):
+    return Response(PlansRecord.get_values())
 
 
 @api_view(['GET'])

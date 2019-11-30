@@ -35,6 +35,8 @@ def get_expanded_header(request):
         elif request.user.is_pro:
             response_dict['business'] = request.user.get_group().serialize()
             term = {'for_pro': True}
+        elif request.user.admin:
+            term = {'for_admin': True}
         else:
             term = {'for_user': True}
         response_dict['libraryLinks'] = [link.serialize() for link in LibraryLink.objects.filter(**term)]
