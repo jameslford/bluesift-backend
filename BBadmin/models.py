@@ -47,12 +47,6 @@ class LibraryLink(models.Model):
             'description': self.description
             }
 
-# class UserTypeStatic(models.Model):
-#     '''
-#     Serves pictures and descriptions etc. to inform user of usertypes on landing page
-#     '''
 
-#     label = models.CharField(max_length=20)
-#     short_description = models.CharField(max_length=150)
-#     display_image = models.ImageField(max_length=1000, upload_to='misc/')
+
 
