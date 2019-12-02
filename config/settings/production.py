@@ -2,8 +2,15 @@ import os
 import dj_database_url
 from .base import *
 
-DEBUG = True
+DEBUG = False
 ENVIRONMENT = 'production'
+# BROKER_URL = 'PASS'
+CELERY_BROKER_URL = os.environ['REDIS_URL']
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_CACHE_BACKEND = 'django-cache'
+CELERY_RESULT_SERIALIZER = 'json'
 
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
@@ -11,7 +18,6 @@ SECRET_KEY = os.environ['SECRET_KEY']
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_TRUSTED_ORIGINS = ['https://www.bluesift.com/', 'https://www.bluesift.com']
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 REDIRECT_URL = 'https://www.bluesift.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
