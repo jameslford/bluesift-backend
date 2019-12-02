@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path, include
-from .views import get_expanded_header
+from .views import get_expanded_header, landing
 
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     path('groups/', include('Groups.urls')),
     path('collections/', include('UserProductCollections.urls')),
     path('expanded-header', get_expanded_header),
+    path('landing', landing),
     path('mailing-list/', include('MailingList.urls')),
     # path('orders/', include('Orders.urls')),
     path('profiles/', include('Profiles.urls')),

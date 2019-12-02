@@ -2,9 +2,9 @@ from urllib.parse import unquote
 from django.apps import apps
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from BBadmin.models import LibraryLink
 from ProductFilter.models import ProductFilter
 from Groups.models import ServiceType
+from .models import LibraryLink, UserTypeStatic
 
 
 def get_departments():
@@ -41,3 +41,9 @@ def get_expanded_header(request):
             term = {'for_user': True}
         response_dict['libraryLinks'] = [link.serialize() for link in LibraryLink.objects.filter(**term)]
     return Response(response_dict)
+
+
+@api_view(['GET'])
+def landing(request):
+    uts = UserTypeStatic.objects.all()
+    return Response([ut.serialize() for ut in uts])
