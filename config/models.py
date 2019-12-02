@@ -101,5 +101,5 @@ class UserTypeStatic(models.Model):
             'tagline': self.tagline,
             'full_text': self.full_text,
             'features': [feat.serialize() for feat in self.feature.all()],
-            'options': ['owner', 'admin', 'employee'] if self.include_options else []
+            'options': ['owner', 'admin', 'employee'] if self.include_options else None
         }
