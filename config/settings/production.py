@@ -2,7 +2,7 @@ import os
 import dj_database_url
 from .base import *
 
-DEBUG = False
+DEBUG = True
 ENVIRONMENT = 'production'
 
 STATIC_URL = '/static/'
