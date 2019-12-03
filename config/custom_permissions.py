@@ -13,12 +13,12 @@ class OwnerOrAdmin(permissions.BasePermission):
     """ permission for owner or admin - does not check for collection/owner association """
 
     def has_permission(self, request, view):
+        if request.method == 'GET':
+            return True
         if request.user.is_pro or request.user.is_supplier:
             profile = request.user.get_profile()
-            if request.method == 'GET':
-                return True
             return bool(profile.owner | profile.admin)
-        return False
+        return True
 
 
 class OwnerDeleteAdminEdit(permissions.BasePermission):

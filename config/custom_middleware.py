@@ -16,6 +16,8 @@ class StagingMiddleware:
             return self.get_response(request)
         if 'accounts/login' in request.path:
             return self.get_response(request)
+        if 'landing' in request.path:
+            return self.get_response(request)
         if 'admin' in request.path:
             return self.get_response(request)
         if 'get-demo' in request.path:
