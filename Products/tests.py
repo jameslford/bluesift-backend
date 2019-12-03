@@ -10,14 +10,14 @@ class ProductModelTest(TestCase):
     def setUpTestData(cls):
         daltile = Manufacturer.objects.create()
         daltile.name = 'Daltile'
-        GT = Product.objects.create()
-        GT.name = 'Grey Tile'
-        GT.manufacturer = daltile
-        
-        
+        grey_tile = Product.objects.create()
+        grey_tile.name = 'Grey Tile'
+        grey_tile.manufacturer = daltile
+
+
     def test_if_created(self):
         product = Product.objects.get(id=1)
-        productManu = Product.manufacturer.name
+        product_manu = product.manufacturer.name
         self.assertEqual(product.name, 'Grey Tile')
-        self.assertEqual(productManu,'Daltile')
+        self.assertEqual(product_manu, 'Daltile')
         
