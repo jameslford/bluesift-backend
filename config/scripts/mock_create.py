@@ -294,11 +294,14 @@ def create_demo_users():
         pro_address = addresses.pop()
         pro_address = create_address(**pro_address)
         pro_company = create_company(pro_user, pro_address)
-        ProEmployeeProfile.objects.create_profile(
+
+        employee = ProEmployeeProfile.objects.create_profile(
             user=pro_user,
-            owner=True,
             company=pro_company
             )
+        if pro_num == 0:
+            employee.owner = True
+            employee.save()
         for x in range(0, 3):
             proj_add = addresses.pop()
             proj_add = create_address(**proj_add)
