@@ -95,18 +95,18 @@ def view_products(request, pk):
 
 @api_view(['POST'])
 @permission_classes((StagingorLocalAdmin,))
-def update_field(request):
-    subgroup_pk = request.POST.get('subgroup_pk', None)
-    field = request.POST.get('field', None)
-    current_value = request.POST.get('current_value', None)
-    new_value = request.POST.get('new_value', None)
-    if not (subgroup_pk and field and current_value):
+def update_subgroup_field(request, subgroup_pk: int):
+    field = request.POST.get('field')
+    current_value = request.POST.get('current_value')
+    new_value = request.POST.get('new_value')
+
+    if not (field and current_value):
         return Response('not enough fields')
     if new_value == current_value:
         return Response('no difference in new and old value')
     revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=subgroup_pk).first()
-    if not revised_subgroup.cleaned:
-        return Response('Should be stock cleaned first', status=status.HTTP_400_BAD_REQUEST)
+    # if not revised_subgroup.cleaned:
+    #     return Response('Should be stock cleaned first', status=status.HTTP_400_BAD_REQUEST)
     argument = {field: current_value, 'subgroup': subgroup_pk}
     model_type = revised_subgroup.get_prod_type()
     revised_products = model_type.objects.filter(**argument)
@@ -131,16 +131,18 @@ def update_field(request):
 @api_view(['POST'])
 @permission_classes((StagingorLocalAdmin,))
 @transaction.atomic()
-def update_value_from_department(request: HttpRequest, pk):
+def update_department_field(request: HttpRequest, department_pk: int):
     field = request.POST.get('field')
-    if field not in ('width', 'thickness', 'length'):
-        return Response('cannot alter this field', status=status.HTTP_400_BAD_REQUEST)
+    # if field not in ('width', 'thickness', 'length'):
+    #     return Response('cannot alter this field', status=status.HTTP_400_BAD_REQUEST)
     current_value = request.POST.get('current_value')
     new_value = request.POST.get('new_value')
-    department: ScraperDepartment = ScraperDepartment.objects.get(pk=pk)
+
+    department: ScraperDepartment = ScraperDepartment.objects.get(pk=department_pk)
     revised_products = department.get_product_type().objects.filter(**{field: current_value})
-    for revised_product in revised_products:
-        setattr(revised_product, field, new_value)
+    revised_products.update(**{field: new_value})
+    # for revised_product in revised_products:
+    #     setattr(revised_product, field, new_value)
     default_products = department.get_product_type().objects.using('scraper_default').filter(
         pk__in=[product.pk for product in revised_products])
     default_subs = default_products.values_list('subgroup__pk', flat=True).distinct()
@@ -253,9 +255,14 @@ def get_departments(request):
 @permission_classes((StagingorLocalAdmin,))
 def department_values(request, dep: str):
     default_department: ScraperDepartment = ScraperDepartment.objects.using('scraper_default').get(name=dep)
+    revised_department: ScraperDepartment = ScraperDepartment.objects.get(name=dep)
     corresponding_class = default_department.get_product_type()
     variable_fields = corresponding_class.variable_fields()
-    content = {'fields': []}
+    content = {
+        'revised_pk': revised_department.pk,
+        'default_pk': default_department.pk,
+        'fields': []
+        }
     for field in variable_fields:
         value = {
             'field_name': field,
