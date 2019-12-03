@@ -124,10 +124,10 @@ class ProEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_pro:
             raise ValueError('user is not pro')
-        if self.owner:
-            owner = self.company.employees.filter(owner=True).first()
-            if owner != self:
-                raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
+        # if self.owner:
+        #     owner = self.company.employees.filter(owner=True).first()
+        #     if owner != self:
+        #         raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(ProEmployeeProfile, self).save(*args, **kwargs)
 
 
@@ -147,10 +147,10 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
-        if self.owner:
-            owners = self.company.employees.filter(owner=True).first()
-            if owners != self:
-                raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
+        # if self.owner:
+        #     owners = self.company.employees.filter(owner=True).first()
+        #     if owners != self:
+        #         raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(RetailerEmployeeProfile, self).save(*args, **kwargs)
 
 

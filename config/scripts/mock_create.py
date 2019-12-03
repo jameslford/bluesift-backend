@@ -315,9 +315,11 @@ def create_demo_users():
         ret_company = create_company(ret_user, ret_address)
         profile = RetailerEmployeeProfile.objects.create_profile(
             user=ret_user,
-            owner=True,
             company=ret_company
             )
+        if ret_num == 0:
+            profile.owner = True
+            profile.save()
         for x in range(0, 3):
             loc_add = addresses.pop()
             loc_add = create_address(**loc_add)
