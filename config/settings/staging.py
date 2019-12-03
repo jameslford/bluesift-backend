@@ -35,11 +35,11 @@ DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 DATABASES['default']['OPTIONS'] = {'options': '-c search_path=default,public'}
 
 DATABASES['scraper_default'] = dj_database_url.config(conn_max_age=500)
-DATABASES['scraper_default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
+DATABASES['scraper_default']['ENGINE'] = 'django.db.backends.postgresql'
 DATABASES['scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_default'}
 
 DATABASES['scraper_revised'] = dj_database_url.config(conn_max_age=500)
-DATABASES['scraper_revised']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
+DATABASES['scraper_revised']['ENGINE'] = 'django.db.backends.postgresql'
 DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
 
 # WSGI_APPLICATION = 'config.wsgi.application'

@@ -50,7 +50,7 @@ DATABASES = {
         }
     },
     'scraper_default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'OPTIONS': {
             'options': '-c search_path=scraper_default,public'
             },
@@ -62,7 +62,7 @@ DATABASES = {
         }
     },
     'scraper_revised': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'OPTIONS': {
             'options': '-c search_path=scraper_revised,public'
             },
@@ -76,10 +76,10 @@ DATABASES = {
 }
 
 DATABASES['staging_scraper_default'] = dj_database_url.config(default=STAGING_DB_URI)
-DATABASES['staging_scraper_default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
+DATABASES['staging_scraper_default']['ENGINE'] = 'django.db.backends.postgresql'
 DATABASES['staging_scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_default'}
 DATABASES['staging_scraper_revised'] = dj_database_url.config(default=STAGING_DB_URI)
-DATABASES['staging_scraper_revised']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
+DATABASES['staging_scraper_revised']['ENGINE'] = 'django.db.backends.postgresql'
 DATABASES['staging_scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
 
 
