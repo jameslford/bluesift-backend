@@ -523,6 +523,7 @@ class DetailBuilder:
     def __init__(self, pk: str):
         self.bb_sku = pk
         self.product = self.get_subclass_instance()
+        self.department = str(type(self.product))
         self.response: DetailResponse = DetailResponse(pk=str(self.product.pk))
         self.product_filter = ProductFilter.get_filter(self.product)
 

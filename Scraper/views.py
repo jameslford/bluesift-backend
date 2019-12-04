@@ -80,85 +80,82 @@ def view_products(request, pk):
     Returns:
         list of products
     """
-    field = request.GET.get('field', None)
-    value = request.GET.get('value', None)
-    if not field and value:
+    field = request.GET.get('field')
+    value = request.GET.get('value')
+    search_group = request.GET.get('search_group')
+    db_ver = request.GET.get('db', 'scraper_default')
+    print('value = ', value)
+    if not (field and value and search_group):
         return Response('not enought fields')
-    default_subgroup: ScraperSubgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=pk).first()
-    if not default_subgroup:
-        return Response('could not find subgroup')
-    argument = {field: value, 'subgroup': default_subgroup}
-    model = default_subgroup.get_prod_type()
-    products = model.objects.using('scraper_default').filter(**argument).values()
-    return Response({'products': list(products)})
-
-
-@api_view(['POST'])
-@permission_classes((StagingorLocalAdmin,))
-def update_subgroup_field(request, subgroup_pk: int):
-    field = request.POST.get('field')
-    current_value = request.POST.get('current_value')
-    new_value = request.POST.get('new_value')
-
-    if not (field and current_value):
-        return Response('not enough fields')
-    if new_value == current_value:
-        return Response('no difference in new and old value')
-    revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=subgroup_pk).first()
-    # if not revised_subgroup.cleaned:
-    #     return Response('Should be stock cleaned first', status=status.HTTP_400_BAD_REQUEST)
-    argument = {field: current_value, 'subgroup': subgroup_pk}
-    model_type = revised_subgroup.get_prod_type()
-    revised_products = model_type.objects.filter(**argument)
-    pks = [product.pk for product in revised_products.all()]
-    for product in revised_products:
-        setattr(product, field, new_value)
-        product.save()
-    default_products = model_type.objects.using('scraper_default').filter(pk__in=pks)
-    initial_values = default_products.values_list(field, flat=True).distinct()
-    for initial_value in initial_values:
-        cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
-            subgroup_manufacturer_name=revised_subgroup.manufacturer.name,
-            subgroup_category_name=revised_subgroup.category.name,
-            field_name=field,
-            initial_value=initial_value
-            )[0]
-        cleaner.new_value = new_value
-        cleaner.save()
-    return Response(status=status.HTTP_201_CREATED)
+    if search_group == 'subgroup':
+        subgroup: ScraperSubgroup = ScraperSubgroup.objects.using(db_ver).get(pk=pk)
+        model = subgroup.get_prod_type()
+        if value == 'null':
+            arg = field + '__isnull'
+            argument = {arg: True, 'subgroup': subgroup}
+        else:
+            argument = {field: value, 'subgroup': subgroup}
+        products = model.objects.using(db_ver).filter(**argument)
+        return Response([prod.serialize_short() for prod in products])
+    if search_group == 'department':
+        department: ScraperDepartment = ScraperDepartment.objects.using(db_ver).get(pk=pk)
+        model = department.get_product_type()
+        if value == 'null':
+            arg = field + '__isnull'
+            argument = {arg: True, 'subgroup__category__department': department}
+        else:
+            argument = {field: value, 'subgroup__category__department': department}
+        products = model.objects.using(db_ver).filter(**argument)
+        return Response([prod.serialize_short() for prod in products])
+    return Response('invalid searchgroup', status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 @permission_classes((StagingorLocalAdmin,))
 @transaction.atomic()
-def update_department_field(request: HttpRequest, department_pk: int):
+def update_field(request, pk: int):
     field = request.POST.get('field')
-    # if field not in ('width', 'thickness', 'length'):
-    #     return Response('cannot alter this field', status=status.HTTP_400_BAD_REQUEST)
     current_value = request.POST.get('current_value')
     new_value = request.POST.get('new_value')
+    group_type = request.POST.get('group_type')
 
-    department: ScraperDepartment = ScraperDepartment.objects.get(pk=department_pk)
-    revised_products = department.get_product_type().objects.filter(**{field: current_value})
-    revised_products.update(**{field: new_value})
-    # for revised_product in revised_products:
-    #     setattr(revised_product, field, new_value)
-    default_products = department.get_product_type().objects.using('scraper_default').filter(
-        pk__in=[product.pk for product in revised_products])
-    default_subs = default_products.values_list('subgroup__pk', flat=True).distinct()
-    for sub in default_subs:
-        subgroup = ScraperSubgroup.objects.using('scraper_default').get(pk=sub)
-        initial_values = subgroup.products.values_list(field, flat=True).distinct()
+    if not (field and current_value and group_type):
+        return Response('not enough fields')
+    if new_value == current_value:
+        return Response('no difference in new and old value')
+    if group_type == 'subgroup':
+        revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=pk).first()
+        model_type = revised_subgroup.get_prod_type()
+        revised_products = revised_subgroup.get_products().filter(**{field: current_value})
+        revised_products.update(**{field: new_value})
+    elif group_type == 'department':
+        department: ScraperDepartment = ScraperDepartment.objects.get(pk=pk)
+        model_type = department.get_product_type()
+        revised_products = department.get_product_type().objects.filter(**{field: current_value})
+        revised_products.update(**{field: new_value})
+    else:
+        return Response('invalid group type')
+    pks = [product.pk for product in revised_products.all()]
+    default_products = model_type.objects.using('scraper_default').filter(pk__in=pks)
+    initial_subgroups = default_products.values_list('subgroup__pk', flat=True)
+    for sub_pk in initial_subgroups:
+        initial_sub = ScraperSubgroup.objects.using('scraper_default').get(pk=sub_pk)
+        def_sub_prods = initial_sub.get_products()
+        initial_values = def_sub_prods.values_list(field, flat=True).distinct()
         for initial_value in initial_values:
             cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
-                subgroup_manufacturer_name=subgroup.manufacturer.name,
-                subgroup_category_name=subgroup.category.name,
+                subgroup_manufacturer_name=initial_sub.manufacturer.name,
+                subgroup_category_name=initial_sub.category.name,
                 field_name=field,
                 initial_value=initial_value
                 )[0]
             cleaner.new_value = new_value
             cleaner.save()
-    return Response(status=status.HTTP_201_CREATED)
+    new_vals = model_type.objects.filter(pk__in=pks)
+    for val in new_vals:
+        print(val.name)
+    return Response(list(new_vals.values_list(field, flat=True)), status=status.HTTP_201_CREATED)
+
 
 @api_view(['POST'])
 @permission_classes((StagingorLocalAdmin,))
@@ -298,3 +295,77 @@ def department_subgroups(request, department: str):
         }
         groups.append(group_dict)
     return Response(groups)
+
+
+# @api_view(['POST'])
+# @permission_classes((StagingorLocalAdmin,))
+# def update_subgroup_field(request, subgroup_pk: int):
+#     field = request.POST.get('field')
+#     current_value = request.POST.get('current_value')
+#     new_value = request.POST.get('new_value')
+
+#     if not (field and current_value):
+#         return Response('not enough fields')
+#     if new_value == current_value:
+#         return Response('no difference in new and old value')
+#     revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=subgroup_pk).first()
+#     # if not revised_subgroup.cleaned:
+#     #     return Response('Should be stock cleaned first', status=status.HTTP_400_BAD_REQUEST)
+#     argument = {field: current_value, 'subgroup': subgroup_pk}
+#     model_type = revised_subgroup.get_prod_type()
+#     revised_products = model_type.objects.filter(**argument)
+#     pks = [product.pk for product in revised_products.all()]
+#     for product in revised_products:
+#         setattr(product, field, new_value)
+#         product.save()
+#     default_products = model_type.objects.using('scraper_default').filter(pk__in=pks)
+#     initial_values = default_products.values_list(field, flat=True).distinct()
+#     for initial_value in initial_values:
+#         cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
+#             subgroup_manufacturer_name=revised_subgroup.manufacturer.name,
+#             subgroup_category_name=revised_subgroup.category.name,
+#             field_name=field,
+#             initial_value=initial_value
+#             )[0]
+#         cleaner.new_value = new_value
+#         cleaner.save()
+#     return Response(status=status.HTTP_201_CREATED)
+
+
+# if not revised_subgroup.cleaned:
+#     return Response('Should be stock cleaned first', status=status.HTTP_400_BAD_REQUEST)
+# argument = {field: current_value, 'subgroup': pk}
+# model_type = revised_subgroup.get_prod_type()
+# revised_products = model_type.objects.filter(**argument)
+
+# @api_view(['POST'])
+# @permission_classes((StagingorLocalAdmin,))
+# @transaction.atomic()
+# def update_department_field(request: HttpRequest, department_pk: int):
+#     field = request.POST.get('field')
+#     # if field not in ('width', 'thickness', 'length'):
+#     #     return Response('cannot alter this field', status=status.HTTP_400_BAD_REQUEST)
+#     current_value = request.POST.get('current_value')
+#     new_value = request.POST.get('new_value')
+
+#     department: ScraperDepartment = ScraperDepartment.objects.get(pk=department_pk)
+#     revised_products = department.get_product_type().objects.filter(**{field: current_value})
+#     revised_products.update(**{field: new_value})
+#     # for revised_product in revised_products:
+#     #     setattr(revised_product, field, new_value)
+#     default_products = department.get_product_type().objects.using('scraper_default').filter(
+#         pk__in=[product.pk for product in revised_products])
+#     default_subs = default_products.values_list('subgroup__pk', flat=True).distinct()
+#     for sub in default_subs:
+#         subgroup = ScraperSubgroup.objects.using('scraper_default').get(pk=sub)
+#         initial_values = subgroup.products.values_list(field, flat=True).distinct()
+#         for initial_value in initial_values:
+#             cleaner: ScraperCleaner = ScraperCleaner.objects.get_or_create(
+#                 subgroup_manufacturer_name=subgroup.manufacturer.name,
+#                 subgroup_category_name=subgroup.category.name,
+#                 field_name=field,
+#                 initial_value=initial_value
+#                 )[0]
+#             cleaner.new_value = new_value
+#             cleaner.save()
+#     return Response(status=status.HTTP_201_CREATED)

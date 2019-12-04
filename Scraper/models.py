@@ -137,7 +137,8 @@ class ScraperSubgroup(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.base_scraping_url = self.base_scraping_url.replace(' ', '')
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        return super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     # the 4 or 5 methods below could potentially be moved to subscraperbase - unesscessarry pinging back and
     # forth if no work is done in manufacturer root
@@ -249,6 +250,13 @@ class ScraperBaseProduct(models.Model):
 
     def department_name(self):
         return self.subgroup.category.department.name
+
+    def serialize_short(self):
+        return {
+            'name': self.name,
+            'product_url': self.product_url,
+            'image': self.swatch_image_final.url if self.swatch_image_final else None
+        }
 
 
     def get_local_images(self, update=False):
