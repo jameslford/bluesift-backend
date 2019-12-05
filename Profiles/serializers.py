@@ -15,6 +15,7 @@ def serialize_profile(user=None, profile=None):
         }
     if not (user.is_pro or user.is_supplier):
         ret_dict['plan'] = PlanSerializer(profile.plan).data if profile.plan else None
+        ret_dict['phone_number'] = profile.phone_number
         return ret_dict
     ret_dict['company_name'] = profile.company.name
     ret_dict['owner'] = profile.owner

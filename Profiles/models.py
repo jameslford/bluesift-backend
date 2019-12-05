@@ -57,7 +57,13 @@ class ProfileManager(models.Manager):
                     profile.avatar.save(image.name, image)
                 except IndexError:
                     pass
-
+        full_name = kwargs.get('full_name')
+        if full_name:
+            user.full_name = full_name
+            user.save()
+        phone_number = kwargs.get('phone_number')
+        if phone_number:
+            profile.phone_number = phone_number
         profile.save()
         return profile
 

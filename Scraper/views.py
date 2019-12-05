@@ -25,7 +25,7 @@ SUBGROUP_COMMANDS = [
 @api_view(['GET'])
 @permission_classes((IsAdminUser,))
 def subgroup_detail(request, pk):
-    revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.filter(pk=pk).first()
+    revised_subgroup: ScraperSubgroup = ScraperSubgroup.objects.get(pk=pk)
     manufacturer_name = revised_subgroup.manufacturer.name
     category_name = revised_subgroup.category.name
     default_subgroup = ScraperSubgroup.objects.using('scraper_default').filter(
@@ -36,8 +36,9 @@ def subgroup_detail(request, pk):
     if not revised_subgroup:
         return Response('invalid pk')
     group_dict = {
-        'subgroup': revised_subgroup.__str__(),
-        'revised_pk': pk,
+        'name': revised_subgroup.__str__(),
+        'revised_pk': revised_subgroup.pk,
+        'default_pk': default_subgroup.pk,
         'category_name': revised_subgroup.category.name,
         'commands': None,
         'manufacturer_name': revised_subgroup.manufacturer.name,
