@@ -68,4 +68,3 @@ webencodings==0.5.1
 whitenoise==4.1.2
 wrapt==1.11.1
 
-worker: celery -A config worker --beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
