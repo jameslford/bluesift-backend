@@ -18,7 +18,7 @@ django-cors-headers==3.2.0
 django-debug-toolbar==2.1
 django-ipware==2.1.0
 django-json-widget==0.2.0
-git+https://github.com/jazzband/django-model-utils.git
+-e git+https://github.com/jazzband/django-model-utils.git@ffa1a85dc7fe3fa8a56e8735b4ac881092abf216#egg=django_model_utils
 django-money==1.0
 django-storages==1.8
 django-timezone-field==4.0
