@@ -1,4 +1,5 @@
 import decimal
+from dataclasses import dataclass
 from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 from SpecializedProducts.models import FinishSurface
 from django.contrib.postgres.fields import DecimalRangeField
@@ -7,22 +8,36 @@ from config.scripts.measurements import char_dec_range_conversion
 REVISED_MODEL = ScraperFinishSurface
 NEW_MODEL = FinishSurface
 
-def return_split(val: str):
-    split = val.split('-').strip()
-    if len(split) > 1:
-        return split
-    return [val]
+class RangeValues:
 
-def convert_to_range(value: str):
-    vals = return_split(value)
-    return_vals = []
-    for val in vals:
-        try:
-            dec = decimal.Decimal(val)
-            return_vals.append(dec)
-        except ValueError:
-            return_vals.append(None)
-    return return_vals
+    def __init__(self, width: str, length: str):
+        self.initial_width = width
+        self.initial_length = length
+        self.width = self.convert_to_range(self.initial_width)
+        self.length = self.convert_to_range(self.initial_length)
+
+    def size(self):
+        pass
+
+
+
+    def return_split(self, val: str):
+        split = val.split('-').strip()
+        if len(split) > 1:
+            return split
+        return [val]
+
+    def convert_to_range(self, value: str):
+        vals = self.return_split(value)
+        return_vals = []
+        for val in vals:
+            try:
+                dec = decimal.Decimal(val)
+                dec = round(dec, 2)
+                return_vals.append(dec)
+            except ValueError:
+                return_vals.append(None)
+        return return_vals
 
 
 def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):

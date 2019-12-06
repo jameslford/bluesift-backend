@@ -17,7 +17,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
-CSRF_TRUSTED_ORIGINS = ['https://www.bluesift.com/', 'https://www.bluesift.com']
+CSRF_TRUSTED_ORIGINS = ['https://www.bluesift.com/', 'https://www.bluesift.com', 'https://www.bluesift-staging-frontend.herokuapp.com/']
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
