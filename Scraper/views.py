@@ -3,8 +3,10 @@ from django.db import transaction
 from django.http import HttpRequest
 from rest_framework.decorators import (
     api_view,
-    permission_classes
+    permission_classes,
+    authentication_classes
     )
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
@@ -112,6 +114,7 @@ def view_products(request, pk):
 
 
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
 @permission_classes((StagingorLocalAdmin,))
 @transaction.atomic()
 def update_field(request, pk: int):
