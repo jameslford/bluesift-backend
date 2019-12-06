@@ -24,10 +24,13 @@ ALLOWED_HOSTS = [
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_TRUSTED_ORIGINS = [
-    'https://www.bluesift.com/',
-    'https://www.bluesift.com',
-    'https://www.bluesift-staging-frontend.herokuapp.com',
-    'https://www.bluesift-staging-frontend.herokuapp',
+    'bluesift.com',
+    'bluesift-staging-frontend.herokuapp.com',
+    'bluesift-staging-frontend.herokuapp',
+    # 'https://www.bluesift.com/',
+    # 'https://www.bluesift.com',
+    # 'https://www.bluesift-staging-frontend.herokuapp.com',
+    # 'https://www.bluesift-staging-frontend.herokuapp',
     ]
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
