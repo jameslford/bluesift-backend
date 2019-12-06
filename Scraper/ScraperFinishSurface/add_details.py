@@ -8,22 +8,17 @@ from config.scripts.measurements import char_dec_range_conversion
 REVISED_MODEL = ScraperFinishSurface
 NEW_MODEL = FinishSurface
 
-class RangeValues:
-
-    def __init__(self, width: str, length: str):
-        self.initial_width = width
-        self.initial_length = length
-        self.width = self.convert_to_range(self.initial_width)
-        self.length = self.convert_to_range(self.initial_length)
-
-    def size(self):
-        pass
-
-
+class DimensionValue:
+    def __init__(self, dimension: str):
+        self.range = None
+        self.absolute = None
+        self.continuous = False
+        self.convert_to_range(dimension)
 
     def return_split(self, val: str):
         split = val.split('-').strip()
         if len(split) > 1:
+            self.continuous = True
             return split
         return [val]
 
@@ -37,7 +32,28 @@ class RangeValues:
                 return_vals.append(dec)
             except ValueError:
                 return_vals.append(None)
-        return return_vals
+        self.absolute = return_vals[0]
+        self.range = return_vals
+
+class RangeValues:
+
+    def __init__(self, width: str, length: str, thickness: str):
+        self.initial_width = width
+        self.initial_length = length
+        self.width = DimensionValue(self.initial_width)
+        self.length = DimensionValue(self.initial_length)
+        # self.size = self.get_size()
+        self.dimension = None
+
+    def get_size(self):
+        pass
+        # width = [x is not None for x in self.width]
+        # if len(width) > 1:
+        #     width = 'continuous'
+        # length = [x is not None for x in self.length]
+        # if len(length) > 1
+
+        # if sum(x for x in self.width) > 1:
 
 
 def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
