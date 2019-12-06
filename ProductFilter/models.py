@@ -197,7 +197,7 @@ class QueryIndex(models.Model):
         request.method = 'GET'
         request.path = self.query_path
         request.GET = QueryDict(self.query_dict)
-        view(request, update=True, *args, **kwargs)
+        # view(request, update=True, *args, **kwargs)
 
     def get_product_pks(self):
         return self.products.values_list('pk', flat=True)

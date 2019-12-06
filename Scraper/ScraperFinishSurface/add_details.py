@@ -7,6 +7,23 @@ from config.scripts.measurements import char_dec_range_conversion
 REVISED_MODEL = ScraperFinishSurface
 NEW_MODEL = FinishSurface
 
+def return_split(val: str):
+    split = val.split('-').strip()
+    if len(split) > 1:
+        return split
+    return [val]
+
+def convert_to_range(value: str):
+    vals = return_split(value)
+    return_vals = []
+    for val in vals:
+        try:
+            dec = decimal.Decimal(val)
+            return_vals.append(dec)
+        except ValueError:
+            return_vals.append(None)
+    return return_vals
+
 
 def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
     new_product.material = revised_product.material
