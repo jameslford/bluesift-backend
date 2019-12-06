@@ -28,25 +28,24 @@ class DimensionValue:
         for val in vals:
             try:
                 dec = decimal.Decimal(val)
-                dec = round(dec, 2)
+                dec = .05 * round((dec / .05), 2)
                 return_vals.append(dec)
             except ValueError:
                 return_vals.append(None)
         self.absolute = return_vals[0]
         self.range = return_vals
 
-class RangeValues:
+# class RangeValues:
 
-    def __init__(self, width: str, length: str, thickness: str):
-        self.initial_width = width
-        self.initial_length = length
-        self.width = DimensionValue(self.initial_width)
-        self.length = DimensionValue(self.initial_length)
-        # self.size = self.get_size()
-        self.dimension = None
+#     def __init__(self, width: str, length: str, thickness: str):
+#         self.initial_width = width
+#         self.initial_length = length
+#         self.width = DimensionValue(self.initial_width)
+#         self.length = DimensionValue(self.initial_length)
+#         # self.size = self.get_size()
+#         self.dimension = None
 
-    def get_size(self):
-        pass
+
         # width = [x is not None for x in self.width]
         # if len(width) > 1:
         #     width = 'continuous'

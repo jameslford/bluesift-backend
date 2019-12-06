@@ -16,9 +16,10 @@ STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
 
 ALLOWED_HOSTS = [
-    'https://www.bluesift.com/',
-    'https://www.bluesift.com',
-    'https://www.bluesift-staging-frontend.herokuapp.com'
+    # 'https://www.bluesift.com/',
+    # 'https://www.bluesift.com',
+    'https://www.bluesift-staging-backend.herokuapp.com'
+    # 'https://www.bluesift-staging-frontend.herokuapp.com'
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_TRUSTED_ORIGINS = [
