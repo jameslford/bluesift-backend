@@ -1,6 +1,8 @@
 import operator
+import decimal
 import webcolors
 from PIL import Image as pimage
+from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
 from Products.models import ProductSubClass
 
@@ -34,10 +36,13 @@ class FinishSurface(ProductSubClass):
     corner_covebase = models.BooleanField(default=False)
 
     thickness = models.DecimalField(max_digits=6, decimal_places=3, null=True)
-    width = models.CharField(max_length=50, null=True, blank=True)
-    length = models.CharField(max_length=50, null=True, blank=True)
+    width = DecimalRangeField(null=True, blank=True)
+    length = DecimalRangeField(null=True, blank=True)
 
+    # size that is filtered upon
+    # actual decimal size in square inches used for calculation
     size = models.CharField(max_length=80, null=True, blank=True)
+    actual_size = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     shape = models.CharField(max_length=80, null=True, blank=True)
 
     lrv = models.CharField(max_length=60, null=True, blank=True)
@@ -50,26 +55,103 @@ class FinishSurface(ProductSubClass):
     sqft_per_carton = models.CharField(max_length=70, null=True)
     slip_resistant = models.BooleanField(default=False)
 
+    def serialize(self):
+        main = self.serialize_remaining()
+        main.update(self.serialize_size())
+        main.update(self.serialize_applications())
+        return main
 
-    def set_size(self):
-        if not self.size:
-            self.size = self.width + ' x ' + self.length
+    def serialize_special(self):
+        return {
+            'details': self.serialize_remaining(),
+            'size_and_shape': self.serialize_size(),
+            'applications': self.serialize_applications(),
+        }
 
-    def name_fields(self):
-        return [
-            'material',
-            'look',
-            'finish',
-            'sub_material',
-            'surface_coating'
-        ]
+    def serialize_remaining(self):
+        return {
+            'label_color': self.label_color,
+            'actual_color': self.actual_color,
+            'material': self.material,
+            'sub_material': self.sub_material,
+            'finish': self.finish,
+            'surface_coating': self.surface_coating,
+            'look': self.look,
+            'shade_variation': self.shade_variation,
+            'lrv': self.lrv,
+            'cof': self.cof,
+            'edge': self.edge,
+            'end': self.end,
+            'install_type': self.install_type,
+            'sqft_per_carton': self.sqft_per_carton,
+            'slip_resistant':self.slip_resistant
+            }
 
-    @classmethod
-    def special_method(cls):
-        print('hello world')
+    def serialize_size(self):
+        return {
+            'thickness': self.thickness,
+            'width': self.width.lower,
+            'length': self.length.lower,
+            'size': self.size,
+            'square inches': self.actual_size,
+            'shape': self.shape
+        }
+
+    def serialize_applications(self):
+        return {
+            'walls': self.walls,
+            'countertops': self.countertops,
+            'floors': self.floors,
+            'cabinet_fronts': self.cabinet_fronts,
+            'shower_floors': self.shower_floors,
+            'shower_walls': self.shower_walls,
+            'exterior_walls': self.exterior_walls,
+            'exterior_floors': self.exterior_floors,
+            'covered_walls': self.covered_walls,
+            'covered_floors': self.covered_floors,
+            'pool_linings': self.pool_linings,
+            'bullnose': self.bullnose,
+            'covebase': self.covebase,
+            'corner_covebase': self.corner_covebase
+            }
+
+
+    def assign_size(self):
+        if not (self.length and self.width):
+            self.actual_size = None
+            return
+        for dim in [self.width, self.length]:
+            lower = dim.lower
+            upper = dim.upper
+            print('lower upper = ', lower, upper)
+            if not lower:
+                self.actual_size = None
+                return
+            if upper is not None:
+                self.actual_size = None
+                self.size = 'continous'
+                return
+        length = self.length.lower
+        width = self.width.lower
+        try:
+            actual_size = length * width
+            actual_size = round(actual_size, 2)
+            self.actual_size = decimal.Decimal(actual_size)
+        except (ValueError, TypeError):
+            self.actual_size = None
+        return
 
     def assign_shape(self):
-        pass
+        if not self.shape:
+            if not self.actual_size:
+                self.shape = 'continuous'
+                return
+            print('actual size', self.actual_size)
+            ratio = self.width.lower / self.length.lower
+            if ratio < .9 or ratio > 1.2:
+                self.shape = 'rectangle'
+                return
+            self.shape = 'square'
 
     def set_actual_color(self):
         # pylint: disable=no-member
@@ -90,7 +172,16 @@ class FinishSurface(ProductSubClass):
         image = image.convert('RGB')
 
         colors = image.getcolors()
-        first_percentage, first_color = max(colors, key=operator.itemgetter(0))
+        first_color = max(colors, key=operator.itemgetter(0))[1]
         real_color = webcolors.rgb_to_hex(first_color)
         self.actual_color = real_color
         self.save()
+
+    def name_fields(self):
+        return [
+            'material',
+            'look',
+            'finish',
+            'sub_material',
+            'surface_coating'
+            ]

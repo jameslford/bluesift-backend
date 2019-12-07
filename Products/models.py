@@ -3,18 +3,18 @@ Main product class, very other type of product(specialized, project & retailer) 
 """
 
 import uuid
-from model_utils.managers import InheritanceManager
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
 from django.forms.models import model_to_dict
 from django.db.models import (
-    Avg,
     Subquery,
+    Avg,
     OuterRef,
     CharField
 )
 from django.db.models.functions import Least
 from django.contrib.gis.geos import MultiPoint
+from model_utils.managers import InheritanceManager
 
 
 def availability_getter(query_term, location_pk=None):
@@ -191,6 +191,51 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = str(self.bb_sku)
+        super(Product, self).save(*args, **kwargs)
+
+    def serialize_stock(self):
+        return {
+            'pk': self.pk,
+            'unit': self.unit,
+            'manufacturer_style': self.manufacturer_style,
+            'manufacturer_collection': self.manu_collection,
+            'manufacturer_sku': self.manufacturer_sku,
+            'name': self.name,
+            'swatch_image': self.swatch_image.url if self.swatch_image else None,
+            'manufacturer': self.manufacturer.label,
+            'low_price': getattr(self, 'low_price', None)
+        }
+
+    def serialize_warranty(self):
+        return {
+            'residential_warranty': self.residential_warranty,
+            'commercial_warranty': self.commercial_warranty,
+            'light_commercial_warranty': self.light_commercial_warranty
+            }
+
+    def create_group(self, name: str, terms: dict):
+        term_dict = [{'term': k, 'value': v} for k,v in terms.items()]
+        return {'name': name, 'terms': term_dict}
+
+    def serialize_detail(self):
+        from UserProducts.serializers import RetailerProductMiniSerializer
+        sub = Product.subclasses.get_subclass(pk=self.pk)
+        stock = self.serialize_stock()
+        special = sub.serialize_special()
+        special.update({'warranty': self.serialize_warranty()})
+        priced = [RetailerProductMiniSerializer(price).data for price in self.get_in_store_priced()]
+        stock.update({
+            'manufacturer_url': self.manufacturer_url,
+            'room_scene': self.room_scene.url if self.room_scene else None,
+            'priced': priced,
+            'lists': special
+            })
+        return stock
+
+
     def average_rating(self):
         avg_rating = self.ratings.all().aggregate(Avg('rating'))
         avg_rating = avg_rating.get('rating_avg', None)
@@ -252,11 +297,6 @@ class Product(models.Model):
         vals = list(model_to_dict(sub, fields=fields).values())
         vals = [str(val) for val in vals]
         self.name = '*$'.join(vals)
-
-    def save(self, *args, **kwargs):
-        if not self.name:
-            self.name = str(self.bb_sku)
-        super(Product, self).save(*args, **kwargs)
 
 
 class ProductSubClass(Product):

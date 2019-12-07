@@ -15,9 +15,13 @@ CELERY_RESULT_SERIALIZER = 'json'
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'bluesift-staging-backend.herokuapp.com',
+    ]
 CORS_ORIGIN_ALLOW_ALL = True
-CSRF_TRUSTED_ORIGINS = ['https://www.bluesift.com/', 'https://www.bluesift.com']
+CSRF_TRUSTED_ORIGINS = [
+    'www.bluesift.com',
+    ]
 
 REDIRECT_URL = 'https://www.bluesift.com/'
 DEFAULT_ADDRESS_INSTANCE = 1

@@ -2,7 +2,6 @@ import decimal
 from dataclasses import dataclass
 from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 from SpecializedProducts.models import FinishSurface
-from django.contrib.postgres.fields import DecimalRangeField
 from config.scripts.measurements import char_dec_range_conversion
 
 REVISED_MODEL = ScraperFinishSurface
@@ -14,45 +13,45 @@ class DimensionValue:
         self.absolute = None
         self.continuous = False
         self.convert_to_range(dimension)
+        print(self.range)
 
     def return_split(self, val: str):
-        split = val.split('-').strip()
-        if len(split) > 1:
-            self.continuous = True
-            return split
-        return [val]
+        if val:
+            split = val.split('-')
+            if len(split) > 1:
+                self.continuous = True
+                return split
+        return [val, None]
 
     def convert_to_range(self, value: str):
         vals = self.return_split(value)
         return_vals = []
         for val in vals:
+            if val and '/' in val:
+                div_split = val.split('/')
+                if len(div_split) > 2:
+                    print('div split = ', div_split)
+                    return_vals.append(None)
+                    continue
+                num, div = div_split
+                try:
+                    val = float(num) / float(div)
+                except (ValueError, TypeError):
+                    return_vals.append(None)
+                    continue
             try:
+                dec = float(val)
+                dec = round(dec, 2)
                 dec = decimal.Decimal(val)
-                dec = .05 * round((dec / .05), 2)
+                # dec = divisor * (round(dec, 2) / divisor)
                 return_vals.append(dec)
-            except ValueError:
+            except (ValueError, TypeError):
                 return_vals.append(None)
-        self.absolute = return_vals[0]
+        if self.continuous:
+            self.absolute = return_vals[-1]
+        else:
+            self.absolute = return_vals[0]
         self.range = return_vals
-
-# class RangeValues:
-
-#     def __init__(self, width: str, length: str, thickness: str):
-#         self.initial_width = width
-#         self.initial_length = length
-#         self.width = DimensionValue(self.initial_width)
-#         self.length = DimensionValue(self.initial_length)
-#         # self.size = self.get_size()
-#         self.dimension = None
-
-
-        # width = [x is not None for x in self.width]
-        # if len(width) > 1:
-        #     width = 'continuous'
-        # length = [x is not None for x in self.length]
-        # if len(length) > 1
-
-        # if sum(x for x in self.width) > 1:
 
 
 def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
@@ -85,6 +84,9 @@ def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
     new_product.bullnose = revised_product.bullnose
     new_product.covebase = revised_product.covebase
     new_product.pool_linings = revised_product.pool_linings
+    new_product.width = DimensionValue(revised_product.width).range
+    new_product.length = DimensionValue(revised_product.length).range
+    new_product.thickness = DimensionValue(revised_product.thickness).absolute
     name = (
         f'{revised_product.department_name()}_{new_product.manufacturer.label}_{new_product.manufacturer_sku}'
         f'{new_product.manu_collection}_{new_product.manufacturer_style}_'
@@ -92,8 +94,36 @@ def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
         f'{revised_product.width}x{revised_product.length}x{revised_product.thickness}'
     )
     new_product.name = name
+    new_product.save()
+
 
     # new_product.width = char_dec_range_conversion(revised_product.width)
     # new_product.length = char_dec_range_conversion(revised_product.length)
     # new_product.thickness = char_dec_range_conversion(revised_product.thickness)
-    new_product.save()
+
+
+    # class RangeValues:
+
+#     def __init__(self, width: str, length: str, thickness: str):
+#         self.width = DimensionValue(width)
+#         self.length = DimensionValue(length)
+#         self.thickness = DimensionValue(thickness)
+#         self.size = self.get_size()
+
+#     def get_size(self):
+#         if self.width.continuous or self.length.continuous:
+#             return 'continuous'
+#         try:
+#             sqft = self.width.absolute * self.length.absolute
+#             if sqft < 144:
+#                 return 'small'
+#             if sqft < 
+
+
+        # width = [x is not None for x in self.width]
+        # if len(width) > 1:
+        #     width = 'continuous'
+        # length = [x is not None for x in self.length]
+        # if len(length) > 1
+
+        # if sum(x for x in self.width) > 1:

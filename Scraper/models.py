@@ -75,7 +75,7 @@ class ScraperDepartment(models.Model):
         self.check_sub_classes()
         corresponding_class = self.corresponding_class()
         for revised_product in self.revised_products():
-            if not revised_product.swatch_image:
+            if not revised_product.swatch_image_final:
                 continue
             bb_sku = revised_product.bb_sku
             revised_manufacturer_name = revised_product.subgroup.manufacturer.name
