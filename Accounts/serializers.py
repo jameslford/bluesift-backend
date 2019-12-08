@@ -13,6 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
             'get_full_name',
             'get_initials',
             'is_supplier',
+            'demo',
             'is_pro',
             'staff',
             'admin',
