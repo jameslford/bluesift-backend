@@ -154,11 +154,20 @@ class RetailerProduct(models.Model):
             update_fields=update_fields
             )
 
-    def location_address(self):
-        return self.retailer.address.city_state()
-
-    def location_id(self):
-        return self.retailer.pk
+    def serialize_mini(self):
+        return {
+            'pk': self.pk,
+            'in_store_ppu': self.in_store_ppu,
+            'units_available_in_store': self.units_available_in_store,
+            'units_per_order': self.units_per_order,
+            'location_address': self.retailer.address.city_state(),
+            'location_id': self.retailer.pk,
+            'company_name': self.retailer.company.name,
+            'lead_time_ts': self.lead_time_ts,
+            'publish_online_price': self.publish_online_price,
+            'publish_in_store_price': self.publish_in_store_price,
+            'publish_in_store_availability': self.publish_in_store_availability
+        }
 
     def get_priced(self):
         return serialize_priced(self)
@@ -183,16 +192,9 @@ class RetailerProduct(models.Model):
             self.banner_item = False
             return
 
-    def company_name(self):
-        return self.retailer.company.name
-
     def coordinates(self):
         coordinates = self.retailer.address.coordinates
         return [coordinates.lat, coordinates.lng]
-
-    def set_self_bb_sku(self):
-        bb_sku = self.product.bb_sku
-        self.product_bb_sku = bb_sku
 
     def check_on_sale(self):
         if not self.sale_price or self.sale_price <= 0:

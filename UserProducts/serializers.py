@@ -1,6 +1,4 @@
 import serpy
-from rest_framework import serializers
-from UserProducts.models import RetailerProduct
 
 
 class DurationField(serpy.Field):
@@ -64,23 +62,3 @@ class FullRetailerProductSerializer(serpy.Serializer):
         if prod_obj.product.swatch_image:
             return prod_obj.product.swatch_image.url
         return None
-
-
-class RetailerProductMiniSerializer(serializers.ModelSerializer):
-    """ RetailerProduct serializer with minimum information - used in product-detail modal """
-    class Meta:
-        model = RetailerProduct
-        fields = (
-            'pk',
-            'in_store_ppu',
-            'units_available_in_store',
-            'units_per_order',
-            'location_address',
-            'location_id',
-            'company_name',
-            'lead_time_ts',
-            'publish_online_price',
-            'publish_in_store_price',
-            'publish_in_store_availability'
-        )
-

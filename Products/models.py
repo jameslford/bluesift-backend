@@ -220,13 +220,14 @@ class Product(models.Model):
         term_dict = [{'term': k, 'value': v} for k,v in terms.items()]
         return {'name': name, 'terms': term_dict}
 
+        # from UserProducts.serializers import RetailerProductMiniSerializer
+        # priced = [RetailerProductMiniSerializer(price).data for price in self.get_in_store_priced()]
     def serialize_detail(self):
-        from UserProducts.serializers import RetailerProductMiniSerializer
         sub = Product.subclasses.get_subclass(pk=self.pk)
         stock = self.serialize_stock()
         special = sub.serialize_special()
         special.update({'warranty': self.serialize_warranty()})
-        priced = [RetailerProductMiniSerializer(price).data for price in self.get_in_store_priced()]
+        priced = [price.serialize_mini() for price in self.get_in_store_priced()]
         stock.update({
             'manufacturer_url': self.manufacturer_url,
             'room_scene': self.room_scene.url if self.room_scene else None,

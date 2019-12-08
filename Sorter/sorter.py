@@ -15,7 +15,6 @@ from Addresses.models import Zipcode
 from config.tasks import add_facet_others_delay, create_product_view_record
 from Products.serializers import serialize_product
 from Products.models import Product, ProductSubClass
-from UserProducts.serializers import RetailerProductMiniSerializer
 from UserProducts.models import RetailerProduct
 from ProductFilter.models import (
     construct_range_facet,
@@ -495,4 +494,3 @@ class Sorter:
                         ) for value in facet.values
                     ]
         self.response.message = 'No results'
-
