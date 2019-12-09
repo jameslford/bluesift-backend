@@ -14,12 +14,12 @@ from Scraper.models import (
     ScraperDepartment
     )
 from Scraper.ScraperCleaner.models import ScraperCleaner
-from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 from Products.models import Product
 from ProductFilter.models import ProductFilter
 from .lists import MODS
-from .check_settings import exclude_production, check_staging, check_local
+from .check_settings import exclude_production, check_local
 from .colors import assign_label_color
+# from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
 
 
 @transaction.atomic(using='scraper_revised')
@@ -113,12 +113,12 @@ def initialize_data():
             subgroup.save()
 
 
-def scrape(overwrite=False):
-    for group in ScraperSubgroup.objects.using('scraper_default').all():
-        if overwrite:
-            group.get_data()
-        elif not group.scraped:
-            group.get_data()
+# def scrape(overwrite=False):
+#     for group in ScraperSubgroup.objects.using('scraper_default').all():
+#         if overwrite:
+#             group.get_data()
+#         elif not group.scraped:
+#             group.get_data()
 
 
 
@@ -127,7 +127,6 @@ def backup_db():
     dt_string = now.strftime('%Y-%m-%d-%H-%M-%S')
     environment = settings.ENVIRONMENT
     current_path = os.getcwd()
-    # for database in local_dbs:
     for database in ['default', 'scraper_default', 'scraper_revised']:
         env_path = f'{current_path}\\z_backups\\{environment}\\{database}\\'
         if not os.path.exists(env_path):

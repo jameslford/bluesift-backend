@@ -3,12 +3,14 @@ import copy
 import io
 import importlib
 import requests
+from PIL import Image as pimage
 from django.conf import settings
 from django.core.files import File
 from django.db import models, transaction
+from django.db.models import F
+from django.db.models.functions import Lower
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
-from PIL import Image as pimage
 from config.local_storage import get_local_storage
 from config.scripts.check_settings import exclude_production
 from Products.models import Manufacturer, Product
@@ -144,11 +146,37 @@ class ScraperSubgroup(models.Model):
 
     # the 4 or 5 methods below could potentially be moved to subscraperbase - unesscessarry pinging back and
     # forth if no work is done in manufacturer root
+    # default_subgroup = ScraperSubgroup.objects.using('scraper_default').get(pk=self.pk)
+    # 'revised_pk': revised_subgroup.pk,
+    # 'default_pk': default_subgroup.pk,
+
+    def get_field_values(self):
+        model_type = self.get_prod_type()
+        default_products = model_type.objects.using(
+            'scraper_default').filter(subgroup__pk=self.pk).select_subclasses()
+        revised_products = model_type.objects.filter(subgroup__pk=self.pk).select_subclasses()
+        variable_fields = self.get_prod_type().variable_fields()
+        fields = {
+            'name': str(self),
+            'pk': self.pk,
+            'category_name': self.category.name,
+            'manufacturer_name': self.manufacturer.name,
+            'cleaned': self.cleaned,
+            'scraped': self.scraped,
+            'fields' : [
+                {
+                    'field_name': field,
+                    'default_values': default_products.values_list(field, flat=True).distinct(),
+                    'revised_values': revised_products.values_list(field, flat=True).distinct()
+                    } for field in variable_fields
+                ]
+            }
+        return fields
 
     def get_module(self):
         return importlib.import_module(f'Scraper.{self.category.department.name}.{self.manufacturer.name}')
 
-    def get_data(self):
+    def scrape(self):
         mod = self.get_module()
         mod.Scraper(self).get_data()
 
@@ -156,33 +184,22 @@ class ScraperSubgroup(models.Model):
         mod = self.get_module()
         mod.Scraper(self).get_detail()
 
-    @transaction.atomic()
-    def run_stock_clean(self):
-        self.run_special_cleaner()
-        self.lower_and_strip()
-        self.cleaned = True
-        self.save()
-
-    def run_special_cleaner(self):
+    @transaction.atomic
+    def stock_clean(self):
         mod = self.get_module()
         scraper = mod.Scraper
         products = self.get_products()
         if not products:
             return
         if 'clean' in dir(scraper):
-            print('clean in dir')
             mod.Scraper(self).clean()
+        variable_fields = self.get_variable_fields()
+        for field in variable_fields:
+            arg = {field: Lower(F(field))}
+            products.update(**arg)
+        self.cleaned = True
+        self.save()
 
-    def lower_and_strip(self):
-        products = self.get_products()
-        if not products:
-            return
-        for product in products:
-            for field in self.get_variable_fields():
-                value = getattr(product, field, None)
-                if value:
-                    setattr(product, field, value.strip().lower())
-                    product.save()
 
     def get_variable_fields(self):
         prod_type = self.get_prod_type()

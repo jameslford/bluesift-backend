@@ -19,7 +19,7 @@ from config.celery import app
 from config.scripts.db_operations import (
     backup_db,
     clean_backups,
-    scrape,
+    # scrape,
     scraper_to_revised,
     initialize_data,
     run_stock_clean
@@ -137,15 +137,15 @@ def clean_backups_task():
     return 'backups_cleaned'
 
 
-@shared_task
-def subgroup_command(command):
-    if command == 'scrape_new':
-        initialize_data()
-        scrape()
-        get_images()
-        scraper_to_revised()
-    elif command == 'clean_new':
-        run_stock_clean()
-    else:
-        return 'bad command called'
-    return f'{command} run'
+# @shared_task
+# def subgroup_command(command):
+#     if command == 'scrape_new':
+#         initialize_data()
+#         scrape()
+#         get_images()
+#         scraper_to_revised()
+#     elif command == 'clean_new':
+#         run_stock_clean()
+#     else:
+#         return 'bad command called'
+#     return f'{command} run'

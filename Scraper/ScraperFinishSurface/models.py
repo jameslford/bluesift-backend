@@ -1,4 +1,3 @@
-
 from django.db import models
 from Scraper.models import ScraperBaseProduct
 
