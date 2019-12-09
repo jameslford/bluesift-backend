@@ -31,9 +31,9 @@ class Scraper(SubScraperBase):
                 continue
 
             product = self.get_detail(product)
-            product = product.name_sku_check()
-            if not product:
-                continue
+            product.name_sku_check()
+            # if not product:
+            #     continue
 
             rating = item.get('rating', None)
             db = self.subgroup._state.db

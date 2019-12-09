@@ -3,6 +3,7 @@ import copy
 import io
 import importlib
 import requests
+from typing import Dict
 from PIL import Image as pimage
 from django.conf import settings
 from django.core.files import File
@@ -42,6 +43,16 @@ class ScraperDepartment(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if not self.name_check():
+            raise Exception('Department name does not conform to <Scraper<corresponding_class>>')
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
+            )
+
     def get_module(self):
         return importlib.import_module(f'Scraper.{self.name}.add_details')
 
@@ -54,6 +65,21 @@ class ScraperDepartment(models.Model):
         matching_class = [cls for cls in ProductSubClass.__subclasses__() if cls.__name__ == stripped_name]
         return matching_class[0] if matching_class else None
 
+    def serialize_list(self):
+        corresponding_class = self.corresponding_class()
+        default_products = ScraperBaseProduct.objects.using(
+            'scraper_default').filter(subgroup__category__department__pk=self.pk).count()
+        revised_products = ScraperBaseProduct.objects.using(
+            'scraper_revised').filter(subgroup__category__department__pk=self.pk).count()
+        published_count = corresponding_class.objects.count()
+        return {
+            'name': self.name,
+            'pk': self.pk,
+            'default_count': default_products,
+            'revised_count': revised_products,
+            'published_count': published_count
+            }
+
     def name_check(self):
         if self.corresponding_class():
             return True
@@ -61,6 +87,17 @@ class ScraperDepartment(models.Model):
 
     def get_product_type(self):
         return self.get_module().REVISED_MODEL
+
+    def clean_all(self):
+        pass
+
+    def get_subgroups(self, db='scraper_revised'):
+        return ScraperSubgroup.objects.using(db).filter(category__department__pk=self.pk)
+
+    def scrape_all(self):
+        subs = self.get_subgroups('scraper_default')
+        for sub in subs:
+            sub.scrape()
 
     def revised_products(self):
         return ScraperBaseProduct.objects.using(
@@ -96,12 +133,6 @@ class ScraperDepartment(models.Model):
             new_product.residential_warranty = revised_product.residential_warranty
             new_product.light_commercial_warranty = revised_product.light_commericial_warranty
             self.get_module().add_details(new_product, revised_product)
-
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if not self.name_check():
-            raise Exception('Department name does not conform to <Scraper<corresponding_class>>')
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 class ScraperCategory(models.Model):
@@ -144,12 +175,6 @@ class ScraperSubgroup(models.Model):
         return super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
-    # the 4 or 5 methods below could potentially be moved to subscraperbase - unesscessarry pinging back and
-    # forth if no work is done in manufacturer root
-    # default_subgroup = ScraperSubgroup.objects.using('scraper_default').get(pk=self.pk)
-    # 'revised_pk': revised_subgroup.pk,
-    # 'default_pk': default_subgroup.pk,
-
     def get_field_values(self):
         model_type = self.get_prod_type()
         default_products = model_type.objects.using(
@@ -177,6 +202,9 @@ class ScraperSubgroup(models.Model):
         return importlib.import_module(f'Scraper.{self.category.department.name}.{self.manufacturer.name}')
 
     def scrape(self):
+        default_subgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=self.pk).first()
+        if not default_subgroup:
+            default_subgroup = self.save(using='scraper_default')
         mod = self.get_module()
         mod.Scraper(self).get_data()
 
@@ -191,8 +219,8 @@ class ScraperSubgroup(models.Model):
         products = self.get_products()
         if not products:
             return
-        if 'clean' in dir(scraper):
-            mod.Scraper(self).clean()
+        # if 'clean' in dir(scraper):
+        #     new_vals: Dict = mod.Scraper(self).clean()
         variable_fields = self.get_variable_fields()
         for field in variable_fields:
             arg = {field: Lower(F(field))}
@@ -261,14 +289,14 @@ class ScraperBaseProduct(models.Model):
 
     objects = InheritanceManager()
 
-    def manufacturer_name(self):
-        return self.subgroup.manufacturer.name
+    # def manufacturer_name(self):
+    #     return self.subgroup.manufacturer.name
 
-    def category_name(self):
-        return self.subgroup.category.name
+    # def category_name(self):
+    #     return self.subgroup.category.name
 
-    def department_name(self):
-        return self.subgroup.category.department.name
+    # def department_name(self):
+    #     return self.subgroup.category.department.name
 
     def serialize_short(self):
         return {
@@ -427,7 +455,7 @@ class SubScraperBase:
 
     def get_sub_module(self):
 
-        """ returns a module specific to self.subgroup. i.e scraperfinishsurface.amrstrong.commercial_hardwood """ 
+        """ returns a module specific to self.subgroup. i.e scraperfinishsurface.amrstrong.commercial_hardwood """
 
         current_module = f'Scraper.{self.subgroup.category.department.name}.{self.subgroup.manufacturer.name}'
         return importlib.import_module(f'.{self.subgroup.category.name}', current_module)
@@ -441,3 +469,10 @@ class SubScraperBase:
         sub_mod = self.get_sub_module()
         func = getattr(sub_mod, 'api_response')
         return func(self.subgroup.base_scraping_url)
+
+
+    # the 4 or 5 methods below could potentially be moved to subscraperbase - unesscessarry pinging back and
+    # forth if no work is done in manufacturer root
+    # default_subgroup = ScraperSubgroup.objects.using('scraper_default').get(pk=self.pk)
+    # 'revised_pk': revised_subgroup.pk,
+    # 'default_pk': default_subgroup.pk,

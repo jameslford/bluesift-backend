@@ -82,13 +82,13 @@ class ScraperFinishSurface(ScraperBaseProduct):
     def name_sku_check(self):
         if not self.manufacturer_sku:
             print('no sku')
-            return None
+            return
         existing_product = ScraperFinishSurface.objects.using('scraper_default').filter(
             manufacturer_sku=self.manufacturer_sku).first()
         if not existing_product:
             self.save(using='scraper_default')
             print(self.name)
-            return self
+            return
         keys = [k for k in existing_product.__dict__.keys() if '_state' not in k]
         for k in keys:
             existing_attr = getattr(existing_product, k, None)
@@ -99,7 +99,7 @@ class ScraperFinishSurface(ScraperBaseProduct):
                 setattr(existing_product, k, new_attr)
         existing_product.save(using='scraper_default')
         print('updated ' + existing_product.name)
-        return None
+        return
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.name = self.get_name()

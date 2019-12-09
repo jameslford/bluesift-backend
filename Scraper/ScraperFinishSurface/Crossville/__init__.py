@@ -10,7 +10,7 @@ class Scraper(SubScraperBase):
     base_url = 'https://www.crossvilleinc.com'
 
     def get_data(self):
-        results = requests.get(self.subgroup.base_scraping_url).json()        
+        results = requests.get(self.subgroup.base_scraping_url).json()
         for item in results:
             look = item.get('Style', None)
             if look:
@@ -93,10 +93,7 @@ class Scraper(SubScraperBase):
                 product.exterior_walls = bool('Exterior walls' in applications)
                 product.pool_lining = bool('Pool fountain full lining' in applications)
                 # product.pool_lining = bool('Pool fountain waterline' in applications)
-
-                product = product.name_sku_check()
-                if not product:
-                    continue
+                product.name_sku_check()
         self.subgroup.scraped = True
         self.subgroup.save()
 
@@ -105,19 +102,19 @@ class Scraper(SubScraperBase):
         for default_product in default_products:
             default_product: ScraperFinishSurface = default_product
             sub_material: str = default_product.sub_material.lower()
-            revised_product: ScraperFinishSurface = ScraperFinishSurface.objects.using(
-                'scraper_revised').get(pk=default_product.pk)
+            revised_product, created = ScraperFinishSurface.objects.using(
+                'scraper_revised').get_or_create(manufacturer_sku=default_product.manufacturer_sku)
             if 'mosaic' in sub_material:
                 new_sub_material = sub_material.replace('mosaic', '')
                 revised_product.sub_material = new_sub_material.strip()
                 revised_product.shape = 'mosaic'
             if (default_product.shower_walls or
-                default_product.covered_walls or
-                default_product.exterior_walls):
+                    default_product.covered_walls or
+                    default_product.exterior_walls):
                 default_product.walls = True
             if (default_product.shower_floors or
-                default_product.covered_floors or
-                default_product.exterior_floors):
+                    default_product.covered_floors or
+                    default_product.exterior_floors):
                 default_product.floors = True
             if 'countertop' in sub_material:
                 revised_product.sub_material = 'porcelain'

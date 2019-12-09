@@ -87,15 +87,6 @@ def run_scraper_cleaners():
         cleaner.run_clean()
 
 
-# def delete_scraper_revised():
-#     ScraperManufacturer.objects.all().delete()
-#     ScraperDepartment.objects.all().delete()
-#     ScraperCategory.objects.all().delete()
-#     ScraperSubgroup.objects.all().delete()
-#     ScraperBaseProduct.objects.all().delete()
-#     ScraperAggregateProductRating.objects.all().delete()
-
-
 def initialize_data():
     for mod in MODS:
         manufacturer = ScraperManufacturer.objects.db_manager('scraper_default').get_or_create(name=mod[0])[0]
@@ -111,15 +102,6 @@ def initialize_data():
         if subgroup_created:
             subgroup.base_scraping_url = mod[3]
             subgroup.save()
-
-
-# def scrape(overwrite=False):
-#     for group in ScraperSubgroup.objects.using('scraper_default').all():
-#         if overwrite:
-#             group.get_data()
-#         elif not group.scraped:
-#             group.get_data()
-
 
 
 def backup_db():
@@ -225,3 +207,20 @@ def staging_revised_to_local_revised():
     #     group.save(using='scraper_revised')
     # for product in products:
     #     product.save(using='scraper_revised')
+
+
+# def delete_scraper_revised():
+#     ScraperManufacturer.objects.all().delete()
+#     ScraperDepartment.objects.all().delete()
+#     ScraperCategory.objects.all().delete()
+#     ScraperSubgroup.objects.all().delete()
+#     ScraperBaseProduct.objects.all().delete()
+#     ScraperAggregateProductRating.objects.all().delete()
+
+
+# def scrape(overwrite=False):
+#     for group in ScraperSubgroup.objects.using('scraper_default').all():
+#         if overwrite:
+#             group.get_data()
+#         elif not group.scraped:
+#             group.get_data()

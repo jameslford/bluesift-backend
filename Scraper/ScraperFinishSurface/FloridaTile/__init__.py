@@ -48,7 +48,7 @@ class Scraper(SubScraperBase):
                     product.width = clean_value(size[0])
                     product.length = clean_value(size[1])
                 product = self.get_detail(product)
-                product = product.name_sku_check()
+                product.name_sku_check()
         self.subgroup.scraped = True
         self.subgroup.save()
 

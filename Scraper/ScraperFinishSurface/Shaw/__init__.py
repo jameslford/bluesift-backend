@@ -59,4 +59,3 @@ class Scraper(SubScraperBase):
             if clean_func:
                 print('running clean func for ' + self.subgroup.__str__())
                 clean_func(product)
-
