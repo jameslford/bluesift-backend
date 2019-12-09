@@ -163,7 +163,7 @@ class RetailerProduct(models.Model):
             'location_address': self.retailer.address.city_state(),
             'location_id': self.retailer.pk,
             'company_name': self.retailer.company.name,
-            'lead_time_ts': self.lead_time_ts,
+            'lead_time_ts': self.lead_time_ts.days,
             'publish_online_price': self.publish_online_price,
             'publish_in_store_price': self.publish_in_store_price,
             'publish_in_store_availability': self.publish_in_store_availability

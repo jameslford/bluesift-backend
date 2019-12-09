@@ -4,5 +4,4 @@ from SpecializedProducts.models import FinishSurface
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        products = FinishSurface.objects.all()
-        assign_size(products)
+        assign_size()

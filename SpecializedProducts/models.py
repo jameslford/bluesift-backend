@@ -41,7 +41,7 @@ class FinishSurface(ProductSubClass):
 
     # size that is filtered upon
     # actual decimal size in square inches used for calculation
-    size = models.CharField(max_length=80, null=True, blank=True)
+    size = models.CharField(max_length=180, null=True, blank=True)
     actual_size = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     shape = models.CharField(max_length=80, null=True, blank=True)
 
@@ -71,7 +71,6 @@ class FinishSurface(ProductSubClass):
     def serialize_remaining(self):
         return {
             'label_color': self.label_color,
-            'actual_color': self.actual_color,
             'material': self.material,
             'sub_material': self.sub_material,
             'finish': self.finish,

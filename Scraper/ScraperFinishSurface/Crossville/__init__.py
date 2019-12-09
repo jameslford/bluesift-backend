@@ -1,7 +1,7 @@
 import sys
 import importlib
-import requests
 from fractions import Fraction
+import requests
 from config.scripts.measurements import clean_value, unified_measurement
 from Scraper.models import SubScraperBase
 from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
@@ -84,15 +84,15 @@ class Scraper(SubScraperBase):
                     product.width = clean_value(size[0])
                     product.length = clean_value(size[1])
 
-                for app in applications:
-                    product.floors = bool('Interior floors dry' in app)
-                    product.walls = bool('Interior walls dry' in app)
-                    product.counter_tops = bool('Counters' in app)
-                    product.shower_floors = bool('Interior floors wet' in app)
-                    product.shower_walls = bool('Interior walls wet' in app)
-                    product.covered_walls = bool('Exterior covered walls' in app)
-                    product.exterior_walls = bool('Exterior walls' in app)
-                    product.pool_lining = bool('Pool fountain full lining' in app)
+                product.floors = bool('Interior floors dry' in applications)
+                product.walls = bool('Interior walls dry' in applications)
+                product.counter_tops = bool('Counters' in applications)
+                product.shower_floors = bool('Interior floors wet' in applications)
+                product.shower_walls = bool('Interior walls wet' in applications)
+                product.covered_walls = bool('Exterior covered walls' in applications)
+                product.exterior_walls = bool('Exterior walls' in applications)
+                product.pool_lining = bool('Pool fountain full lining' in applications)
+                # product.pool_lining = bool('Pool fountain waterline' in applications)
 
                 product = product.name_sku_check()
                 if not product:
