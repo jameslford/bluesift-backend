@@ -1,4 +1,5 @@
 from urllib.parse import unquote
+from celery.result import AsyncResult
 from django.apps import apps
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -47,3 +48,13 @@ def get_expanded_header(request):
 def landing(request):
     uts = UserTypeStatic.objects.all()
     return Response([ut.serialize() for ut in uts])
+
+@api_view(['GET'])
+def task_progress(request):
+    job_id = request.GET.get('job_id')
+    if not job_id:
+        return Response('no job id')
+    task = AsyncResult(job_id)
+    data = task.state or task.result
+    print(data)
+    return Response(data)

@@ -16,7 +16,7 @@ urlpatterns = [
     path('subgroups_list', subgroups_list),
     path('subgroups_list/<str:department>', subgroups_list),
     path('subgroup_detail/<int:pk>', subgroup_detail),
-    path('supgroup_clean', clean_subgroup),
+    path('subgroup_clean', clean_subgroup),
     path('subgroup_scrape', scrape_subgroup),
     path('update_field/<int:pk>', update_field),
     path('view_products/<int:pk>', view_products)

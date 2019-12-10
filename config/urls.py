@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path, include
-from .views import get_expanded_header, landing
+from .views import get_expanded_header, landing, task_progress
 
 
 urlpatterns = [
@@ -22,6 +22,7 @@ urlpatterns = [
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),
     path('schedule/', include('Schedule.urls')),
+    path('task-progress', task_progress),
     path('user-products/', include('UserProducts.urls'))
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

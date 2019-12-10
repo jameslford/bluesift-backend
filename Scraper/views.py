@@ -170,8 +170,9 @@ def clean_subgroup(request):
         subgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=subgroup_pk).first()
     if not subgroup:
         return Response('invalid pk')
-    subgroup_clean.delay(pk=subgroup.pk)
-    return Response('good')
+    res = subgroup_clean.delay(pk=subgroup.pk)
+    return Response(res.id)
+
 
 @api_view(['POST'])
 @permission_classes((StagingorLocalAdmin,))
@@ -184,8 +185,8 @@ def scrape_subgroup(request):
         subgroup = ScraperSubgroup.objects.using('scraper_default').filter(pk=subgroup_pk).first()
     if not subgroup:
         return Response('invalid pk')
-    subgroup_scrape.delay(subgroup.pk)
-    return Response('good')
+    res = subgroup_scrape.delay(subgroup.pk)
+    return Response(res.id)
 
 
 @api_view(['POST'])
@@ -199,8 +200,8 @@ def scrape_department(request):
         department = ScraperDepartment.objects.using('scraper_default').filter(pk=department_pk).first()
     if not department:
         return Response('invalid pk')
-    department_scrape.delay(department.pk)
-    return Response('good')
+    res = department_scrape.delay(department.pk)
+    return Response(res.id)
 
 
 @api_view(['POST'])
@@ -214,8 +215,8 @@ def clean_department(request):
         department = ScraperDepartment.objects.using('scraper_default').filter(pk=department_pk).first()
     if not department:
         return Response('invalid pk')
-    department_scrape.delay(department.pk)
-    return Response('good')
+    res = department_scrape.delay(department.pk)
+    return Response(res.id)
 
 
     # subgroup_pk = int(subgroup_pk)
