@@ -67,8 +67,7 @@ def product_assignments(request: Request, project_pk):
         'priced__retailer'
         ).select_related('manufacturer').filter(pk__in=project_product_pks).select_subclasses()
     res = []
-    categories = [kls for kls in ProductSubClass.__subclasses__()]
-    for kls in categories:
+    for kls in ProductSubClass.__subclasses__():
         kls_res = {
             'name': kls.__name__,
             'products': [serialize_product_priced(product) for product in products if isinstance(product, kls)]
@@ -80,7 +79,7 @@ def product_assignments(request: Request, project_pk):
         ).all()
     response = {
         'assignments': [serializer_product_assignment(assi) for assi in assignments],
-        'categories': [cat.__name__ for cat in categories],
+        'categories': [cat.__name__ for cat in ProductSubClass.__subclasses__()],
         'groups': res
         }
     return Response(response)
