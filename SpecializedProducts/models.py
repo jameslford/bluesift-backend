@@ -184,3 +184,16 @@ class FinishSurface(ProductSubClass):
             'sub_material',
             'surface_coating'
             ]
+
+
+
+class Appliance(ProductSubClass):
+    room_type = models.CharField(max_length=100, blank=True, null=True)
+    appliance_type = models.CharField(max_length=100, blank=True, null=True)
+    height = models.DecimalField(max_digits=5, decimal_places=2)
+    depth = models.DecimalField(max_digits=5, decimal_places=2)
+    width = models.DecimalField(max_digits=5, decimal_places=2)
+
+
+class Millwork(ProductSubClass):
+    pass
