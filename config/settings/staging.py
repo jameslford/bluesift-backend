@@ -29,6 +29,8 @@ CSRF_COOKIE_DOMAIN = [
 CSRF_TRUSTED_ORIGINS = [
     'bluesift.com',
     'bluesift.com/',
+    'https://www.bluesift.com/',
+    'https://www.bluesift.com',
     'bluesift-staging-frontend.herokuapp.com',
     'bluesift-staging-frontend.herokuapp',
     ]
