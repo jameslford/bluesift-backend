@@ -18,8 +18,9 @@ SECRET_KEY = os.environ['SECRET_KEY']
 ALLOWED_HOSTS = [
     'bluesift-staging-backend.herokuapp.com',
 ]
-CORS_ORIGIN_ALLOW_ALL = [
+CORS_ORIGIN_WHITELIST = [
     'https://www.bluesift.com/',
+    'https://www.bluesift.com',
     'https://bluesift-staging-frontend.herokuapp.com'
     ]
 # CSRF_COOKIE_DOMAIN = [

@@ -45,7 +45,7 @@ class LastSeenMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request: Request):
+    def __call__(self, request):
         headers = request.headers
         host = request.get_host()
         qps = request.query_params
