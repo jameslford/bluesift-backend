@@ -46,7 +46,7 @@ class LastSeenMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest):
-        headers = request.headers
+        headers = request.headers.__dict__
         host = request.get_host()
         qps = None
         if request.method == 'GET':
