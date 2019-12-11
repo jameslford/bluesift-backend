@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from config.views import check_department_string
-from Sorter.sorter import Sorter
+from ProductFilter.sorter import Sorter
 from .models import Product
 
 

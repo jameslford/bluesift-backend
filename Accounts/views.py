@@ -19,7 +19,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from config.tasks import send_verification_email
+from .tasks import send_verification_email
 
 from Profiles.models import BaseProfile, RetailerEmployeeProfile, ProEmployeeProfile
 from .serializers import UserSerializer

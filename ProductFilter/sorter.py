@@ -12,11 +12,10 @@ from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
-from config.tasks import add_facet_others_delay, create_product_view_record
 from Products.serializers import serialize_product
 from Products.models import Product, ProductSubClass
 from UserProducts.models import RetailerProduct
-from ProductFilter.models import (
+from .models import (
     construct_range_facet,
     return_radii,
     ProductFilter,
@@ -36,6 +35,9 @@ from ProductFilter.models import (
     DEPENDENT_FACET,
     COLOR_FACET
 )
+
+from .tasks import add_facet_others_delay, create_product_view_record
+
 
 
 @dataclass
