@@ -23,16 +23,17 @@ logger = get_task_logger(__name__)
 
 @app.task
 def harvest_request(headers: Dict, host, path):
-    header_token = headers.get('HTTP_AUTHORIZATION', None)
-    user = None
-    if header_token:
-        token = header_token.replace('Token', '').strip()
-        token_obj = Token.objects.filter(key=token).first()
-        if token_obj:
-            user = token_obj.user
-            user.last_seen = datetime.datetime.now()
-            user.save()
-    print(headers, host, path)
+    pass
+    # header_token = headers.get('HTTP_AUTHORIZATION', None)
+    # user = None
+    # if header_token:
+    #     token = header_token.replace('Token', '').strip()
+    #     token_obj = Token.objects.filter(key=token).first()
+    #     if token_obj:
+    #         user = token_obj.user
+    #         user.last_seen = datetime.datetime.now()
+    #         user.save()
+    # print(headers, host, path)
 
 
 @shared_task
