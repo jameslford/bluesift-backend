@@ -1,6 +1,6 @@
 from django.conf import settings
-from django.http import JsonResponse
-from rest_framework.request import Request
+from django.http import JsonResponse, HttpRequest
+# from rest_framework.request import Request
 from rest_framework.authtoken.models import Token
 from .tasks import mark_user_seen, harvest_request
 
@@ -45,10 +45,12 @@ class LastSeenMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest):
         headers = request.headers
         host = request.get_host()
-        qps = request.query_params
+        qps = None
+        if request.method == 'GET':
+            qps = request.GET
         harvest_request.delay(headers, host, qps)
         if request.user.is_authenticated:
             mark_user_seen.delay(request.user.pk)
