@@ -18,22 +18,25 @@ SECRET_KEY = os.environ['SECRET_KEY']
 ALLOWED_HOSTS = [
     'bluesift-staging-backend.herokuapp.com',
 ]
-CORS_ORIGIN_ALLOW_ALL = True
-CSRF_COOKIE_DOMAIN = [
-    'bluesift.com',
-    'bluesift.com/',
-    'bluesift-staging-frontend.herokuapp.com',
-    'bluesift-staging-frontend.herokuapp'
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    'bluesift.com',
-    'bluesift.com/',
+CORS_ORIGIN_ALLOW_ALL = [
     'https://www.bluesift.com/',
-    'https://www.bluesift.com',
-    'bluesift-staging-frontend.herokuapp.com',
-    'bluesift-staging-frontend.herokuapp',
+    'https://bluesift-staging-frontend.herokuapp.com'
     ]
+# CSRF_COOKIE_DOMAIN = [
+#     'bluesift.com',
+#     'bluesift.com/',
+#     'bluesift-staging-frontend.herokuapp.com',
+#     'bluesift-staging-frontend.herokuapp'
+# ]
+
+# CSRF_TRUSTED_ORIGINS = [
+#     'bluesift.com',
+#     'bluesift.com/',
+#     'https://www.bluesift.com/',
+#     'https://www.bluesift.com',
+#     'bluesift-staging-frontend.herokuapp.com',
+#     'bluesift-staging-frontend.herokuapp',
+#     ]
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1

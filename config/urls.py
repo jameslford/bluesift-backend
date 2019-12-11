@@ -6,8 +6,8 @@ from .views import get_expanded_header, landing, task_progress
 
 
 urlpatterns = [
-    path('admin/doc/', include('django.contrib.admindocs.urls')),
-    path('admin/', admin.site.urls),
+    # path('admin/doc/', include('django.contrib.admindocs.urls')),
+    # path('admin/', admin.site.urls),
     path('addresses/', include('Addresses.urls')),
     path('accounts/', include('Accounts.urls')),
     path('analytics/', include('Analytics.urls')),

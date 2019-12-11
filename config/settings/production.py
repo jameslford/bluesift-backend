@@ -20,12 +20,12 @@ ALLOWED_HOSTS = [
     'bluesift-production-backend.herokuapp.com'
     ]
 CORS_ORIGIN_ALLOW_ALL = True
-CSRF_TRUSTED_ORIGINS = [
-    'www.bluesift.com',
-    ]
-CSRF_COOKIE_DOMAIN = [
-    'bluesift.com',
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     'www.bluesift.com',
+#     ]
+# CSRF_COOKIE_DOMAIN = [
+#     'bluesift.com',
+# ]
 
 
 REDIRECT_URL = 'https://www.bluesift.com/'
@@ -52,7 +52,7 @@ DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     )
 }
