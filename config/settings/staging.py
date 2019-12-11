@@ -19,6 +19,12 @@ ALLOWED_HOSTS = [
     'bluesift-staging-backend.herokuapp.com',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
+CSRF_COOKIE_DOMAIN = [
+    'bluesift.com',
+    'bluesift-staging-frontend.herokuapp.com',
+    'bluesift-staging-frontend.herokuapp'
+]
+
 CSRF_TRUSTED_ORIGINS = [
     'bluesift.com',
     'bluesift-staging-frontend.herokuapp.com',

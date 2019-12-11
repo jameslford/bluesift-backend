@@ -89,8 +89,8 @@ class FinishSurface(ProductSubClass):
     def serialize_size(self):
         return {
             'thickness': self.thickness,
-            'width': self.width.lower,
-            'length': self.length.lower,
+            'width': self.width.lower if self.width else None,
+            'length': self.length.lower if self.length else None,
             'size': self.size,
             'square inches': self.actual_size,
             'shape': self.shape

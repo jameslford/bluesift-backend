@@ -23,6 +23,10 @@ CORS_ORIGIN_ALLOW_ALL = True
 CSRF_TRUSTED_ORIGINS = [
     'www.bluesift.com',
     ]
+CSRF_COOKIE_DOMAIN = [
+    'bluesift.com',
+]
+
 
 REDIRECT_URL = 'https://www.bluesift.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
