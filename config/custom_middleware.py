@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.http import JsonResponse
-from config.tasks import mark_user_seen
+from rest_framework.request import Request
 from rest_framework.authtoken.models import Token
+from .tasks import mark_user_seen, harvest_request
 
 class StagingMiddleware:
     """
@@ -36,25 +37,6 @@ class StagingMiddleware:
         return JsonResponse({'message': 'We\'re sorry, this area is for admin only'})
 
 
-# class ProductionMiddleware(object):
-#     """
-#     Keeps random users from being able to look at staging data
-#     """
-
-#     def __init__(self, get_response):
-#         self.get_response = get_response
-
-#     def __call__(self, request):
-#         if 'accounts/login' in request.path:
-#             return self.get_response(request)
-#         if settings.ENVIRONMENT != 'production':
-#             return self.get_response(request)
-#         if request.user.is_authenticated:
-#             if request.user:
-#                 return self.get_response(request)
-#         return JsonResponse({'message': 'We\'re sorry, this area is for admin only'})
-
-
 class LastSeenMiddleware:
     """
     sends a request to celery to mark user as seen
@@ -63,7 +45,11 @@ class LastSeenMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request: Request):
+        headers = request.headers
+        host = request.get_host()
+        qps = request.query_params
+        harvest_request.delay(headers, host, qps)
         if request.user.is_authenticated:
             mark_user_seen.delay(request.user.pk)
         return self.get_response(request)

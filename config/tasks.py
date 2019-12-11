@@ -4,6 +4,7 @@ celery tasks - these are all asynchronous that exist for this project
 from __future__ import absolute_import, unicode_literals
 # import logging
 import datetime
+from typing import Dict
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
@@ -101,11 +102,20 @@ def create_product_view_record(
     pv_record.save()
     return 'ProductViewRecord Created'
 
+
 @app.task
 def mark_user_seen(user_pk):
     user = get_user_model().objects.get(pk=user_pk)
     user.last_seen = datetime.datetime.now()
     user.save()
+
+
+@app.task
+def harvest_request(headers: Dict, host, params: Dict = None):
+    print(headers, host, params)
+    # user = get_user_model().objects.get(pk=user_pk)
+    # user.last_seen = datetime.datetime.now()
+    # user.save()
 
 
 @shared_task
