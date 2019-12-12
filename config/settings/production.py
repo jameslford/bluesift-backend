@@ -1,10 +1,11 @@
 import os
 import dj_database_url
+from corsheaders.defaults import default_headers
 from .base import *
+
 
 DEBUG = False
 ENVIRONMENT = 'production'
-# BROKER_URL = 'PASS'
 CELERY_BROKER_URL = os.environ['REDIS_URL']
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -23,12 +24,10 @@ CORS_ORIGIN_WHITELIST = [
     'https://www.bluesift.com/',
     'https://www.bluesift.com',
 ]
-# CSRF_TRUSTED_ORIGINS = [
-#     'www.bluesift.com',
-#     ]
-# CSRF_COOKIE_DOMAIN = [
-#     'bluesift.com',
-# ]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'Location',
+    'Session_ID'
+]
 
 
 REDIRECT_URL = 'https://www.bluesift.com/'

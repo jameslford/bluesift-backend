@@ -1,6 +1,8 @@
 import os
 import dj_database_url
+from corsheaders.defaults import default_headers
 from .base import *
+
 
 DEBUG = False
 ENVIRONMENT = 'staging'
@@ -23,6 +25,12 @@ CORS_ORIGIN_WHITELIST = [
     'https://www.bluesift.com',
     'https://bluesift-staging-frontend.herokuapp.com'
     ]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'location',
+    'session_id'
+]
+
 # CSRF_COOKIE_DOMAIN = [
 #     'bluesift.com',
 #     'bluesift.com/',

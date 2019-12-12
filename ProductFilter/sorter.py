@@ -5,7 +5,6 @@ Primarily 2 classes that return product (not subclassed) instances
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List
-from ipware import get_client_ip
 from django.db import models
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
@@ -36,7 +35,7 @@ from .models import (
     COLOR_FACET
 )
 
-from .tasks import add_facet_others_delay, create_product_view_record
+from .tasks import add_facet_others_delay
 
 
 
@@ -93,11 +92,6 @@ class Sorter:
             if field in query_dict:
                 values = query_dict.pop(field)
                 stripped_fields[field] = values
-        # if 'page' in query_dict:
-        #     page = query_dict.pop('page', None)
-        #     if page:
-        #         self.page = int(page[0])
-        #     print('page = ', self.page)
         query_index, created = QueryIndex.objects.get_or_create_qi(
             query_path=self.request.path,
             query_dict=query_dict.urlencode(),
@@ -105,15 +99,15 @@ class Sorter:
             retailer_location=self.location_pk
             )
         self.query_index = query_index
-        print('self query index = ', self.query_index.pk)
-        user_pk = self.request.user.pk if self.request.user.is_authenticated else None
-        client_ip = get_client_ip(self.request)[0]
-        create_product_view_record.delay(
-            qi_pk=self.query_index.pk,
-            user_pk=user_pk,
-            ip_address=str(client_ip),
-            floating_fields=stripped_fields,
-            )
+        # print('self query index = ', self.query_index.pk)
+        # user_pk = self.request.user.pk if self.request.user.is_authenticated else None
+        # client_ip = get_client_ip(self.request)[0]
+        # create_product_view_record.delay(
+        #     qi_pk=self.query_index.pk,
+        #     user_pk=user_pk,
+        #     ip_address=str(client_ip),
+        #     floating_fields=stripped_fields,
+        #     )
         self.__parse_querydict(query_dict)
         self.__check_dependents()
         if query_index.dirty or self.update or created:
@@ -143,19 +137,16 @@ class Sorter:
         The products it stores come from values that are not subject to much change,
         so are used as a base for floating fields filtering
         """
-        print('building full')
         products = self.get_products()
         self.__filter_bools(products)
         self.__filter_multi(products)
         self.assign_facet_others(products)
         if full_build:
-            print('full build')
             self.__count_objects(products)
             indices = self.__get_counted_facet_indices()
             qsets = [self.facets[q].queryset for q in indices]
             products = products.intersection(*qsets)
             self.__set_filter_dict()
-            print('filter_dict_set')
             self.query_index.products.clear()
             self.query_index.products.add(*products)
             self.query_index.response = asdict(self.response)
@@ -167,7 +158,6 @@ class Sorter:
         Filters fields that are subject to rapid change - price, location, availability fields.
         draws initial products from QueryIndex
         """
-        print('filtering floating')
         self.__check_availability_facet(stripped_fields)
         search_terms = stripped_fields.pop('search') if 'search' in stripped_fields else None
         for key in stripped_fields:
@@ -197,7 +187,6 @@ class Sorter:
         However, it does need to check the counts for possible types of availability and insert them dynamically,
         as these are subject to change
         """
-        print('returning static')
         products = self.query_index.get_products('manufacturer').product_prices(self.location_pk)
         self.__count_availability(products)
         availability_facet = self.facets[self.get_index_by_qv('availability')]
@@ -236,14 +225,11 @@ class Sorter:
         indices = self.__get_counted_facet_indices()
         for index in indices:
             facet: Facet = self.facets[index]
-            print(facet.name)
             if facet.facet_type == BOOLGROUP_FACET:
                 other_qsets = [self.facets[q].queryset for q in indices]
             else:
-                print('else')
                 other_qsets = [self.facets[q].queryset for q in indices if q != index]
             facet.intersection = products.intersection(*other_qsets).values_list('pk', flat=True)
-            print('facet intersection query index = ', self.query_index.pk)
             add_facet_others_delay.delay(self.query_index.pk, facet.name, list(facet.intersection))
 
     def __count_objects(self, products: QuerySet):
@@ -334,11 +320,9 @@ class Sorter:
         try:
             return [serialize_product(product) for product in products]
         except IndexError:
-            print('response count = ', self.response.product_count, ' ', start_index, end_index)
             return []
 
     def __filter_bools(self, products: QuerySet):
-        print('filtering bools')
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET)
         for index in bool_indices:
             facet = self.facets[index]

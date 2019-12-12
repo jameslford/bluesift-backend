@@ -3,37 +3,63 @@ celery tasks - these are all asynchronous that exist for this project
 """
 from __future__ import absolute_import, unicode_literals
 # import logging
-import datetime
+import json
+from django.utils import timezone
 from typing import Dict
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from django.urls import resolve as dj_resolve
 from rest_framework.authtoken.models import Token
 from ProductFilter.models import QueryIndex
 from Addresses.models import Coordinate
+from Analytics.models import ViewRecord
 from config.celery import app
 from config.scripts.db_operations import (
     backup_db,
     clean_backups,
-    scraper_to_revised,
-    initialize_data,
-    run_stock_clean
+    # scraper_to_revised,
+    # initialize_data,
+    # run_stock_clean
     )
 
 logger = get_task_logger(__name__)
 
+
 @app.task
-def harvest_request(headers: Dict, host, path):
-    pass
-    # header_token = headers.get('HTTP_AUTHORIZATION', None)
-    # user = None
-    # if header_token:
-    #     token = header_token.replace('Token', '').strip()
-    #     token_obj = Token.objects.filter(key=token).first()
-    #     if token_obj:
-    #         user = token_obj.user
-    #         user.last_seen = datetime.datetime.now()
-    #         user.save()
-    # print(headers, host, path)
+def harvest_request(headers: Dict, path, ip_address=None):
+    header_token = headers.get('HTTP_AUTHORIZATION', None)
+    user = None
+    record = ViewRecord()
+    if header_token:
+        token = header_token.replace('Token', '').strip()
+        token_obj = Token.objects.filter(key=token).first()
+        if token_obj:
+            user = token_obj.user
+            user.last_seen = timezone.now()
+            user.save()
+            record.user = user
+    location = headers.get('HTTP_LOCATION')
+    if location:
+        location = json.loads(location)
+        lat = location.get('lat')
+        lon = location.get('lon')
+        timestamp = location.get('timeStamp')
+        if lat and lon:
+            try:
+                lat = float(lat)
+                lon = float(lon)
+                coord = Coordinate.objects.get_or_create(lat=lat, lng=lon)
+                record.location = coord
+            except (ValueError, AttributeError):
+                pass
+    session_id = headers.get('HTTP_SESSION_ID')
+    if session_id:
+        record.session_id = session_id
+    record.ip_address = ip_address
+    record.path = path
+    record.save()
+    # if location:
+    #     lat = location.get('lat')
 
 
 @shared_task

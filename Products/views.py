@@ -6,6 +6,7 @@ from rest_framework import status
 from config.views import check_department_string
 from ProductFilter.sorter import Sorter
 from .models import Product
+from .tasks import add_detail_record
 
 
 @api_view(['GET'])
@@ -20,4 +21,5 @@ def products_list(request: Request, product_type: str, location_pk: int = None, 
 @api_view(['GET'])
 def product_detail(request, pk):
     response = Product.objects.get(pk=pk).serialize_detail()
+    add_detail_record.delay(request.get_full_path(), pk)
     return Response(response, status=status.HTTP_200_OK)

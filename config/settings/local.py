@@ -1,15 +1,16 @@
 import dj_database_url
-from celery.schedules import crontab
+from corsheaders.defaults import default_headers
 from .base import *
-# from .passwords import *
 from ..passwords import *
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'Location',
+    'SessionID'
+]
 
 
 DEBUG = True
 ENVIRONMENT = 'local'
-
-SECRET_KEY = SECRET_KEY
-
 CELERY_BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -31,10 +32,8 @@ EMAIL_HOST_PASSWORD = 'M&5#OXp29yMX'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-
 MEDIA_ROOT = os.path.join(BASE_DIR, 'management\\media')
 MEDIA_URL = 'management/media/'
-
 
 DATABASES = {
     'default': {
