@@ -13,7 +13,7 @@ from .models import ViewRecord
 
 
 @api_view(['GET'])
-@permission_classes((IsAdminUser,))
+# @permission_classes((IsAdminUser,))
 def view_records(request):
     records = ViewRecord.objects.all()
     recs = records.order_by('recorded').values_list('recorded', 'session_id')

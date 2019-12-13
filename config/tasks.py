@@ -52,7 +52,7 @@ def harvest_request(headers: Dict, path, ip_address=None):
                 record.location = coord
             except (ValueError, AttributeError):
                 pass
-    session_id = headers.get('HTTP_SESSION_ID')
+    session_id = headers.get('HTTP_SESSIONID')
     if session_id:
         record.session_id = session_id
     record.ip_address = ip_address
