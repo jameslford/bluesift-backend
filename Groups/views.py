@@ -26,6 +26,7 @@ from UserProductCollections.models import RetailerLocation
 from Profiles.models import BaseProfile
 from .serializers import BusinessSerializer
 from .models import RetailerCompany, ProCompany, Company, ServiceType
+from .tasks import add_retailer_record, add_pro_record
 
 
 @api_view(['POST'])
@@ -92,6 +93,7 @@ def retailer_location_detail_header(request: Request, pk):
         'address__coordinates',
         'company'
         ).prefetch_related('products', 'products__product').get(pk=pk)
+    add_retailer_record.delay(request.get_full_path(), pk=pk)
     return Response(
         BusinessSerializer(retailer).getData(),
         status=status.HTTP_200_OK
@@ -128,7 +130,7 @@ def service_detail_header(request: Request, pk=None):
         'business_address__coordinates',
         'plan'
     ).get(pk=pk)
-
+    add_pro_record.delay(request.get_full_path(), pk=pk)
     return Response(
         BusinessSerializer(service).getData(),
         status=status.HTTP_200_OK

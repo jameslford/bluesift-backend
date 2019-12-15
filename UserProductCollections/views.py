@@ -10,7 +10,7 @@ from config.custom_permissions import OwnerOrAdmin, RetailerPermission
 from Groups.serializers import BusinessSerializer
 from .models import BaseProject, RetailerLocation
 from .serializers import ProjectListSerializer
-
+from .tasks import add_retailer_record
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
@@ -83,6 +83,7 @@ def crud_location(request: Request, location_pk: int = None):
     user = request.user
 
     if request.method == 'GET':
+        add_retailer_record.delay(request.get_full_path(), location_pk)
         location = RetailerLocation.objects.get(pk=location_pk)
         return Response(BusinessSerializer(location, True).getData(), status=status.HTTP_200_OK)
 

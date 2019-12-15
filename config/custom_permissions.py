@@ -67,12 +67,14 @@ class AllowAllExceptStaging(permissions.BasePermission):
             )
         return True
 
-class SupplierorAdmin(permissions.IsAuthenticated):
+class SupplierAdminPro(permissions.IsAuthenticated):
 
     def has_permission(self, request, view):
         user = request.user
         if user.admin:
             return True
         if user.is_supplier:
+            return True
+        if user.is_pro:
             return True
         return False

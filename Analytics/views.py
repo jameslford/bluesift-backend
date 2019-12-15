@@ -1,23 +1,44 @@
 """
 Analytics.views
 """
+from django.db.models import Count
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models.functions import TruncWeek, TruncDay, TruncMonth
+from django.db.models.functions import TruncWeek, TruncDay, TruncMonth, TruncHour
+from Accounts.models import User
 from .models import ViewRecord
 # from rest_framework import status
-# from config.custom_permissions import SupplierorAdmin
+from config.custom_permissions import SupplierAdminPro
 # from UserProductCollections.models import RetailerLocation
 # from Groups.models import RetailerCompany
 
 
 @api_view(['GET'])
-# @permission_classes((IsAdminUser,))
-def view_records(request):
-    records = ViewRecord.objects.all()
-    recs = records.order_by('recorded').values_list('recorded', 'session_id')
-    return Response(recs)
+# @permission_classes((SupplierAdminPro,))
+def view_records(request, interval='day'):
+    user: User = request.user
+    if user.is_authenticated:
+        if user.is_supplier:
+            pks = user.get_collections().values_list('pk')
+            records = ViewRecord.objects.filter(supplier_pk__in=pks)
+        elif user.is_pro:
+            pk = user.get_group().pk
+            records = ViewRecord.objects.filter(pro_company_pk=pk)
+        elif user.admin:
+            records = ViewRecord.objects.all()
+    else:
+        records = ViewRecord.objects.all()
+    # recs = records.order_by('recorded').annotate(value=Count('pk')).values('recorded', 'value')
+    recs = records.annotate(
+            x=TruncDay('recorded')).values(
+                'x').annotate(
+                    y=Count('pk')).values('x', 'y').order_by('x')
+    res = {
+        'label': 'all views',
+        'data': recs
+    }
+    return Response(res)
 
 #     pass
 

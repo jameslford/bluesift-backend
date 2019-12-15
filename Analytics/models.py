@@ -34,6 +34,7 @@ class ViewRecord(Record):
     cleaned = models.BooleanField(default=False)
     product_detail_pk = models.CharField(max_length=120, null=True)
     supplier_pk = models.IntegerField(null=True)
+    pro_company_pk = models.IntegerField(null=True)
     location = models.ForeignKey(
         Coordinate,
         null=True,
