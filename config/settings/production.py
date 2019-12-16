@@ -13,6 +13,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_RESULT_SERIALIZER = 'json'
 
+
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
 

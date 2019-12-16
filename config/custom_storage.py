@@ -13,3 +13,8 @@ class MediaStorage(S3Boto3Storage):
     location = settings.MEDIAFILES_LOCATION
     bucket_name = settings.AWS_MEDIA_BUCKET_NAME
     custom_domain = bucket_name + '.s3.amazonaws.com'
+
+    @classmethod
+    def base_path(cls):
+        url_p = cls.url_protocol
+        return f'https://{cls.custom_domain}/{cls.location}/'

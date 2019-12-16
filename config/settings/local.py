@@ -1,7 +1,10 @@
 import dj_database_url
 from corsheaders.defaults import default_headers
+from .base import INSTALLED_APPS as baseApps
 from .base import *
 from ..passwords import *
+
+INSTALLED_APPS = baseApps + ['debug_toolbar']
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'Location',

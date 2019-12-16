@@ -19,7 +19,6 @@ DEFAULT_FILE_STORAGE = 'config.custom_storage.MediaStorage'
 
 INSTALLED_APPS = [
     'corsheaders',
-    'debug_toolbar',
     'django_celery_results',
     'django_json_widget',
     'django_celery_beat',

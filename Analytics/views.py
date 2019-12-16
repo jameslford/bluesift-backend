@@ -20,8 +20,10 @@ def view_records(request, interval='day'):
     user: User = request.user
     if user.is_authenticated:
         if user.is_supplier:
-            pks = user.get_collections().values_list('pk')
-            records = ViewRecord.objects.filter(supplier_pk__in=pks)
+            pks = user.get_collections().values_list('pk', flat=True)
+            print('pk list is', pks)
+            records = ViewRecord.objects.filter(supplier_pk__in=list(pks))
+            print('view record count = ', records.count())
         elif user.is_pro:
             pk = user.get_group().pk
             records = ViewRecord.objects.filter(pro_company_pk=pk)

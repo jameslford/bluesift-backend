@@ -6,9 +6,12 @@ from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List
 from django.db import models
+from django.core.files.storage import get_storage_class, default_storage
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
+from django.db.models import Value, CharField
+from django.db.models.functions import Concat
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
 from Products.serializers import serialize_product
@@ -309,18 +312,19 @@ class Sorter:
     def __serialize_products(self, products: QuerySet):
         if not self.response.return_products:
             return []
-        start_index = (self.page - 1) * 300
-        end_index = self.page * 300
-        if start_index > self.response.product_count:
-            return []
-        if end_index > self.response.product_count:
-            self.response.load_more = False
-            end_index = None
-            return [serialize_product(product) for product in products[start_index:end_index]]
-        try:
-            return [serialize_product(product) for product in products]
-        except IndexError:
-            return []
+        imageurl = get_storage_class().base_path()
+        return products.annotate(swatch_url=Concat(Value(imageurl), 'swatch_image', output_field=CharField())).values(
+            'pk',
+            'unit',
+            'manufacturer_style',
+            'manu_collection',
+            'manufacturer_sku',
+            'name',
+            'swatch_url',
+            'swatch_image',
+            'manufacturer__label',
+            'low_price'
+        )
 
     def __filter_bools(self, products: QuerySet):
         bool_indices = self.get_indices_by_ft(BOOLGROUP_FACET)

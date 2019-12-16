@@ -4,6 +4,7 @@ from corsheaders.defaults import default_headers
 from .base import *
 
 
+
 DEBUG = False
 ENVIRONMENT = 'staging'
 # BROKER_URL = 'PASS'
@@ -30,22 +31,6 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'location',
     'session_id'
 ]
-
-# CSRF_COOKIE_DOMAIN = [
-#     'bluesift.com',
-#     'bluesift.com/',
-#     'bluesift-staging-frontend.herokuapp.com',
-#     'bluesift-staging-frontend.herokuapp'
-# ]
-
-# CSRF_TRUSTED_ORIGINS = [
-#     'bluesift.com',
-#     'bluesift.com/',
-#     'https://www.bluesift.com/',
-#     'https://www.bluesift.com',
-#     'bluesift-staging-frontend.herokuapp.com',
-#     'bluesift-staging-frontend.herokuapp',
-#     ]
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
@@ -116,5 +101,22 @@ MIDDLEWARE = [
     'config.custom_middleware.LastSeenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+
+# CSRF_COOKIE_DOMAIN = [
+#     'bluesift.com',
+#     'bluesift.com/',
+#     'bluesift-staging-frontend.herokuapp.com',
+#     'bluesift-staging-frontend.herokuapp'
+# ]
+
+# CSRF_TRUSTED_ORIGINS = [
+#     'bluesift.com',
+#     'bluesift.com/',
+#     'https://www.bluesift.com/',
+#     'https://www.bluesift.com',
+#     'bluesift-staging-frontend.herokuapp.com',
+#     'bluesift-staging-frontend.herokuapp',
+#     ]
