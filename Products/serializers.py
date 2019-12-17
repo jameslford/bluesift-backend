@@ -22,8 +22,8 @@ def serialize_product(product: Product) -> Dict[str, any]:
         'manu_collection': product.manu_collection,
         'manufacturer_sku': product.manufacturer_sku,
         'name': product.name,
-        'swatch_image': product.swatch_image.url if product.swatch_image else None,
-        'manufacturer': product.manufacturer.label,
+        'swatch_url': product.swatch_image.url if product.swatch_image else None,
+        'manufacturer__label': product.manufacturer.label,
         'low_price': getattr(product, 'low_price', None)
         }
 
