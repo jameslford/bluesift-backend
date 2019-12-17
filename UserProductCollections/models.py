@@ -200,11 +200,17 @@ class BaseProjectManager(models.Manager):
     def update_project(self, user, **kwargs):
         """ update method """
         project_pk = kwargs.get('pk')
+        if isinstance(project_pk, list):
+            project_pk = project_pk[0]
+        if isinstance(project_pk, str):
+            project_pk = int(project_pk)
+        project_pk = int(project_pk)
         collections = user.get_collections()
         collection = collections.get(pk=project_pk)
         nickname = kwargs.get('nickname')
         deadline = kwargs.get('deadline')
         address = kwargs.get('address')
+        image = kwargs.get('image')
         if deadline:
             collection.deadline = deadline
         if address:
@@ -212,6 +218,13 @@ class BaseProjectManager(models.Manager):
             collection.address = address
         if nickname:
             collection.nickname = nickname
+        if image:
+            try:
+                image = image[0]
+                collection.image.save(image.name, image)
+                print('image saved')
+            except IndexError:
+                pass
         collection.save()
         return collection
 
@@ -236,6 +249,7 @@ class BaseProjectManager(models.Manager):
 
 class BaseProject(models.Model):
     deadline = models.DateTimeField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True, upload_to='project-images/' )
     template = models.BooleanField(default=False)
     address = models.ForeignKey(
         Address,

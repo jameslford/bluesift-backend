@@ -9,8 +9,8 @@ from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin, RetailerPermission
 from Groups.serializers import BusinessSerializer
 from .models import BaseProject, RetailerLocation
-from .serializers import ProjectListSerializer
 from .tasks import add_retailer_record
+from .serializers import serialize_project
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
@@ -37,7 +37,7 @@ def get_library(request: Request):
             )]
         return Response(content, status=status.HTTP_200_OK)
     collections = request.user.get_collections()
-    content['my_projects'] = ProjectListSerializer(collections, many=True).data
+    content['my_projects'] = [serialize_project(proj) for proj in collections]
     return Response(content, status=status.HTTP_200_OK)
 
 
@@ -49,7 +49,7 @@ def crud_project(request: Request, project_pk=None):
     """
     if request.method == 'GET':
         project = request.user.get_collections().filter(pk=project_pk).first()
-        return Response(ProjectListSerializer(project).data)
+        return Response(serialize_project(project));
 
     if request.method == 'POST':
         try:
@@ -69,7 +69,7 @@ def crud_project(request: Request, project_pk=None):
         user = request.user
         data = request.data
         project = BaseProject.objects.update_project(user, **data)
-        return Response(ProjectListSerializer(project).data, status=status.HTTP_200_OK)
+        return Response(serialize_project(project), status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 

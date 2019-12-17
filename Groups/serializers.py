@@ -11,7 +11,6 @@ class BusinessSerializer:
     def __init__(self, business, full=True):
         self.business = business
         self.full = full
-
         self.pk = business.pk
         self.address: Address = None
         self.address_string: str = None
@@ -39,7 +38,7 @@ class BusinessSerializer:
     def getData(self):
         if isinstance(self.business, RetailerLocation):
             business: RetailerLocation = self.business
-            self.coordinates = business.coordinates()
+            # self.coordinates = business.coordinates()
             self.email = business.email
             self.product_count = business.product_count()
             self.phone_number = business.phone_number
@@ -78,10 +77,6 @@ class BusinessSerializer:
             self.service_type = pro_comp.service.label
             self.address = AddressSerializer(pro_comp.business_address).data
             self.address_string = pro_comp.business_address.address_string
-            self.coordinates = [
-                pro_comp.business_address.lat,
-                pro_comp.business_address.lng
-                ]
             self.phone_number = pro_comp.phone_number
             self.image = pro_comp.image
             self.info = pro_comp.info
