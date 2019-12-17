@@ -28,8 +28,8 @@ CORS_ORIGIN_WHITELIST = [
     ]
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
-    'location',
-    'session_id'
+    'Location',
+    'sessionID'
 ]
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
