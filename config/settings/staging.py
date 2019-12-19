@@ -22,7 +22,7 @@ ALLOWED_HOSTS = [
     'bluesift-staging-backend.herokuapp.com',
 ]
 CORS_ORIGIN_WHITELIST = [
-    'https://www.bluesift.com/',
+    'https://www.bluesift.com',
     'https://www.bluesift.com',
     'https://bluesift-staging-frontend.herokuapp.com'
     ]
