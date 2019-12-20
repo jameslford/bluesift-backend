@@ -1,15 +1,6 @@
 from django.db import models
 from django.conf import settings
 from Addresses.models import Coordinate
-# from typing import List
-# from pandas import date_range as pdate_range
-# from datetime import date, timedelta, datetime
-# from django.db.models import Min, Max, Count, QuerySet
-# from django.db.models.functions import TruncWeek, TruncDay, TruncMonth
-# from Profiles.models import ConsumerProfile
-# from Groups.models import ProCompany, RetailerCompany
-# from UserProductCollections.models import RetailerLocation
-# from ProductFilter.models import QueryIndex
 
 
 class Record(models.Model):
@@ -26,15 +17,21 @@ class ViewRecord(Record):
         on_delete=models.SET_NULL,
         related_name='viewRecords'
         )
+
     ip_address = models.CharField(max_length=200, null=True)
     session_id = models.CharField(max_length=120, null=True)
+
     path = models.CharField(max_length=500, null=True)
     base_path = models.CharField(max_length=200, null=True)
     path_params = models.CharField(max_length=300, null=True)
+
     cleaned = models.BooleanField(default=False)
+    best_location = models.BooleanField(default=False)
+
     product_detail_pk = models.CharField(max_length=120, null=True)
     supplier_pk = models.IntegerField(null=True)
     pro_company_pk = models.IntegerField(null=True)
+
     location = models.ForeignKey(
         Coordinate,
         null=True,
@@ -47,6 +44,17 @@ class ViewRecord(Record):
 
     def check_location(self):
         pass
+
+
+# from typing import List
+# from pandas import date_range as pdate_range
+# from datetime import date, timedelta, datetime
+# from django.db.models import Min, Max, Count, QuerySet
+# from django.db.models.functions import TruncWeek, TruncDay, TruncMonth
+# from Profiles.models import ConsumerProfile
+# from Groups.models import ProCompany, RetailerCompany
+# from UserProductCollections.models import RetailerLocation
+# from ProductFilter.models import QueryIndex
         # if self.location:
         #     return
 

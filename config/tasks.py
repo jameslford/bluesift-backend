@@ -49,6 +49,7 @@ def harvest_request(headers: Dict, path, ip_address=None):
                 lat = float(lat)
                 lon = float(lon)
                 coord = Coordinate.objects.get_or_create(lat=lat, lng=lon)
+                record.best_location = True
                 record.location = coord
             except (ValueError, AttributeError):
                 pass
