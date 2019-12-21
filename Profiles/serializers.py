@@ -1,5 +1,5 @@
 """ Profiles.serializers """
-from Accounts.serializers import UserSerializer
+from Accounts.serializers import user_serializer
 from Plans.serializers import PlanSerializer
 
 
@@ -10,7 +10,7 @@ def serialize_profile(user=None, profile=None):
         profile = user.get_profile()
     ret_dict = {
         'pk': profile.pk,
-        'user': UserSerializer(user).data,
+        'user': user_serializer(user),
         'avatar': profile.avatar.url if profile.avatar else None,
         }
     if not (user.is_pro or user.is_supplier):

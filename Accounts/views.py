@@ -13,7 +13,6 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_text
 from django.conf import settings
 
-
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -22,7 +21,7 @@ from rest_framework.response import Response
 from .tasks import send_verification_email
 
 from Profiles.models import BaseProfile, RetailerEmployeeProfile, ProEmployeeProfile
-from .serializers import UserSerializer
+from .serializers import user_serializer
 
 USER_TIMEOUT_MINUTES = .2
 
@@ -61,10 +60,10 @@ def create_user(request):
     if not user:
         return Response('No user created', status=status.HTTP_400_BAD_REQUEST)
 
-    Token.objects.get_or_create(user=user)
+    Token.objects.create(user=user)
     site = get_current_site(request).domain
     send_verification_email.delay(site, user.pk)
-    return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+    return Response(user_serializer(user), status=status.HTTP_201_CREATED)
 
 
 def activate(request, uidb64):
@@ -112,13 +111,13 @@ def custom_login(request):
     if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging' and not user.is_staff:
         return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)
 
-    return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+    return Response(user_serializer(user), status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def get_user(request):
-    return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+    return Response(user_serializer(request.user), status=status.HTTP_200_OK)
 
 
 # sdafdsafads
@@ -155,4 +154,12 @@ def get_demo_user(request, user_type='user', auth_type=None):
     pks = eligible_users.values_list('pk', flat=True)
     choice_pk = random.choice(pks)
     user = get_user_model().objects.get(pk=choice_pk)
-    return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+    return Response(user_serializer(user), status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def logout(request):
+    request.user.auth_token.delete()
+
+
+
