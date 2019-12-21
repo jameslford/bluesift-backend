@@ -32,6 +32,15 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'sessionID'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'bluesift.com',
+    'bluesift-staging-frontend.herokuapp.com',
+    # 'https://www.bluesift.com',
+    # 'bluesift.com/',
+    # 'https://www.bluesift.com/',
+    # 'bluesift-staging-frontend.herokuapp',
+    ]
+
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
 
@@ -60,8 +69,8 @@ DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_re
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     )
 }
 
@@ -112,11 +121,4 @@ MIDDLEWARE = [
 #     'bluesift-staging-frontend.herokuapp'
 # ]
 
-CSRF_TRUSTED_ORIGINS = [
-    'bluesift.com',
-    'https://www.bluesift.com',
-    'bluesift-staging-frontend.herokuapp.com',
-    # 'bluesift.com/',
-    # 'https://www.bluesift.com/',
-    # 'bluesift-staging-frontend.herokuapp',
-    ]
+

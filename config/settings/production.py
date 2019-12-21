@@ -28,6 +28,14 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'Location',
     'SessionID'
 ]
+CSRF_TRUSTED_ORIGINS = [
+    'bluesift.com',
+    # 'https://www.bluesift.com',
+    'bluesift-staging-frontend.herokuapp.com',
+    'bluesift.com/',
+    # 'https://www.bluesift.com/',
+    # 'bluesift-staging-frontend.herokuapp',
+    ]
 
 
 REDIRECT_URL = 'https://www.bluesift.com/'
@@ -54,8 +62,8 @@ DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     )
 }
 
@@ -97,11 +105,4 @@ MIDDLEWARE = [
 ]
 
 
-CSRF_TRUSTED_ORIGINS = [
-    'bluesift.com',
-    'https://www.bluesift.com',
-    'bluesift-staging-frontend.herokuapp.com',
-    # 'bluesift.com/',
-    # 'https://www.bluesift.com/',
-    # 'bluesift-staging-frontend.herokuapp',
-    ]
+
