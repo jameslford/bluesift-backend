@@ -5,7 +5,7 @@ from .models import User
 
 def user_serializer(user: User):
 
-    auth_token = Token.objects.get_or_create(user=user.pk)[0]
+    auth_token = Token.objects.get_or_create(user=user)[0]
     return {
         'pk': user.pk,
         'email': user.email,

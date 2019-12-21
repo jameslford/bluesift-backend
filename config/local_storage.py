@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-
+from django.http import request
 
 class LocalStorage(FileSystemStorage):
     def get_available_name(self, name, max_length=None):

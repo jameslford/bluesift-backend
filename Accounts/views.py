@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.db import transaction
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_text
@@ -103,14 +103,14 @@ def custom_login(request):
             status=status.HTTP_400_BAD_REQUEST
             )
 
-    if not user.get_profile():
-        if user.is_pro or user.is_supplier:
-            return Response('Profile needed', status=status.HTTP_428_PRECONDITION_REQUIRED)
-        BaseProfile.objects.create_profile(user)
+    if user.is_pro or user.is_supplier:
+        if not user.get_profile():
+            BaseProfile.objects.create_profile(user)
 
     if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging' and not user.is_staff:
         return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)
 
+    login(request, user)
     return Response(user_serializer(user), status=status.HTTP_200_OK)
 
 
@@ -119,8 +119,6 @@ def custom_login(request):
 def get_user(request):
     return Response(user_serializer(request.user), status=status.HTTP_200_OK)
 
-
-# sdafdsafads
 
 @api_view(['POST'])
 def reset_password(request):
@@ -156,10 +154,10 @@ def get_demo_user(request, user_type='user', auth_type=None):
     user = get_user_model().objects.get(pk=choice_pk)
     return Response(user_serializer(user), status=status.HTTP_200_OK)
 
-@api_view(['POST'])
+
+@api_view(['DELETE'])
 @permission_classes((IsAuthenticated,))
-def logout(request):
+def custom_logout(request):
     request.user.auth_token.delete()
-
-
-
+    logout(request)
+    return Response(status=status.HTTP_200_OK)

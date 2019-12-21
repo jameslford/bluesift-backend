@@ -54,7 +54,7 @@ DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.BasicAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     )
 }
@@ -90,8 +90,18 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'config.custom_middleware.LastSeenMiddleware',
-    # 'config.custom_middleware.ProductionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'config.custom_middleware.ProductionMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'bluesift.com',
+    'https://www.bluesift.com',
+    'bluesift-staging-frontend.herokuapp.com',
+    # 'bluesift.com/',
+    # 'https://www.bluesift.com/',
+    # 'bluesift-staging-frontend.herokuapp',
+    ]
