@@ -3,7 +3,6 @@ import dj_database_url
 from corsheaders.defaults import default_headers
 from .base import *
 
-
 DEBUG = False
 ENVIRONMENT = 'production'
 CELERY_BROKER_URL = os.environ['REDIS_URL']
@@ -12,7 +11,6 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_RESULT_SERIALIZER = 'json'
-
 
 STATIC_URL = '/static/'
 SECRET_KEY = os.environ['SECRET_KEY']
@@ -30,11 +28,8 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 CSRF_TRUSTED_ORIGINS = [
     'bluesift.com',
-    # 'https://www.bluesift.com',
     'bluesift-staging-frontend.herokuapp.com',
     'bluesift.com/',
-    # 'https://www.bluesift.com/',
-    # 'bluesift-staging-frontend.herokuapp',
     ]
 
 
@@ -57,11 +52,9 @@ DATABASES['staging'] = dj_database_url.config(STAGING_DB_URL)
 DATABASES['staging']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
 
-# WSGI_APPLICATION = 'config.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     )
@@ -81,7 +74,6 @@ GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 
 
 def show_toolbar(request):
-    # return request.user.is_staff
     return False
 
 
@@ -99,10 +91,4 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'config.custom_middleware.LastSeenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # 'config.custom_middleware.ProductionMiddleware',
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
-
-
-

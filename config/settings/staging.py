@@ -35,16 +35,11 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 CSRF_TRUSTED_ORIGINS = [
     'bluesift.com',
     'bluesift-staging-frontend.herokuapp.com',
-    # 'https://www.bluesift.com',
-    # 'bluesift.com/',
-    # 'https://www.bluesift.com/',
-    # 'bluesift-staging-frontend.herokuapp',
     ]
 
 REDIRECT_URL = 'https://www.bluesift-staging-frontend.herokuapp.com/'
 DEFAULT_ADDRESS_INSTANCE = 1
 
-# PRODUCTION_DB_URL = os.environ['HEROKU_POSTGRESQL_WHITE_URL']
 
 DATABASES = {
     'default': {},
@@ -64,11 +59,9 @@ DATABASES['scraper_revised'] = dj_database_url.config(conn_max_age=500)
 DATABASES['scraper_revised']['ENGINE'] = 'django.db.backends.postgresql'
 DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
 
-# WSGI_APPLICATION = 'config.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     )
@@ -88,12 +81,10 @@ GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH')
 
 
 def show_toolbar(request):
-    # return request.user.is_staff
     return DEBUG
 
 
 DEBUG_TOOLBAR_CONFIG = {
-    # ...
     'SHOW_TOOLBAR_CALLBACK': 'config.settings.staging.show_toolbar',
 }
 
@@ -109,16 +100,4 @@ MIDDLEWARE = [
     'config.custom_middleware.StagingMiddleware',
     'config.custom_middleware.LastSeenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
-
-
-# CSRF_COOKIE_DOMAIN = [
-#     'bluesift.com',
-#     'bluesift.com/',
-#     'bluesift-staging-frontend.herokuapp.com',
-#     'bluesift-staging-frontend.herokuapp'
-# ]
-
-

@@ -12,7 +12,7 @@ from rest_framework import status
 from Scraper.models import ScraperSubgroup, ScraperDepartment
 from Scraper.ScraperCleaner.models import ScraperCleaner
 from config.custom_permissions import StagingorLocalAdmin
-from .tasks import subgroup_scrape, subgroup_clean, department_clean, department_scrape
+from .tasks import subgroup_scrape, subgroup_clean, department_scrape
 
 
 @api_view(['GET'])
