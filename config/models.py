@@ -11,7 +11,7 @@ class LibraryLink(models.Model):
     Holds svg paths (draw_path), descriptions and labels for user libraries.
     uses for_user/retailer/pro to serve the correct links per user accordingly
     '''
-    TYPES = Choices('Analytics', 'Projects', 'Locations', 'Profile', 'Company_Info', 'Admin')
+    TYPES = Choices('Analytics', 'Projects', 'Locations', 'Profile', 'Company_Info', 'Admin', 'Dashboard')
     label = models.CharField(choices=TYPES, max_length=18, unique=True)
     description = models.CharField(max_length=60, blank=True, null=True)
     draw_path = models.TextField(blank=True, null=True)

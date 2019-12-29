@@ -8,9 +8,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin, RetailerPermission
 from Groups.serializers import BusinessSerializer
-from .models import BaseProject, RetailerLocation
+from .models import BaseProject, RetailerLocation, ProProject, ConsumerProject
 from .tasks import add_retailer_record
-from .serializers import serialize_project
+from .serializers import project_mini_serializer, project_full_serializer
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
@@ -36,8 +36,12 @@ def get_library(request: Request):
             # 'local_admin'
             )]
         return Response(content, status=status.HTTP_200_OK)
-    collections = request.user.get_collections()
-    content['my_projects'] = [serialize_project(proj) for proj in collections]
+    model = ProProject if user.is_pro else ConsumerProject
+    collections = model.objects.prefetch_related(
+        'tasks',
+        'product_assignments',
+        'products').filter(owner=user.get_group())
+    content['my_projects'] = [project_mini_serializer(proj) for proj in collections]
     return Response(content, status=status.HTTP_200_OK)
 
 
@@ -49,7 +53,7 @@ def crud_project(request: Request, project_pk=None):
     """
     if request.method == 'GET':
         project = request.user.get_collections().filter(pk=project_pk).first()
-        return Response(serialize_project(project));
+        return Response(project_full_serializer(project))
 
     if request.method == 'POST':
         try:
@@ -69,7 +73,7 @@ def crud_project(request: Request, project_pk=None):
         user = request.user
         data = request.data
         project = BaseProject.objects.update_project(user, **data)
-        return Response(serialize_project(project), status=status.HTTP_200_OK)
+        return Response(project_full_serializer(project), status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -97,4 +101,17 @@ def crud_location(request: Request, location_pk: int = None):
         location = RetailerLocation.objects.update_location(user, **data)
         return Response(BusinessSerializer(location).getData(), status=status.HTTP_200_OK)
 
+    if request.method == 'DELETE':
+        profile = user.get_profile()
+        if profile.owner:
+            location = user.get_collections.all().filter(pk=location_pk).first()
+            location.delete()
+            return Response(status=status.HTTP_200_OK)
+
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def dashboard(request):
+    pass

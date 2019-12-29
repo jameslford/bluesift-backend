@@ -1,3 +1,5 @@
+import decimal 
+from typing import Dict
 from django.db import models, transaction
 from model_utils import Choices
 from UserProductCollections.models import BaseProject, RetailerLocation
@@ -6,6 +8,9 @@ from Products.models import Product
 from Groups.models import ProCompany
 from Groups.serializers import BusinessSerializer
 from Profiles.serializers import serialize_profile
+from UserProducts.models import RetailerProduct
+
+DAY = 60*60*24*1000
 
 
 class ProductAssignmentManager(models.Manager):
@@ -75,11 +80,34 @@ class ProductAssignment(models.Model):
         related_name='project_assignments',
         null=True
         )
+    supplier_product = models.ForeignKey(
+        RetailerProduct,
+        on_delete=models.CASCADE,
+        related_name='project_assignments',
+        null=True
+    )
 
     objects = ProductAssignmentManager()
 
     class Meta:
         unique_together = ('project', 'name')
+
+    def save(self, *args, **kwargs):
+        if self.supplier and not self.supplier_product:
+            prod = RetailerProduct.objects.filter(retailer=self.supplier, product=self.product).first()
+            self.supplier_product = prod if prod else None
+        if self.supplier_product and not self.supplier:
+            self.supplier = self.supplier_product.retailer
+        super(ProductAssignment, self).save(*args, **kwargs)
+
+    def mini_serialize(self):
+        cost = None
+        if self.supplier_product and self.quantity_needed:
+            cost = self.supplier_product.in_store_ppu * decimal.Decimal(self.quantity_needed)
+        return {
+            'name': self.name,
+            'cost': cost
+            }
 
 
 class ProCollaborator(models.Model):
@@ -185,6 +213,12 @@ class ProjectTask(models.Model):
         related_name='task'
         )
 
+    def save(self, *args, **kwargs):
+        self.count_parents()
+        if self.user_collaborator and self.pro_collaborator:
+            raise ValueError('cannot have 2 collaborators')
+        super(ProjectTask, self).save(*args, **kwargs)
+
     def count_parents(self):
         level = 0
         if self.parent:
@@ -202,8 +236,16 @@ class ProjectTask(models.Model):
             return self.user_collaborator.pk
         return None
 
-    def save(self, *args, **kwargs):
-        self.count_parents()
-        if self.user_collaborator and self.pro_collaborator:
-            raise ValueError('cannot have 2 collaborators')
-        super(ProjectTask, self).save(*args, **kwargs)
+    def mini_serialize(self) -> Dict[str, any]:
+        return {
+            'pk': self.pk,
+            'name': self.name,
+            'assigned_to': self.collaborator(),
+            # 'assigned_product': serializer_product_assignment(self.product) if self.product else None,
+            'progress': self.progress,
+            'saved': True,
+            'start_date': self.start_date,
+            'duration': self.duration / DAY if self.duration else None,
+            'children': [child.mini_serialize() for child in self.children.all()],
+            # 'predecessor': serialize_self(self.predecessor) if self.predecessor else None
+            }

@@ -189,7 +189,7 @@ class Product(models.Model):
     subclasses = InheritanceManager()
 
     def __str__(self):
-        return self.name
+        return f'{self.manufacturer.label}, {self.manu_collection}, {self.manufacturer_style}'
 
     def save(self, *args, **kwargs):
         if not self.name:
