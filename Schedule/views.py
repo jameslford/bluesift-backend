@@ -37,7 +37,7 @@ def tasks(request: Request, project_pk, task_pk=None):
             'project_deadline': project.deadline,
             'tasks': res
             }
-        return Response(project_node)
+        return Response(project_node, status=status.HTTP_200_OK)
 
     if request.method == 'POST':
         data = request.data
