@@ -4,6 +4,7 @@ These models hold/relay static materials served for front end
 
 from xml.dom import minidom
 from django.db import models
+from django.db.models import F
 from model_utils import Choices
 
 class LibraryLink(models.Model):
@@ -12,18 +13,20 @@ class LibraryLink(models.Model):
     uses for_user/retailer/pro to serve the correct links per user accordingly
     '''
     TYPES = Choices(
-        'Admin',
-        'Company_Info',
-        'Collaborators',
-        'Materials',
-        'Projects',
-        'Profile',
-        'Dashboard'
+        'admin',
+        'company_info',
+        'all_collaborators',
+        'all_materials',
+        'projects',
+        'profile',
+        'dashboard'
         )
     label = models.CharField(choices=TYPES, max_length=18, unique=True)
+    link = models.CharField(max_length=18, default='')
     description = models.CharField(max_length=60, blank=True, null=True)
     draw_path = models.TextField(blank=True, null=True)
     display = models.FileField(upload_to='misc/', blank=True, null=True)
+    include_collections = models.BooleanField(default=False)
     for_user = models.BooleanField(default=False)
     for_pro = models.BooleanField(default=False)
     for_supplier = models.BooleanField(default=False)
@@ -33,6 +36,8 @@ class LibraryLink(models.Model):
         return self.label
 
     def save(self, *args, **kwargs):
+        if not self.link:
+            self.link = self.label
         if not self.display:
             super().save(*args, **kwargs)
             return
@@ -46,13 +51,15 @@ class LibraryLink(models.Model):
                 break
         super().save(*args, **kwargs)
 
-
-    def serialize(self):
+    def custom_serialize(self):
         return {
             'label': self.label,
-            'image': self.draw_path,
-            'description': self.description
+            'link': self.link,
+            'icon': self.draw_path,
+            'description': self.description,
+            'includeCollections': self.include_collections
             }
+
 
 class UserFeature(models.Model):
     label = models.CharField(max_length=40, unique=True)

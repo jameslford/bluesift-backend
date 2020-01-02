@@ -7,6 +7,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from rest_framework.authtoken.models import Token
 from Profiles.models import BaseProfile
+from config.models import LibraryLink
 
 
 class UserManager(BaseUserManager):
@@ -140,6 +141,17 @@ class User(AbstractBaseUser):
         if self.is_supplier:
             return RetailerProduct
         return ProjectProduct
+
+    def get_library_links(self):
+        if self.is_supplier:
+            term = {'for_supplier': True}
+        elif self.is_pro:
+            term = {'for_pro': True}
+        elif self.admin:
+            term = {'for_admin': True}
+        else:
+            term = {'for_user': True}
+        return [link.custom_serialize() for link in LibraryLink.objects.filter(**term)]
 
     @property
     def is_staff(self):

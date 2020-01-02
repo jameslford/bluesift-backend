@@ -85,7 +85,7 @@ class ServiceType(models.Model):
     description = models.CharField(max_length=500, blank=True, default='')
     image = models.ImageField(null=True, blank=True, upload_to='misc/')
 
-    def serialize(self):
+    def custom_serialize(self):
         return {
             'label': self.label,
             'description': self.description,
@@ -108,7 +108,7 @@ class ProCompany(Company):
     def get_employees(self):
         return self.employees.select_related('user').all()
 
-    def serialize(self, full=False):
+    def custom_serialize(self, full=False):
         from .serializers import BusinessSerializer
         return BusinessSerializer(self, full).getData()
 
