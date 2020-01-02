@@ -1,6 +1,7 @@
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
-from UserProductCollections.models import RetailerLocation
+from Retailers.models import RetailerLocation
+# from UserProductCollections.models import RetailerLocation
 from Profiles.serializers import serialize_profile
 from Plans.serializers import PlanSerializer
 from .models import RetailerCompany, ProCompany

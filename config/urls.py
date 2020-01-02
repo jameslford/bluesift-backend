@@ -13,7 +13,7 @@ urlpatterns = [
     path('analytics/', include('Analytics.urls')),
     # path('bbadmin/', include('BBadmin.urls')),
     path('groups/', include('Groups.urls')),
-    path('collections/', include('UserProductCollections.urls')),
+    # path('collections/', include('UserProductCollections.urls')),
     path('expanded-header', user_config),
     path('landing', landing),
     path('mailing-list/', include('MailingList.urls')),
@@ -21,9 +21,9 @@ urlpatterns = [
     path('profiles/', include('Profiles.urls')),
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),
-    path('schedule/', include('Schedule.urls')),
+    # path('schedule/', include('Schedule.urls')),
     path('task-progress', task_progress),
-    path('user-products/', include('UserProducts.urls'))
+    # path('user-products/', include('UserProducts.urls'))
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

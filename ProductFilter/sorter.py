@@ -14,9 +14,9 @@ from django.db.models import Value, CharField
 from django.db.models.functions import Concat
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
-from Products.serializers import serialize_product
+# from Products.serializers import serialize_product
 from Products.models import Product, ProductSubClass
-from UserProducts.models import RetailerProduct
+from Retailers.models import RetailerProduct
 from .models import (
     construct_range_facet,
     return_radii,

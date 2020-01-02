@@ -12,37 +12,48 @@ from .models import BaseProject, RetailerLocation, ProProject, ConsumerProject
 from .tasks import add_retailer_record
 from .serializers import project_mini_serializer, project_full_serializer
 
+# @api_view(['GET'])
+# @permission_classes((IsAuthenticated,))
+# def get_library(request: Request):
+#     """
+#     returns projects or retail_locations that apply to user.
+#     If user.is_supplier will return all locations that apply to the users company.
+#     If user.is_pro or regular user, will return all projects that the user owns, or
+#     will return projects that the user is included on as colloborator - which is noted
+#     """
+
+#     content = {
+#         'my_locations': None,
+#         'my_projects': None,
+#         }
+#     user = request.user
+#     if user.is_supplier:
+#         content['my_locations'] = [BusinessSerializer(loc).getData() for loc in user.get_collections(
+#             'address',
+#             'address__postal_code',
+#             'address__coordinates',
+#             'company',
+#             # 'local_admin'
+#             )]
+#         return Response(content, status=status.HTTP_200_OK)
+#     model = ProProject if user.is_pro else ConsumerProject
+#     collections = model.objects.prefetch_related(
+#         'tasks',
+#         'product_assignments',
+#         'products').filter(owner=user.get_group())
+#     content['my_projects'] = [project_mini_serializer(proj) for proj in collections]
+#     return Response(content, status=status.HTTP_200_OK)
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
-def get_library(request: Request):
-    """
-    returns projects or retail_locations that apply to user.
-    If user.is_supplier will return all locations that apply to the users company.
-    If user.is_pro or regular user, will return all projects that the user owns, or
-    will return projects that the user is included on as colloborator - which is noted
-    """
+def projects(request):
+    pass
 
-    content = {
-        'my_locations': None,
-        'my_projects': None,
-        }
-    user = request.user
-    if user.is_supplier:
-        content['my_locations'] = [BusinessSerializer(loc).getData() for loc in user.get_collections(
-            'address',
-            'address__postal_code',
-            'address__coordinates',
-            'company',
-            # 'local_admin'
-            )]
-        return Response(content, status=status.HTTP_200_OK)
-    model = ProProject if user.is_pro else ConsumerProject
-    collections = model.objects.prefetch_related(
-        'tasks',
-        'product_assignments',
-        'products').filter(owner=user.get_group())
-    content['my_projects'] = [project_mini_serializer(proj) for proj in collections]
-    return Response(content, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def locations(request):
+    pass
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
@@ -110,8 +121,3 @@ def crud_location(request: Request, location_pk: int = None):
 
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def dashboard(request):
-    pass

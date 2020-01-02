@@ -22,7 +22,7 @@ from rest_framework.request import Request
 from rest_framework import status
 from config.custom_permissions import OwnerDeleteAdminEdit
 from config.views import check_department_string
-from UserProductCollections.models import RetailerLocation
+from Retailers.models import RetailerLocation
 from Profiles.models import BaseProfile
 from .serializers import BusinessSerializer
 from .models import RetailerCompany, ProCompany, Company, ServiceType
@@ -139,7 +139,7 @@ def service_detail_header(request: Request, pk=None):
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes((IsAuthenticated, OwnerDeleteAdminEdit))
-def company_edit_delete(request: Request, company_pk=None):
+def company_edit_delete(request: Request):
     if request.method == 'DELETE':
         Company.objects.delete_company(request.user)
         return Response(status=status.HTTP_200_OK)

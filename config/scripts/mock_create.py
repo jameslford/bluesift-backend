@@ -11,9 +11,11 @@ from Addresses.models import Address
 from Products.models import Product
 from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile, BaseProfile
 from Groups.models import Company, ServiceType, ProCompany, RetailerCompany
-from UserProductCollections.models import RetailerLocation, BaseProject
-from UserProducts.models import RetailerProduct, ProjectProduct
-from Schedule.models import ProductAssignment, ProjectTask, ConsumerCollaborator, ProCollaborator
+from Retailers.models import RetailerLocation, RetailerProduct
+from Projects.models import BaseProject, ProjectProduct, ProductAssignment, ProjectTask, ConsumerCollaborator, ProCollaborator
+# from UserProductCollections.models import RetailerLocation, BaseProject
+# from UserProducts.models import RetailerProduct, ProjectProduct
+# from Schedule.models import ProductAssignment, ProjectTask, ConsumerCollaborator, ProCollaborator
 
 # ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-100.json'
 ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-all.min.json'

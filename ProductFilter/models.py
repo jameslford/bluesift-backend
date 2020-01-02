@@ -13,8 +13,9 @@ from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
-from Products.models import Product, ProductSubClass
-from UserProductCollections.models import RetailerLocation
+from Products.models import Product
+from Retailers.models import RetailerLocation
+# from UserProductCollections.models import RetailerLocation
 
 
 AVAILABILITY_FACET = 'AvailabilityFacet'
@@ -209,23 +210,23 @@ class QueryIndex(models.Model):
             return model.objects.select_related(select_related).filter(pk__in=pks)
         return model.objects.filter(pk__in=pks)
 
-    @classmethod
-    def get_all_paths(cls):
-        from UserProductCollections.models import RetailerLocation
-        base = 'specialized-products/filter/'
-        paths = [
-            {'product_type': pt, 'path': base + pt.__name__}
-            for pt in ProductSubClass.__subclasses__()
-            ]
-        locations = RetailerLocation.objects.all()
-        for location in locations:
-            location_list = [
-                {'product_type': product_type['cls'],
-                 'path': f'{base}{product_type["name"]}/{location.pk}'}
-                for product_type in location.product_types(True)
-                ]
-            paths = paths + location_list
-        return paths
+    # @classmethod
+    # def get_all_paths(cls):
+    #     from UserProductCollections.models import RetailerLocation
+    #     base = 'specialized-products/filter/'
+    #     paths = [
+    #         {'product_type': pt, 'path': base + pt.__name__}
+    #         for pt in ProductSubClass.__subclasses__()
+    #         ]
+    #     locations = RetailerLocation.objects.all()
+    #     for location in locations:
+    #         location_list = [
+    #             {'product_type': product_type['cls'],
+    #              'path': f'{base}{product_type["name"]}/{location.pk}'}
+    #             for product_type in location.product_types(True)
+    #             ]
+    #         paths = paths + location_list
+    #     return paths
 
     # @classmethod
     # def get_all_queries(cls):

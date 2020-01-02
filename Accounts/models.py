@@ -118,9 +118,9 @@ class User(AbstractBaseUser):
         return profile
 
     def get_collections(self, *select_related):
-        from UserProductCollections.models import RetailerLocation, ProProject, ConsumerProject
         group = self.get_group()
         if self.is_supplier:
+            from Retailers.models import RetailerLocation
             if select_related:
                 return RetailerLocation.objects.prefetch_related(
                     'products'
@@ -128,6 +128,7 @@ class User(AbstractBaseUser):
             return RetailerLocation.objects.prefetch_related(
                 'products'
             ).filter(company=group)
+        from Projects.models import ProProject, ConsumerProject
         if self.is_pro:
             return ProProject.objects.prefetch_related(
                 'products'
@@ -137,9 +138,11 @@ class User(AbstractBaseUser):
         ).filter(owner=group)
 
     def get_user_product_type(self):
-        from UserProducts.models import RetailerProduct, ProjectProduct
+        # from UserProducts.models import RetailerProduct, ProjectProduct
         if self.is_supplier:
+            from Retailers.models import RetailerProduct
             return RetailerProduct
+        from Projects.models import ProjectProduct
         return ProjectProduct
 
     def get_library_links(self):
