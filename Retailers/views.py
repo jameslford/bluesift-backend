@@ -1,14 +1,15 @@
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from config.custom_permissions import OwnerOrAdmin, RetailerPermission
+from config.custom_permissions import RetailerPermission
 from Groups.serializers import BusinessSerializer
-from .models import RetailerLocation
+from .models import RetailerLocation, RetailerProduct
 from .tasks import add_retailer_record
+from .serializers import FullRetailerProductSerializer
 
 
 @api_view(['GET'])
@@ -47,3 +48,25 @@ def crud_location(request: Request, location_pk: int = None):
             return Response(status=status.HTTP_200_OK)
 
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['PUT'])
+@permission_classes((IsAuthenticated, RetailerPermission))
+def edit_retailer_product(request: Request):
+    data = request.data
+    updates = 0
+    try:
+        updates = RetailerProduct.objects.update_product(request.user, **data)
+    except PermissionDenied:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    return Response(f'{updates} products updated', status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, RetailerPermission))
+def retailer_products(request, location_pk):
+    location = request.user.get_collections().get(pk=location_pk)
+    products = location.products.select_related(
+        'product',
+        'product__manufacturer'
+    ).all()
+    return Response(FullRetailerProductSerializer(products, many=True).data, status=status.HTTP_200_OK)

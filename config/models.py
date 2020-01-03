@@ -4,7 +4,6 @@ These models hold/relay static materials served for front end
 
 from xml.dom import minidom
 from django.db import models
-from django.db.models import F
 from model_utils import Choices
 
 class LibraryLink(models.Model):
@@ -18,8 +17,8 @@ class LibraryLink(models.Model):
         'all_collaborators',
         'all_materials',
         'projects',
+        'locations',
         'profile',
-        'dashboard'
         )
     label = models.CharField(choices=TYPES, max_length=18, unique=True)
     link = models.CharField(max_length=18, default='')
@@ -118,3 +117,4 @@ class UserTypeStatic(models.Model):
             'features': [feat.serialize() for feat in self.feature.all()],
             'options': ['owner', 'admin', 'employee'] if self.include_options else None
         }
+

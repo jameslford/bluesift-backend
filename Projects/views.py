@@ -6,26 +6,29 @@ from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin
 from Products.models import Product, ProductSubClass
-from Groups.models import ProCompany
-from .models import BaseProject, ProCollaborator, ProductAssignment
-from .serializers import project_full_serializer, serialize_task, reserialize_task, serializer_product_assignment, serialize_product_priced
-
+from .models import ProductAssignment, BaseProject
+from .serializers import serialize_project_detail, serialize_project_list
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
-def projects(request):
-    pass
+def all_projects(request):
+    projects = request.user.get_collections()
+    res = [serialize_project_list(proj) for proj in projects]
+    return Response(res, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated, OwnerOrAdmin))
-def crud_project(request: Request, project_pk=None):
+def dashboard(request: Request, project_pk=None):
     """
     sole endpoint to add a project - model manager will differentiate between user and pro_user
     """
     if request.method == 'GET':
-        project = request.user.get_collections().filter(pk=project_pk).first()
-        return Response(project_full_serializer(project))
+        project = request.user.get_collections().select_related(
+            'address',
+            'address__postal_code'
+            ).filter(pk=project_pk).first()
+        return Response(serialize_project_detail(project))
 
     if request.method == 'POST':
         try:
@@ -45,121 +48,88 @@ def crud_project(request: Request, project_pk=None):
         user = request.user
         data = request.data
         project = BaseProject.objects.update_project(user, **data)
-        return Response(project_full_serializer(project), status=status.HTTP_200_OK)
+        return Response(serialize_project_detail(project), status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['GET', 'POST', 'DELETE'])
+# @api_view(['GET', 'POST', 'DELETE'])
 def tasks(request: Request, project_pk, task_pk=None):
-    project = BaseProject.objects.get_user_projects(request.user, project_pk)
+    pass
+    # project = BaseProject.objects.get_user_projects(request.user, project_pk)
+
+    # if request.method == 'GET':
+    #     p_tasks = project.tasks.select_related(
+    #         'product',
+    #         'user_collaborator',
+    #         'pro_collaborator'
+    #     ).filter(level=0)
+    #     res = [serialize_task(task) for task in p_tasks]
+    #     if not res:
+    #         res = [{
+    #             'name': 'New Major Task',
+    #             'children': []
+    #         }]
+    #     assignments = project.product_assignments.select_related(
+    #         'product',
+    #         'product__manufacturer'
+    #         ).all()
+    #     project_node = {
+    #         'assignments': [serialize_product_assignment(assi) for assi in assignments],
+    #         'project_name': project.nickname,
+    #         'project_deadline': project.deadline,
+    #         'tasks': res
+    #         }
+    #     project_node = 'foo'
+    #     return Response(project_node, status=status.HTTP_200_OK)
+
+    # if request.method == 'POST':
+    #     data = request.data
+    #     if data.get('project_changed', False):
+    #         project.nickname = data.get('project_name', project.nickname)
+    #         project.deadline = data.get('project_deadline', project.deadline)
+    #         project.save()
+    #     children = data.get('children', None)
+    #     if children:
+    #         for child in children:
+    #             # reserialize_task(project, child)
+    #             pass
+    #         return Response('children created', status=status.HTTP_200_OK)
+    #     return Response(status=status.HTTP_200_OK)
+
+    # if request.method == 'DELETE':
+    #     task = project.tasks.get(pk=task_pk)
+    #     task.delete()
+    #     return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+def palette(request: Request, project_pk, assignment_pk=None):
 
     if request.method == 'GET':
-        p_tasks = project.tasks.select_related(
-            'product',
-            'user_collaborator',
-            'pro_collaborator'
-        ).filter(level=0)
-        res = [serialize_task(task) for task in p_tasks]
-        if not res:
-            res = [{
-                'name': 'New Major Task',
-                'children': []
-            }]
+        project = BaseProject.objects.get_user_projects(request.user, project_pk)
+        project_product_pks = project.products.all().values_list('product__pk', flat=True)
+        products = Product.subclasses.prefetch_related(
+            'priced',
+            'priced__retailer'
+            ).select_related('manufacturer').filter(pk__in=project_product_pks).select_subclasses()
+        res = []
+        for kls in ProductSubClass.__subclasses__():
+            kls_res = {
+                'name': kls.__name__,
+                # 'products': [serialize_product_priced(product) for product in products if isinstance(product, kls)]
+                }
+            res.append(kls_res)
         assignments = project.product_assignments.select_related(
             'product',
             'product__manufacturer'
             ).all()
-        project_node = {
-            'assignments': [serializer_product_assignment(assi) for assi in assignments],
-            'project_name': project.nickname,
-            'project_deadline': project.deadline,
-            'tasks': res
+        response = {
+            # 'assignments': [serialize_product_assignment(assi) for assi in assignments],
+            'categories': [cat.__name__ for cat in ProductSubClass.__subclasses__()],
+            'groups': res
             }
-        return Response(project_node, status=status.HTTP_200_OK)
-
-    if request.method == 'POST':
-        data = request.data
-        if data.get('project_changed', False):
-            project.nickname = data.get('project_name', project.nickname)
-            project.deadline = data.get('project_deadline', project.deadline)
-            project.save()
-        children = data.get('children', None)
-        if children:
-            for child in children:
-                reserialize_task(project, child)
-            return Response('children created', status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_200_OK)
-
-    if request.method == 'DELETE':
-        task = project.tasks.get(pk=task_pk)
-        task.delete()
-        return Response(status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def product_assignments(request: Request, project_pk):
-    project = BaseProject.objects.get_user_projects(request.user, project_pk)
-    project_product_pks = project.products.all().values_list('product__pk', flat=True)
-    products = Product.subclasses.prefetch_related(
-        'priced',
-        'priced__retailer'
-        ).select_related('manufacturer').filter(pk__in=project_product_pks).select_subclasses()
-    res = []
-    for kls in ProductSubClass.__subclasses__():
-        kls_res = {
-            'name': kls.__name__,
-            'products': [serialize_product_priced(product) for product in products if isinstance(product, kls)]
-            }
-        res.append(kls_res)
-    assignments = project.product_assignments.select_related(
-        'product',
-        'product__manufacturer'
-        ).all()
-    response = {
-        'assignments': [serializer_product_assignment(assi) for assi in assignments],
-        'categories': [cat.__name__ for cat in ProductSubClass.__subclasses__()],
-        'groups': res
-        }
-    return Response(response)
-
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
-def collabsForService(request: Request, service_pk: int):
-    projects = request.user.get_collections()
-    pro_collab = ProCollaborator.objects.filter(collaborator__pk=service_pk).values_list('project__pk', flat=True)
-    print('pro collab = ', list(pro_collab))
-    return Response(
-        [{'nickname': proj.nickname, 'pk': proj.pk, 'remove': proj.pk in pro_collab} for proj in projects],
-        status=status.HTTP_200_OK)
-
-
-@api_view(['GET', 'POST', 'DELETE', 'PUT'])
-@permission_classes((IsAuthenticated,))
-def collaborators(request: Request, project_pk=None):
-
-    if request.method == 'GET':
-        project = BaseProject.objects.get_user_projects(request.user, project_pk)
-        pro_collabs = project.pro_collaborators.all().select_related('collaborator', 'contact', 'contact__user')
-        user_collabs = project.collaborators.all().select_related('collaborator')
-        return Response({
-            'pro_collaborators': [col.serialize() for col in pro_collabs],
-            'user_collaborators': [col.serialize() for col in user_collabs]
-        }, status=status.HTTP_200_OK)
-
-    if request.method == 'POST':
-        project = BaseProject.objects.get_user_projects(request.user, project_pk)
-        service_pk = request.data.get('service_pk', None)
-        if service_pk:
-            collab = ProCompany.objects.get(pk=service_pk)
-            ProCollaborator.objects.create(project=project, collaborator=collab)
-            return Response(status=status.HTTP_201_CREATED)
-
-
-
-@api_view(['POST', 'PUT', 'DELETE'])
-def assignment_cud(request: Request, project_pk, assignment_pk=None):
-    project = BaseProject.objects.get_user_projects(request.user, project_pk)
+        return Response(response)
 
     if request.method == 'POST':
         ProductAssignment.objects.update_assignments(project, *request.data)
@@ -170,8 +140,44 @@ def assignment_cud(request: Request, project_pk, assignment_pk=None):
         assignment.delete()
         return Response('deleted')
 
-    # if request.method == 'PUT':
-    #     assignment = project.assignments.filter(pk=assignment_pk)
-
+    if request.method == 'PUT':
+        # assignment = project.assignments.filter(pk=assignment_pk)
+        pass
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['GET', 'POST', 'DELETE', 'PUT'])
+@permission_classes((IsAuthenticated,))
+def collaborators(request: Request, pk=None):
+
+    if request.method == 'GET':
+        project = BaseProject.objects.get_user_projects(request.user, pk)
+        pro_collabs = project.pro_collaborators.all().select_related('collaborator', 'contact', 'contact__user')
+        user_collabs = project.collaborators.all().select_related('collaborator')
+        return Response({
+            'pro_collaborators': [col.serialize() for col in pro_collabs],
+            'user_collaborators': [col.serialize() for col in user_collabs]
+        }, status=status.HTTP_200_OK)
+
+    if request.method == 'POST':
+        pass
+        # project = BaseProject.objects.get_user_projects(request.user, pk)
+        # service_pk = request.data.get('service_pk', None)
+        # if service_pk:
+        #     collab = ProCompany.objects.get(pk=service_pk)
+        #     ProCollaborator.objects.create(project=project, collaborator=collab)
+        #     return Response(status=status.HTTP_201_CREATED)
+
+    if request.method == 'DELETE':
+        pass
+
+    if request.method == 'PUT':
+        pass
+
+
+
+# @api_view(['POST', 'PUT', 'DELETE'])
+# def assignments(request: Request, project_pk, assignment_pk=None):
+#     project = BaseProject.objects.get_user_projects(request.user, project_pk)
+

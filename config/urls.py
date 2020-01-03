@@ -21,6 +21,7 @@ urlpatterns = [
     path('profiles/', include('Profiles.urls')),
     path('products/', include('Products.urls')),
     path('scraper/', include('Scraper.urls')),
+    path('projects/', include('Projects.urls')),
     # path('schedule/', include('Schedule.urls')),
     path('task-progress', task_progress),
     # path('user-products/', include('UserProducts.urls'))

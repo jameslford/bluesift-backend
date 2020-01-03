@@ -75,7 +75,7 @@ class RetailerCompany(Company):
             self.plan = RetailerPlan.objects.get_or_create_default()
         super().save(*args, **kwargs)
 
-    def serialize(self, full=False):
+    def custom_serialize(self, full=False):
         from .serializers import BusinessSerializer
         return BusinessSerializer(self, full).getData()
 
@@ -116,3 +116,4 @@ class ProCompany(Company):
         if not self.plan:
             self.plan = ProPlan.objects.get_or_create_default()
         super().save(*args, **kwargs)
+

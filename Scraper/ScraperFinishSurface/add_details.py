@@ -87,8 +87,9 @@ def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
     new_product.width = DimensionValue(revised_product.width).range
     new_product.length = DimensionValue(revised_product.length).range
     new_product.thickness = DimensionValue(revised_product.thickness).absolute
+    depart_name = revised_product.subgroup.category.department
     name = (
-        f'{revised_product.department_name()}_{new_product.manufacturer.label}_{new_product.manufacturer_sku}'
+        f'{depart_name}_{new_product.manufacturer.label}_{new_product.manufacturer_sku}'
         f'{new_product.manu_collection}_{new_product.manufacturer_style}_'
         f'{new_product.material}_{new_product.sub_material}_{new_product.finish}_'
         f'{revised_product.width}x{revised_product.length}x{revised_product.thickness}'

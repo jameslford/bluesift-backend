@@ -18,7 +18,7 @@ from model_utils.managers import InheritanceManager
 
 
 def availability_getter(query_term, location_pk=None):
-    from UserProducts.models import RetailerProduct
+    from Retailers.models import RetailerProduct
     term = {query_term: True}
     if location_pk:
         term['retailer_id'] = location_pk
@@ -58,7 +58,7 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         return self.filter(pk__in=Subquery(pks))
 
     def retailer_products(self, location_pk=None):
-        from UserProducts.models import RetailerProduct
+        from Retailers.models import RetailerProduct
         if location_pk:
             sup_prods = RetailerProduct.objects.filter(
                 retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
@@ -90,7 +90,7 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         return ('available_in_store', 'priced_in_store', 'installation_offered')
 
     def product_prices(self, location_pk=None):
-        from UserProducts.models import RetailerProduct
+        from Retailers.models import RetailerProduct
         term = {'product__pk': OuterRef('pk'), 'publish_in_store_price': True}
         if location_pk:
             term['retailer__pk'] = location_pk

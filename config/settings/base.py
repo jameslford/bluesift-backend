@@ -55,12 +55,8 @@ INSTALLED_APPS = [
     'Retailers',
     'Scraper',
     'Scraper.ScraperFinishSurface',
-    # 'Scraper.ScraperAppliance',
     'Scraper.ScraperCleaner',
     'SpecializedProducts',
-    'Schedule',
-    'UserProductCollections',
-    'UserProducts'
 ]
 
 # CELERY STUFF

@@ -8,7 +8,7 @@ from PIL import Image as pimage
 from django.conf import settings
 from django.core.files import File
 from django.db import models, transaction
-from django.db.models import F
+from django.db.models import F as Ffunction
 from django.db.models.functions import Lower
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
@@ -223,7 +223,7 @@ class ScraperSubgroup(models.Model):
         #     new_vals: Dict = mod.Scraper(self).clean()
         variable_fields = self.get_variable_fields()
         for field in variable_fields:
-            arg = {field: Lower(F(field))}
+            arg = {field: Lower(Ffunction(field))}
             products.update(**arg)
         self.cleaned = True
         self.save()

@@ -279,66 +279,7 @@ class ProductAssignment(models.Model):
             cost = self.supplier_product.in_store_ppu * decimal.Decimal(self.quantity_needed)
         return {
             'name': self.name,
-            'cost': cost
-            }
-
-
-class ProCollaborator(models.Model):
-    project = models.ForeignKey(
-        BaseProject,
-        on_delete=models.CASCADE,
-        related_name='pro_collaborators'
-        )
-    role = models.CharField(max_length=80, null=True)
-    collaborator = models.ForeignKey(
-        ProCompany,
-        on_delete=models.CASCADE,
-        related_name='collaborations'
-        )
-    contact = models.ForeignKey(
-        ProEmployeeProfile,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='collaborations'
-        )
-
-    class Meta:
-        unique_together = ('project', 'collaborator')
-
-    def __str__(self):
-        return str(self.project.pk) + ' ' + str(self.collaborator.pk)
-
-    def save(self, *args, **kwargs):
-        if self.contact and self.contact.company != self.collaborator:
-            raise ValueError('Contact does not belong to company')
-        super(ProCollaborator, self).save(*args, **kwargs)
-
-    def serialize(self):
-        return {
-            'business': BusinessSerializer(self.collaborator).getData(),
-            'contact': serialize_profile(profile=self.contact),
-            'role': self.role
-            }
-
-
-class ConsumerCollaborator(models.Model):
-    project = models.ForeignKey(
-        BaseProject,
-        on_delete=models.CASCADE,
-        related_name='collaborators'
-        )
-    role = models.CharField(max_length=80, null=True)
-    collaborator = models.ForeignKey(
-        ConsumerProfile,
-        on_delete=models.CASCADE,
-        related_name='collaborations'
-        )
-
-
-    def serialize(self):
-        return {
-            'collaborator': serialize_profile(self.collaborator),
-            'role': self.role
+            'cost': cost if cost else 0
             }
 
 class ProjectTask(models.Model):
@@ -352,16 +293,6 @@ class ProjectTask(models.Model):
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(null=True)
     level = models.IntegerField(default=0)
-    pro_collaborator = models.ForeignKey(
-        ProCollaborator,
-        null=True,
-        on_delete=models.SET_NULL
-        )
-    user_collaborator = models.ForeignKey(
-        ConsumerCollaborator,
-        null=True,
-        on_delete=models.SET_NULL
-        )
     predecessor = models.ForeignKey(
         'self',
         null=True,
@@ -388,8 +319,6 @@ class ProjectTask(models.Model):
 
     def save(self, *args, **kwargs):
         self.count_parents()
-        if self.user_collaborator and self.pro_collaborator:
-            raise ValueError('cannot have 2 collaborators')
         super(ProjectTask, self).save(*args, **kwargs)
 
     def count_parents(self):
@@ -402,18 +331,10 @@ class ProjectTask(models.Model):
                     raise ValueError('Only 2 nested levels allowed')
         self.level = level
 
-    def collaborator(self):
-        if self.pro_collaborator:
-            return self.pro_collaborator.pk
-        if self.user_collaborator:
-            return self.user_collaborator.pk
-        return None
-
     def mini_serialize(self) -> Dict[str, any]:
         return {
             'pk': self.pk,
             'name': self.name,
-            'assigned_to': self.collaborator(),
             # 'assigned_product': serializer_product_assignment(self.product) if self.product else None,
             'progress': self.progress,
             'saved': True,
@@ -422,6 +343,133 @@ class ProjectTask(models.Model):
             'children': [child.mini_serialize() for child in self.children.all()],
             # 'predecessor': serialize_self(self.predecessor) if self.predecessor else None
             }
+
+class AddtionalProjectCosts(models.Model):
+    project = models.ForeignKey(
+        BaseProject,
+        on_delete=models.CASCADE,
+        related_name='additional_costs'
+        )
+    amount = models.DecimalField(max_digits=7, decimal_places=2)
+    label = models.CharField(max_length=60)
+    notes = models.TextField(null=True, blank=True)
+
+
+class Bid(models.Model):
+    task = models.ForeignKey(
+        ProjectTask,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='bids'
+        )
+    project = models.ForeignKey(
+        BaseProject,
+        on_delete=models.CASCADE,
+        related_name='bids'
+        )
+    company = models.ForeignKey(
+        ProCompany,
+        on_delete=models.CASCADE,
+        related_query_name='bids'
+        )
+    amount = models.DecimalField(max_digits=7, decimal_places=2)
+    accepted = models.BooleanField(default=False)
+    files = models.FileField(null=True, upload_to='bids/')
+    role = models.CharField(max_length=100, blank=True, null=True)
+    message = models.TextField(null=True, blank=True)
+    assigned_to = models.ForeignKey(
+        ProEmployeeProfile,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+        )
+
+    def save(self, *args, **kwargs):
+        if self.assigned_to and self.assigned_to.company != self.company:
+            raise ValidationError('Can only assign to company employee')
+        if not self.project:
+            if not self.task:
+                raise ValidationError('No project or task to assign')
+            self.project = self.task.project
+        super(Bid, self).save(*args, **kwargs)
+
+
+class BidInvitation(models.Model):
+    message = models.TextField(null=True, blank=True)
+    task = models.ForeignKey(
+        ProjectTask,
+        on_delete=models.CASCADE,
+        related_name='bid_invites',
+        null=True,
+        blank=True
+        )
+    company = models.ForeignKey(
+        ProCompany,
+        on_delete=models.CASCADE,
+        related_query_name='bid_invites'
+        )
+    project = models.ForeignKey(
+        BaseProject,
+        on_delete=models.CASCADE,
+        related_name='bid_invites',
+        null=True,
+        blank=True
+        )
+
+    def save(self, *args, **kwargs):
+        if not self.project:
+            if not self.task:
+                raise ValidationError('No project or task to assign')
+            self.project = self.task.project
+        super(BidInvitation, self).save(*args, **kwargs)
+
+
+
+# class ProCollaborator(Collaborator):
+#     collaborator = models.ForeignKey(
+#         ProCompany,
+#         on_delete=models.CASCADE,
+#         related_name='collaborations'
+#         )
+#     contact = models.ForeignKey(
+#         ProEmployeeProfile,
+#         null=True,
+#         on_delete=models.SET_NULL,
+#         related_name='collaborations'
+#         )
+
+#     class Meta:
+#         unique_together = ('project', 'collaborator')
+
+#     def __str__(self):
+#         return str(self.project.pk) + ' ' + str(self.collaborator.pk)
+
+#     def save(self, *args, **kwargs):
+#         if self.contact and self.contact.company != self.collaborator:
+#             raise ValueError('Contact does not belong to company')
+#         super(ProCollaborator, self).save(*args, **kwargs)
+
+#     def serialize(self):
+#         return {
+#             'business': BusinessSerializer(self.collaborator).getData(),
+#             'contact': serialize_profile(profile=self.contact),
+#             'role': self.role
+#             }
+
+# class ConsumerCollaborator(Collaborator):
+#     collaborator = models.ForeignKey(
+#         ConsumerProfile,
+#         on_delete=models.CASCADE,
+#         related_name='collaborations'
+#         )
+
+#     def serialize(self):
+#         return {
+#             'collaborator': serialize_profile(self.collaborator),
+#             'role': self.role
+#             }
+
 
 
     # @transaction.atomic()

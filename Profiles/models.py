@@ -79,8 +79,10 @@ class BaseProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='profile'
         )
+    collaborators = models.ManyToManyField('BaseProfile', blank=True)
     date_create = models.DateTimeField(auto_now_add=True)
     avatar = models.ImageField(null=True, blank=True, upload_to='profiles/')
+
     objects = ProfileManager()
     subclasses = InheritanceManager()
 
@@ -114,6 +116,7 @@ class EmployeeBaseProfile(BaseProfile):
     """
     owner = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
+    publish = models.BooleanField(default=True)
     title = models.CharField(max_length=100, null=True)
 
     class Meta:
@@ -130,10 +133,6 @@ class ProEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_pro:
             raise ValueError('user is not pro')
-        # if self.owner:
-        #     owner = self.company.employees.filter(owner=True).first()
-        #     if owner != self:
-        #         raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(ProEmployeeProfile, self).save(*args, **kwargs)
 
 
@@ -153,10 +152,6 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
-        # if self.owner:
-        #     owners = self.company.employees.filter(owner=True).first()
-        #     if owners != self:
-        #         raise ValueError(f'{self.company.name} already has an owner - cannot have more than 1')
         super(RetailerEmployeeProfile, self).save(*args, **kwargs)
 
 
