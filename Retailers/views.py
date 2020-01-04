@@ -1,11 +1,13 @@
-
+import datetime
 from django.core.exceptions import PermissionDenied
+from django.http.request import HttpRequest
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import RetailerPermission
+from Profiles.models import RetailerEmployeeProfile
 from Groups.serializers import BusinessSerializer
 from .models import RetailerLocation, RetailerProduct
 from .tasks import add_retailer_record
@@ -13,9 +15,27 @@ from .serializers import FullRetailerProductSerializer
 
 
 @api_view(['GET'])
+def public_location(request: Request, pk):
+    retailer = RetailerLocation.objects.select_related(
+        'address',
+        'address__postal_code',
+        'address__coordinates',
+        'company'
+        ).prefetch_related('products', 'products__product').get(pk=pk)
+    add_retailer_record.delay(request.get_full_path(), pk=pk)
+    return Response(
+        BusinessSerializer(retailer).getData(),
+        status=status.HTTP_200_OK
+        )
+
+
+@api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def locations(request):
+    # TODO locations view for retailer workbench
     pass
+
+
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
 @permission_classes((IsAuthenticated, RetailerPermission))
@@ -26,8 +46,7 @@ def crud_location(request: Request, location_pk: int = None):
     user = request.user
 
     if request.method == 'GET':
-        add_retailer_record.delay(request.get_full_path(), location_pk)
-        location = RetailerLocation.objects.get(pk=location_pk)
+        location = user.get_collections().get(pk=location_pk)
         return Response(BusinessSerializer(location, True).getData(), status=status.HTTP_200_OK)
 
     if request.method == 'POST':
@@ -49,24 +68,47 @@ def crud_location(request: Request, location_pk: int = None):
 
     return Response('unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-@api_view(['PUT'])
-@permission_classes((IsAuthenticated, RetailerPermission))
-def edit_retailer_product(request: Request):
-    data = request.data
-    updates = 0
-    try:
-        updates = RetailerProduct.objects.update_product(request.user, **data)
-    except PermissionDenied:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    return Response(f'{updates} products updated', status=status.HTTP_200_OK)
-
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, RetailerPermission))
-def retailer_products(request, location_pk):
+def retailer_products(request: HttpRequest, location_pk):
+    # TODO product_type = request.GET.get('product_type')
     location = request.user.get_collections().get(pk=location_pk)
     products = location.products.select_related(
         'product',
         'product__manufacturer'
     ).all()
+    # TODO:try to use values instead of a serializer for this. also allow product type filter
     return Response(FullRetailerProductSerializer(products, many=True).data, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+@permission_classes((IsAuthenticated, RetailerPermission))
+def retailer_product(request: Request):
+    data = request.data
+    profile: RetailerEmployeeProfile = request.user.get_profile()
+    # location_pks = [location.pk for location in request.user.get_collections()]
+    location = data.get('location_pk')
+    location: RetailerLocation = request.user.get_collections().get(pk=location)
+    if not (profile == location.local_admin or
+            profile.owner or
+            profile.admin):
+        return Response('unauthorized', status=status.HTTP_401_UNAUTHORIZED)
+    changes = data.get('changes')
+    updates = 0
+    for change in changes:
+        product_pk = change.get('pk')
+        product: RetailerProduct = location.products.filter(pk=product_pk).first()
+        if not product:
+            continue
+        in_store_ppu = data.get('in_store_ppu' )
+        units_available_in_store = data.get('units_available_in_store')
+        lead_time_ts = data.get('lead_time_ts')
+        lead_time_ts = datetime.timedelta(days=lead_time_ts)
+        product.update(
+            in_store_ppu=in_store_ppu,
+            units_available_in_store=units_available_in_store,
+            lead_time_ts=lead_time_ts
+            )
+        updates += 1
+    return Response(f'{updates} products updated', status=status.HTTP_200_OK)

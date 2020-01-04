@@ -146,7 +146,7 @@ class RetailerLocation(models.Model):
         return self.company.name
 
     def clean(self):
-        # makes sure employee assigned to local_admin is a company employee
+        # TODO makes sure employee assigned to local_admin is a company employee
         if not self.local_admin:
             return super().clean()
         if self.local_admin.company == self.company:
@@ -206,24 +206,6 @@ class RetailerProductManager(models.Manager):
             return False
         user_prod = self.get(product__pk=product, retailer=location)
         user_prod.delete()
-
-    def update_product(self, user, **kwargs):
-        product_pk = kwargs.get('pk')
-        locations = [location.pk for location in user.get_collections()]
-        profile = user.get_profile()
-        if not (profile.admin or profile.owner):
-            locations = profile.locations_managed()
-        product: RetailerProduct = RetailerProduct.objects.filter(pk=product_pk, retailer__pk__in=locations)
-        in_store_ppu = kwargs.get('in_store_ppu' )
-        units_available_in_store = kwargs.get('units_available_in_store')
-        lead_time_ts = kwargs.get('lead_time_ts')
-        lead_time_ts = datetime.timedelta(days=lead_time_ts)
-        updates = product.update(
-            in_store_ppu=in_store_ppu,
-            units_available_in_store=units_available_in_store,
-            lead_time_ts=lead_time_ts
-            )
-        return updates
 
 
 class RetailerProduct(models.Model):

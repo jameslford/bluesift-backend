@@ -26,7 +26,7 @@ from Retailers.models import RetailerLocation
 from Profiles.models import BaseProfile
 from .serializers import BusinessSerializer
 from .models import RetailerCompany, ProCompany, Company, ServiceType
-from .tasks import add_retailer_record, add_pro_record
+from .tasks import add_pro_record
 
 
 @api_view(['POST'])
@@ -51,7 +51,7 @@ def get_or_create_business(request):
 
 
 @api_view(['GET'])
-def retailer_company_header(request: Request, retailer_pk=None):
+def retailer_company_detail_public(request: Request, retailer_pk=None):
     if retailer_pk:
         company = RetailerCompany.objects.prefetch_related(
             'employees',
@@ -65,59 +65,13 @@ def retailer_company_header(request: Request, retailer_pk=None):
 
 
 @api_view(['GET'])
-def retailer_location_list_all(request: Request, prod_type='all'):
-    retailers = RetailerLocation.objects.select_related(
-        'address',
-        'address__postal_code',
-        'address__coordinates',
-        ).prefetch_related(
-            'products',
-            ).all().annotate(prod_count=Count('products'))
-    if prod_type.lower() != 'all':
-        prod_class = check_department_string(prod_type)
-        if prod_class is None:
-            return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
-        retailer_product_pks = prod_class.objects.values('priced__retailer__pk').distinct()
-        retailers = retailers.filter(pk__in=retailer_product_pks)
-    return Response(
-        [BusinessSerializer(ret, False).getData() for ret in retailers],
-        status=status.HTTP_200_OK
-        )
+@permission_classes((IsAuthenticated,))
+def retailer_company_detail(request: Request):
+    pass
 
 
 @api_view(['GET'])
-def retailer_location_detail_header(request: Request, pk):
-    retailer = RetailerLocation.objects.select_related(
-        'address',
-        'address__postal_code',
-        'address__coordinates',
-        'company'
-        ).prefetch_related('products', 'products__product').get(pk=pk)
-    add_retailer_record.delay(request.get_full_path(), pk=pk)
-    return Response(
-        BusinessSerializer(retailer).getData(),
-        status=status.HTTP_200_OK
-        )
-
-
-@api_view(['GET'])
-def services_list_all(request: Request, cat='all'):
-    services = ProCompany.objects.select_related(
-        'service',
-        'business_address',
-        'business_address__postal_code',
-        'business_address__coordinates'
-    ).all()
-    if cat.lower() != 'all':
-        services = services.filter(service__label__iexact=cat)
-    return Response(
-        [BusinessSerializer(serv).getData() for serv in services],
-        status=status.HTTP_200_OK
-    )
-
-
-@api_view(['GET'])
-def service_detail_header(request: Request, pk=None):
+def pro_company_detail_public(request: Request, pk=None):
     user = request.user
     if not pk:
         if user.is_authenticated and user.is_pro:
@@ -135,6 +89,12 @@ def service_detail_header(request: Request, pk=None):
         BusinessSerializer(service).getData(),
         status=status.HTTP_200_OK
         )
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def pro_company_detail(request: Request):
+    pass
+
 
 
 @api_view(['GET', 'PUT', 'DELETE'])

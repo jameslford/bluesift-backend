@@ -4,11 +4,10 @@ serializers used for return project and retailer locations list to user library
 
 # from rest_framework import serializers
 from typing import Dict
-from Addresses.serializers import AddressSerializer
 from django.db.models import Min, Max, F, Sum, DateTimeField
-from Products.serializers import serialize_product_priced
-from Products.models import Product, ProductSubClass
-from Retailers.models import RetailerLocation, RetailerProduct
+from Addresses.serializers import AddressSerializer
+from Products.models import Product
+from Retailers.models import RetailerProduct
 from .models import ProjectTask, ProductAssignment, BaseProject, Bid
 DAY = 60*60*24*1000
 
@@ -87,9 +86,18 @@ def serialize_assignments(project: BaseProject):
     suppliers = RetailerProduct.objects.select_related(
         'retailer',
         'retailer__address'
-        ).filter(product__pk__in=product_ids).values()
+        ).filter(product__pk__in=product_ids).values(
+            'pk',
+            'product_id',
+            'retailer__nickname',
+            'in_store_ppu',
+            'retailer__pk',
+            'units_available_in_store',
+            'lead_time_ts',
+        )
     for assignment in assignments:
         assignment['suppliers'] = [sup for sup in suppliers if sup['product_id'] == assignment['product_id']]
+        # pylint: disable=cell-var-from-loop
         prod = list(filter(lambda x: x['pk'] == assignment.get('product_id'), products))
         assignment['product'] = prod[0] if prod else None
     return assignments
@@ -98,7 +106,6 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
     return {
         'pk': task.pk,
         'name': task.name,
-        # 'assigned_to': task.collaborator(),
         'assigned_product': {
             'name': task.product.name,
             'pk': task.product.pk} if task.product else None,
@@ -109,6 +116,40 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
         'children': [serialize_task(child) for child in task.children.all()],
         'predecessor': serialize_task(task.predecessor) if task.predecessor else None
     }
+
+
+def reserialize_task(project, data, parent: ProjectTask = None):
+    task_pk = data.get('pk', None)
+    children = data.get('children', [])
+    changed = data.get('changed', False)
+    new = False
+    if task_pk:
+        task: ProjectTask = ProjectTask.objects.get(pk=task_pk)
+    else:
+        new = True
+        task = ProjectTask()
+        task.project = project
+    if changed or new:
+        task.name = data.get('name', task.name)
+        task.duration = data.get('duration', task.duration)
+        task.start_date = data.get('start_date', task.start_date)
+        task.progress = data.get('progress', task.progress)
+        product_pk = None
+        try:
+            product_pk = data['assigned_product']['pk']
+        except (KeyError, TypeError):
+            pass
+        if product_pk:
+            product = project.product_assignments.get(pk=product_pk)
+            task.product = product
+        if parent:
+            task.parent = parent
+        task.save()
+    for child in children:
+        reserialize_task(project, child, task)
+
+
+
 
 # def serialize_collaborators(project: BaseProject):
 #     pros = ProCollaborator.select_related().objects.filter(project=project).values(
@@ -214,37 +255,6 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
 
 
 
-
-
-# def reserialize_task(project, data, parent: ProjectTask = None):
-#     task_pk = data.get('pk', None)
-#     children = data.get('children', [])
-#     changed = data.get('changed', False)
-#     new = False
-#     if task_pk:
-#         task: ProjectTask = ProjectTask.objects.get(pk=task_pk)
-#     else:
-#         new = True
-#         task = ProjectTask()
-#         task.project = project
-#     if changed or new:
-#         task.name = data.get('name', task.name)
-#         task.duration = data.get('duration', task.duration)
-#         task.start_date = data.get('start_date', task.start_date)
-#         task.progress = data.get('progress', task.progress)
-#         product_pk = None
-#         try:
-#             product_pk = data['assigned_product']['pk']
-#         except (KeyError, TypeError):
-#             pass
-#         if product_pk:
-#             product = project.product_assignments.get(pk=product_pk)
-#             task.product = product
-#         if parent:
-#             task.parent = parent
-#         task.save()
-#     for child in children:
-#         reserialize_task(project, child, task)
 
 
 # def serialize_product_assignment(assignment: ProductAssignment) -> Dict[str, any]:

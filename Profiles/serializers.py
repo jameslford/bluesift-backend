@@ -1,5 +1,6 @@
 """ Profiles.serializers """
 from Plans.serializers import PlanSerializer
+from .models import ProEmployeeProfile, RetailerEmployeeProfile, ConsumerProfile
 
 def serialize_profile(user=None, profile=None):
     if not profile:
@@ -10,6 +11,9 @@ def serialize_profile(user=None, profile=None):
         'pk': profile.pk,
         'avatar': profile.avatar.url if profile.avatar else None,
         }
+    all_collaborators = profile.collaborators.values_list('pk', flat=True)
+    pro_collaborators = ProEmployeeProfile.objects.filter(pk__in=all_collaborators).values('pk', 'company__pk')
+    ret_collaborators = RetailerEmployeeProfile.objects.filter(pk__in=all_collaborators).values('pk', 'company__pk')
     if not (user.is_pro or user.is_supplier):
         ret_dict['plan'] = PlanSerializer(profile.plan).data if profile.plan else None
         ret_dict['phone_number'] = profile.phone_number

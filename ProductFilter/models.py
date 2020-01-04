@@ -318,8 +318,10 @@ class ProductFilter(models.Model):
         return prod_filter
 
     def serialize_pt_attributes(self):
+        name = self.get_content_model()._meta.verbose_name_plural.title()
+        print(name)
         return {
-            'label': self.get_content_model()._meta.verbose_name_plural.title(),
+            'label': name,
             'description': self.sub_product_description,
             'image': self.sub_product_image.url if self.sub_product_image else None
             }
