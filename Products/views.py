@@ -1,12 +1,11 @@
 ''' Products.views.py '''
 from django.http import HttpRequest
-from rest_framework.request import Request
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from config.views import check_department_string
+from config.tasks import add_retailer_record
 from ProductFilter.sorter import Sorter
-from Groups.tasks import add_retailer_record
 from .models import Product
 from .tasks import add_detail_record
 

@@ -2,17 +2,21 @@ from urllib.parse import unquote
 from celery.result import AsyncResult
 from django.apps import apps
 from django.http.request import HttpRequest
+from django.db.models import Count
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from Accounts.serializers import user_serializer
 from ProductFilter.models import ProductFilter
-from Groups.models import ServiceType
+from Groups.models import ServiceType, ProCompany, RetailerCompany
 from Profiles.serializers import serialize_profile
 from Projects.models import ProjectProduct
-from Retailers.models import RetailerProduct
+from Retailers.models import RetailerProduct, RetailerLocation
 from .models import UserTypeStatic
+from .tasks import add_retailer_record, add_pro_record
+from .serializers import BusinessSerializer
+from .globals import BusinessType
 
 
 def get_departments():
@@ -50,45 +54,65 @@ def user_config(request: HttpRequest):
 
 
 @api_view(['GET'])
-def generic_business_list(request: HttpRequest):
-    pass
+def generic_business_detail(request: HttpRequest, business_pk: int, category: str):
+    if category.lower() == BusinessType.PRO_COMPANY.value:
+        model: ProCompany = ProCompany.objects.select_related(
+            'business_address',
+            'business_address__postal_code',
+            'business_address__coordinates',
+            'plan'
+            ).get(pk=business_pk)
+        add_pro_record.delay(request.get_full_path(), pk=business_pk)
+    elif category.lower() == BusinessType.RETAILER_LOCATION.value:
+        model: RetailerLocation = RetailerLocation.objects.select_related(
+            'address',
+            'address__postal_code',
+            'address__coordinates',
+            'company'
+            ).prefetch_related('products', 'products__product').get(pk=business_pk)
+        add_retailer_record.delay(request.get_full_path(), pk=business_pk)
+    elif category.lower() == 'retailer-company':
+        model = RetailerCompany.objects.prefetch_related(
+            'employees',
+            'employees__user'
+            ).get(pk=business_pk)
+    return Response(BusinessSerializer(model).getData(), status=status.HTTP_200_OK)
 
-# TODO integrate views below into single generic call above
-# @api_view(['GET'])
-# def retailer_location_list_all(request: Request, prod_type='all'):
-#     retailers = RetailerLocation.objects.select_related(
-#         'address',
-#         'address__postal_code',
-#         'address__coordinates',
-#         ).prefetch_related(
-#             'products',
-#             ).all().annotate(prod_count=Count('products'))
-#     if prod_type.lower() != 'all':
-#         prod_class = check_department_string(prod_type)
-#         if prod_class is None:
-#             return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
-#         retailer_product_pks = prod_class.objects.values('priced__retailer__pk').distinct()
-#         retailers = retailers.filter(pk__in=retailer_product_pks)
-#     return Response(
-#         [BusinessSerializer(ret, False).getData() for ret in retailers],
-#         status=status.HTTP_200_OK
-#         )
 
+@api_view(['GET'])
+def generic_business_list(request: HttpRequest, category: str):
+    service_type = request.GET.get('service_type', None)
 
-# @api_view(['GET'])
-# def services_list_all(request: Request, cat='all'):
-#     services = ProCompany.objects.select_related(
-#         'service',
-#         'business_address',
-#         'business_address__postal_code',
-#         'business_address__coordinates'
-#     ).all()
-#     if cat.lower() != 'all':
-#         services = services.filter(service__label__iexact=cat)
-#     return Response(
-#         [BusinessSerializer(serv).getData() for serv in services],
-#         status=status.HTTP_200_OK
-#     )
+    if 'retailer' in category.lower():
+        retailers = RetailerLocation.objects.select_related(
+            'address',
+            'address__postal_code',
+            'address__coordinates',
+            ).prefetch_related(
+                'products',
+                ).all().annotate(prod_count=Count('products'))
+        if service_type:
+            prod_class = check_department_string(service_type)
+            if prod_class is None:
+                return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
+            retailer_product_pks = prod_class.objects.values('priced__retailer__pk').distinct()
+            retailers = retailers.filter(pk__in=retailer_product_pks)
+        return Response(
+            [BusinessSerializer(ret, False).getData() for ret in retailers],
+            status=status.HTTP_200_OK)
+
+    if 'pro' in category.lower():
+        services = ProCompany.objects.select_related(
+            'service',
+            'business_address',
+            'business_address__postal_code',
+            'business_address__coordinates'
+        ).all()
+        if service_type:
+            services = services.filter(service__label__iexact=service_type)
+        return Response(
+            [BusinessSerializer(serv).getData() for serv in services],
+            status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

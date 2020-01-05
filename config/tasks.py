@@ -8,11 +8,12 @@ from django.utils import timezone
 from typing import Dict
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from django.urls import resolve as dj_resolve
 from rest_framework.authtoken.models import Token
 from ProductFilter.models import QueryIndex
 from Addresses.models import Coordinate
 from Analytics.models import ViewRecord
+from Retailers.models import RetailerLocation
+from Groups.models import ProCompany, RetailerCompany
 from config.celery import app
 from config.scripts.db_operations import (
     backup_db,
@@ -85,6 +86,28 @@ def backup_db_task():
 def clean_backups_task():
     clean_backups()
     return 'backups_cleaned'
+
+
+@app.task
+def add_retailer_record(path, pk):
+    record: ViewRecord = ViewRecord.objects.filter(path=path).latest('recorded')
+    retailer = RetailerLocation.objects.filter(pk=pk).first()
+    if record and retailer:
+        if not record.supplier_pk:
+            record.supplier_pk = pk
+            record.save()
+
+@app.task
+def add_pro_record(path, pk):
+    record: ViewRecord = ViewRecord.objects.filter(path=path).latest('recorded')
+    pro = ProCompany.objects.filter(pk=pk).first()
+    if record and pro:
+        if not record.pro_company_pk:
+            record.pro_company_pk = pk
+            record.save()
+            return
+    print('no record found')
+
 
 
 # @shared_task

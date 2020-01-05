@@ -15,21 +15,6 @@ from .serializers import FullRetailerProductSerializer
 
 
 @api_view(['GET'])
-def public_location(request: Request, pk):
-    retailer = RetailerLocation.objects.select_related(
-        'address',
-        'address__postal_code',
-        'address__coordinates',
-        'company'
-        ).prefetch_related('products', 'products__product').get(pk=pk)
-    add_retailer_record.delay(request.get_full_path(), pk=pk)
-    return Response(
-        BusinessSerializer(retailer).getData(),
-        status=status.HTTP_200_OK
-        )
-
-
-@api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def locations(request):
     # TODO locations view for retailer workbench

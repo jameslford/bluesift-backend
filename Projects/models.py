@@ -9,8 +9,6 @@ from Retailers.models import RetailerLocation, RetailerProduct
 from Profiles.models import ConsumerProfile, ProEmployeeProfile
 from Products.models import Product
 from Groups.models import ProCompany
-from Groups.serializers import BusinessSerializer
-from Profiles.serializers import serialize_profile
 # from UserProductCollections.models import BaseProject, RetailerLocation
 # from UserProducts.models import RetailerProduct
 
