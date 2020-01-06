@@ -54,28 +54,28 @@ def user_config(request: HttpRequest):
 
 
 @api_view(['GET'])
-def generic_business_detail(request: HttpRequest, business_pk: int, category: str):
+def generic_business_detail(request: HttpRequest, category: str, pk: int):
     if category.lower() == BusinessType.PRO_COMPANY.value:
         model: ProCompany = ProCompany.objects.select_related(
             'business_address',
             'business_address__postal_code',
             'business_address__coordinates',
             'plan'
-            ).get(pk=business_pk)
-        add_pro_record.delay(request.get_full_path(), pk=business_pk)
+            ).get(pk=pk)
+        add_pro_record.delay(request.get_full_path(), pk=pk)
     elif category.lower() == BusinessType.RETAILER_LOCATION.value:
         model: RetailerLocation = RetailerLocation.objects.select_related(
             'address',
             'address__postal_code',
             'address__coordinates',
             'company'
-            ).prefetch_related('products', 'products__product').get(pk=business_pk)
-        add_retailer_record.delay(request.get_full_path(), pk=business_pk)
+            ).prefetch_related('products', 'products__product').get(pk=pk)
+        add_retailer_record.delay(request.get_full_path(), pk=pk)
     elif category.lower() == 'retailer-company':
         model = RetailerCompany.objects.prefetch_related(
             'employees',
             'employees__user'
-            ).get(pk=business_pk)
+            ).get(pk=pk)
     return Response(BusinessSerializer(model).getData(), status=status.HTTP_200_OK)
 
 
