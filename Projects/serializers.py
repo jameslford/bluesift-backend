@@ -151,6 +151,7 @@ def reserialize_task(project, data, parent: ProjectTask = None):
 
 
 
+
 # def serialize_collaborators(project: BaseProject):
 #     pros = ProCollaborator.select_related().objects.filter(project=project).values(
 #         'collaborator',

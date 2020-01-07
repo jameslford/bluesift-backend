@@ -380,7 +380,8 @@ class Bid(models.Model):
         ProEmployeeProfile,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL
+        on_delete=models.SET_NULL,
+        related_name='bid_assignments'
         )
 
     def save(self, *args, **kwargs):
@@ -389,7 +390,15 @@ class Bid(models.Model):
         if not self.project:
             if not self.task:
                 raise ValidationError('No project or task to assign')
-            self.project = self.task.project
+        if self.accepted:
+            if not self.task:
+                accepted_count = BaseProject.objects.filter(task=self.task, accepted=True).count()
+                if accepted_count:
+                    raise Exception('another bid already accepted')
+            else:
+                accepted_count = Bid.objects.filter(task=self.task, accepted=True).count()
+                if accepted_count:
+                    raise Exception('another bid already accepted')
         super(Bid, self).save(*args, **kwargs)
 
 

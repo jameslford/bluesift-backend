@@ -7,17 +7,14 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from Accounts.serializers import user_serializer
 from ProductFilter.models import ProductFilter
 from Groups.models import ServiceType, ProCompany, RetailerCompany
-from Profiles.serializers import serialize_profile
 from Projects.models import ProjectProduct
 from Retailers.models import RetailerProduct, RetailerLocation
 from .models import UserTypeStatic
 from .tasks import add_retailer_record, add_pro_record
-from .serializers import BusinessSerializer
+from .serializers import BusinessSerializer, ProfileSerializer, ShortLib, ProductStatus
 from .globals import BusinessType
-
 
 def get_departments():
     return apps.get_app_config('SpecializedProducts').get_models()
@@ -33,22 +30,26 @@ def check_department_string(department_string: str):
 
 
 @api_view(['GET'])
+def pl_status_for_product(request, pk):
+    blah = ProductStatus(request.user, pk)
+    return Response(blah.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_short_lib(request, pk=None):
+    short_lib = ShortLib(request.user, pk)
+    return Response(short_lib.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
 def user_config(request: HttpRequest):
     user = request.user if request.user.is_authenticated else None
-    library_links = user.get_library_links() if user else None
-    business = user.get_group().custom_serialize() if user and (user.is_pro or user.is_supplier) else None
     pro_types = [serv.custom_serialize() for serv in ServiceType.objects.all()]
     deps = [dep.serialize_pt_attributes() for dep in ProductFilter.objects.all()]
-    collections = user.get_collections().values('pk', 'nickname')
-    user_res = user_serializer(user) if user else None
     res_dict = {
-        'user': user_res,
-        'profile': serialize_profile(request.user),
+        'profile': ProfileSerializer(user).full_data,
         'pros': sorted(pro_types, key=lambda k: k['label']),
         'departments': sorted(deps, key=lambda k: k['label']),
-        'collections': collections,
-        'business': business,
-        'libraryLinks': library_links
         }
     return Response(res_dict)
 
@@ -130,7 +131,7 @@ def generic_add(request, collection_pk=None):
 
 @api_view(['DELETE'])
 @permission_classes((IsAuthenticated,))
-def generic_delete(request, product_pk, collection_pk=None):
+def generic_delete(request, product_pk, collection_pk):
     if request.user.is_supplier:
         RetailerProduct.objects.delete_product(request.user, product_pk, collection_pk)
         return Response(status=status.HTTP_200_OK)
@@ -152,3 +153,22 @@ def task_progress(request):
     task = AsyncResult(job_id)
     data = task.state or task.result
     return Response(data)
+
+
+    # user = request.user
+    # blank_slib = ShortLib(0, [], [])
+    # if not user.is_authenticated:
+    #     return Response(asdict(blank_slib), status=status.HTTP_200_OK)
+    # collections = user.get_collections()
+    # collection = collections.get(pk=pk) if pk else collections.first()
+    # if not collection:
+    #     return Response(asdict(blank_slib), status=status.HTTP_200_OK)
+    # selected_proj_loc = PLShort(collection.nickname, collection.pk)
+    # pl_list = collections.values('nickname', 'pk')
+    # product_ids = collection.products.values_list('product__pk', flat=True)
+    # short_lib = ShortLib(
+    #     count=collections.count(),
+    #     product_ids=product_ids,
+    #     pl_short_list=pl_list,
+    #     selected_location=selected_proj_loc
+    #     )

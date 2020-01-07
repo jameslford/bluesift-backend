@@ -1,5 +1,8 @@
 import datetime
 from django.db import models
+from django.db.models import Value, CharField
+from django.db.models.functions import Concat
+from django.core.files.storage import get_storage_class, default_storage
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
 from Plans.models import RetailerPlan, ProPlan
@@ -68,7 +71,18 @@ class RetailerCompany(Company):
     plan = models.ForeignKey(RetailerPlan, null=True, on_delete=models.SET_NULL, related_name='suppliers')
 
     def get_employees(self):
-        return self.employees.select_related('user').all()
+        return self.employees.select_related('user').filter(publish=True).values(
+            'pk',
+            'title',
+            'avatar',
+            'admin',
+            'owner',
+            'user__full_name',
+            'user__email'
+            )
+        # imageurl = get_storage_class().base_path()
+        # return self.employees.select_related('user').filter(publish=True).annotate(
+        #     avatar_url=Concat(Value(imageurl), 'avatar', output_field=CharField())).values('pk', 'title', 'avatar_url')
 
     def save(self, *args, **kwargs):
         if not self.plan:

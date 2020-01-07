@@ -9,7 +9,9 @@ from .views import (
     generic_business_list,
     generic_business_detail,
     generic_add,
-    generic_delete
+    generic_delete,
+    get_short_lib,
+    pl_status_for_product
     )
 
 
@@ -23,12 +25,15 @@ urlpatterns = [
     path('products/', include('Products.urls')),
     path('profiles/', include('Profiles.urls')),
     path('projects/', include('Projects.urls')),
+    path('retailers/', include('Retailers.urls')),
     path('scraper/', include('Scraper.urls')),
 
-    path('add', generic_add),
-    path('delete/<int:product_pk>', generic_delete),
+    path('add/<int:collection_pk>', generic_add),
     path('delete/<int:product_pk>/<int:collection_pk>', generic_delete),
     path('expanded-header', user_config),
+    path('shortLib', get_short_lib),
+    path('shortLib/<str:pk>', get_short_lib),
+    path('pl_status/<str:pk>', pl_status_for_product),
 
     path('business-detail/<str:category>/<int:pk>', generic_business_detail),
     path('businesses/<str:category>', generic_business_list),
