@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework import status
 from config.custom_permissions import OwnerDeleteAdminEdit
 from Profiles.models import BaseProfile
-from .models import RetailerCompany, ProCompany, Company, ServiceType
+from .models import RetailerCompany, ProCompany, Company, ServiceType, BaseGroup
 
 
 @api_view(['POST'])
@@ -30,7 +30,7 @@ def get_or_create_business(request):
     service_type = ServiceType.objects.filter(label__icontains=service_type).first()
     if user.is_pro and not service_type:
         return Response('Invalid service type', status=status.HTTP_400_BAD_REQUEST)
-    company: Company = Company.objects.create_company(user=user, name=company_name, service=service_type)
+    company = BaseGroup.objects.create_company(user=user, name=company_name, service=service_type)
     profile = BaseProfile.objects.create_profile(user, company=company, title=title, owner=True)
     return Response({'name': company.name}, status=status.HTTP_201_CREATED)
 

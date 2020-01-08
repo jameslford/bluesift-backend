@@ -1,1 +1,0 @@
-from ProductFilter.models import ProductFilter

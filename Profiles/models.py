@@ -1,30 +1,30 @@
 from django.db import models
 from django.conf import settings
 from model_utils.managers import InheritanceManager
-from Groups.models import ProCompany, RetailerCompany
-from Plans.models import ConsumerPlan
+from Groups.models import ProCompany, RetailerCompany, ConsumerLibrary
 
 
 class ProfileManager(models.Manager):
 
     def create_profile(self, user, **kwargs):
-        if user.is_supplier or user.is_pro:
-            company = kwargs.get('company')
-            company_pk = kwargs.get('company_pk')
-            owner = kwargs.get('owner', False)
-            admin = kwargs.get('admin', False)
-            title = kwargs.get('title', None)
-            if not company or company_pk:
-                raise ValueError('must provide company')
-            if user.is_pro:
-                if not company:
-                    company = ProCompany.objects.get(pk=company_pk)
-                return ProEmployeeProfile.objects.get_or_create(
-                    user=user,
-                    company=company,
-                    owner=owner,
-                    title=title,
-                    admin=admin)[0]
+        group = kwargs.get('group')
+        company = kwargs.get('company')
+        company_pk = kwargs.get('company_pk')
+        owner = kwargs.get('owner', False)
+        admin = kwargs.get('admin', False)
+        title = kwargs.get('title', None)
+        plan = kwargs.get('plan', None)
+        phone = kwargs.get('phone_number', None)
+        if user.is_pro:
+            if not company:
+                company = ProCompany.objects.get(pk=company_pk)
+            return ProEmployeeProfile.objects.get_or_create(
+                user=user,
+                company=company,
+                owner=owner,
+                title=title,
+                admin=admin)[0]
+        if user.is_supplier:
             if not company:
                 company = RetailerCompany.objects.get(pk=company_pk)
             return RetailerEmployeeProfile.objects.get_or_create(
@@ -33,12 +33,11 @@ class ProfileManager(models.Manager):
                 owner=owner,
                 title=title,
                 admin=admin)[0]
-        plan = kwargs.get('plan', None)
-        phone = kwargs.get('phone_number', None)
-        return ConsumerProfile.objects.get_or_create(
+        return ConsumerProfile.objects.create(
             user=user,
-            plan=plan,
-            phone_number=phone)[0]
+            group=group,
+            phone_number=phone
+            )
 
     def update_profile(self, user, **kwargs):
 
@@ -92,11 +91,12 @@ class BaseProfile(models.Model):
 
 class ConsumerProfile(BaseProfile):
     phone_number = models.CharField(max_length=30, null=True, blank=True)
-    plan = models.ForeignKey(
-        ConsumerPlan,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='customers')
+    owner = models.BooleanField(default=True)
+    group = models.OneToOneField(
+        ConsumerLibrary,
+        on_delete=models.CASCADE,
+        related_name='group'
+        )
 
     def __str__(self):
         return self.user.get_first_name() + "'s library"

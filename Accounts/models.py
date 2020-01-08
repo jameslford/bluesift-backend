@@ -25,7 +25,7 @@ class UserManager(BaseUserManager):
         if is_supplier and is_pro:
             raise ValueError('User cannot be proffesional and supplier')
 
-        user = self.model.objects.create(email=email)
+        user: User = self.model.objects.create(email=email)
         user.set_password(password)
         user.full_name = kwargs.get('full_name', None)
         user.staff = kwargs.get('is_staff', False)
@@ -37,6 +37,11 @@ class UserManager(BaseUserManager):
         user.is_pro = is_pro
         user.save(using=self.db)
         Token.objects.get_or_create(user=user)
+        if not (user.is_pro or user.is_supplier):
+            from Groups.models import ConsumerLibrary
+            from Profiles.models import ConsumerProfile
+            lib = ConsumerLibrary.objects.create()
+            ConsumerProfile.objects.create(user=user, group=lib)
         return user
 
     def create_staffuser(self, email, full_name=None, password=None):
@@ -115,7 +120,7 @@ class User(AbstractBaseUser):
         profile = self.get_profile()
         if self.is_supplier or self.is_pro:
             return profile.company
-        return profile
+        return profile.group
 
     def get_collections(self, *select_related):
         group = self.get_group()
@@ -128,22 +133,21 @@ class User(AbstractBaseUser):
             return RetailerLocation.objects.prefetch_related(
                 'products'
             ).filter(company=group)
-        from Projects.models import ProProject, ConsumerProject
+        from Projects.models import Project
         if self.is_pro:
-            return ProProject.objects.prefetch_related(
+            return Project.objects.prefetch_related(
                 'products'
             ).filter(owner=group)
-        return ConsumerProject.objects.prefetch_related(
+        return Project.objects.prefetch_related(
             'products'
         ).filter(owner=group)
 
     def get_user_product_type(self):
-        # from UserProducts.models import RetailerProduct, ProjectProduct
         if self.is_supplier:
             from Retailers.models import RetailerProduct
             return RetailerProduct
-        from Projects.models import ProjectProduct
-        return ProjectProduct
+        from Projects.models import LibraryProduct
+        return LibraryProduct
 
     def get_library_links(self):
         if self.is_supplier:

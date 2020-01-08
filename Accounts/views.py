@@ -102,9 +102,8 @@ def custom_login(request):
             status=status.HTTP_400_BAD_REQUEST
             )
 
-    if user.is_pro or user.is_supplier:
-        if not user.get_profile():
-            BaseProfile.objects.create_profile(user)
+    if not user.profile:
+        BaseProfile.objects.create_profile(user)
 
     if os.environ['DJANGO_SETTINGS_MODULE'] == 'config.settings.staging' and not user.is_staff:
         return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)

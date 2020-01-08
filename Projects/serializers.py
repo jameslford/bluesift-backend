@@ -8,7 +8,7 @@ from django.db.models import Min, Max, F, Sum, DateTimeField
 from Addresses.serializers import AddressSerializer
 from Products.models import Product
 from Retailers.models import RetailerProduct
-from .models import ProjectTask, ProductAssignment, BaseProject, Bid
+from .models import ProjectTask, Project, Bid
 DAY = 60*60*24*1000
 
 def serialize_product(product: Product) -> Dict[str, any]:
@@ -50,8 +50,9 @@ def serialize_project_list(project):
         }
 
 
-def serialize_project_detail(project: BaseProject):
-    assignments = serialize_assignments(project)
+def serialize_project_detail(project: Project):
+    # assignments = serialize_assignments(project)
+    assignments = None
     tasks = [serialize_task(task) for task in ProjectTask.objects.prefetch_related(
         'children',
         'children__children'
@@ -68,39 +69,39 @@ def serialize_project_detail(project: BaseProject):
         }
 
 
-def serialize_assignments(project: BaseProject):
-    assignments = ProductAssignment.objects.filter(project=project).values(
-        'product_id',
-        'pk',
-        'name',
-        'procured',
-        'supplier',
-        'supplier_product',
-        'quantity_needed'
-        )
-    assignments = list(assignments)
-    product_ids = [assi['product_id'] for assi in assignments]
-    products = Product.subclasses.select_related(
-        'manufacturer').filter(pk__in=product_ids).select_subclasses()
-    products = [serialize_product(prod) for prod in products]
-    suppliers = RetailerProduct.objects.select_related(
-        'retailer',
-        'retailer__address'
-        ).filter(product__pk__in=product_ids).values(
-            'pk',
-            'product_id',
-            'retailer__nickname',
-            'in_store_ppu',
-            'retailer__pk',
-            'units_available_in_store',
-            'lead_time_ts',
-        )
-    for assignment in assignments:
-        assignment['suppliers'] = [sup for sup in suppliers if sup['product_id'] == assignment['product_id']]
-        # pylint: disable=cell-var-from-loop
-        prod = list(filter(lambda x: x['pk'] == assignment.get('product_id'), products))
-        assignment['product'] = prod[0] if prod else None
-    return assignments
+# def serialize_assignments(project: Project):
+#     assignments = ProductAssignment.objects.filter(project=project).values(
+#         'product_id',
+#         'pk',
+#         'name',
+#         'procured',
+#         'supplier',
+#         'supplier_product',
+#         'quantity_needed'
+#         )
+#     assignments = list(assignments)
+#     product_ids = [assi['product_id'] for assi in assignments]
+#     products = Product.subclasses.select_related(
+#         'manufacturer').filter(pk__in=product_ids).select_subclasses()
+#     products = [serialize_product(prod) for prod in products]
+#     suppliers = RetailerProduct.objects.select_related(
+#         'retailer',
+#         'retailer__address'
+#         ).filter(product__pk__in=product_ids).values(
+#             'pk',
+#             'product_id',
+#             'retailer__nickname',
+#             'in_store_ppu',
+#             'retailer__pk',
+#             'units_available_in_store',
+#             'lead_time_ts',
+#         )
+#     for assignment in assignments:
+#         assignment['suppliers'] = [sup for sup in suppliers if sup['product_id'] == assignment['product_id']]
+#         # pylint: disable=cell-var-from-loop
+#         prod = list(filter(lambda x: x['pk'] == assignment.get('product_id'), products))
+#         assignment['product'] = prod[0] if prod else None
+#     return assignments
 
 def serialize_task(task: ProjectTask) -> Dict[str, any]:
     return {
@@ -152,7 +153,7 @@ def reserialize_task(project, data, parent: ProjectTask = None):
 
 
 
-# def serialize_collaborators(project: BaseProject):
+# def serialize_collaborators(project: Project):
 #     pros = ProCollaborator.select_related().objects.filter(project=project).values(
 #         'collaborator',
 #         'collaborator__service__label',
@@ -164,7 +165,7 @@ def reserialize_task(project, data, parent: ProjectTask = None):
 
 
 
-# def project_serializer(project: BaseProject):
+# def project_serializer(project: Project):
 #     return {
 #         'pk' : project.pk,
 #         'image' : project.image.url if project.image else None,
@@ -175,7 +176,7 @@ def reserialize_task(project, data, parent: ProjectTask = None):
 #         # 'tasks': []
 #         }
 
-# def project_full_serializer(project: BaseProject):
+# def project_full_serializer(project: Project):
 #     tasks = ProjectTask.objects.prefetch_related(
 #         'children',
 #         'children__children'
@@ -230,7 +231,7 @@ def reserialize_task(project, data, parent: ProjectTask = None):
 #         'assignments': response
 #     }
 
-# def project_mini_serializer(project: BaseProject):
+# def project_mini_serializer(project: Project):
 #     tasks = ProjectTask.objects.prefetch_related(
 #         'children',
 #         'children__children'

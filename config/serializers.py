@@ -5,7 +5,7 @@ from Accounts.models import User
 from Accounts.serializers import user_serializer
 from Retailers.models import RetailerLocation, RetailerProduct
 from Profiles.models import RetailerEmployeeProfile, ConsumerProfile, ProEmployeeProfile
-from Projects.models import ProProject, ConsumerProject, ProjectProduct
+from Projects.models import Project, Project, LibraryProduct
 from Plans.serializers import PlanSerializer
 from Groups.models import RetailerCompany, ProCompany
 from .globals import BusinessType
@@ -246,14 +246,18 @@ class ProductStatus:
         if self.user.is_supplier:
             collections = RetailerLocation.objects.prefetch_related('products').filter(company=group)
             subquery = RetailerProduct.objects.filter(retailer=OuterRef('pk'))
-        elif self.user.is_pro:
-            collections = ProProject.objects.prefetch_related('products').filter(owner=group)
-            subquery = ProjectProduct.objects.filter(project=OuterRef('pk'))
+            res = collections.annotate(removed=Exists(subquery)).values('nickname', 'pk', 'removed')
+            self.pl_list = [CollectionNote(col['nickname'], col['pk'], not col['removed']).serialize() for col in res]
         else:
-            collections = ConsumerProject.objects.prefetch_related('products').filter(owner=group)
-            subquery = ProjectProduct.objects.filter(project=OuterRef('pk'))
-        res = collections.annotate(removed=Exists(subquery)).values('nickname', 'pk', 'removed')
-        self.pl_list = [CollectionNote(col['nickname'], col['pk'], not col['removed']).serialize() for col in res]
+            remove = group.products.filter(pk=self.pk).exists()
+            self.pl_list.append(CollectionNote('workbench', None, remove).serialize())
+        # elif self.user.is_pro:
+            # collections = Project.objects.prefetch_related('products').filter(owner=group)
+            # subquery = Pro.objects.filter(project=OuterRef('pk'))
+        # else:
+        #     collections = Project.objects.prefetch_related('products').filter(owner=group)
+        #     subquery = LibraryProduct.objects.filter(project=OuterRef('pk'))
+        # self.pl_list =
 
 
     @property

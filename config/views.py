@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from ProductFilter.models import ProductFilter
 from Groups.models import ServiceType, ProCompany, RetailerCompany
-from Projects.models import ProjectProduct
+from Projects.models import LibraryProduct
 from Retailers.models import RetailerProduct, RetailerLocation
 from .models import UserTypeStatic
 from .tasks import add_retailer_record, add_pro_record
@@ -125,17 +125,17 @@ def generic_add(request, collection_pk=None):
     if request.user.is_supplier:
         RetailerProduct.objects.add_product(request.user, product_pk, collection_pk)
         return Response(status=status.HTTP_201_CREATED)
-    ProjectProduct.objects.add_product(request.user, product_pk, collection_pk)
+    LibraryProduct.objects.add_product(request.user, product_pk)
     return Response(status=status.HTTP_201_CREATED)
 
 
 @api_view(['DELETE'])
 @permission_classes((IsAuthenticated,))
-def generic_delete(request, product_pk, collection_pk):
+def generic_delete(request, product_pk, collection_pk=None):
     if request.user.is_supplier:
         RetailerProduct.objects.delete_product(request.user, product_pk, collection_pk)
         return Response(status=status.HTTP_200_OK)
-    ProjectProduct.objects.delete_product(request.user, product_pk, collection_pk)
+    LibraryProduct.objects.delete_product(request.user, product_pk)
     return Response(status=status.HTTP_200_OK)
 
 

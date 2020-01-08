@@ -4,14 +4,15 @@ import requests
 from faker import Faker
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from Accounts.models import User
 from Addresses.models import Address
 from Products.models import Product
 from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile, BaseProfile
-from Groups.models import Company, ServiceType, ProCompany, RetailerCompany
+from Groups.models import ServiceType, ProCompany, RetailerCompany, BaseGroup
 from Retailers.models import RetailerLocation
-from Projects.models import BaseProject
+from Projects.models import Project
 
 ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-all.min.json'
 PASSWORD = '0gat_surfer'
@@ -38,7 +39,7 @@ PROJECT_SUFFIXES = [
 
 def random_date(deadline=None):
     if deadline:
-        return deadline - datetime.timedelta(days=random.randint(1, 30))
+        return deadline - datetime.timedelta(days=random.randint(1, 90))
     return timezone.now() + datetime.timedelta(days=random.randint(60, 130))
 
 
@@ -74,24 +75,28 @@ def create_address(**kwargs):
     city = kwargs.get('city')
     state = kwargs.get('state')
     postal_code = kwargs.get('postalCode')
-    address = Address.objects.get_or_create_address(
-        address_line_1=address_1,
-        address_line_2=address_2,
-        city=city,
-        state=state,
-        postal_code=postal_code
-        )
-    return address
+    try:
+        address = Address.objects.get_or_create_address(
+            address_line_1=address_1,
+            address_line_2=address_2,
+            city=city,
+            state=state,
+            postal_code=postal_code
+            )
+        return address
+    except ValidationError:
+        print('bad addres')
+        return None
 
 
-def create_company(user, address):
+def create_group(user, address):
     fake = Faker()
     u_phone = fake.phone_number()
     u_phone = u_phone[:25] if len(u_phone) > 25 else u_phone
     ret_com_text = fake.paragraph(nb_sentences=4, variable_nb_sentences=True)
     print(ret_com_text)
     ret_com_name = fake.company() + ' demo'
-    company = Company.objects.create_company(
+    company = BaseGroup.objects.create_group(
         user=user,
         business_address=address,
         phone_number=u_phone,
@@ -126,15 +131,16 @@ def create_project(user, address: Address):
     deadline = random_date()
     middle = random.choice(PROJECT_MIDDLES)
     suffix = random.choice(PROJECT_SUFFIXES)
-    nickname = f'{address.city} {middle} {suffix}'
-    return BaseProject.objects.create_project(
+    nickname = f'{address.city} {middle} {suffix}' if address else f'{middle} {suffix}'
+    project = Project.objects.create_project(
         user=user,
         nickname=nickname,
-        address_pk=address.pk,
         deadline=deadline
         )
-
-
+    if address:
+        project.address= address
+        project.save()
+    return project
 
 def create_locations(company: RetailerCompany, address: Address):
     fake = Faker()
@@ -147,25 +153,24 @@ def create_locations(company: RetailerCompany, address: Address):
         )
     return location
 
-
 @transaction.atomic
 def create_demo_users():
     fake = Faker()
-    user_count = 20
-    retailer_count = 24
-    pro_count = 24
+    user_count = 12
+    retailer_count = 20
+    pro_count = 20
     addresses_response = requests.get(ADDRESS_URL).json()
     addresses = addresses_response.get('addresses', [])
     addresses = list(addresses)
     random.shuffle(addresses)
     print('addresses length = ', len(addresses))
     for usernum in range(0, user_count):
+        print(usernum)
         user = create_user()
         u_phone = fake.phone_number()
-        ConsumerProfile.objects.create_profile(
-            user=user,
-            phone_number=u_phone
-            )
+        prof = ConsumerProfile.objects.get_or_create(user=user)[0]
+        prof.phone_number = u_phone
+        prof.save()
         proj_num = random.randint(3,6)
         for num in range(0, proj_num):
             proj_add = addresses.pop()
@@ -174,11 +179,11 @@ def create_demo_users():
             # create_assignments_and_tasks(project, product_ids)
         print('user name = ', user.full_name)
     for pro_num in range(0, pro_count):
+        print('pro_count = ', pro_num)
         pro_user = create_user(is_pro=True)
         pro_address = addresses.pop()
         pro_address = create_address(**pro_address)
-        pro_company = create_company(pro_user, pro_address)
-
+        pro_company = create_group(pro_user, pro_address)
         employee = ProEmployeeProfile.objects.create_profile(
             user=pro_user,
             company=pro_company
@@ -196,7 +201,7 @@ def create_demo_users():
         ret_user = create_user(is_supplier=True)
         ret_address = addresses.pop()
         ret_address = create_address(**ret_address)
-        ret_company = create_company(ret_user, ret_address)
+        ret_company = create_group(ret_user, ret_address)
         profile = RetailerEmployeeProfile.objects.create_profile(
             user=ret_user,
             company=ret_company

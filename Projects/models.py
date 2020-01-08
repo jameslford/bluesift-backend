@@ -1,20 +1,19 @@
-import decimal 
 from typing import Dict
 from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
-from Retailers.models import RetailerLocation, RetailerProduct
-from Profiles.models import ConsumerProfile, ProEmployeeProfile
+from Retailers.models import RetailerLocation
+from Profiles.models import ProEmployeeProfile
 from Products.models import Product
-from Groups.models import ProCompany
-# from UserProductCollections.models import BaseProject, RetailerLocation
+from Groups.models import BaseGroup, ProCompany
+# from UserProductCollections.models import Project, RetailerLocation
 # from UserProducts.models import RetailerProduct
 
 DAY = 60*60*24*1000
 
-class BaseProjectManager(models.Manager):
+class ProjectManager(models.Manager):
     """
     manager for projects, cosumer and pro. only adds 1 custom method: create_project
     """
@@ -29,10 +28,7 @@ class BaseProjectManager(models.Manager):
         address = kwargs.get('address_pk')
         project = None
         group = user.get_group()
-        if user.is_pro:
-            project = ProProject.objects.create(owner=group, nickname=nickname, deadline=deadline)
-        else:
-            project = ConsumerProject.objects.create(owner=group, nickname=nickname, deadline=deadline)
+        project = Project.objects.create(owner=group, nickname=nickname, deadline=deadline)
         if not address:
             return project
         address = Address.objects.filter(pk=address).first()
@@ -75,24 +71,19 @@ class BaseProjectManager(models.Manager):
 
     def get_user_projects(self, user, project_pk=None):
         """
-        returns correct subclass of BaseProject based on user
+        returns correct subclass of Project based on user
         if project_pk is provided, returns a project instance, else returns a queryset
         """
         if user.is_admin or user.is_supplier:
             raise ValueError('Unsupported user type')
-        if user.is_pro:
-            group = user.get_group()
-            projects = ProProject.objects.filter(owner=group)
-            if project_pk:
-                return projects.get(pk=project_pk)
-            return projects
-        projects = ConsumerProject.objects.filter(owner__user=user)
+        group = user.get_group()
+        projects = Project.objects.filter(owner=group)
         if project_pk:
             return projects.get(pk=project_pk)
         return projects
 
 
-class BaseProject(models.Model):
+class Project(models.Model):
     deadline = models.DateTimeField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True, upload_to='project-images/' )
     template = models.BooleanField(default=False)
@@ -102,44 +93,10 @@ class BaseProject(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name='projects'
-    )
-
-    objects = BaseProjectManager()
-    subclasses = InheritanceManager()
-
-    def product_count(self):
-        return self.products.count()
-
-    def application_count(self):
-        # pylint: disable=no-member
-        if self.applications:
-            return self.applications.count()
-        return 0
-
-
-class ProProject(BaseProject):
+        )
     nickname = models.CharField(max_length=60)
     owner = models.ForeignKey(
-        ProCompany,
-        on_delete=models.CASCADE,
-        related_name='projects'
-    )
-
-    class Meta:
-        unique_together = ('nickname', 'owner')
-
-    def save(self, *args, **kwargs):
-        if not self.nickname:
-            count = self.owner.projects.count() + 1
-            self.nickname = 'Project ' + str(count)
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
-
-class ConsumerProject(BaseProject):
-    nickname = models.CharField(max_length=60)
-    owner = models.ForeignKey(
-        ConsumerProfile,
+        BaseGroup,
         on_delete=models.CASCADE,
         related_name='projects'
         )
@@ -162,123 +119,64 @@ class ConsumerProject(BaseProject):
         if not self.nickname:
             count = self.owner.projects.count() + 1
             self.nickname = 'Project ' + str(count)
-        self.full_clean()
+        # self.full_clean()
         return super().save(*args, **kwargs)
 
-class ProjectProductManager(models.Manager):
-    def add_product(self, user, product_pk, collection_pk=None):
-        collections = user.get_collections()
-        collection = collections.filter(
-            pk=collection_pk).first() if collection_pk else collections.first()
+    objects = ProjectManager()
+    subclasses = InheritanceManager()
+
+    def product_count(self):
+        return self.products.count()
+
+    def application_count(self):
+        # pylint: disable=no-member
+        if self.applications:
+            return self.applications.count()
+        return 0
+
+
+class LibraryProductManager(models.Manager):
+
+    def add_product(self, user, product_pk):
+        if user.is_supplier:
+            raise Exception('supplier cannot add libraryproduct')
         product = Product.objects.get(pk=product_pk)
-        self.get_or_create(product=product, project=collection)[0]
+        group = user.get_group()
+        LibraryProduct.objects.get_or_create(product=product, owner=group)
         return True
 
-    def delete_product(self, user, product_pk, collection_pk=None):
-        collections = user.get_collections()
-        collection = collections.filter(
-            pk=collection_pk).first() if collection_pk else collections.first()
-        user_product = self.get(product__pk=product_pk, project=collection)
-        user_product.delete()
+    def delete_product(self, user, product_pk):
+        if user.is_supplier:
+            raise Exception('supplier cannot delete libraryproduct')
+        product = Product.objects.get(pk=product_pk)
+        group = user.get_group()
+        product = LibraryProduct.objects.get(product=product, owner=group)
+        product.delete()
         return True
 
 
-class ProjectProduct(models.Model):
+class LibraryProduct(models.Model):
     product = models.ForeignKey(
         Product,
         null=True,
         on_delete=models.SET_NULL,
-        related_name='customer_products'
+        related_name='project_products'
         )
-    project = models.ForeignKey(
-        BaseProject,
+    owner = models.ForeignKey(
+        BaseGroup,
         on_delete=models.CASCADE,
         related_name='products'
         )
 
-    objects = ProjectProductManager()
+    objects = LibraryProductManager()
+    subclasses = InheritanceManager()
+
+    class Meta:
+        unique_together = ('product', 'owner')
 
     def __str__(self):
         return self.product.name
 
-    class Meta:
-        unique_together = ('product', 'project')
-
-
-class ProductAssignmentManager(models.Manager):
-
-    @transaction.atomic()
-    def update_assignments(self, project, *args):
-        for arg in args:
-            pk = arg.get('pk')
-            assignment: ProductAssignment = self.model.objects.get(pk=pk) if pk else self.model()
-
-            assignment.project = project
-            assignment.name = arg.get('name')
-            assignment.quantity_needed = arg.get('quantity', 0)
-            assignment.procured = arg.get('procured', False)
-
-            supplier = arg.get('supplier')
-            product = arg.get('product')
-            if product:
-                product_pk = product.get('pk')
-                product = Product.objects.get(pk=product_pk)
-                assignment.product = product
-
-                if supplier:
-                    location_pk = supplier.get('location_pk')
-                    assignment.supplier = RetailerLocation.objects.get(pk=location_pk)
-            assignment.save()
-
-
-class ProductAssignment(models.Model):
-    name = models.CharField(max_length=80)
-    quantity_needed = models.IntegerField()
-    procured = models.BooleanField(default=False)
-    project = models.ForeignKey(
-        BaseProject,
-        on_delete=models.CASCADE,
-        related_name='product_assignments'
-        )
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name='project_assignments'
-        )
-    supplier = models.ForeignKey(
-        RetailerLocation,
-        on_delete=models.CASCADE,
-        related_name='project_assignments',
-        null=True
-        )
-    supplier_product = models.ForeignKey(
-        RetailerProduct,
-        on_delete=models.CASCADE,
-        related_name='project_assignments',
-        null=True
-    )
-
-    objects = ProductAssignmentManager()
-
-    class Meta:
-        unique_together = ('project', 'name')
-
-    def save(self, *args, **kwargs):
-        if self.supplier and not self.supplier_product:
-            prod = RetailerProduct.objects.filter(retailer=self.supplier, product=self.product).first()
-            self.supplier_product = prod if prod else None
-        if self.supplier_product and not self.supplier:
-            self.supplier = self.supplier_product.retailer
-        super(ProductAssignment, self).save(*args, **kwargs)
-
-    def mini_serialize(self):
-        cost = None
-        if self.supplier_product and self.quantity_needed:
-            cost = self.supplier_product.in_store_ppu * decimal.Decimal(self.quantity_needed)
-        return {
-            'name': self.name,
-            'cost': cost if cost else 0
-            }
 
 class ProjectTask(models.Model):
     DEPENDENCIES = Choices(('FTS', 'Finish to Start'), ('STS', 'Start to Start'), ('FTF', 'Finish to Finish'))
@@ -291,6 +189,8 @@ class ProjectTask(models.Model):
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(null=True)
     level = models.IntegerField(default=0)
+    quantity_needed = models.IntegerField()
+    procured = models.BooleanField(default=False)
     predecessor = models.ForeignKey(
         'self',
         null=True,
@@ -304,12 +204,18 @@ class ProjectTask(models.Model):
         related_name='children'
         )
     project = models.ForeignKey(
-        BaseProject,
+        Project,
         on_delete=models.CASCADE,
         related_name='tasks'
         )
     product = models.ForeignKey(
-        ProductAssignment,
+        Product,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='task'
+        )
+    selected_retailer = models.ForeignKey(
+        RetailerLocation,
         null=True,
         on_delete=models.SET_NULL,
         related_name='task'
@@ -329,6 +235,7 @@ class ProjectTask(models.Model):
                     raise ValueError('Only 2 nested levels allowed')
         self.level = level
 
+
     def mini_serialize(self) -> Dict[str, any]:
         return {
             'pk': self.pk,
@@ -344,7 +251,7 @@ class ProjectTask(models.Model):
 
 class AddtionalProjectCosts(models.Model):
     project = models.ForeignKey(
-        BaseProject,
+        Project,
         on_delete=models.CASCADE,
         related_name='additional_costs'
         )
@@ -362,7 +269,7 @@ class Bid(models.Model):
         related_name='bids'
         )
     project = models.ForeignKey(
-        BaseProject,
+        Project,
         on_delete=models.CASCADE,
         related_name='bids'
         )
@@ -392,7 +299,7 @@ class Bid(models.Model):
                 raise ValidationError('No project or task to assign')
         if self.accepted:
             if not self.task:
-                accepted_count = BaseProject.objects.filter(task=self.task, accepted=True).count()
+                accepted_count = Bid.objects.filter(project=self.project, accepted=True).count()
                 if accepted_count:
                     raise Exception('another bid already accepted')
             else:
@@ -417,7 +324,7 @@ class BidInvitation(models.Model):
         related_query_name='bid_invites'
         )
     project = models.ForeignKey(
-        BaseProject,
+        Project,
         on_delete=models.CASCADE,
         related_name='bid_invites',
         null=True,
@@ -499,3 +406,77 @@ class BidInvitation(models.Model):
     #         assignment.supplier = retailer_product
     #         assignment.save()
     #     return assignment
+
+
+
+# class ProductAssignmentManager(models.Manager):
+
+#     @transaction.atomic()
+#     def update_assignments(self, project, *args):
+#         for arg in args:
+#             pk = arg.get('pk')
+#             assignment: ProductAssignment = self.model.objects.get(pk=pk) if pk else self.model()
+
+#             assignment.project = project
+#             assignment.name = arg.get('name')
+#             assignment.quantity_needed = arg.get('quantity', 0)
+#             assignment.procured = arg.get('procured', False)
+
+#             supplier = arg.get('supplier')
+#             product = arg.get('product')
+#             if product:
+#                 product_pk = product.get('pk')
+#                 product = Product.objects.get(pk=product_pk)
+#                 assignment.product = product
+
+#                 if supplier:
+#                     location_pk = supplier.get('location_pk')
+#                     assignment.supplier = RetailerLocation.objects.get(pk=location_pk)
+#             assignment.save()
+
+
+
+
+# class ProductAssignment(models.Model):
+#     name = models.CharField(max_length=80)
+
+    
+#     # product = models.ForeignKey(
+#     #     Product,
+#     #     on_delete=models.CASCADE,
+#     #     related_name='project_assignments'
+#     #     )
+#     # supplier = models.ForeignKey(
+#     #     RetailerLocation,
+#     #     on_delete=models.CASCADE,
+#     #     related_name='project_assignments',
+#     #     null=True
+#     #     )
+#     # supplier_product = models.ForeignKey(
+#     #     RetailerProduct,
+#     #     on_delete=models.CASCADE,
+#     #     related_name='project_assignments',
+#     #     null=True
+#     # )
+
+#     objects = ProductAssignmentManager()
+
+#     class Meta:
+#         unique_together = ('project', 'name')
+
+#     def save(self, *args, **kwargs):
+#         if self.supplier and not self.supplier_product:
+#             prod = RetailerProduct.objects.filter(retailer=self.supplier, product=self.product).first()
+#             self.supplier_product = prod if prod else None
+#         if self.supplier_product and not self.supplier:
+#             self.supplier = self.supplier_product.retailer
+#         super(ProductAssignment, self).save(*args, **kwargs)
+
+    # def mini_serialize(self):
+    #     cost = None
+    #     if self.supplier_product and self.quantity_needed:
+    #         cost = self.supplier_product.in_store_ppu * decimal.Decimal(self.quantity_needed)
+    #     return {
+    #         'name': self.name,
+    #         'cost': cost if cost else 0
+    #         }

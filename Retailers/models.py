@@ -84,7 +84,7 @@ class RetailerLocation(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name='retailer_locations'
-    )
+        )
     approved_in_store_seller = models.BooleanField(default=False)
     approved_online_seller = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=16)
@@ -145,16 +145,13 @@ class RetailerLocation(models.Model):
     def company_name(self):
         return self.company.name
 
-    def clean(self):
-        # TODO makes sure employee assigned to local_admin is a company employee
-        if not self.local_admin:
-            return super().clean()
-        if self.local_admin.company == self.company:
-            return super().clean()
-        raise ValidationError('Employee not a company employee')
+    # def clean(self):
+    #     # TODO makes sure employee assigned to local_admin is a company employee
+
 
     def assign_number(self):
-        numbers = self.company.shipping_locations.values_list('number', flat=True)
+        # numbers = self.company.shipping_locations.values_list('number', flat=True)
+        numbers = list(RetailerLocation.objects.filter(company=self.company).values_list('number', flat=True))
         if not numbers:
             return 1
         return max(numbers) + 1
@@ -167,8 +164,9 @@ class RetailerLocation(models.Model):
             self.number = self.assign_number()
         if not self.nickname:
             self.nickname = self.company.name + ' ' + str(self.number)
-        self.full_clean()
-        super(RetailerLocation, self).save(*args, **kwargs)
+        if self.local_admin and self.local_admin.company != self.company:
+            raise ValidationError('Employee not a company employee')
+        return super(RetailerLocation, self).save(*args, **kwargs)
 
 def serialize_priced(prod):
     return {
@@ -249,16 +247,24 @@ class RetailerProduct(models.Model):
     def __str__(self):
         return str(self.retailer) + ' ' + str(self.product.name)
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    # def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, *args, **kwargs):
         self.check_approvals()
         self.check_availability()
-        self.product.set_locations()
-        return super().save(
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields
-            )
+        if self.publish_in_store_availability:
+            self.product.set_locations()
+            print('location set')
+            # address: Address = self.retailer.address
+            # print(address.coordinates)
+            # self.product.set_location_from_retailer(address.coordinates)
+        print('saving ret')
+        return super(RetailerProduct, self).save(*args, **kwargs)
+        # return super(RetailerProduct, self).save(
+        #     force_insert=force_insert,
+        #     force_update=force_update,
+        #     using=using,
+        #     update_fields=update_fields
+        #     )
 
     def serialize_mini(self):
         return {

@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin
-from .models import BaseProject, ProductAssignment
+from .models import Project
 from .serializers import serialize_project_detail, serialize_project_list, reserialize_task
 
 @api_view(['GET'])
@@ -31,7 +31,7 @@ def dashboard(request: Request, project_pk=None):
 
     if request.method == 'POST':
         try:
-            project = BaseProject.objects.create_project(request.user, **request.data)
+            project = Project.objects.create_project(request.user, **request.data)
             return Response(status=status.HTTP_201_CREATED)
         except ValidationError as error:
             return Response(error.messages[1], status=status.HTTP_400_BAD_REQUEST)
@@ -46,7 +46,7 @@ def dashboard(request: Request, project_pk=None):
     if request.method == 'PUT':
         user = request.user
         data = request.data
-        project = BaseProject.objects.update_project(user, **data)
+        project = Project.objects.update_project(user, **data)
         return Response(serialize_project_detail(project), status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -54,7 +54,7 @@ def dashboard(request: Request, project_pk=None):
 
 @api_view(['POST', 'DELETE'])
 def tasks(request: Request, project_pk, task_pk=None):
-    project = BaseProject.objects.get_user_projects(request.user, project_pk)
+    project = Project.objects.get_user_projects(request.user, project_pk)
 
     if request.method == 'POST':
         data = request.data
@@ -72,21 +72,21 @@ def tasks(request: Request, project_pk, task_pk=None):
 
 
 
-@api_view(['POST', 'DELETE'])
-def assignments(request: Request, project_pk, assignment_pk=None):
+# @api_view(['POST', 'DELETE'])
+# def assignments(request: Request, project_pk, assignment_pk=None):
 
-    project = request.user.get_collections().get(pk=project_pk)
+#     project = request.user.get_collections().get(pk=project_pk)
 
-    if request.method == 'POST':
-        ProductAssignment.objects.update_assignments(project, *request.data)
-        return Response(status=status.HTTP_201_CREATED)
+#     if request.method == 'POST':
+#         ProductAssignment.objects.update_assignments(project, *request.data)
+#         return Response(status=status.HTTP_201_CREATED)
 
-    if request.method == 'DELETE':
-        assignment = project.product_assignments.get(pk=assignment_pk)
-        assignment.delete()
-        return Response('deleted')
+#     if request.method == 'DELETE':
+#         assignment = project.product_assignments.get(pk=assignment_pk)
+#         assignment.delete()
+#         return Response('deleted')
 
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+#     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 
@@ -116,7 +116,7 @@ def assignments(request: Request, project_pk, assignment_pk=None):
     #     return Response(project_node, status=status.HTTP_200_OK)
 
     # if request.method == 'GET':
-    #     project = BaseProject.objects.get_user_projects(request.user, project_pk)
+    #     project = Project.objects.get_user_projects(request.user, project_pk)
     #     project_product_pks = project.products.all().values_list('product__pk', flat=True)
     #     products = Product.subclasses.prefetch_related(
     #         'priced',
@@ -145,7 +145,7 @@ def assignments(request: Request, project_pk, assignment_pk=None):
 # def collaborators(request: Request, pk=None):
 
 #     if request.method == 'GET':
-#         project = BaseProject.objects.get_user_projects(request.user, pk)
+#         project = Project.objects.get_user_projects(request.user, pk)
 #         pro_collabs = project.pro_collaborators.all().select_related('collaborator', 'contact', 'contact__user')
 #         user_collabs = project.collaborators.all().select_related('collaborator')
 #         return Response({
@@ -155,7 +155,7 @@ def assignments(request: Request, project_pk, assignment_pk=None):
 
 #     if request.method == 'POST':
 #         pass
-        # project = BaseProject.objects.get_user_projects(request.user, pk)
+        # project = Project.objects.get_user_projects(request.user, pk)
         # service_pk = request.data.get('service_pk', None)
         # if service_pk:
         #     collab = ProCompany.objects.get(pk=service_pk)
@@ -170,5 +170,5 @@ def assignments(request: Request, project_pk, assignment_pk=None):
 
 # @api_view(['POST', 'PUT', 'DELETE'])
 # def assignments(request: Request, project_pk, assignment_pk=None):
-#     project = BaseProject.objects.get_user_projects(request.user, project_pk)
+#     project = Project.objects.get_user_projects(request.user, project_pk)
 

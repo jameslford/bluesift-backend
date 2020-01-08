@@ -1,34 +1,26 @@
-import datetime
 from django.db import models
-from django.db.models import Value, CharField
-from django.db.models.functions import Concat
-from django.core.files.storage import get_storage_class, default_storage
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
-from Plans.models import RetailerPlan, ProPlan
+from Plans.models import RetailerPlan, ProPlan, ConsumerPlan
 
 
-class CompanyManager(models.Manager):
-
-    def create_company(self, user, **kwargs):
+class BaseGroupManager(models.Manager):
+    def create_group(self, user, **kwargs):
         if user.is_pro:
             return ProCompany.objects.get_or_create(**kwargs)[0]
+        if kwargs.get('service', False):
+            del kwargs['service']
         if user.is_supplier:
-            if kwargs.get('service', False):
-                del kwargs['service']
             return RetailerCompany.objects.get_or_create(**kwargs)[0]
-        raise ValueError('user is not pro or supplier')
 
-    def delete_company(self, user):
-        if not (user.is_supplier or user.is_pro):
-            return
+    def delete_group(self, user):
         profile = user.get_profile()
         if profile.owner:
             group = user.get_group()
             group.delete()
         return
 
-    def edit_company(self, user, **kwargs):
+    def edit_group(self, user, **kwargs):
         if not (user.is_pro or user.is_supplier):
             return
         profile = user.get_profile()
@@ -38,7 +30,21 @@ class CompanyManager(models.Manager):
         name = kwargs.get('name')
 
 
-class Company(models.Model):
+class BaseGroup(models.Model):
+    objects = BaseGroupManager()
+    subclasses = InheritanceManager()
+
+
+class ConsumerLibrary(BaseGroup):
+    name = models.CharField(max_length=40, null=True, blank=True)
+    plan = models.ForeignKey(
+        ConsumerPlan,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='consumers'
+        )
+
+class Company(BaseGroup):
     name = models.CharField(max_length=40, unique=True)
     phone_number = models.CharField(max_length=30, null=True, blank=True)
     business_address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
@@ -48,8 +54,8 @@ class Company(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(null=True, blank=True, upload_to='storefronts/')
 
-    objects = CompanyManager()
-    subclasses = InheritanceManager()
+    class Meta:
+        abstract = True
 
     def __str__(self):
         return f'{self.name} {self.pk}'
@@ -60,7 +66,6 @@ class Company(models.Model):
 
 
     def coordinates(self):
-        # coordinates = self.address.coordinates
         return [
             self.business_address.lat,
             self.business_address.lng
@@ -80,18 +85,11 @@ class RetailerCompany(Company):
             'user__full_name',
             'user__email'
             )
-        # imageurl = get_storage_class().base_path()
-        # return self.employees.select_related('user').filter(publish=True).annotate(
-        #     avatar_url=Concat(Value(imageurl), 'avatar', output_field=CharField())).values('pk', 'title', 'avatar_url')
 
     def save(self, *args, **kwargs):
         if not self.plan:
             self.plan = RetailerPlan.objects.get_or_create_default()
         super().save(*args, **kwargs)
-
-    # def custom_serialize(self, full=False):
-    #     from .serializers import BusinessSerializer
-    #     return BusinessSerializer(self, full).getData()
 
 
 class ServiceType(models.Model):
@@ -122,12 +120,20 @@ class ProCompany(Company):
     def get_employees(self):
         return self.employees.select_related('user').all()
 
-    # def custom_serialize(self, full=False):
-    #     from .serializers import BusinessSerializer
-    #     return BusinessSerializer(self, full).getData()
-
     def save(self, *args, **kwargs):
         if not self.plan:
             self.plan = ProPlan.objects.get_or_create_default()
         super().save(*args, **kwargs)
 
+
+    # imageurl = get_storage_class().base_path()
+    # return self.employees.select_related('user').filter(publish=True).annotate(
+    #     avatar_url=Concat(Value(imageurl), 'avatar', output_field=CharField())).values('pk', 'title', 'avatar_url')
+
+    # def custom_serialize(self, full=False):
+    #     from .serializers import BusinessSerializer
+    #     return BusinessSerializer(self, full).getData()
+
+    # def custom_serialize(self, full=False):
+    #     from .serializers import BusinessSerializer
+    #     return BusinessSerializer(self, full).getData()

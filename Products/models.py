@@ -15,6 +15,7 @@ from django.db.models import (
 from django.db.models.functions import Least
 from django.contrib.gis.geos import MultiPoint
 from model_utils.managers import InheritanceManager
+from Addresses.models import Coordinate
 
 
 def availability_getter(query_term, location_pk=None):
@@ -159,8 +160,8 @@ class Product(models.Model):
     manufacturer_style = models.CharField(max_length=200, null=True, blank=True)
 
     swatch_image = models.ImageField()
-    room_scene = models.ImageField()
-    tiling_image = models.ImageField()
+    room_scene = models.ImageField(null=True, blank=True)
+    tiling_image = models.ImageField(null=True, blank=True)
 
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True, blank=True)
@@ -169,7 +170,7 @@ class Product(models.Model):
     online_and_priced = models.BooleanField(default=False)
     in_store_and_priced = models.BooleanField(default=False)
     installation_offered = models.BooleanField(default=False)
-    locations = models.MultiPointField(null=True)
+    locations = models.MultiPointField(null=True, blank=True)
 
     residential_warranty = models.CharField(max_length=100, null=True, blank=True)
     commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
@@ -192,9 +193,14 @@ class Product(models.Model):
         return f'{self.manufacturer.label}, {self.manu_collection}, {self.manufacturer_style}'
 
     def save(self, *args, **kwargs):
+        print('saving')
         if not self.name:
+            print('no name')
             self.name = str(self.bb_sku)
+        # try:
         super(Product, self).save(*args, **kwargs)
+        # except Exception as e:
+        #     print(e.__cause__)
 
     def serialize_stock(self):
         return {
@@ -222,6 +228,7 @@ class Product(models.Model):
 
         # from UserProducts.serializers import RetailerProductMiniSerializer
         # priced = [RetailerProductMiniSerializer(price).data for price in self.get_in_store_priced()]
+
     def serialize_detail(self):
         sub = Product.subclasses.get_subclass(pk=self.pk)
         stock = self.serialize_stock()
@@ -235,7 +242,6 @@ class Product(models.Model):
             'lists': special
             })
         return stock
-
 
     def average_rating(self):
         avg_rating = self.ratings.all().aggregate(Avg('rating'))
@@ -278,8 +284,14 @@ class Product(models.Model):
         if in_store_sellers.count() > 0:
             coordinates = [q.retailer.address.coordinates.point for q in in_store_sellers]
             points = MultiPoint(*coordinates)
-            self.locations = points
+            print('sellers exist ', points)
+            # self.locations = points
             self.save()
+    
+    def set_location_from_retailer(self, coordinates: Coordinate):
+        points = MultiPoint(coordinates.point)
+        self.locations = points
+        self.save()
 
     def manufacturer_name(self):
         if not self.manufacturer:
