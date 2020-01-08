@@ -3,12 +3,10 @@ import os
 from celery import Celery
 from django.conf import settings
 
-# print('precelery settings are ' + os.environ['DJANGO_SETTINGS_MODULE'])
 
 INIT_SETTINGS = os.environ.get('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', INIT_SETTINGS)
-# print('celery settings are ' + os.environ['DJANGO_SETTINGS_MODULE'])
 app = Celery('config')
 
 # Using a string here means the worker will not have to

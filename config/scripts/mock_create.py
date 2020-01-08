@@ -1,6 +1,5 @@
 import random
 import datetime
-import decimal
 import requests
 from faker import Faker
 from django.utils import timezone
@@ -11,39 +10,14 @@ from Addresses.models import Address
 from Products.models import Product
 from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile, BaseProfile
 from Groups.models import Company, ServiceType, ProCompany, RetailerCompany
-from Retailers.models import RetailerLocation, RetailerProduct
-from Projects.models import BaseProject, ProjectProduct, ProductAssignment, ProjectTask, ConsumerCollaborator, ProCollaborator
-# from UserProductCollections.models import RetailerLocation, BaseProject
-# from UserProducts.models import RetailerProduct, ProjectProduct
-# from Schedule.models import ProductAssignment, ProjectTask, ConsumerCollaborator, ProCollaborator
+from Retailers.models import RetailerLocation
+from Projects.models import BaseProject
 
-# ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-100.json'
 ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-all.min.json'
 PASSWORD = '0gat_surfer'
 SERVICE_TYPES = ('Architect', 'Contractor', 'Interior Designer', 'Carpenter', 'Engineer')
 
-ROOMS = [
-    'bathroom',
-    'kitchen',
-    'office',
-    'den',
-    'library',
-    'deck',
-    'patio',
-    'living room',
-    'basement',
-]
 
-APPLICATIONS = [
-    'walls',
-    'floor',
-    'counter',
-    'desk wrap',
-    'bookshelf covering',
-    'fireplace interior',
-    'mantle',
-    'stand'
-]
 
 PROJECT_MIDDLES = [
     'house',
@@ -62,16 +36,11 @@ PROJECT_SUFFIXES = [
     'addition'
 ]
 
-SUB_TASKS = [
-    'clean',
-    'electrical',
-    'plumbing',
-    'painting',
-    'framing',
-    'finish work',
-    'millwork',
-    'demo'
-]
+def random_date(deadline=None):
+    if deadline:
+        return deadline - datetime.timedelta(days=random.randint(1, 30))
+    return timezone.now() + datetime.timedelta(days=random.randint(60, 130))
+
 
 
 def get_name_and_email():
@@ -139,12 +108,6 @@ def create_company(user, address):
     return company
 
 
-def random_date(deadline=None):
-    if deadline:
-        return deadline - datetime.timedelta(days=random.randint(1, 30))
-    return timezone.now() + datetime.timedelta(days=random.randint(60, 130))
-
-
 def create_employees(company):
     if isinstance(company, ProCompany):
         user = create_user(is_pro=True)
@@ -172,58 +135,6 @@ def create_project(user, address: Address):
         )
 
 
-def create_assignments_and_tasks(project: BaseProject, _product_ids):
-    prod_ids = list(_product_ids)
-    rooms = ROOMS.copy()
-    applications = APPLICATIONS.copy()
-    for x in range(random.randint(8, 20)):
-        select_id = random.choice(prod_ids)
-        del prod_ids[prod_ids.index(select_id)]
-        product = Product.objects.get(pk=select_id)
-        ProjectProduct.objects.create(
-            product=product,
-            project=project
-            )
-        assignment_choice = random.choice([True, False])
-        if assignment_choice and rooms:
-            quantity = random.randint(30, 200)
-            room = random.choice(rooms)
-            index = rooms.index(room)
-            del rooms[index]
-            application = random.choice(applications)
-            assignment_name = f'{room} {application}'
-            supplier = product.priced.all().first()
-            supplier = supplier.retailer if supplier else None
-            assignment = ProductAssignment.objects.create(
-                name=assignment_name,
-                quantity_needed=quantity,
-                product=product,
-                project=project,
-                supplier=supplier
-                )
-            parent_task = ProjectTask.objects.create(
-                name=room,
-                project=project
-                )
-            child_name = f'{application} install'
-            child_start = project.deadline - datetime.timedelta(days=20)
-            ProjectTask.objects.create(
-                name=child_name,
-                product=assignment,
-                project=project,
-                duration=datetime.timedelta(days=random.randint(3, 9)),
-                start_date=child_start,
-                parent=parent_task
-                )
-            for stask in random.sample(SUB_TASKS, 3):
-                ProjectTask.objects.create(
-                    name=stask,
-                    parent=parent_task,
-                    duration=datetime.timedelta(days=random.randint(3, 9)),
-                    start_date=random_date(project.deadline),
-                    project=project
-                    )
-
 
 def create_locations(company: RetailerCompany, address: Address):
     fake = Faker()
@@ -237,47 +148,17 @@ def create_locations(company: RetailerCompany, address: Address):
     return location
 
 
-def create_retailer_products(location: RetailerLocation, _product_ids):
-    product_ids = _product_ids
-    max_count = product_ids.count()
-    rang_int = random.randint(10, (max_count // 20))
-    location_prod_ids = list(product_ids)
-    for x in range(rang_int):
-        price = random.uniform(1, 10)
-        price = round(float(price), 2)
-        price = decimal.Decimal(price)
-        units_available = random.randint(10, 60)
-        units_per_order = decimal.Decimal(3.5)
-        select_id = random.choice(location_prod_ids)
-        del location_prod_ids[location_prod_ids.index(select_id)]
-        product = Product.objects.get(pk=select_id)
-        lead_time = random.randint(1, 14)
-        offer_install = random.choice([True, False])
-        sup_prod: RetailerProduct = RetailerProduct.objects.get_or_create(
-            product=product,
-            retailer=location,
-            )[0]
-        sup_prod.units_available_in_store = units_available
-        sup_prod.units_per_order = units_per_order
-        sup_prod.publish_in_store_price = True
-        sup_prod.in_store_ppu = price
-        sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
-        sup_prod.offer_installation = offer_install
-        sup_prod.save()
-
-
 @transaction.atomic
 def create_demo_users():
     fake = Faker()
-    user_count = 10
-    retailer_count = 14
-    pro_count = 14
+    user_count = 20
+    retailer_count = 24
+    pro_count = 24
     addresses_response = requests.get(ADDRESS_URL).json()
     addresses = addresses_response.get('addresses', [])
     addresses = list(addresses)
     random.shuffle(addresses)
     print('addresses length = ', len(addresses))
-    product_ids = Product.objects.values_list('pk', flat=True)
     for usernum in range(0, user_count):
         user = create_user()
         u_phone = fake.phone_number()
@@ -285,11 +166,12 @@ def create_demo_users():
             user=user,
             phone_number=u_phone
             )
-        for x in range(0, 3):
+        proj_num = random.randint(3,6)
+        for num in range(0, proj_num):
             proj_add = addresses.pop()
             proj_add = create_address(**proj_add)
             project = create_project(user, proj_add)
-            create_assignments_and_tasks(project, product_ids)
+            # create_assignments_and_tasks(project, product_ids)
         print('user name = ', user.full_name)
     for pro_num in range(0, pro_count):
         pro_user = create_user(is_pro=True)
@@ -304,12 +186,12 @@ def create_demo_users():
         if pro_num == 0:
             employee.owner = True
             employee.save()
-        for x in range(0, 3):
+        for num in range(0, 3):
             proj_add = addresses.pop()
             proj_add = create_address(**proj_add)
             project = create_project(pro_user, proj_add)
-            create_assignments_and_tasks(project, product_ids)
-        print(pro_user.full_name)
+            # create_assignments_and_tasks(project, product_ids)
+        print('pro name = ', pro_user.full_name)
     for ret_num in range(0, retailer_count):
         ret_user = create_user(is_supplier=True)
         ret_address = addresses.pop()
@@ -326,5 +208,5 @@ def create_demo_users():
             loc_add = addresses.pop()
             loc_add = create_address(**loc_add)
             location = create_locations(ret_company, loc_add)
-            create_retailer_products(location, product_ids)
-        print(ret_user.full_name)
+            # create_retailer_products(location, product_ids)
+        print('ret name = ', ret_user.full_name)
