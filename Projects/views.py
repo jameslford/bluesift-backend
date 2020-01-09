@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -6,14 +7,31 @@ from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin
 from .models import Project
-from .serializers import serialize_project_detail, serialize_project_list, reserialize_task
+from .serializers import serialize_project_detail, reserialize_task
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def all_projects(request):
     projects = request.user.get_collections()
-    res = [serialize_project_list(proj) for proj in projects]
-    return Response(res, status=status.HTTP_200_OK)
+    return_dict = projects.annotate(
+        min_date=Min('tasks__start_date'), 
+        max_date=Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day')),
+        material_cost=Sum(
+            F('tasks__retailer_product__in_store_ppu') * F('tasks__quantity_needed'),
+            output_field=DecimalField(decimal_places=2)),
+        additional_costs_sum=Sum('additional_costs__amount'),
+        bid_sum=Sum('bids__amount')
+        ).values(
+            'pk',
+            'nickname',
+            'deadline',
+            'min_date',
+            'max_date',
+            'additional_costs_sum',
+            'bid_sum',
+            'material_cost'
+            )
+    return Response(return_dict, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])

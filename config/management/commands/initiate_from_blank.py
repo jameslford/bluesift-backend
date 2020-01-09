@@ -7,6 +7,7 @@ from config.scripts.colors import assign_label_color
 from config.scripts.create_usertypes import create_usertypes
 from config.scripts.mock_create import create_demo_users
 from config.scripts.mock_create_additional import add_additonal
+from config.models import LibraryLink
 
 
 class Command(BaseCommand):
@@ -20,3 +21,4 @@ class Command(BaseCommand):
         create_usertypes()
         create_demo_users()
         add_additonal()
+        LibraryLink.create_links()

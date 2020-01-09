@@ -1,12 +1,11 @@
-from urllib.parse import unquote
 from celery.result import AsyncResult
-from django.apps import apps
 from django.http.request import HttpRequest
 from django.db.models import Count
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from config.globals import check_department_string
 from ProductFilter.models import ProductFilter
 from Groups.models import ServiceType, ProCompany, RetailerCompany
 from Projects.models import LibraryProduct
@@ -15,18 +14,6 @@ from .models import UserTypeStatic
 from .tasks import add_retailer_record, add_pro_record
 from .serializers import BusinessSerializer, ProfileSerializer, ShortLib, ProductStatus
 from .globals import BusinessType
-
-def get_departments():
-    return apps.get_app_config('SpecializedProducts').get_models()
-
-
-def check_department_string(department_string: str):
-    department_string = unquote(department_string)
-    departments = get_departments()
-    department = [dep for dep in departments if dep._meta.verbose_name_plural.lower() == department_string.lower()]
-    if department:
-        return department[0]
-    return None
 
 
 @api_view(['GET'])

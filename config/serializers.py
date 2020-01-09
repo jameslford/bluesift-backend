@@ -7,7 +7,7 @@ from Retailers.models import RetailerLocation, RetailerProduct
 from Profiles.models import RetailerEmployeeProfile, ConsumerProfile, ProEmployeeProfile
 from Projects.models import Project, Project, LibraryProduct
 from Plans.serializers import PlanSerializer
-from Groups.models import RetailerCompany, ProCompany
+from Groups.models import RetailerCompany, ProCompany, ConsumerLibrary
 from .globals import BusinessType
 
 
@@ -92,6 +92,11 @@ class BusinessSerializer:
             self.plan = PlanSerializer(pro_comp.plan).data if pro_comp.plan else None
             # self.employees = [ProfileSerializer(employee.user).data for employee in pro_comp.get_employees()]
             return self.serialize()
+        if isinstance(self.business, ConsumerLibrary):
+            return
+            # con_lib: ConsumerLibrary = self.business
+            # self.plan = PlanSerializer(con_lib.plan).data if con_lib.plan else None
+            # return self.serialize()
         raise AttributeError('invalid model for business argument')
 
 class ProfileSerializer:
@@ -112,15 +117,15 @@ class ProfileSerializer:
         self.phone_number = None
         self.tasks = []
         self.collections = None
-        self.business = None
-        self.libraryLinks = None
+        self.group = None
+        self.library_links = None
 
 
     def retrieve_values(self, full=False):
         self.pk = self.profile.pk
         self.avatar = self.profile.avatar.url if self.profile.avatar else None
         self.collections = self.user.get_collections().values('pk', 'nickname')
-        self.libraryLinks = self.user.get_library_links()
+        self.library_links = self.user.get_library_links()
 
         if isinstance(self.profile, ProEmployeeProfile):
             self.user_type = 'pro'
@@ -128,7 +133,7 @@ class ProfileSerializer:
             self.owner = self.profile.owner
             self.title = self.profile.title
             if full:
-                self.business = BusinessSerializer(self.user.get_group()).getData()
+                self.group = BusinessSerializer(self.user.get_group()).getData()
                 self.tasks = self.profile.bid_assignments.all()
         if isinstance(self.profile, RetailerEmployeeProfile):
             self.user_type = 'retailer'
@@ -136,10 +141,12 @@ class ProfileSerializer:
             self.owner = self.profile.owner
             self.title = self.profile.title
             if full:
-                self.business = BusinessSerializer(self.user.get_group()).getData()
+                self.group = BusinessSerializer(self.user.get_group()).getData()
         if isinstance(self.profile, ConsumerProfile):
             self.user_type = 'user'
-            self.plan = PlanSerializer(self.profile.plan) if self.profile.plan else None
+            if full:
+                # self.group = BusinessSerializer(self.user.get_group()).getData()
+                self.plan = PlanSerializer(self.profile.group.plan).data if self.profile.group.plan else None
 
         self.user = user_serializer(self.user) if self.user.is_authenticated else None
 
@@ -156,8 +163,8 @@ class ProfileSerializer:
             'plan': self.plan,
             'phone_number': self.phone_number,
             'tasks': self.tasks,
-            'libraryLinks': self.libraryLinks,
-            'business': self.business,
+            'libraryLinks': self.library_links,
+            'group': self.group,
             'collections': self.collections,
             }
 

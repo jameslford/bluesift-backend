@@ -44,11 +44,15 @@ SUB_TASKS = [
     'demo'
     ]
 
-
+@transaction.atomic
 def add_group_products(group):
     print('adding products to ', group.name)
     products = list(Product.objects.values_list('pk', flat=True))
-    max_products = random.randint(20, 40)
+    min_prod = 20
+    max_products = random.randint(min_prod, 40)
+    if group.products.all().count() >= min_prod:
+        print('products already assigned')
+        return
     for num in range(max_products):
         index = random.choice(products)
         index = products.index(index)
@@ -57,7 +61,7 @@ def add_group_products(group):
         LibraryProduct.objects.create(product=product, owner=group)
 
 
-
+@transaction.atomic
 def create_group_products():
     consumer_groups = ConsumerLibrary.objects.all()
     pro_groups = ProCompany.objects.all()
@@ -66,14 +70,14 @@ def create_group_products():
     for pro in pro_groups:
         add_group_products(pro)
 
-
+@transaction.atomic
 def create_parent_tasks():
     projects: List[Project] = Project.objects.all()
     for project in projects:
         print('creating parent tasks for ', project.nickname)
         rooms = ROOMS.copy()
         total_rooms = len(rooms)
-        products = list(project.owner.products.all())
+        products = [prod.product for prod in project.owner.products.all()]
         task_max = random.randint(3, total_rooms)
         task_count = range(task_max)
         deadline = project.deadline
@@ -86,7 +90,7 @@ def create_parent_tasks():
             start_date = random_date(deadline)
             duration = datetime.timedelta(duration)
             progress = random.randint(0, 100)
-            task = ProjectTask()
+            task = ProjectTask(project=project)
             task.name = task_name
             task.start_date = start_date
             task.duration = duration
@@ -95,11 +99,11 @@ def create_parent_tasks():
                 prod = random.choice(products)
                 index = products.index(prod)
                 task.product = products.pop(index)
-                task.quantity = random.randint(30, 300)
+                task.quantity_needed = random.randint(30, 300)
                 task.procured = random.choice([True, False])
             task.save()
 
-
+@transaction.atomic
 def create_child_tasks():
     tasks: List[ProjectTask] = ProjectTask.objects.all()
     for task in tasks:
@@ -119,14 +123,16 @@ def create_child_tasks():
             child_task.progress = random.randint(0, 100)
             child_task.start_date = task.start_date + datetime.timedelta(tdelt)
 
-
+@transaction.atomic
 def create_retailer_products():
     locations: List[RetailerLocation] = RetailerLocation.objects.all()
+    min_count = 30
     for location in locations:
-        print('retailer location = ', location.nickname)
+        if location.products.all().count() >= min_count:
+            print('products already assigned')
+            continue
         products: List[Product] = list(Product.objects.all())
         max_count = len(products)
-        min_count = 30
         max_count = (max_count // 18) + min_count
         rang_int = random.randint(min_count, max_count)
         for num in range(rang_int):
@@ -134,14 +140,11 @@ def create_retailer_products():
             price = random.uniform(1, 10)
             price = round(float(price), 2)
             price = decimal.Decimal(price)
-            print('price = ', price)
             units_available = random.randint(10, 60)
             units_per_order = decimal.Decimal(3.5)
             select_product = random.choice(products)
-            print('seleceted product = ', select_product)
             index = products.index(select_product)
             select_product = products.pop(index)
-            print('seleceted product = ', select_product)
             # del location_prod_ids[location_prod_ids.index(select_id)]
             # product = Product.objects.get(pk=select_id)
             lead_time = random.randint(1, 14)
@@ -150,19 +153,16 @@ def create_retailer_products():
                 product=select_product,
                 retailer=location
                 )[0]
-            print(f'retailer product {sup_prod.product.name} created')
             sup_prod.units_available_in_store = units_available
             sup_prod.units_per_order = units_per_order
             sup_prod.publish_in_store_price = True
             sup_prod.in_store_ppu = price
             sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
-            print('product lead time = ', sup_prod.lead_time_ts)
             sup_prod.offer_installation = offer_install
             print(f'retailer product {sup_prod.offer_installation} created')
             sup_prod.save()
 
 
-@transaction.atomic
 def add_additonal():
     create_retailer_products()
     create_group_products()

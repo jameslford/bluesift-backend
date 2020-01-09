@@ -134,13 +134,8 @@ class User(AbstractBaseUser):
                 'products'
             ).filter(company=group)
         from Projects.models import Project
-        if self.is_pro:
-            return Project.objects.prefetch_related(
-                'products'
-            ).filter(owner=group)
-        return Project.objects.prefetch_related(
-            'products'
-        ).filter(owner=group)
+        return Project.objects.filter(owner=group)
+
 
     def get_user_product_type(self):
         if self.is_supplier:

@@ -4,12 +4,10 @@ from django.core.exceptions import ValidationError
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
-from Retailers.models import RetailerLocation
+from Retailers.models import RetailerLocation, RetailerProduct
 from Profiles.models import ProEmployeeProfile
 from Products.models import Product
 from Groups.models import BaseGroup, ProCompany
-# from UserProductCollections.models import Project, RetailerLocation
-# from UserProducts.models import RetailerProduct
 
 DAY = 60*60*24*1000
 
@@ -101,6 +99,9 @@ class Project(models.Model):
         related_name='projects'
         )
 
+    objects = ProjectManager()
+    subclasses = InheritanceManager()
+
     class Meta:
         unique_together = ('nickname', 'owner')
 
@@ -119,20 +120,7 @@ class Project(models.Model):
         if not self.nickname:
             count = self.owner.projects.count() + 1
             self.nickname = 'Project ' + str(count)
-        # self.full_clean()
         return super().save(*args, **kwargs)
-
-    objects = ProjectManager()
-    subclasses = InheritanceManager()
-
-    def product_count(self):
-        return self.products.count()
-
-    def application_count(self):
-        # pylint: disable=no-member
-        if self.applications:
-            return self.applications.count()
-        return 0
 
 
 class LibraryProductManager(models.Manager):
@@ -189,7 +177,7 @@ class ProjectTask(models.Model):
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(null=True)
     level = models.IntegerField(default=0)
-    quantity_needed = models.IntegerField()
+    quantity_needed = models.IntegerField(null=True, blank=True)
     procured = models.BooleanField(default=False)
     predecessor = models.ForeignKey(
         'self',
@@ -220,8 +208,18 @@ class ProjectTask(models.Model):
         on_delete=models.SET_NULL,
         related_name='task'
         )
+    retailer_product = models.ForeignKey(
+        RetailerProduct,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='task'
+        )
 
     def save(self, *args, **kwargs):
+        if self.product and self.selected_retailer:
+            self.retailer_product = RetailerProduct.objects.filter(
+                retailer=self.selected_retailer,
+                product=self.product).first()
         self.count_parents()
         super(ProjectTask, self).save(*args, **kwargs)
 

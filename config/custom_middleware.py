@@ -23,6 +23,7 @@ class StagingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        print('request_received')
         if settings.ENVIRONMENT != 'staging':
             return self.get_response(request)
         safe_urls = ['accounts/login', 'landing', 'admin', 'get-demo']
@@ -51,6 +52,7 @@ class LastSeenMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest):
+        print('request_received')
         headers = {k: v for k, v in request.META.items() if is_jsonable(v)}
         ip_address = get_client_ip(request)[0]
         path = request.get_full_path()

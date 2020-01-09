@@ -129,7 +129,7 @@ class RetailerLocation(models.Model):
         return self.products.count()
 
     def product_types(self):
-        from config.views import get_departments
+        from config.globals import get_departments
         self_pks = self.products.values('product__pk')
         ret_dict = [{
             'name': dep._meta.verbose_name_plural.title(),
