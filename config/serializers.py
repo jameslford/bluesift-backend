@@ -256,7 +256,7 @@ class ProductStatus:
             res = collections.annotate(removed=Exists(subquery)).values('nickname', 'pk', 'removed')
             self.pl_list = [CollectionNote(col['nickname'], col['pk'], not col['removed']).serialize() for col in res]
         else:
-            remove = group.products.filter(pk=self.pk).exists()
+            remove = group.products.filter(product__pk=self.pk).exists()
             self.pl_list.append(CollectionNote('workbench', None, remove).serialize())
         # elif self.user.is_pro:
             # collections = Project.objects.prefetch_related('products').filter(owner=group)

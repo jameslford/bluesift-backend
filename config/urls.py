@@ -28,6 +28,7 @@ urlpatterns = [
     path('retailers/', include('Retailers.urls')),
     path('scraper/', include('Scraper.urls')),
 
+    path('add/', generic_add),
     path('add/<int:collection_pk>', generic_add),
     path('delete/<int:product_pk>/<int:collection_pk>', generic_delete),
     path('expanded-header', user_config),

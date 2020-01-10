@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin
 from .models import Project
-from .serializers import serialize_project_detail, reserialize_task
+from .serializers import serialize_project_detail, reserialize_task, DAY
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
@@ -20,6 +20,10 @@ def all_projects(request):
             F('tasks__retailer_product__in_store_ppu') * F('tasks__quantity_needed'),
             output_field=DecimalField(decimal_places=2)),
         additional_costs_sum=Sum('additional_costs__amount'),
+        duration=(
+            (Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day'))) -
+            (Min('tasks__start_date'))
+            ),
         bid_sum=Sum('bids__amount')
         ).values(
             'pk',
@@ -27,6 +31,7 @@ def all_projects(request):
             'deadline',
             'min_date',
             'max_date',
+            'duration',
             'additional_costs_sum',
             'bid_sum',
             'material_cost'
