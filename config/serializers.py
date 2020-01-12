@@ -102,14 +102,17 @@ class BusinessSerializer:
 class ProfileSerializer:
 
     def __init__(self, user: User):
-        if user:
+        self.user: User = None
+        self.profile = None
+
+        if user.is_authenticated:
             self.user = user
             self.profile = user.get_profile()
 
         self.pk = None
         self.avatar: str = None
         self.user_type: str = None
-        self.company_name: str = None
+        self.group_name: str = None
         self.owner = False
         self.admin = False
         self.title = False
@@ -132,6 +135,7 @@ class ProfileSerializer:
             self.admin = self.profile.admin
             self.owner = self.profile.owner
             self.title = self.profile.title
+            self.group_name = self.user.get_group().name
             if full:
                 self.group = BusinessSerializer(self.user.get_group()).getData()
                 self.tasks = self.profile.bid_assignments.all()
@@ -140,10 +144,12 @@ class ProfileSerializer:
             self.admin = self.profile.admin
             self.owner = self.profile.owner
             self.title = self.profile.title
+            self.group_name = self.user.get_group().name
             if full:
                 self.group = BusinessSerializer(self.user.get_group()).getData()
         if isinstance(self.profile, ConsumerProfile):
             self.user_type = 'user'
+            self.group_name = self.user.get_first_name() if self.user else None
             if full:
                 # self.group = BusinessSerializer(self.user.get_group()).getData()
                 self.plan = PlanSerializer(self.profile.group.plan).data if self.profile.group.plan else None
@@ -156,7 +162,7 @@ class ProfileSerializer:
             'user': self.user,
             'avatar': self.avatar,
             'user_type': self.user_type,
-            'company_name': self.company_name,
+            'group_name': self.group_name,
             'owner': self.owner,
             'admin': self.admin,
             'title': self.title,

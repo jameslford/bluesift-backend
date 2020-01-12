@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField
+from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -20,9 +20,9 @@ def all_projects(request):
             F('tasks__retailer_product__in_store_ppu') * F('tasks__quantity_needed'),
             output_field=DecimalField(decimal_places=2)),
         additional_costs_sum=Sum('additional_costs__amount'),
-        duration=(
+        duration=ExpressionWrapper(
             (Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day'))) -
-            (Min('tasks__start_date'))
+            (Min('tasks__start_date')), output_field=DurationField()
             ),
         bid_sum=Sum('bids__amount')
         ).values(
