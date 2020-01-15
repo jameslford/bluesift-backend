@@ -114,7 +114,7 @@ class User(AbstractBaseUser):
         profile = self.get_profile()
         if self.is_supplier:
             return profile.company
-        return profile.group
+        return profile
 
     def get_collections(self, *select_related):
         group = self.get_group()

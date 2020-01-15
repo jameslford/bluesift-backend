@@ -282,7 +282,7 @@ class Product(models.Model):
         self.locations = None
         in_store_sellers = self.priced.all().filter(publish_in_store_availability=True)
         if in_store_sellers.count() > 0:
-            coordinates = [q.retailer.address.coordinates.point for q in in_store_sellers]
+            coordinates = [q.location.address.coordinates.point for q in in_store_sellers]
             points = MultiPoint(*coordinates)
             print('sellers exist ', points)
             # self.locations = points

@@ -146,7 +146,7 @@ def create_retailer_products():
             offer_install = random.choice([True, False])
             sup_prod: SupplierProduct = SupplierProduct.objects.get_or_create(
                 product=select_product,
-                retailer=location
+                location=location
                 )[0]
             sup_prod.units_available_in_store = units_available
             sup_prod.units_per_order = units_per_order

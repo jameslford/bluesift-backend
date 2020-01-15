@@ -89,7 +89,7 @@ class ConsumerProfile(BaseProfile):
 
     # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
-        if self.user.is_pro or self.user.is_supplier:
+        if self.user.is_supplier:
             raise ValueError('user should not be pro or supplier')
         super(ConsumerProfile, self).save(*args, **kwargs)
 

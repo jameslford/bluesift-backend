@@ -12,13 +12,13 @@ from config.models import LibraryLink
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        revised_to_default()
-        rename()
-        add_zips()
-        assign_size()
-        assign_label_color()
-        create_finish_surface()
-        create_usertypes()
-        create_demo_users()
+        # revised_to_default()
+        # rename()
+        # add_zips()
+        # assign_size()
+        # assign_label_color()
+        # create_finish_surface()
+        # create_usertypes()
+        # create_demo_users()
         add_additonal()
         LibraryLink.create_links()
