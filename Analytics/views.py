@@ -21,9 +21,6 @@ def view_records(request, interval='day'):
             print('pk list is', pks)
             records = ViewRecord.objects.filter(supplier_pk__in=list(pks))
             print('view record count = ', records.count())
-        elif user.is_pro:
-            pk = user.get_group().pk
-            records = ViewRecord.objects.filter(pro_company_pk=pk)
         elif user.admin:
             records = ViewRecord.objects.all()
     else:

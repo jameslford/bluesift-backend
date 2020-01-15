@@ -7,6 +7,7 @@ from Addresses.models import Address
 from Products.models import Product
 from Groups.models import SupplierCompany
 from Profiles.models import SupplierEmployeeProfile
+# from .serializers import serialize_priced
 
 
 class SupplierLocationManager(models.Manager):
@@ -166,16 +167,6 @@ class SupplierLocation(models.Model):
             raise ValidationError('Employee not a company employee')
         return super(SupplierLocation, self).save(*args, **kwargs)
 
-def serialize_priced(prod):
-    return {
-        'pk': prod.pk,
-        'location_pk': prod.retailer.pk,
-        'name': prod.retailer.nickname,
-        'qty_in_store': prod.units_available_in_store,
-        'lead_time': prod.lead_time_ts,
-        'price': prod.in_store_ppu
-        }
-
 
 class SupplierProductManager(models.Manager):
     def add_product(self, user, product_pk, collection_pk=None):
@@ -269,7 +260,14 @@ class SupplierProduct(models.Model):
         }
 
     def get_priced(self):
-        return serialize_priced(self)
+        return {
+            'pk': self.pk,
+            'location_pk': self.location.pk,
+            'name': self.location.nickname,
+            'qty_in_store': self.units_available_in_store,
+            'lead_time': self.lead_time_ts,
+            'price': self.in_store_ppu
+            }
 
     def percentage_off(self):
         if not self.on_sale and self.sale_price and self.in_store_ppu:

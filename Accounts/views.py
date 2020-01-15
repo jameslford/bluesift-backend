@@ -33,11 +33,8 @@ def create_user(request):
     email = request.data.get('email', None)
     password = request.data.get('password', None)
     user_type = request.data.get('user_type', None)
-    is_pro = False
     is_supplier = False
-    if user_type == 'is_pro':
-        is_pro = True
-    elif user_type == 'is_supplier':
+    if user_type == 'is_supplier':
         is_supplier = True
     user_model = get_user_model()
     user = None
@@ -52,7 +49,6 @@ def create_user(request):
         full_name=full_name,
         password=password,
         is_active=True,
-        is_pro=is_pro,
         is_supplier=is_supplier,
         date_registered=datetime.datetime.now()
     )
@@ -137,14 +133,11 @@ def get_demo_user(request, user_type='user', auth_type=None):
         auth_term['admin'] = False
 
     user_type = user_type.lower()
-    if user_type in ('retailer', 'retailers'):
+    if user_type in ('suppliers', 'supplier'):
         rpks = SupplierEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
         eligible_users = eligible_users.filter(pk__in=rpks)
-    # elif user_type in ('pro', 'pros'):
-    #     ppks = ProEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
-    #     eligible_users = eligible_users.filter(pk__in=ppks)
     else:
-        eligible_users = eligible_users.filter(is_pro=False, is_supplier=False)
+        eligible_users = eligible_users.filter(is_supplier=False)
 
 
     pks = eligible_users.values_list('pk', flat=True)

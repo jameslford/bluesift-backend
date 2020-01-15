@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from model_utils.managers import InheritanceManager
 from Groups.models import SupplierCompany
+from Plans.models import ConsumerPlan
 
 
 class ProfileManager(models.Manager):
@@ -83,6 +84,12 @@ class BaseProfile(models.Model):
 class ConsumerProfile(BaseProfile):
     phone_number = models.CharField(max_length=30, null=True, blank=True)
     owner = models.BooleanField(default=True)
+    plan = models.ForeignKey(
+        ConsumerPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return self.user.get_first_name() + "'s library"

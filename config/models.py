@@ -27,7 +27,6 @@ class LibraryLink(models.Model):
     display = models.FileField(upload_to='misc/', blank=True, null=True)
     include_collections = models.BooleanField(default=False)
     for_user = models.BooleanField(default=False)
-    # for_pro = models.BooleanField(default=False)
     for_supplier = models.BooleanField(default=False)
     for_admin = models.BooleanField(default=False)
 

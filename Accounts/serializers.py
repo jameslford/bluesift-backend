@@ -15,7 +15,6 @@ def user_serializer(user: User):
         'get_initials': user.get_initials(),
         'is_supplier': user.is_supplier,
         'demo': user.demo,
-        'is_pro': user.is_pro,
         'staff': user.staff,
         'admin': user.admin,
         'is_active': user.is_active,

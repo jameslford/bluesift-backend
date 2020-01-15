@@ -24,7 +24,6 @@ def all_projects(request):
             (Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day'))) -
             (Min('tasks__start_date')), output_field=DurationField()
             ),
-        bid_sum=Sum('bids__amount')
         ).values(
             'pk',
             'nickname',
@@ -33,7 +32,6 @@ def all_projects(request):
             'max_date',
             'duration',
             'additional_costs_sum',
-            'bid_sum',
             'material_cost'
             )
     return Response(return_dict, status=status.HTTP_200_OK)
