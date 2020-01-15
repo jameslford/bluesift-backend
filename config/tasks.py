@@ -2,7 +2,6 @@
 celery tasks - these are all asynchronous that exist for this project
 """
 from __future__ import absolute_import, unicode_literals
-# import logging
 import json
 from django.utils import timezone
 from typing import Dict
@@ -12,15 +11,12 @@ from rest_framework.authtoken.models import Token
 from ProductFilter.models import QueryIndex
 from Addresses.models import Coordinate
 from Analytics.models import ViewRecord
-from Retailers.models import RetailerLocation
-from Groups.models import ProCompany, RetailerCompany
+from Suppliers.models import SupplierLocation
+from Groups.models import SupplierCompany
 from config.celery import app
 from config.scripts.db_operations import (
     backup_db,
     clean_backups,
-    # scraper_to_revised,
-    # initialize_data,
-    # run_stock_clean
     )
 
 logger = get_task_logger(__name__)
@@ -44,7 +40,6 @@ def harvest_request(headers: Dict, path, ip_address=None):
         location = json.loads(location)
         lat = location.get('lat')
         lon = location.get('lon')
-        timestamp = location.get('timeStamp')
         if lat and lon:
             try:
                 lat = float(lat)
@@ -60,8 +55,6 @@ def harvest_request(headers: Dict, path, ip_address=None):
     record.ip_address = ip_address
     record.path = path
     record.save()
-    # if location:
-    #     lat = location.get('lat')
 
 
 @shared_task
@@ -89,36 +82,10 @@ def clean_backups_task():
 
 
 @app.task
-def add_retailer_record(path, pk):
+def add_supplier_record(path, pk):
     record: ViewRecord = ViewRecord.objects.filter(path=path).latest('recorded')
-    retailer = RetailerLocation.objects.filter(pk=pk).first()
+    retailer = SupplierLocation.objects.filter(pk=pk).first()
     if record and retailer:
         if not record.supplier_pk:
             record.supplier_pk = pk
             record.save()
-
-@app.task
-def add_pro_record(path, pk):
-    record: ViewRecord = ViewRecord.objects.filter(path=path).latest('recorded')
-    pro = ProCompany.objects.filter(pk=pk).first()
-    if record and pro:
-        if not record.pro_company_pk:
-            record.pro_company_pk = pk
-            record.save()
-            return
-    print('no record found')
-
-
-
-# @shared_task
-# def subgroup_command(command):
-#     if command == 'scrape_new':
-#         initialize_data()
-#         scrape()
-#         get_images()
-#         scraper_to_revised()
-#     elif command == 'clean_new':
-#         run_stock_clean()
-#     else:
-#         return 'bad command called'
-#     return f'{command} run'

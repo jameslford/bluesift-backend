@@ -14,8 +14,8 @@ from django.http import HttpRequest, QueryDict
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
 from Products.models import Product
-from Retailers.models import RetailerLocation
-# from UserProductCollections.models import RetailerLocation
+from Suppliers.models import SupplierLocation
+# from UserProductCollections.models import SupplierLocation
 
 
 AVAILABILITY_FACET = 'AvailabilityFacet'
@@ -148,7 +148,7 @@ class QueryIndexManager(models.Manager):
             'product_filter': product_filter
             }
         if retailer_location:
-            location = RetailerLocation.objects.get(pk=retailer_location)
+            location = SupplierLocation.objects.get(pk=retailer_location)
             args['retailer_location'] = location
         query_index = self.model.objects.get_or_create(**args)
         return query_index
@@ -163,7 +163,7 @@ class QueryIndex(models.Model):
     response = pg_fields.JSONField(null=True)
     dirty = models.BooleanField(default=True)
     retailer_location = models.ForeignKey(
-        RetailerLocation,
+        SupplierLocation,
         null=True,
         on_delete=models.CASCADE,
         related_name='qis'
@@ -209,36 +209,6 @@ class QueryIndex(models.Model):
         if select_related:
             return model.objects.select_related(select_related).filter(pk__in=pks)
         return model.objects.filter(pk__in=pks)
-
-    # @classmethod
-    # def get_all_paths(cls):
-    #     from UserProductCollections.models import RetailerLocation
-    #     base = 'specialized-products/filter/'
-    #     paths = [
-    #         {'product_type': pt, 'path': base + pt.__name__}
-    #         for pt in ProductSubClass.__subclasses__()
-    #         ]
-    #     locations = RetailerLocation.objects.all()
-    #     for location in locations:
-    #         location_list = [
-    #             {'product_type': product_type['cls'],
-    #              'path': f'{base}{product_type["name"]}/{location.pk}'}
-    #             for product_type in location.product_types(True)
-    #             ]
-    #         paths = paths + location_list
-    #     return paths
-
-    # @classmethod
-    # def get_all_queries(cls):
-    #     product_types = [pt for pt in ProductSubClass.__subclasses__()]
-    #     for p_type in product_types:
-    #         p_filter = ProductFilter.get_filter(p_type)
-
-    # # need to write this method to create all
-    # possible queries for a given view
-    # @classmethod
-    # def get_all_combinations(cls):
-    #     paths = cls.get_all_paths()
 
 
 class FacetOthersCollection(models.Model):

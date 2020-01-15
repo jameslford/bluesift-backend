@@ -1,13 +1,11 @@
 from django.contrib import admin
 from .models import (
-    ProEmployeeProfile,
-    RetailerEmployeeProfile,
+    SupplierEmployeeProfile,
     ConsumerProfile
     )
 
 
 admin.site.register(ConsumerProfile)
-admin.site.register(RetailerEmployeeProfile)
-admin.site.register(ProEmployeeProfile)
+admin.site.register(SupplierEmployeeProfile)
 
 # Register your models here.

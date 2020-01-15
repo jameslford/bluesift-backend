@@ -13,7 +13,7 @@ class TitleField(serpy.Field):
         return value.lower().title()
 
 
-class FullRetailerProductSerializer(serpy.Serializer):
+class FullSupplierProductSerializer(serpy.Serializer):
     pk = serpy.Field()
     in_store_ppu = serpy.Field()
     online_ppu = serpy.Field()

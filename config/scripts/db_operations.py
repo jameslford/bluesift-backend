@@ -155,8 +155,8 @@ def refresh_filters():
 
 @transaction.atomic()
 def reset_supplier_products():
-    from UserProducts.models import RetailerProduct
-    for supplier_product in RetailerProduct.objects.all():
+    from Suppliers.models import SupplierProduct
+    for supplier_product in SupplierProduct.objects.all():
         supplier_product.reset_product()
 
 

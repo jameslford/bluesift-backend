@@ -1,9 +1,6 @@
 from django.contrib import admin
-from .models import ProCompany, RetailerCompany, ServiceType, ConsumerLibrary
+from .models import SupplierCompany
 
-admin.site.register(ProCompany)
-admin.site.register(RetailerCompany)
-admin.site.register(ServiceType)
-admin.site.register(ConsumerLibrary)
+admin.site.register(SupplierCompany)
 
 # Register your models here.

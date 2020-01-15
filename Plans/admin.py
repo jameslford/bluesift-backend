@@ -1,8 +1,7 @@
 from django.contrib import admin
-from .models import ConsumerPlan, ProPlan, RetailerPlan
+from .models import ConsumerPlan, SupplierPlan
 
 admin.site.register(ConsumerPlan)
-admin.site.register(RetailerPlan)
-admin.site.register(ProPlan)
+admin.site.register(SupplierPlan)
 
 # Register your models here.

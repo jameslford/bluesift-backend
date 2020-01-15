@@ -8,9 +8,9 @@ from rest_framework import status
 from config.globals import check_department_string
 from config.custom_permissions import RetailerPermission
 from config.serializers import BusinessSerializer
-from Profiles.models import RetailerEmployeeProfile
-from .models import RetailerLocation, RetailerProduct
-from .serializers import FullRetailerProductSerializer
+from Profiles.models import SupplierEmployeeProfile
+from .models import SupplierLocation, SupplierProduct
+from .serializers import FullSupplierProductSerializer
 
 
 @api_view(['GET'])
@@ -25,7 +25,7 @@ def locations(request):
 @permission_classes((IsAuthenticated, RetailerPermission))
 def crud_location(request: Request, pk: int = None):
     """
-    create, update, delete endpoint for RetailerLocation objects
+    create, update, delete endpoint for SupplierLocation objects
     """
     user = request.user
 
@@ -35,12 +35,12 @@ def crud_location(request: Request, pk: int = None):
 
     if request.method == 'POST':
         data = request.data
-        RetailerLocation.objects.create_location(user, **data)
+        SupplierLocation.objects.create_location(user, **data)
         return Response(status=status.HTTP_201_CREATED)
 
     if request.method == 'PUT':
         data = request.data
-        location = RetailerLocation.objects.update_location(user, **data)
+        location = SupplierLocation.objects.update_location(user, **data)
         return Response(BusinessSerializer(location).getData(), status=status.HTTP_200_OK)
 
     if request.method == 'DELETE':
@@ -66,14 +66,14 @@ def retailer_products(request: HttpRequest, product_type=None, location_pk=None)
             'product__manufacturer'
         ).filter(pk__in=pks)
         # TODO:try to use values instead of a serializer for this. also allow product type filter
-        return Response(FullRetailerProductSerializer(products, many=True).data, status=status.HTTP_200_OK)
+        return Response(FullSupplierProductSerializer(products, many=True).data, status=status.HTTP_200_OK)
 
     if request.method == 'PUT':
         data = request.data
-        profile: RetailerEmployeeProfile = request.user.get_profile()
+        profile: SupplierEmployeeProfile = request.user.get_profile()
         # location_pks = [location.pk for location in request.user.get_collections()]
         location = data.get('location_pk')
-        location: RetailerLocation = request.user.get_collections().get(pk=location)
+        location: SupplierLocation = request.user.get_collections().get(pk=location)
         if not (profile == location.local_admin or
                 profile.owner or
                 profile.admin):
@@ -82,7 +82,7 @@ def retailer_products(request: HttpRequest, product_type=None, location_pk=None)
         updates = 0
         for change in changes:
             product_pk = change.get('pk')
-            product: RetailerProduct = location.products.filter(pk=product_pk).first()
+            product: SupplierProduct = location.products.filter(pk=product_pk).first()
             if not product:
                 continue
             in_store_ppu = data.get('in_store_ppu' )

@@ -58,12 +58,3 @@ class LastSeenMiddleware:
         path = request.get_full_path()
         harvest_request.delay(headers, path, ip_address)
         return self.get_response(request)
-
-
-        # if 'accounts/login' in request.path:
-        # if 'landing' in request.path:
-        #     return self.get_response(request)
-        # if 'admin' in request.path:
-        #     return self.get_response(request)
-        # if 'get-demo' in request.path:
-        #     return self.get_response(request)

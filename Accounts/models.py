@@ -21,9 +21,7 @@ class UserManager(BaseUserManager):
             raise ValueError("Users must have a password")
 
         is_supplier = kwargs.get('is_supplier', False)
-        is_pro = kwargs.get('is_pro', False)
-        if is_supplier and is_pro:
-            raise ValueError('User cannot be proffesional and supplier')
+
 
         user: User = self.model.objects.create(email=email)
         user.set_password(password)
@@ -34,14 +32,11 @@ class UserManager(BaseUserManager):
         user.email_verified = kwargs.get('email_verified', False)
         user.is_active = kwargs.get('is_active', False)
         user.is_supplier = is_supplier
-        user.is_pro = is_pro
         user.save(using=self.db)
         Token.objects.get_or_create(user=user)
-        if not (user.is_pro or user.is_supplier):
-            from Groups.models import ConsumerLibrary
+        if not user.is_supplier:
             from Profiles.models import ConsumerProfile
-            lib = ConsumerLibrary.objects.create()
-            ConsumerProfile.objects.create(user=user, group=lib)
+            ConsumerProfile.objects.create(user=user)
         return user
 
     def create_staffuser(self, email, full_name=None, password=None):
@@ -74,7 +69,6 @@ class User(AbstractBaseUser):
     date_registered = models.DateTimeField(auto_now_add=True, null=True)
     date_confirmed = models.DateTimeField(auto_now_add=True, null=True)
     is_active = models.BooleanField(default=False)
-    is_pro = models.BooleanField(default=False)
     is_supplier = models.BooleanField(default=False)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
@@ -118,19 +112,19 @@ class User(AbstractBaseUser):
 
     def get_group(self):
         profile = self.get_profile()
-        if self.is_supplier or self.is_pro:
+        if self.is_supplier:
             return profile.company
         return profile.group
 
     def get_collections(self, *select_related):
         group = self.get_group()
         if self.is_supplier:
-            from Retailers.models import RetailerLocation
+            from Suppliers.models import SupplierLocation
             if select_related:
-                return RetailerLocation.objects.prefetch_related(
+                return SupplierLocation.objects.prefetch_related(
                     'products'
                 ).select_related(*select_related).filter(company=group)
-            return RetailerLocation.objects.prefetch_related(
+            return SupplierLocation.objects.prefetch_related(
                 'products'
             ).filter(company=group)
         from Projects.models import Project
@@ -139,16 +133,14 @@ class User(AbstractBaseUser):
 
     def get_user_product_type(self):
         if self.is_supplier:
-            from Retailers.models import RetailerProduct
-            return RetailerProduct
+            from Suppliers.models import SupplierProduct
+            return SupplierProduct
         from Projects.models import LibraryProduct
         return LibraryProduct
 
     def get_library_links(self):
         if self.is_supplier:
             term = {'for_supplier': True}
-        elif self.is_pro:
-            term = {'for_pro': True}
         elif self.admin:
             term = {'for_admin': True}
         else:

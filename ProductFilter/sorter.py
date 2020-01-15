@@ -16,7 +16,7 @@ from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
 # from Products.serializers import serialize_product
 from Products.models import Product, ProductSubClass
-from Retailers.models import RetailerProduct
+from Suppliers.models import SupplierProduct
 from .models import (
     construct_range_facet,
     return_radii,
@@ -102,15 +102,6 @@ class Sorter:
             retailer_location=self.location_pk
             )
         self.query_index = query_index
-        # print('self query index = ', self.query_index.pk)
-        # user_pk = self.request.user.pk if self.request.user.is_authenticated else None
-        # client_ip = get_client_ip(self.request)[0]
-        # create_product_view_record.delay(
-        #     qi_pk=self.query_index.pk,
-        #     user_pk=user_pk,
-        #     ip_address=str(client_ip),
-        #     floating_fields=stripped_fields,
-        #     )
         self.__parse_querydict(query_dict)
         self.__check_dependents()
         if query_index.dirty or self.update or created:
@@ -217,7 +208,7 @@ class Sorter:
     def get_products(self, select_related=None):
         """ Returns applicable product subclass instances """
         if self.location_pk:
-            pks = RetailerProduct.objects.filter(retailer__pk=self.location_pk).values_list('product__pk', flat=True)
+            pks = SupplierProduct.objects.filter(retailer__pk=self.location_pk).values_list('product__pk', flat=True)
             return self.product_type.objects.all().prefetch_related('priced').filter(pk__in=pks)
         if select_related:
             return self.product_type.objects.select_related(select_related).all()

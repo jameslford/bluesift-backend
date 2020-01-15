@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from model_utils.managers import InheritanceManager
-from Groups.models import ProCompany, RetailerCompany, ConsumerLibrary
+from Groups.models import SupplierCompany
 
 
 class ProfileManager(models.Manager):
@@ -15,19 +15,10 @@ class ProfileManager(models.Manager):
         title = kwargs.get('title', None)
         plan = kwargs.get('plan', None)
         phone = kwargs.get('phone_number', None)
-        if user.is_pro:
-            if not company:
-                company = ProCompany.objects.get(pk=company_pk)
-            return ProEmployeeProfile.objects.get_or_create(
-                user=user,
-                company=company,
-                owner=owner,
-                title=title,
-                admin=admin)[0]
         if user.is_supplier:
             if not company:
-                company = RetailerCompany.objects.get(pk=company_pk)
-            return RetailerEmployeeProfile.objects.get_or_create(
+                company = SupplierCompany.objects.get(pk=company_pk)
+            return SupplierEmployeeProfile.objects.get_or_create(
                 user=user,
                 company=company,
                 owner=owner,
@@ -92,11 +83,6 @@ class BaseProfile(models.Model):
 class ConsumerProfile(BaseProfile):
     phone_number = models.CharField(max_length=30, null=True, blank=True)
     owner = models.BooleanField(default=True)
-    group = models.OneToOneField(
-        ConsumerLibrary,
-        on_delete=models.CASCADE,
-        related_name='group'
-        )
 
     def __str__(self):
         return self.user.get_first_name() + "'s library"
@@ -108,37 +94,14 @@ class ConsumerProfile(BaseProfile):
         super(ConsumerProfile, self).save(*args, **kwargs)
 
 
-class EmployeeBaseProfile(BaseProfile):
-    """
-    shared fields for pro-employees and retailer-employees
-    owners can delete/edit company objects
-    owners and admins can add, delete, and edit projects/retailer locations
-    """
+
+class SupplierEmployeeProfile(BaseProfile):
     owner = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     publish = models.BooleanField(default=True)
     title = models.CharField(max_length=100, null=True)
-
-    class Meta:
-        abstract = True
-
-
-class ProEmployeeProfile(EmployeeBaseProfile):
     company = models.ForeignKey(
-        ProCompany,
-        on_delete=models.CASCADE,
-        related_name='employees'
-        )
-
-    def save(self, *args, **kwargs):
-        if not self.user.is_pro:
-            raise ValueError('user is not pro')
-        super(ProEmployeeProfile, self).save(*args, **kwargs)
-
-
-class RetailerEmployeeProfile(EmployeeBaseProfile):
-    company = models.ForeignKey(
-        RetailerCompany,
+        SupplierCompany,
         on_delete=models.CASCADE,
         related_name='employees'
         )
@@ -152,49 +115,4 @@ class RetailerEmployeeProfile(EmployeeBaseProfile):
     def save(self, *args, **kwargs):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
-        super(RetailerEmployeeProfile, self).save(*args, **kwargs)
-
-
-
-        # profile.user.name = kwargs.get('user_name', profile.user.full_name)
-        # email = kwargs.get('email')
-        # if email:
-        #     profile.user.email = email
-        #     profile.user.email_verified = False
-        # user.save()
-
-
-    # def __str__(self):
-    #     return self.user.email
-
-    # def get_plan(self):
-    #     plan = company.plan
-
-    # def clean(self):
-    #     # makes sure company owners/admins do not exceed quota
-    #     # hardcoding quota for now, but leaves door open
-    #     owners_allowed = 1
-    #     admins_allowed = 1
-    #     if self.admin:
-    #         existing_admins = self.company.employees.filter(company_account_admin=True).count()
-    #         if existing_admins >= admins_allowed:
-    #             raise ValidationError('Maximum admins, ' + str(admins_allowed) + ' already exist')
-    #     if self.owner:
-    #         existing_owners = self.company.employees.filter(company_account_owner=True).count()
-    #         if existing_owners >= owners_allowed:
-    #             raise ValidationError('Maximum owners, ' + str(owners_allowed) + ' already exist')
-    #     return super().clean()
-
-    # def save(self, *args, **kwargs):
-    #     # calling full_clean() which executes clean() above
-    #     # among 2 other default methods
-    #     self.full_clean()
-    #     if not (self.user.is_pro or self.user.is_supplier):
-    #         raise ValidationError('User is not pro or supplier')
-    #     super(EmployeeProfile, self).save(*args, **kwargs)
-
-    # def name(self):
-    #     return self.user.get_first_name()
-
-    # def email(self):
-    #     return self.user.email
+        super(SupplierEmployeeProfile, self).save(*args, **kwargs)

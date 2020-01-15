@@ -3,11 +3,11 @@ from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
 from Accounts.models import User
 from Accounts.serializers import user_serializer
-from Retailers.models import RetailerLocation, RetailerProduct
-from Profiles.models import RetailerEmployeeProfile, ConsumerProfile, ProEmployeeProfile
+from Suppliers.models import SupplierLocation, SupplierProduct
+from Profiles.models import SupplierEmployeeProfile, ConsumerProfile
 from Projects.models import Project, Project, LibraryProduct
 from Plans.serializers import PlanSerializer
-from Groups.models import RetailerCompany, ProCompany, ConsumerLibrary
+from Groups.models import SupplierCompany
 from .globals import BusinessType
 
 
@@ -42,8 +42,8 @@ class BusinessSerializer:
         return new_dict
 
     def getData(self):
-        if isinstance(self.business, RetailerLocation):
-            business: RetailerLocation = self.business
+        if isinstance(self.business, SupplierLocation):
+            business: SupplierLocation = self.business
             self.business_type = BusinessType.RETAILER_LOCATION.value
             self.email = business.email
             self.product_count = business.product_count()
@@ -58,20 +58,19 @@ class BusinessSerializer:
                 if business.local_admin:
                     self.location_manager = ProfileSerializer(business.local_admin.user).data
             return self.serialize()
-        if isinstance(self.business, RetailerCompany):
-            ret_company: RetailerCompany = self.business
+        if isinstance(self.business, SupplierCompany):
+            ret_company: SupplierCompany = self.business
             self.address = AddressSerializer(ret_company.business_address).data
             self.name = ret_company.name
             self.business_type = BusinessType.RETAILER_COMPANY.value
             self.employees = ret_company.get_employees()
-            # self.employees = [ProfileSerializer(employee.user).data for employee in ret_company.get_employees()]
             self.phone_number = ret_company.phone_number
             self.address_string = ret_company.business_address.address_string
             self.info = ret_company.info
             self.image = ret_company.image
             self.plan = PlanSerializer(ret_company.plan).data if ret_company.plan else None
             if self.full:
-                locations = RetailerLocation.objects.select_related(
+                locations = SupplierLocation.objects.select_related(
                     'address',
                     'address__postal_code',
                     'company',
@@ -79,25 +78,8 @@ class BusinessSerializer:
                 ).filter(company=ret_company)
                 self.locations = [BusinessSerializer(loc).getData() for loc in locations]
             return self.serialize()
-        if isinstance(self.business, ProCompany):
-            pro_comp: ProCompany = self.business
-            self.name = pro_comp.name
-            self.business_type = BusinessType.PRO_COMPANY.value
-            self.service_type = pro_comp.service.label
-            self.address = AddressSerializer(pro_comp.business_address).data
-            self.address_string = pro_comp.business_address.address_string
-            self.phone_number = pro_comp.phone_number
-            self.image = pro_comp.image
-            self.info = pro_comp.info
-            self.plan = PlanSerializer(pro_comp.plan).data if pro_comp.plan else None
-            # self.employees = [ProfileSerializer(employee.user).data for employee in pro_comp.get_employees()]
-            return self.serialize()
-        if isinstance(self.business, ConsumerLibrary):
-            return
-            # con_lib: ConsumerLibrary = self.business
-            # self.plan = PlanSerializer(con_lib.plan).data if con_lib.plan else None
-            # return self.serialize()
-        raise AttributeError('invalid model for business argument')
+        return
+   
 
 class ProfileSerializer:
 
@@ -130,16 +112,7 @@ class ProfileSerializer:
         self.collections = self.user.get_collections().values('pk', 'nickname')
         self.library_links = self.user.get_library_links()
 
-        if isinstance(self.profile, ProEmployeeProfile):
-            self.user_type = 'pro'
-            self.admin = self.profile.admin
-            self.owner = self.profile.owner
-            self.title = self.profile.title
-            self.group_name = self.user.get_group().name
-            if full:
-                self.group = BusinessSerializer(self.user.get_group()).getData()
-                self.tasks = self.profile.bid_assignments.all()
-        if isinstance(self.profile, RetailerEmployeeProfile):
+        if isinstance(self.profile, SupplierEmployeeProfile):
             self.user_type = 'retailer'
             self.admin = self.profile.admin
             self.owner = self.profile.owner
@@ -151,8 +124,7 @@ class ProfileSerializer:
             self.user_type = 'user'
             self.group_name = self.user.get_first_name() if self.user else None
             if full:
-                # self.group = BusinessSerializer(self.user.get_group()).getData()
-                self.plan = PlanSerializer(self.profile.group.plan).data if self.profile.group.plan else None
+                self.plan = PlanSerializer(self.profile.plan).data if self.profile.plan else None
 
         self.user = user_serializer(self.user) if self.user.is_authenticated else None
 
@@ -215,7 +187,6 @@ class ShortLib:
         self.product_ids = None
         self.pl_short_list = None
         self.selected_location = None
-        # selected_location: PLShort = None
 
     def return_data(self):
         return {
@@ -257,66 +228,15 @@ class ProductStatus:
             return
         group = self.user.get_group()
         if self.user.is_supplier:
-            collections = RetailerLocation.objects.prefetch_related('products').filter(company=group)
-            subquery = RetailerProduct.objects.filter(retailer=OuterRef('pk'))
+            collections = SupplierLocation.objects.prefetch_related('products').filter(company=group)
+            subquery = SupplierProduct.objects.filter(retailer=OuterRef('pk'))
             res = collections.annotate(removed=Exists(subquery)).values('nickname', 'pk', 'removed')
             self.pl_list = [CollectionNote(col['nickname'], col['pk'], not col['removed']).serialize() for col in res]
         else:
             remove = group.products.filter(product__pk=self.pk).exists()
             self.pl_list.append(CollectionNote('workbench', None, remove).serialize())
-        # elif self.user.is_pro:
-            # collections = Project.objects.prefetch_related('products').filter(owner=group)
-            # subquery = Pro.objects.filter(project=OuterRef('pk'))
-        # else:
-        #     collections = Project.objects.prefetch_related('products').filter(owner=group)
-        #     subquery = LibraryProduct.objects.filter(project=OuterRef('pk'))
-        # self.pl_list =
-
 
     @property
     def data(self):
         self.retrieve_data()
         return self.pl_list
-
-
-
-
-
-
-# @api_view(['GET'])
-# def pl_status_for_product(request: HttpRequest, pk):
-#     pl_list = PLStatusList(pl_list=[])
-#     if not request.user.is_authenticated:
-#         return Response(asdict(pl_list), status=status.HTTP_200_OK)
-#     product = Product.objects.get(pk=pk)
-#     collections = request.user.get_collections()
-#     for collection in collections:
-#         remove = product.pk in collection.products.values_list('product__pk', flat=True)
-#         plmed = PLMedium(collection.nickname, collection.pk, remove)
-#         pl_list.pl_list.append(plmed)
-#     return Response(asdict(pl_list), status=status.HTTP_200_OK)
-
-
-
-# @dataclass
-# class PLShort:
-#     nickname: str
-#     pk: int
-
-
-# @dataclass
-# class PLMedium(PLShort):
-#     remove: bool
-
-
-# @dataclass
-# class PLStatusList:
-#     pl_list: List[PLMedium]
-
-
-# @dataclass
-# class ShortLib:
-#     count: int
-#     product_ids: List[str]
-#     pl_short_list: List[PLShort]
-#     selected_location: PLShort = None

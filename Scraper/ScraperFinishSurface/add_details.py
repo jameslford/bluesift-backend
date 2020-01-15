@@ -97,34 +97,3 @@ def add_details(new_product: NEW_MODEL, revised_product: REVISED_MODEL):
     new_product.name = name
     new_product.save()
 
-
-    # new_product.width = char_dec_range_conversion(revised_product.width)
-    # new_product.length = char_dec_range_conversion(revised_product.length)
-    # new_product.thickness = char_dec_range_conversion(revised_product.thickness)
-
-
-    # class RangeValues:
-
-#     def __init__(self, width: str, length: str, thickness: str):
-#         self.width = DimensionValue(width)
-#         self.length = DimensionValue(length)
-#         self.thickness = DimensionValue(thickness)
-#         self.size = self.get_size()
-
-#     def get_size(self):
-#         if self.width.continuous or self.length.continuous:
-#             return 'continuous'
-#         try:
-#             sqft = self.width.absolute * self.length.absolute
-#             if sqft < 144:
-#                 return 'small'
-#             if sqft < 
-
-
-        # width = [x is not None for x in self.width]
-        # if len(width) > 1:
-        #     width = 'continuous'
-        # length = [x is not None for x in self.length]
-        # if len(length) > 1
-
-        # if sum(x for x in self.width) > 1:

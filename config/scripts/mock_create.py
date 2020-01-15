@@ -9,9 +9,9 @@ from django.db import transaction
 from Accounts.models import User
 from Addresses.models import Address
 from Products.models import Product
-from Profiles.models import ConsumerProfile, RetailerEmployeeProfile, ProEmployeeProfile, BaseProfile
-from Groups.models import ServiceType, ProCompany, RetailerCompany, BaseGroup
-from Retailers.models import RetailerLocation
+from Profiles.models import ConsumerProfile, SupplierEmployeeProfile, BaseProfile
+from Groups.models import SupplierCompany
+from Suppliers.models import SupplierLocation
 from Projects.models import Project
 
 ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-all.min.json'
@@ -89,35 +89,27 @@ def create_address(**kwargs):
         return None
 
 
-def create_group(user, address):
+def create_supplier_company(user, address):
     fake = Faker()
     u_phone = fake.phone_number()
     u_phone = u_phone[:25] if len(u_phone) > 25 else u_phone
     ret_com_text = fake.paragraph(nb_sentences=4, variable_nb_sentences=True)
     print(ret_com_text)
     ret_com_name = fake.company() + ' demo'
-    company = BaseGroup.objects.create_group(
+    company = SupplierCompany.objects.create_group(
         user=user,
         business_address=address,
         phone_number=u_phone,
         name=ret_com_name,
         info=ret_com_text
         )
-    if isinstance(company, ProCompany):
-        pick_serve = random.choice(SERVICE_TYPES)
-        serv_obj = ServiceType.objects.get_or_create(label=pick_serve)[0]
-        company.service = serv_obj
-        company.save()
     for x in range(random.randint(0, 3)):
         create_employees(company)
     return company
 
 
 def create_employees(company):
-    if isinstance(company, ProCompany):
-        user = create_user(is_pro=True)
-    else:
-        user = create_user(is_supplier=True)
+    user = create_user(is_supplier=True)
     admin = random.choice([True, False])
     employee = BaseProfile.objects.create_profile(
         user=user,
@@ -138,14 +130,14 @@ def create_project(user, address: Address):
         deadline=deadline
         )
     if address:
-        project.address= address
+        project.address = address
         project.save()
     return project
 
-def create_locations(company: RetailerCompany, address: Address):
+def create_locations(company: SupplierCompany, address: Address):
     fake = Faker()
     u_phone: str = fake.phone_number()
-    location = RetailerLocation.objects.create(
+    location = SupplierLocation.objects.create(
         company=company,
         address=address,
         approved_in_store_seller=True,
@@ -176,33 +168,13 @@ def create_demo_users():
             proj_add = addresses.pop()
             proj_add = create_address(**proj_add)
             project = create_project(user, proj_add)
-            # create_assignments_and_tasks(project, product_ids)
         print('user name = ', user.full_name)
-    for pro_num in range(0, pro_count):
-        print('pro_count = ', pro_num)
-        pro_user = create_user(is_pro=True)
-        pro_address = addresses.pop()
-        pro_address = create_address(**pro_address)
-        pro_company = create_group(pro_user, pro_address)
-        employee = ProEmployeeProfile.objects.create_profile(
-            user=pro_user,
-            company=pro_company
-            )
-        if pro_num == 0:
-            employee.owner = True
-            employee.save()
-        for num in range(0, 3):
-            proj_add = addresses.pop()
-            proj_add = create_address(**proj_add)
-            project = create_project(pro_user, proj_add)
-            # create_assignments_and_tasks(project, product_ids)
-        print('pro name = ', pro_user.full_name)
     for ret_num in range(0, retailer_count):
         ret_user = create_user(is_supplier=True)
         ret_address = addresses.pop()
         ret_address = create_address(**ret_address)
-        ret_company = create_group(ret_user, ret_address)
-        profile = RetailerEmployeeProfile.objects.create_profile(
+        ret_company = create_supplier_company(ret_user, ret_address)
+        profile = SupplierEmployeeProfile.objects.create_profile(
             user=ret_user,
             company=ret_company
             )
@@ -213,5 +185,4 @@ def create_demo_users():
             loc_add = addresses.pop()
             loc_add = create_address(**loc_add)
             location = create_locations(ret_company, loc_add)
-            # create_retailer_products(location, product_ids)
         print('ret name = ', ret_user.full_name)

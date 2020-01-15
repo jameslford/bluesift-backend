@@ -20,7 +20,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from .tasks import send_verification_email
 
-from Profiles.models import BaseProfile, RetailerEmployeeProfile, ProEmployeeProfile
+from Profiles.models import BaseProfile, SupplierEmployeeProfile
 from .serializers import user_serializer
 
 USER_TIMEOUT_MINUTES = .2
@@ -138,11 +138,11 @@ def get_demo_user(request, user_type='user', auth_type=None):
 
     user_type = user_type.lower()
     if user_type in ('retailer', 'retailers'):
-        rpks = RetailerEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
+        rpks = SupplierEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
         eligible_users = eligible_users.filter(pk__in=rpks)
-    elif user_type in ('pro', 'pros'):
-        ppks = ProEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
-        eligible_users = eligible_users.filter(pk__in=ppks)
+    # elif user_type in ('pro', 'pros'):
+    #     ppks = ProEmployeeProfile.objects.filter(**auth_term).values_list('user__pk', flat=True)
+    #     eligible_users = eligible_users.filter(pk__in=ppks)
     else:
         eligible_users = eligible_users.filter(is_pro=False, is_supplier=False)
 

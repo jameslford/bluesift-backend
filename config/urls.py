@@ -25,7 +25,7 @@ urlpatterns = [
     path('products/', include('Products.urls')),
     path('profiles/', include('Profiles.urls')),
     path('projects/', include('Projects.urls')),
-    path('retailers/', include('Retailers.urls')),
+    path('supplierss/', include('Suppliers.urls')),
     path('scraper/', include('Scraper.urls')),
 
     path('add/', generic_add),
@@ -47,10 +47,3 @@ if settings.DEBUG:
     urlpatterns = [
         path('__debug__', include(debug_toolbar.urls))
     ] + urlpatterns
-
-    # path('admin/doc/', include('django.contrib.admindocs.urls')),
-    # path('bbadmin/', include('BBadmin.urls')),
-    # path('collections/', include('UserProductCollections.urls')),
-    # path('orders/', include('Orders.urls')),
-    # path('schedule/', include('Schedule.urls')),
-    # path('user-products/', include('UserProducts.urls'))

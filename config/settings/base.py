@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'Profiles',
     'Projects',
     'Ratings',
-    'Retailers',
+    'Suppliers',
     'Scraper',
     'Scraper.ScraperFinishSurface',
     'Scraper.ScraperCleaner',

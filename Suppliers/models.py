@@ -5,12 +5,11 @@ from model_utils.managers import InheritanceManager
 
 from Addresses.models import Address
 from Products.models import Product
-from Groups.models import RetailerCompany
-from Profiles.models import RetailerEmployeeProfile
-# from django.db import transaction
+from Groups.models import SupplierCompany
+from Profiles.models import SupplierEmployeeProfile
 
 
-class RetailerLocationManager(models.Manager):
+class SupplierLocationManager(models.Manager):
 
     def create_location(self, user, **kwargs):
         company = user.get_group()
@@ -21,9 +20,9 @@ class RetailerLocationManager(models.Manager):
             raise ValidationError('Company, Phone Number, and Address Pk needed')
         local_admin = user.get('local_admin')
         if local_admin:
-            local_admin = RetailerEmployeeProfile.objects.get(pk=local_admin)
+            local_admin = SupplierEmployeeProfile.objects.get(pk=local_admin)
         address = Address.objects.get(pk=address_pk)
-        location = RetailerLocation.objects.create(
+        location = SupplierLocation.objects.create(
             nickname=nickname,
             phone_number=phone_number,
             address=address,
@@ -33,7 +32,6 @@ class RetailerLocationManager(models.Manager):
 
     def update_location(self, user, **kwargs):
         pk = kwargs.get('pk')
-        print('location pk = ', pk)
         if isinstance(pk, list):
             pk = pk[0]
         if isinstance(pk, str):
@@ -41,7 +39,7 @@ class RetailerLocationManager(models.Manager):
         profile = user.get_profile()
         if not (profile.owner or profile.admin):
             raise PermissionError(f'{user.email} does not have permission to edit this object')
-        location: RetailerLocation = user.get_collections().get(pk=pk)
+        location: SupplierLocation = user.get_collections().get(pk=pk)
         address_pk = kwargs.get('address_pk', location.address.pk)
         address = Address.objects.get(pk=address_pk)
         location_manager = kwargs.get('location_manager')
@@ -64,15 +62,15 @@ class RetailerLocationManager(models.Manager):
         return location
 
 
-class RetailerLocation(models.Model):
+class SupplierLocation(models.Model):
     nickname = models.CharField(max_length=60)
     company = models.ForeignKey(
-        RetailerCompany,
+        SupplierCompany,
         on_delete=models.CASCADE,
         related_name='shipping_locations'
         )
     local_admin = models.ForeignKey(
-        RetailerEmployeeProfile,
+        SupplierEmployeeProfile,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -94,7 +92,7 @@ class RetailerLocation(models.Model):
     image = models.ImageField(null=True, blank=True, upload_to='storefronts/')
     slug = models.SlugField(null=True, blank=True)
 
-    objects = RetailerLocationManager()
+    objects = SupplierLocationManager()
 
     class Meta:
         unique_together = ('nickname', 'company')
@@ -151,7 +149,7 @@ class RetailerLocation(models.Model):
 
     def assign_number(self):
         # numbers = self.company.shipping_locations.values_list('number', flat=True)
-        numbers = list(RetailerLocation.objects.filter(company=self.company).values_list('number', flat=True))
+        numbers = list(SupplierLocation.objects.filter(company=self.company).values_list('number', flat=True))
         if not numbers:
             return 1
         return max(numbers) + 1
@@ -166,7 +164,7 @@ class RetailerLocation(models.Model):
             self.nickname = self.company.name + ' ' + str(self.number)
         if self.local_admin and self.local_admin.company != self.company:
             raise ValidationError('Employee not a company employee')
-        return super(RetailerLocation, self).save(*args, **kwargs)
+        return super(SupplierLocation, self).save(*args, **kwargs)
 
 def serialize_priced(prod):
     return {
@@ -179,7 +177,7 @@ def serialize_priced(prod):
         }
 
 
-class RetailerProductManager(models.Manager):
+class SupplierProductManager(models.Manager):
     def add_product(self, user, product_pk, collection_pk=None):
         collections = user.get_collections()
         location = collections.filter(
@@ -206,15 +204,15 @@ class RetailerProductManager(models.Manager):
         user_prod.delete()
 
 
-class RetailerProduct(models.Model):
+class SupplierProduct(models.Model):
     product = models.ForeignKey(
         Product,
         null=True,
         on_delete=models.SET_NULL,
         related_name='priced'
         )
-    retailer = models.ForeignKey(
-        RetailerLocation,
+    location = models.ForeignKey(
+        SupplierLocation,
         on_delete=models.CASCADE,
         related_name='products'
         )
@@ -238,33 +236,22 @@ class RetailerProduct(models.Model):
     offer_installation = models.BooleanField(default=False)
     banner_item = models.BooleanField(default=False)
 
-    objects = RetailerProductManager()
+    objects = SupplierProductManager()
     subclasses = InheritanceManager()
 
     class Meta:
-        unique_together = ('product', 'retailer')
+        unique_together = ('product', 'location')
 
     def __str__(self):
-        return str(self.retailer) + ' ' + str(self.product.name)
+        return str(self.location) + ' ' + str(self.product.name)
 
-    # def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
     def save(self, *args, **kwargs):
         self.check_approvals()
         self.check_availability()
         if self.publish_in_store_availability:
             self.product.set_locations()
             print('location set')
-            # address: Address = self.retailer.address
-            # print(address.coordinates)
-            # self.product.set_location_from_retailer(address.coordinates)
-        print('saving ret')
-        return super(RetailerProduct, self).save(*args, **kwargs)
-        # return super(RetailerProduct, self).save(
-        #     force_insert=force_insert,
-        #     force_update=force_update,
-        #     using=using,
-        #     update_fields=update_fields
-        #     )
+        return super(SupplierProduct, self).save(*args, **kwargs)
 
     def serialize_mini(self):
         return {
@@ -272,9 +259,9 @@ class RetailerProduct(models.Model):
             'in_store_ppu': self.in_store_ppu,
             'units_available_in_store': self.units_available_in_store,
             'units_per_order': self.units_per_order,
-            'location_address': self.retailer.address.city_state(),
-            'location_id': self.retailer.pk,
-            'company_name': self.retailer.company.name,
+            'location_address': self.location.address.city_state(),
+            'location_id': self.location.pk,
+            'company_name': self.location.company.name,
             'lead_time_ts': self.lead_time_ts.days,
             'publish_online_price': self.publish_online_price,
             'publish_in_store_price': self.publish_in_store_price,
@@ -299,13 +286,13 @@ class RetailerProduct(models.Model):
     def set_banner(self):
         if not self.banner_item:
             return
-        location_banner_item_count = self.retailer.products.filter(banner_item=True).count()
+        location_banner_item_count = self.location.products.filter(banner_item=True).count()
         if location_banner_item_count >= 3:
             self.banner_item = False
             return
 
     def coordinates(self):
-        coordinates = self.retailer.address.coordinates
+        coordinates = self.location.address.coordinates
         return [coordinates.lat, coordinates.lng]
 
     def check_on_sale(self):
@@ -317,8 +304,8 @@ class RetailerProduct(models.Model):
             self.publish_in_store_price = False
 
     def check_approvals(self):
-        if not self.retailer.approved_online_seller:
+        if not self.location.approved_online_seller:
             self.publish_online_price = False
-        if not self.retailer.approved_in_store_seller:
+        if not self.location.approved_in_store_seller:
             self.publish_in_store_price = False
             self.publish_in_store_availability = False

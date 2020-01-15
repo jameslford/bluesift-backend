@@ -19,11 +19,11 @@ from Addresses.models import Coordinate
 
 
 def availability_getter(query_term, location_pk=None):
-    from Retailers.models import RetailerProduct
+    from Suppliers.models import SupplierProduct
     term = {query_term: True}
     if location_pk:
         term['retailer_id'] = location_pk
-    return RetailerProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
+    return SupplierProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
 
 
 class Manufacturer(models.Model):
@@ -59,12 +59,12 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         return self.filter(pk__in=Subquery(pks))
 
     def retailer_products(self, location_pk=None):
-        from Retailers.models import RetailerProduct
+        from Suppliers.models import SupplierProduct
         if location_pk:
-            sup_prods = RetailerProduct.objects.filter(
+            sup_prods = SupplierProduct.objects.filter(
                 retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
         else:
-            sup_prods = RetailerProduct.objects.filter(product__in=Subquery(self.values('pk')))
+            sup_prods = SupplierProduct.objects.filter(product__in=Subquery(self.values('pk')))
         return sup_prods
 
     def filter_availability(self, commands, location_pk=None, pk_only=False):
@@ -91,12 +91,12 @@ class ProductAvailabilityQuerySet(models.QuerySet):
         return ('available_in_store', 'priced_in_store', 'installation_offered')
 
     def product_prices(self, location_pk=None):
-        from Retailers.models import RetailerProduct
+        from Suppliers.models import SupplierProduct
         term = {'product__pk': OuterRef('pk'), 'publish_in_store_price': True}
         if location_pk:
             term['retailer__pk'] = location_pk
         sup_prods = (
-            RetailerProduct
+            SupplierProduct
             .objects
             .filter(**term).only('in_store_ppu', 'online_ppu')
             .annotate(min_price=Least('in_store_ppu', 'online_ppu'))
@@ -226,8 +226,8 @@ class Product(models.Model):
         term_dict = [{'term': k, 'value': v} for k,v in terms.items()]
         return {'name': name, 'terms': term_dict}
 
-        # from UserProducts.serializers import RetailerProductMiniSerializer
-        # priced = [RetailerProductMiniSerializer(price).data for price in self.get_in_store_priced()]
+        # from UserProducts.serializers import SupplierProductMiniSerializer
+        # priced = [SupplierProductMiniSerializer(price).data for price in self.get_in_store_priced()]
 
     def serialize_detail(self):
         sub = Product.subclasses.get_subclass(pk=self.pk)

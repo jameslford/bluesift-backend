@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework import status
 from config.custom_permissions import OwnerDeleteAdminEdit
 from Profiles.models import BaseProfile
-from .models import RetailerCompany, ProCompany, Company, ServiceType, BaseGroup
+from .models import SupplierCompany
 
 
 @api_view(['POST'])
@@ -23,14 +23,14 @@ def get_or_create_business(request):
         return Response(f'{user.email} already associated with business', status=status.HTTP_412_PRECONDITION_FAILED)
     data = request.data
     company_name = data.get('company_name')
-    service_type = data.get('service_type', 'contractor')
+    # service_type = data.get('service_type', 'contractor')
     title = data.get('role')
     if not company_name:
         return Response('No company name', status=status.HTTP_400_BAD_REQUEST)
-    service_type = ServiceType.objects.filter(label__icontains=service_type).first()
-    if user.is_pro and not service_type:
-        return Response('Invalid service type', status=status.HTTP_400_BAD_REQUEST)
-    company = BaseGroup.objects.create_company(user=user, name=company_name, service=service_type)
+    # service_type = ServiceType.objects.filter(label__icontains=service_type).first()
+    # if user.is_pro and not service_type:
+    #     return Response('Invalid service type', status=status.HTTP_400_BAD_REQUEST)
+    company = SupplierCompany.objects.create_company(user=user, name=company_name)
     profile = BaseProfile.objects.create_profile(user, company=company, title=title, owner=True)
     return Response({'name': company.name}, status=status.HTTP_201_CREATED)
 
@@ -39,9 +39,6 @@ def get_or_create_business(request):
 @permission_classes((IsAuthenticated,))
 def company_detail(request: Request):
     user = request.user
-
-    if user.is_pro:
-        pass
 
     if user.is_supplier:
         pass
@@ -53,5 +50,5 @@ def company_detail(request: Request):
 @permission_classes((IsAuthenticated, OwnerDeleteAdminEdit))
 def company_edit_delete(request: Request):
     if request.method == 'DELETE':
-        Company.objects.delete_company(request.user)
+        SupplierCompany.objects.delete_company(request.user)
         return Response(status=status.HTTP_200_OK)

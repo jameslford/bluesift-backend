@@ -15,7 +15,7 @@ class OwnerOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method == 'GET':
             return True
-        if request.user.is_pro or request.user.is_supplier:
+        if request.user.is_supplier:
             profile = request.user.get_profile()
             return bool(profile.owner | profile.admin)
         return True
@@ -25,7 +25,7 @@ class OwnerDeleteAdminEdit(permissions.BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        if not (user.is_pro or user.is_supplier):
+        if not user.is_supplier:
             return False
         profile = user.get_profile()
         if request.method == 'DELETE':
@@ -74,7 +74,5 @@ class SupplierAdminPro(permissions.IsAuthenticated):
         if user.admin:
             return True
         if user.is_supplier:
-            return True
-        if user.is_pro:
             return True
         return False

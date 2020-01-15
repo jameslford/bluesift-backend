@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from config.globals import check_department_string
-from config.tasks import add_retailer_record
+from config.tasks import add_supplier_record
 from ProductFilter.sorter import Sorter
 from .models import Product
 from .tasks import add_detail_record
@@ -16,7 +16,7 @@ def products_list(request: HttpRequest, product_type: str, location_pk: int = No
     if not product_type:
         return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
     if location_pk:
-        add_retailer_record.delay(request.get_full_path(), pk=location_pk)
+        add_supplier_record.delay(request.get_full_path(), pk=location_pk)
     content = Sorter(product_type, request=request, location_pk=location_pk, update=update)
     return Response(content(), status=status.HTTP_200_OK)
 

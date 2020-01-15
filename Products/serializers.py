@@ -32,28 +32,3 @@ def serialize_product_priced(product: Product) -> Dict[str, any]:
     prod_dict = serialize_product(product)
     prod_dict['suppliers'] = [prod.get_priced() for prod in product.priced.all()]
     return prod_dict
-
-
-# class SerpyProduct(serpy.Serializer):
-#     pk = serpy.MethodField()
-#     unit = serpy.Field()
-#     manufacturer_style = TitleField()
-#     manu_collection = TitleField()
-#     manufacturer_sku = serpy.Field()
-#     name = serpy.Field()
-#     swatch_image = serpy.MethodField()
-#     manufacturer = SerpyManufacturer()
-#     low_price = serpy.MethodField()
-
-#     def get_low_price(self, prod_obj):
-#         if hasattr(prod_obj, 'low_price'):
-#             return prod_obj.low_price
-#         return None
-
-#     def get_swatch_image(self, prod_obj):
-#         if prod_obj.swatch_image:
-#             return prod_obj.swatch_image.url
-#         return None
-
-#     def get_pk(self, prod_obj: Product):
-#         return str(prod_obj.bb_sku)

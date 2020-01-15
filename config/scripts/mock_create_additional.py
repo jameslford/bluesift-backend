@@ -3,10 +3,10 @@ import datetime
 import decimal
 from typing import List
 from django.db import transaction
-from Groups.models import ConsumerLibrary, ProCompany
 from Products.models import Product
-from Projects.models import Project, LibraryProduct, ProjectTask, Bid, BidInvitation
-from Retailers.models import RetailerLocation, RetailerProduct
+from Profiles.models import ConsumerProfile
+from Projects.models import Project, LibraryProduct, ProjectTask
+from Suppliers.models import SupplierLocation, SupplierProduct
 from .mock_create import random_date
 
 ROOMS = [
@@ -45,12 +45,12 @@ SUB_TASKS = [
     ]
 
 @transaction.atomic
-def add_group_products(group):
-    print('adding products to ', group.name)
+def add_group_products(profile: ConsumerProfile):
+    print('adding products to ', profile.name)
     products = list(Product.objects.values_list('pk', flat=True))
     min_prod = 20
     max_products = random.randint(min_prod, 40)
-    if group.products.all().count() >= min_prod:
+    if profile.products.all().count() >= min_prod:
         print('products already assigned')
         return
     for num in range(max_products):
@@ -58,17 +58,14 @@ def add_group_products(group):
         index = products.index(index)
         product = products.pop(index)
         product = Product.objects.get(pk=product)
-        LibraryProduct.objects.create(product=product, owner=group)
+        LibraryProduct.objects.create(product=product, owner=profile)
 
 
 @transaction.atomic
 def create_group_products():
-    consumer_groups = ConsumerLibrary.objects.all()
-    pro_groups = ProCompany.objects.all()
-    for con in consumer_groups:
-        add_group_products(con)
-    for pro in pro_groups:
-        add_group_products(pro)
+    consumer_profiles = ConsumerProfile.objects.filter(user__demo=True)
+    for prof in consumer_profiles:
+        add_group_products(prof)
 
 @transaction.atomic
 def create_parent_tasks():
@@ -125,7 +122,7 @@ def create_child_tasks():
 
 @transaction.atomic
 def create_retailer_products():
-    locations: List[RetailerLocation] = RetailerLocation.objects.all()
+    locations: List[SupplierLocation] = SupplierLocation.objects.all()
     min_count = 30
     for location in locations:
         if location.products.all().count() >= min_count:
@@ -145,11 +142,9 @@ def create_retailer_products():
             select_product = random.choice(products)
             index = products.index(select_product)
             select_product = products.pop(index)
-            # del location_prod_ids[location_prod_ids.index(select_id)]
-            # product = Product.objects.get(pk=select_id)
             lead_time = random.randint(1, 14)
             offer_install = random.choice([True, False])
-            sup_prod: RetailerProduct = RetailerProduct.objects.get_or_create(
+            sup_prod: SupplierProduct = SupplierProduct.objects.get_or_create(
                 product=select_product,
                 retailer=location
                 )[0]
@@ -168,67 +163,3 @@ def add_additonal():
     create_group_products()
     create_parent_tasks()
     create_child_tasks()
-
-
-
-
-    # def create_tasks():
-#     applications = APPLICATIONS.copy()
-#     rooms = ROOMS.copy()
-#     projects = Project.objects.all()
-#     for project in projects:
-#         products = ProductAssignment.objects.filter(project=project)
-#         for product in products:
-#             assignment_choice = random.choice([True, False])
-#             if assignment_choice and rooms:
-#                 quantity = random.randint(30, 200)
-#                 room = random.choice(rooms)
-#                 index = rooms.index(room)
-#                 del rooms[index]
-#                 application = random.choice(applications)
-#                 assignment_name = f'{room} {application}'
-#                 supplier = product.priced.all().first()
-#                 supplier = supplier.retailer if supplier else None
-#                 assignment = ProductAssignment.objects.create(
-#                     name=assignment_name,
-#                     quantity_needed=quantity,
-#                     product=product,
-#                     project=project,
-#                     supplier=supplier
-#                     )
-#             parent_task = ProjectTask.objects.create(
-#                 name=room,
-#                 project=project
-#                 )
-#             child_name = f'{application} install'
-#             child_start = project.deadline - datetime.timedelta(days=20)
-#             ProjectTask.objects.create(
-#                 name=child_name,
-#                 product=assignment,
-#                 project=project,
-#                 duration=datetime.timedelta(days=random.randint(3, 9)),
-#                 start_date=child_start,
-#                 parent=parent_task
-#                 )
-#             for stask in random.sample(SUB_TASKS, 3):
-#                 ProjectTask.objects.create(
-#                     name=stask,
-#                     parent=parent_task,
-#                     duration=datetime.timedelta(days=random.randint(3, 9)),
-#                     start_date=random_date(project.deadline),
-#                     project=project
-#                     )
-
-
-# def create_assignments():
-#     prod_ids = list(Product.objects.values_list('pk', flat=True))
-#     projects = Project.objects.all()
-#     for project in projects:
-#         for num in range(random.randint(8, 20)):
-#             select_id = random.choice(prod_ids)
-#             del prod_ids[prod_ids.index(select_id)]
-#             product = Product.objects.get(pk=select_id)
-#             LibraryProduct.objects.create(
-#                 product=product,
-#                 project=project
-#                 )

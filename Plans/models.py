@@ -33,9 +33,10 @@ class ConsumerPlan(Plan):
     pass
 
 
-class ProPlan(Plan):
+class SupplierPlan(Plan):
     employee_limit = models.IntegerField(default=1)
 
 
-class RetailerPlan(Plan):
-    employee_limit = models.IntegerField(default=1)
+# class ProPlan(Plan):
+#     employee_limit = models.IntegerField(default=1)
+
