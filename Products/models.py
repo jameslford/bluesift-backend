@@ -223,7 +223,7 @@ class Product(models.Model):
             }
 
     def create_group(self, name: str, terms: dict):
-        term_dict = [{'term': k, 'value': v} for k,v in terms.items()]
+        term_dict = [{'term': k, 'value': v} for k, v in terms.items()]
         return {'name': name, 'terms': term_dict}
 
         # from UserProducts.serializers import SupplierProductMiniSerializer
@@ -253,29 +253,29 @@ class Product(models.Model):
 
     def get_in_store(self):
         return self.priced.select_related(
-            'retailer',
-            'retailer__company',
-            'retailer__address',
-            'retailer__address__coordinates',
-            'retailer__address__postal_code'
+            'location',
+            'location__company',
+            'location__address',
+            'location__address__coordinates',
+            'location__address__postal_code'
         ).filter(publish_in_store_availability=True)
 
     def get_online_priced(self):
         return self.priced.select_related(
-            'retailer',
-            'retailer__company',
-            'retailer__address',
-            'retailer__address__coordinates',
-            'retailer__address__postal_code'
+            'location',
+            'location__company',
+            'location__address',
+            'location__address__coordinates',
+            'location__address__postal_code'
             ).all().filter(publish_online_price=True)
 
     def get_in_store_priced(self):
         return self.priced.select_related(
-            'retailer',
-            'retailer__company',
-            'retailer__address',
-            'retailer__address__coordinates',
-            'retailer__address__postal_code'
+            'location',
+            'location__company',
+            'location__address',
+            'location__address__coordinates',
+            'location__address__postal_code'
         ).all().filter(publish_in_store_price=True)
 
     def set_locations(self):
@@ -287,7 +287,7 @@ class Product(models.Model):
             print('sellers exist ', points)
             # self.locations = points
             self.save()
-    
+
     def set_location_from_retailer(self, coordinates: Coordinate):
         points = MultiPoint(coordinates.point)
         self.locations = points
