@@ -33,6 +33,11 @@ class Manufacturer(models.Model):
         return self.label
 
 
+    def create_group(self, name: str, terms: dict):
+        term_dict = [{'term': k, 'value': v} for k, v in terms.items()]
+        return {'name': name, 'terms': term_dict}
+
+
 class ProductAvailabilityQuerySet(models.QuerySet):
     def priced_in_store(self, location_pk=None, pk_only=False):
         pks = availability_getter('publish_in_store_price', location_pk)
@@ -177,6 +182,9 @@ class Product(models.Model):
     light_commercial_warranty = models.CharField(max_length=100, null=True)
     commercial = models.BooleanField(default=False)
 
+    obj_file = models.FileField(null=True, blank=True, upload_to='objs/')
+    gltf_file = models.FileField(null=True, blank=True, upload_to='gtlf/')
+
     detail_response = pg_fields.JSONField(null=True, blank=True)
 
     manufacturer = models.ForeignKey(
@@ -193,14 +201,9 @@ class Product(models.Model):
         return f'{self.manufacturer.label}, {self.manu_collection}, {self.manufacturer_style}'
 
     def save(self, *args, **kwargs):
-        print('saving')
         if not self.name:
-            print('no name')
             self.name = str(self.bb_sku)
-        # try:
         super(Product, self).save(*args, **kwargs)
-        # except Exception as e:
-        #     print(e.__cause__)
 
     def serialize_stock(self):
         return {
@@ -213,7 +216,7 @@ class Product(models.Model):
             'swatch_image': self.swatch_image.url if self.swatch_image else None,
             'manufacturer': self.manufacturer.label,
             'low_price': getattr(self, 'low_price', None)
-        }
+            }
 
     def serialize_warranty(self):
         return {
@@ -221,13 +224,6 @@ class Product(models.Model):
             'commercial_warranty': self.commercial_warranty,
             'light_commercial_warranty': self.light_commercial_warranty
             }
-
-    def create_group(self, name: str, terms: dict):
-        term_dict = [{'term': k, 'value': v} for k, v in terms.items()]
-        return {'name': name, 'terms': term_dict}
-
-        # from UserProducts.serializers import SupplierProductMiniSerializer
-        # priced = [SupplierProductMiniSerializer(price).data for price in self.get_in_store_priced()]
 
     def serialize_detail(self):
         sub = Product.subclasses.get_subclass(pk=self.pk)
@@ -284,19 +280,13 @@ class Product(models.Model):
         if in_store_sellers.count() > 0:
             coordinates = [q.location.address.coordinates.point for q in in_store_sellers]
             points = MultiPoint(*coordinates)
-            print('sellers exist ', points)
-            # self.locations = points
+            self.locations = points
             self.save()
 
     def set_location_from_retailer(self, coordinates: Coordinate):
         points = MultiPoint(coordinates.point)
         self.locations = points
         self.save()
-
-    def manufacturer_name(self):
-        if not self.manufacturer:
-            return None
-        return self.manufacturer.label
 
     def set_name(self):
         fields = [

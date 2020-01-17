@@ -65,19 +65,16 @@ class LibraryLink(models.Model):
         admin.save()
 
         company_info = cls.objects.get_or_create(label='company_info')[0]
-        company_info.for_pro = True
         company_info.for_supplier = True
         company_info.save()
 
         profile = cls.objects.get_or_create(label='profile')[0]
         profile.for_admin = True
-        profile.for_pro = True
         profile.for_supplier = True
         profile.for_user = True
         profile.save()
 
         palette = cls.objects.get_or_create(label='palette')[0]
-        palette.for_pro = True
         palette.for_user = True
         palette.save()
 
@@ -87,15 +84,9 @@ class LibraryLink(models.Model):
         locations.save()
 
         projects = cls.objects.get_or_create(label='projects')[0]
-        projects.for_pro = True
         projects.for_user = True
         projects.include_collections = True
         projects.save()
-
-
-
-
-
 
 
 class UserFeature(models.Model):
@@ -154,5 +145,4 @@ class UserTypeStatic(models.Model):
             'full_text': self.full_text,
             'features': [feat.serialize() for feat in self.feature.all()],
             'options': ['owner', 'admin', 'employee'] if self.include_options else None
-        }
-
+            }

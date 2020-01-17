@@ -1,6 +1,8 @@
 import operator
 import decimal
 import webcolors
+import numpy as np
+from vispy import geometry as vspy
 from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
@@ -39,8 +41,7 @@ class FinishSurface(ProductSubClass):
     width = DecimalRangeField(null=True, blank=True)
     length = DecimalRangeField(null=True, blank=True)
 
-    # size that is filtered upon
-    # actual decimal size in square inches used for calculation
+
     size = models.CharField(max_length=180, null=True, blank=True)
     actual_size = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     shape = models.CharField(max_length=80, null=True, blank=True)
@@ -122,7 +123,6 @@ class FinishSurface(ProductSubClass):
         for dim in [self.width, self.length]:
             lower = dim.lower
             upper = dim.upper
-            print('lower upper = ', lower, upper)
             if not lower:
                 self.actual_size = None
                 return
@@ -184,6 +184,33 @@ class FinishSurface(ProductSubClass):
             'sub_material',
             'surface_coating'
             ]
+
+    # def create_obj_file(self):
+    #     if not (
+    #         self.width and
+    #         self.length and
+    #         self.width.lower
+    #         and self.length.lower
+    #         and self.thickness):
+    #         return
+    #     width = self.width.lower
+    #     length = self.length.lower
+    #     thick = self.thickness
+
+    #     # create x, y, z arrays for vertices
+    #     whalf = width/2
+    #     lhalf = length/2
+
+    #     blb = ((0-whalf), 0, (0-lhalf))
+    #     brb = (whalf, 0, (0-lhalf))
+    #     blf = ((0-whalf), 0, lhalf)
+    #     brf = (whalf, 0, lhalf)
+
+    #     tlb = ((0-whalf), thick, (0-lhalf))
+    #     trb = (whalf, thick, (0-lhalf))
+    #     tlf = ((0-whalf), thick, lhalf)
+    #     trf = (whalf, thick, lhalf)
+
 
 
 
