@@ -2,6 +2,15 @@ from rest_framework import permissions
 from django.conf import settings
 
 
+class IsAdminorReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method == 'GET':
+            return True
+        if request.method == 'POST':
+            if request.user.isauthenticated and request.user.is_admin:
+                return True
+            return False
+
 class RetailerPermission(permissions.BasePermission):
     """ permission for suppliers only """
 

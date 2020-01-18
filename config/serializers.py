@@ -161,7 +161,7 @@ class ProfileSerializer:
 
 class CollectionNote:
 
-    def __init__(self, nickname=None, pk=None, remove=None):
+    def __init__(self, nickname='library', pk=None, remove=None):
         self.nickname = nickname
         self.pk = pk
         self.remove = remove
@@ -199,16 +199,21 @@ class ShortLib:
 
     def retrieve_data(self):
         collection = None
-        if self.user.is_authenticated:
+        self.product_ids = []
+        self.selected_location = CollectionNote().serialize()
+        if not self.user.is_authenticated:
+            return
+        if self.user.is_supplier:
             collections = self.user.get_collections()
             self.pl_short_list = [CollectionNote(res).data for res in list(collections.values('nickname', 'pk'))]
             collection = collections.get(pk=self.pk) if self.pk else collections.first()
-        if collection:
             self.product_ids = collection.products.values_list('product__pk', flat=True)
             self.selected_location = CollectionNote(collection.nickname, collection.pk).serialize()
-        else:
-            self.product_ids = []
-            self.selected_location = CollectionNote().serialize()
+            return
+        group = self.user.get_group()
+        self.product_ids = list(group.products.all().values_list('pk', flat=True))
+        self.selected_location = CollectionNote().serialize()
+
 
     @property
     def data(self):

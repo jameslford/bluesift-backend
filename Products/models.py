@@ -184,6 +184,12 @@ class Product(models.Model):
 
     obj_file = models.FileField(null=True, blank=True, upload_to='objs/')
     gltf_file = models.FileField(null=True, blank=True, upload_to='gtlf/')
+    stl_file = models.FileField(null=True, blank=True, upload_to='stl/')
+    rvt_file = models.FileField(null=True, blank=True, upload_to='rvt/')
+    ipt_file = models.FileField(null=True, blank=True, upload_to='ipt/')
+    dae_file = models.FileField(null=True, blank=True, upload_to='dae/')
+    three_json = pg_fields.JSONField(null=True, blank=True)
+    geometry_clean = models.BooleanField(default=False)
 
     detail_response = pg_fields.JSONField(null=True, blank=True)
 
@@ -204,48 +210,6 @@ class Product(models.Model):
         if not self.name:
             self.name = str(self.bb_sku)
         super(Product, self).save(*args, **kwargs)
-
-    def serialize_stock(self):
-        return {
-            'pk': self.pk,
-            'unit': self.unit,
-            'manufacturer_style': self.manufacturer_style,
-            'manufacturer_collection': self.manu_collection,
-            'manufacturer_sku': self.manufacturer_sku,
-            'name': self.name,
-            'swatch_image': self.swatch_image.url if self.swatch_image else None,
-            'manufacturer': self.manufacturer.label,
-            'low_price': getattr(self, 'low_price', None)
-            }
-
-    def serialize_warranty(self):
-        return {
-            'residential_warranty': self.residential_warranty,
-            'commercial_warranty': self.commercial_warranty,
-            'light_commercial_warranty': self.light_commercial_warranty
-            }
-
-    def serialize_detail(self):
-        sub = Product.subclasses.get_subclass(pk=self.pk)
-        stock = self.serialize_stock()
-        special = sub.serialize_special()
-        special.update({'warranty': self.serialize_warranty()})
-        priced = [price.serialize_mini() for price in self.get_in_store_priced()]
-        stock.update({
-            'manufacturer_url': self.manufacturer_url,
-            'room_scene': self.room_scene.url if self.room_scene else None,
-            'priced': priced,
-            'lists': special
-            })
-        return stock
-
-    def average_rating(self):
-        avg_rating = self.ratings.all().aggregate(Avg('rating'))
-        avg_rating = avg_rating.get('rating_avg', None)
-        return avg_rating
-
-    def rating_count(self):
-        return self.ratings.all().count()
 
     def get_in_store(self):
         return self.priced.select_related(
@@ -306,6 +270,9 @@ class ProductSubClass(Product):
 
     class Meta:
         abstract = True
+
+    def geometries(self):
+        return None
 
     @classmethod
     def run_special(cls):

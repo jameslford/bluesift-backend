@@ -1,13 +1,15 @@
 ''' Products.views.py '''
 from django.http import HttpRequest
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from config.globals import check_department_string
 from config.tasks import add_supplier_record
+from config.custom_permissions import IsAdminorReadOnly
 from ProductFilter.sorter import Sorter
 from .models import Product
 from .tasks import add_detail_record
+from .serializers import serialize_detail, serialize_detail_quick
 
 
 @api_view(['GET'])
@@ -21,8 +23,27 @@ def products_list(request: HttpRequest, product_type: str, location_pk: int = No
     return Response(content(), status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
+@permission_classes((IsAdminorReadOnly,))
 def product_detail(request, pk):
-    response = Product.objects.get(pk=pk).serialize_detail()
+
+    product = Product.subclasses.get_subclass(pk=pk)
+
+    if request.method == 'GET':
+        response = serialize_detail(product)
+        add_detail_record.delay(request.get_full_path(), pk)
+        return Response(response, status=status.HTTP_200_OK)
+
+    if request.method == 'POST':
+        pass
+
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['GET'])
+def product_detail_quick(request, pk):
+    product = Product.subclasses.get_subclass(pk=pk)
+    response = serialize_detail_quick(product)
     add_detail_record.delay(request.get_full_path(), pk)
     return Response(response, status=status.HTTP_200_OK)

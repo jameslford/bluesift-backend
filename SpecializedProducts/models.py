@@ -1,8 +1,6 @@
 import operator
 import decimal
 import webcolors
-import numpy as np
-from vispy import geometry as vspy
 from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
@@ -185,6 +183,12 @@ class FinishSurface(ProductSubClass):
             'surface_coating'
             ]
 
+    def geometries(self):
+        return {
+            'width': self.width.lower if self.width else None,
+            'length': self.length.lower if self.length else None,
+            'thickness': self.thickness
+            }
     # def create_obj_file(self):
     #     if not (
     #         self.width and
