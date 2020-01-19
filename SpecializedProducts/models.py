@@ -5,6 +5,7 @@ from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
 from Products.models import ProductSubClass
+from .serializers import AdminFields
 
 
 class FinishSurface(ProductSubClass):
@@ -14,7 +15,6 @@ class FinishSurface(ProductSubClass):
 
     material = models.CharField(max_length=200)
     sub_material = models.CharField(max_length=200, null=True, blank=True)
-
     finish = models.CharField(max_length=200, null=True, blank=True)
     surface_coating = models.CharField(max_length=200, null=True, blank=True)
     look = models.CharField(max_length=200, null=True, blank=True)
@@ -53,6 +53,35 @@ class FinishSurface(ProductSubClass):
 
     sqft_per_carton = models.CharField(max_length=70, null=True)
     slip_resistant = models.BooleanField(default=False)
+
+    scale_width = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
+    scale_length = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
+    scale_thickness = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
+    admin_fields = [
+        'scale_width',
+        'scale_thickness',
+        'scale_length',
+        'walls',
+        'countertops',
+        'floors',
+        'cabinet_fronts',
+        'shower_floors',
+        'shower_walls',
+        'exterior_walls',
+        'exterior_floors',
+        'covered_walls',
+        'covered_floors',
+        'pool_linings',
+        'bullnose',
+        'covebase',
+        'corner_covebase',
+        'material',
+        'sub_material',
+        'finish',
+        'surface_coating',
+        'look',
+        'shade_variation'
+        ]
 
     def serialize(self):
         main = self.serialize_remaining()
@@ -184,11 +213,54 @@ class FinishSurface(ProductSubClass):
             ]
 
     def geometries(self):
+        if self.scale_length:
+            length = self.scale_length
+        else:
+            length = self.length.lower if self.length else None
+        if self.scale_width:
+            width = self.scale_width
+        else:
+            width = self.width.lower if self.width else None
+        if self.scale_thickness:
+            thickness = self.scale_thickness
+        else:
+            thickness = self.thickness
+
         return {
-            'width': self.width.lower if self.width else None,
-            'length': self.length.lower if self.length else None,
-            'thickness': self.thickness
+            'width': width,
+            'length': length,
+            'thickness': thickness
             }
+
+
+    def get_admin_fields(self):
+        return AdminFields(self).data
+
+        # return {
+        #     'scale_width',
+        #     'scale_thickness',
+        #     'scales_length',
+        #     'walls',
+        #     'countertops',
+        #     'floors',
+        #     'cabinet_fronts',
+        #     'shower_floors',
+        #     'shower_walls',
+        #     'exterior_walls',
+        #     'exterior_floors',
+        #     'covered_walls',
+        #     'covered_floors',
+        #     'pool_linings',
+        #     'bullnose',
+        #     'covebase',
+        #     'corner_covebase',
+        #     'material',
+        #     'sub_material',
+        #     'finish',
+        #     'surface_coating',
+        #     'look',
+        #     'shade_variation',
+        # }
     # def create_obj_file(self):
     #     if not (
     #         self.width and

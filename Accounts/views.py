@@ -89,6 +89,7 @@ def custom_login(request):
 
     if not user:
         return Response('Invalid credentials', status=status.HTTP_400_BAD_REQUEST)
+    print(user.password)
     if not check_password(password, user.password):
         return Response(f'Invalid password', status=status.HTTP_400_BAD_REQUEST)
 

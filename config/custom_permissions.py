@@ -7,7 +7,7 @@ class IsAdminorReadOnly(permissions.BasePermission):
         if request.method == 'GET':
             return True
         if request.method == 'POST':
-            if request.user.isauthenticated and request.user.is_admin:
+            if request.user.is_authenticated and request.user.is_admin:
                 return True
             return False
 

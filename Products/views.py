@@ -31,11 +31,24 @@ def product_detail(request, pk):
 
     if request.method == 'GET':
         response = serialize_detail(product)
+        if request.user.is_authenticated and request.user.is_admin:
+            admin_fields = product.get_admin_fields()
+            response.update({
+                'admin_fields' : admin_fields
+            })
         add_detail_record.delay(request.get_full_path(), pk)
         return Response(response, status=status.HTTP_200_OK)
 
     if request.method == 'POST':
-        pass
+        for k, v in request.data.items():
+            setattr(product, k, v)
+        product.save()
+        response = serialize_detail(product)
+        admin_fields = product.get_admin_fields()
+        response.update({
+            'admin_fields' : admin_fields
+        })
+        return Response(response, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
 

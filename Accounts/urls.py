@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import login
 from .views import create_user, activate, custom_login, get_user, get_demo_user, custom_logout
 
 
@@ -6,6 +7,7 @@ urlpatterns = [
     path('get-user', get_user),
     path('register-user/', create_user),
     path('activate/<uidb64>/<token>', activate, name='activate'),
+    # path('login/', login),
     path('login/', custom_login),
     path('logout', custom_logout),
     path('get-demo/<str:user_type>', get_demo_user),
