@@ -1,4 +1,5 @@
 from typing import Dict
+from django.core.files.storage import get_storage_class
 from .models import Product, ProductSubClass
 
 
@@ -78,16 +79,22 @@ def serialize_warranty(product):
 
 def serialize_geometry(product: ProductSubClass):
     geometries = product.geometries()
+    image = product.swatch_image.url if product.swatch_image else None
+    if product.tiling_image:
+        image = product.tiling_image.url
+    image = get_storage_class().base_path() + image
     return {
         'width': geometries.get('width'),
         'length': geometries.get('length'),
         'thickness': geometries.get('thickness'),
-        'obj_file': product.obj_file.url if product.obj_file else None,
-        'gltf_file': product.gltf_file.url if product.gltf_file else None,
-        'stl_file': product.stl_file.url if product.stl_file else None,
-        'rvt_file': product.rvt_file.url if product.rvt_file else None,
-        'ipt_file': product.ipt.url if product.ipt_file else None,
-        'dae_file': product.dae_file.url if product.dae_file else None,
+        'image': image,
+        'obj_file': product.initial_obj_file.url if product.initial_obj_file else None,
+        'mtl_file': product.initial_obj_file.url if product.initial_obj_file else None,
+        'gltf_file': product.initial_gltf_file.url if product.initial_gltf_file else None,
+        'stl_file': product.initial_stl_file.url if product.initial_stl_file else None,
+        'rvt_file': product.initial_rvt_file.url if product.initial_rvt_file else None,
+        'ipt_file': product.initial_ipt.url if product.initial_ipt_file else None,
+        'dae_file': product.initial_dae_file.url if product.initial_dae_file else None,
         'three_json': product.three_json,
         'geometry_clean': product.geometry_clean
     }

@@ -1,10 +1,12 @@
 import operator
 import decimal
 import webcolors
+import requests
 from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
 from Products.models import ProductSubClass
+from Products.serializers import serialize_geometry
 from .serializers import AdminFields
 
 
@@ -231,6 +233,12 @@ class FinishSurface(ProductSubClass):
             'length': length,
             'thickness': thickness
             }
+
+    def convert_objects(self):
+        url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
+        data = serialize_geometry(self)
+        r = requests.get(url, params=data)
+        print(r.text)
 
 
     def get_admin_fields(self):

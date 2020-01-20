@@ -20,7 +20,6 @@ class AdminFields:
             value = getattr(product, field)
             model_field = product._meta.get_field(field)
             field_type = model_field.get_internal_type()
-            print(field_type)
             afield = AdminField(term=field, field_type=str(field_type), value=value)
             self.admin_fields.append(afield)
 

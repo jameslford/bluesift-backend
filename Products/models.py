@@ -182,12 +182,22 @@ class Product(models.Model):
     light_commercial_warranty = models.CharField(max_length=100, null=True)
     commercial = models.BooleanField(default=False)
 
+    initial_obj_file = models.FileField(null=True, blank=True, upload_to='objs/')
+    initial_mtl_file = models.FileField(null=True, blank=True, upload_to='objs/')
+    initial_gltf_file = models.FileField(null=True, blank=True, upload_to='gtlf/')
+    initial_stl_file = models.FileField(null=True, blank=True, upload_to='stl/')
+    initial_rvt_file = models.FileField(null=True, blank=True, upload_to='rvt/')
+    initial_ipt_file = models.FileField(null=True, blank=True, upload_to='ipt/')
+    initial_dae_file = models.FileField(null=True, blank=True, upload_to='dae/')
+
     obj_file = models.FileField(null=True, blank=True, upload_to='objs/')
+    mtl_file = models.FileField(null=True, blank=True, upload_to='objs/')
     gltf_file = models.FileField(null=True, blank=True, upload_to='gtlf/')
     stl_file = models.FileField(null=True, blank=True, upload_to='stl/')
     rvt_file = models.FileField(null=True, blank=True, upload_to='rvt/')
     ipt_file = models.FileField(null=True, blank=True, upload_to='ipt/')
     dae_file = models.FileField(null=True, blank=True, upload_to='dae/')
+
     three_json = pg_fields.JSONField(null=True, blank=True)
     geometry_clean = models.BooleanField(default=False)
 
