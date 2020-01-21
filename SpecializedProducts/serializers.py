@@ -14,7 +14,7 @@ class AdminFields:
 
     def __init__(self, product: ProductSubClass):
         # fields = product.get_admin_fields()
-        self.admin_fields: List[AdminField] =[]
+        self.admin_fields: List[AdminField] = []
 
         for field in product.admin_fields:
             value = getattr(product, field)

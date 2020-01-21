@@ -229,15 +229,15 @@ class FinishSurface(ProductSubClass):
             thickness = self.thickness
 
         return {
-            'width': width,
-            'length': length,
-            'thickness': thickness
+            'width': float(width),
+            'length': float(length),
+            'thickness': float(thickness)
             }
 
     def convert_objects(self):
-        url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
+        url = 'http://localhost:5000/geoconverter/us-central1/helloWorld'
         data = serialize_geometry(self)
-        r = requests.get(url, params=data)
+        r = requests.post(url, data=data)
         print(r.text)
 
 
