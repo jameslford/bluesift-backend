@@ -1,12 +1,14 @@
 import operator
 import decimal
+import base64
 import webcolors
 import requests
+import json
+import io
 from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
 from Products.models import ProductSubClass
-from Products.serializers import serialize_geometry
 from .serializers import AdminFields
 
 
@@ -235,72 +237,65 @@ class FinishSurface(ProductSubClass):
             }
 
     def convert_objects(self):
-        url = 'http://localhost:5000/geoconverter/us-central1/helloWorld'
-        data = serialize_geometry(self)
-        r = requests.post(url, data=data)
-        print(r.text)
+        geometries = self.geometries()
+        url = self.swatch_image.url
+        image = base64.b64encode(requests.get(url).content)
+        image = f'data:image/png; base64, {image}'
+        url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
+        data = {
+            'width': geometries.get('width'),
+            'length': geometries.get('length'),
+            'thickness': geometries.get('thickness'),
+            'image': image,
+            'obj_file': self.obj_file.url if self.obj_file else None,
+            'mtl_file': self.mtl_file.url if self.mtl_file else None,
+            'gltf_file': self.gltf_file.url if self.gltf_file else None,
+            'stl_file': self.stl_file.url if self.stl_file else None,
+            'dae_file': self.dae_file.url if self.dae_file else None,
+            'three_json': self.three_json,
+            'geometry_clean': self.geometry_clean
+            }
 
+        response = json.loads(requests.post(url, data=data).text)
+        obj_content = response.get('obj_file')
+        three_json = response.get('three_json')
+        derived_depth = response.get('derived_depth')
+        derived_height = response.get('derived_height')
+        derived_width = response.get('derived_width')
+        if obj_content:
+            name = str(self.bb_sku) + '.obj'
+            file = open(name, 'w')
+            file = file.write(obj_content)
+            file.close()
+            self.derived_obj_file = file
+        self.three_json = three_json
+        self.derived_depth = derived_depth
+        self.derived_height = derived_height
+        self.derived_width = derived_width
+        self.save()
 
     def get_admin_fields(self):
         return AdminFields(self).data
 
-        # return {
-        #     'scale_width',
-        #     'scale_thickness',
-        #     'scales_length',
-        #     'walls',
-        #     'countertops',
-        #     'floors',
-        #     'cabinet_fronts',
-        #     'shower_floors',
-        #     'shower_walls',
-        #     'exterior_walls',
-        #     'exterior_floors',
-        #     'covered_walls',
-        #     'covered_floors',
-        #     'pool_linings',
-        #     'bullnose',
-        #     'covebase',
-        #     'corner_covebase',
-        #     'material',
-        #     'sub_material',
-        #     'finish',
-        #     'surface_coating',
-        #     'look',
-        #     'shade_variation',
-        # }
-    # def create_obj_file(self):
-    #     if not (
-    #         self.width and
-    #         self.length and
-    #         self.width.lower
-    #         and self.length.lower
-    #         and self.thickness):
-    #         return
-    #     width = self.width.lower
-    #     length = self.length.lower
-    #     thick = self.thickness
 
-    #     # create x, y, z arrays for vertices
-    #     whalf = width/2
-    #     lhalf = length/2
-
-    #     blb = ((0-whalf), 0, (0-lhalf))
-    #     brb = (whalf, 0, (0-lhalf))
-    #     blf = ((0-whalf), 0, lhalf)
-    #     brf = (whalf, 0, lhalf)
-
-    #     tlb = ((0-whalf), thick, (0-lhalf))
-    #     trb = (whalf, thick, (0-lhalf))
-    #     tlf = ((0-whalf), thick, lhalf)
-    #     trf = (whalf, thick, lhalf)
+class Appliance(ProductSubClass):
+    appliance_type = models.CharField(max_length=100, blank=True, null=True)
+    room_type = models.CharField(max_length=100, null=True, blank=True)
 
 
+class Cabinets(ProductSubClass):
+    pass
 
 
-# class Appliance(ProductSubClass):
+class Furniture(ProductSubClass):
+    pass
+
+
+class Lumber(ProductSubClass):
+    pass
+
+
 #     room_type = models.CharField(max_length=100, blank=True, null=True)
-#     appliance_type = models.CharField(max_length=100, blank=True, null=True)
 #     height = models.DecimalField(max_digits=5, decimal_places=2)
 #     depth = models.DecimalField(max_digits=5, decimal_places=2)
 #     width = models.DecimalField(max_digits=5, decimal_places=2)
@@ -308,3 +303,8 @@ class FinishSurface(ProductSubClass):
 
 # class Millwork(ProductSubClass):
 #     pass
+
+
+
+        # data = serialize_geometry(self)
+        # url = 'http://localhost:5000/geoconverter/us-central1/helloWorld'

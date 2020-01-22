@@ -1,5 +1,4 @@
 from typing import Dict
-from django.core.files.storage import get_storage_class
 from .models import Product, ProductSubClass
 
 
@@ -79,22 +78,44 @@ def serialize_warranty(product):
 
 def serialize_geometry(product: ProductSubClass):
     geometries = product.geometries()
-    image = product.swatch_image.url if product.swatch_image else None
-    if product.tiling_image:
-        image = product.tiling_image.url
-    image = get_storage_class().base_path() + image
     return {
         'width': geometries.get('width'),
         'length': geometries.get('length'),
         'thickness': geometries.get('thickness'),
-        'image': image,
-        'obj_file': product.initial_obj_file.url if product.initial_obj_file else None,
-        'mtl_file': product.initial_obj_file.url if product.initial_obj_file else None,
-        'gltf_file': product.initial_gltf_file.url if product.initial_gltf_file else None,
-        'stl_file': product.initial_stl_file.url if product.initial_stl_file else None,
+        'obj_file': product.obj_file_url,
+        'mtl_file': product.mtl_file_url,
+        'gltf_file': product.gltf_file_url,
+        'stl_file': product.stl_file_url,
+        'dae_file': product.dae_file_url,
         'rvt_file': product.initial_rvt_file.url if product.initial_rvt_file else None,
         'ipt_file': product.initial_ipt.url if product.initial_ipt_file else None,
-        'dae_file': product.initial_dae_file.url if product.initial_dae_file else None,
         'three_json': product.three_json,
         'geometry_clean': product.geometry_clean
     }
+
+
+
+# def encode_image(url: str):
+    # image = image.open()
+    # with image.open() as img_file:
+    #     print(img_file)
+    #     encoded_string = base64.b64encode(img_file.red())
+    # return f'data:image/png; base64, {encoded_string}'
+
+    # if product.tiling_image:
+    #     image = product.tiling_image.url
+    # image = get_storage_class().base_path() + image
+
+    # image = encode_image(image)
+    # image = product.swatch_image.url if product.swatch_image else None
+    # content = requests.get(url).content
+    # ary = np.array(content)
+    # r, g, b = np.split(ary, 3, axis=2)
+    # r = r.reshape(-1)
+    # g = g.reshape(-1)
+    # b = b.reshape(-1)
+    # bitmap = list(map(lambda x: 0.299*x[0]+0.587*x[1]+0.114*x[2], 
+    # zip(r,g,b)))
+    # bitmap = np.array(bitmap).reshape([ary.shape, ary.shape])
+    # bitmap = np.dot((bitmap > 128).astype(float),255)
+    # image = pimage.fromarray(bitmap.astype(np.uint8))
