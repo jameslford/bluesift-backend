@@ -30,7 +30,7 @@ def get_short_lib(request, pk=None):
 
 @api_view(['GET'])
 def user_config(request: HttpRequest):
-    user = request.user if request.user.is_authenticated else None
+    user = request.user if request.user and request.user.is_authenticated else None
     deps = [dep.serialize_pt_attributes() for dep in ProductFilter.objects.all()]
     res_dict = {
         'profile': ProfileSerializer(user).full_data,

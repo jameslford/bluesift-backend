@@ -155,9 +155,9 @@ class Product(models.Model):
         (EACH, 'Each')
     )
 
-    name = models.CharField(max_length=1200)
+    name = models.CharField(max_length=1200, blank=True)
     bb_sku = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4, editable=False)
-    unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF, blank=True)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
     manufacturer_sku = models.CharField(max_length=200, null=True, blank=True)
@@ -179,22 +179,25 @@ class Product(models.Model):
 
     residential_warranty = models.CharField(max_length=100, null=True, blank=True)
     commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
-    light_commercial_warranty = models.CharField(max_length=100, null=True)
+    light_commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
     commercial = models.BooleanField(default=False)
 
+    dwg_3d_file = models.FileField(null=True, blank=True, upload_to='dwg_3d/')
+    dwg_2d_file = models.FileField(null=True, blank=True, upload_to='dwg_2d/')
+    dxf_file = models.FileField(null=True, blank=True, upload_to='dxf/')
     obj_file = models.FileField(null=True, blank=True, upload_to='objs/')
     mtl_file = models.FileField(null=True, blank=True, upload_to='objs/')
     gltf_file = models.FileField(null=True, blank=True, upload_to='gtlf/')
     stl_file = models.FileField(null=True, blank=True, upload_to='stl/')
     dae_file = models.FileField(null=True, blank=True, upload_to='dae/')
-    rvt_file = models.FileField(null=True, blank=True, upload_to='rvt/')
+    rfa_file = models.FileField(null=True, blank=True, upload_to='rvt/')
     ipt_file = models.FileField(null=True, blank=True, upload_to='ipt/')
 
-    derived_obj_file = models.FileField(null=True, blank=True, upload_to='derived')
-    derived_mtl_file = models.FileField(null=True, blank=True, upload_to='derived')
-    derived_gltf_file = models.FileField(null=True, blank=True, upload_to='derived')
-    derived_stl_file = models.FileField(null=True, blank=True, upload_to='derived')
-    derived_dae_file = models.FileField(null=True, blank=True, upload_to='derived')
+    derived_obj_file = models.FileField(null=True, blank=True, upload_to='derived/')
+    derived_mtl_file = models.FileField(null=True, blank=True, upload_to='derived/')
+    derived_gltf_file = models.FileField(null=True, blank=True, upload_to='derived/')
+    derived_stl_file = models.FileField(null=True, blank=True, upload_to='derived/')
+    derived_dae_file = models.FileField(null=True, blank=True, upload_to='derived/')
     derived_width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_height = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_depth = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
@@ -264,40 +267,13 @@ class Product(models.Model):
         self.save()
 
     def set_name(self):
+        sub = Product.subclasses.get_subclass(pk=self.pk)
         fields = [
             'manufacturer',
             'manufacturer_style',
             'manu_collection',
             'manufacturer_sku'
-            ]
-        sub = Product.subclasses.get_subclass(pk=self.pk)
-        fields = fields + sub.name_fields()
+            ] + sub.name_fields
         vals = list(model_to_dict(sub, fields=fields).values())
         vals = [str(val) for val in vals]
         self.name = '*$'.join(vals)
-
-
-class ProductSubClass(Product):
-
-    class Meta:
-        abstract = True
-
-    def geometries(self):
-        return None
-
-    @classmethod
-    def run_special(cls):
-        if hasattr(cls, 'special_method'):
-            special_method = getattr(cls, 'special_method')
-            special_method()
-
-    @classmethod
-    def validate_sub(cls, sub: str):
-        return bool(sub.lower() in [klas.__name__.lower() for klas in cls.__subclasses__()])
-
-    @classmethod
-    def return_sub(cls, sub: str):
-        classes = [klas for klas in cls.__subclasses__() if klas.__name__.lower() == sub.lower()]
-        if classes:
-            return classes[0]
-        return None

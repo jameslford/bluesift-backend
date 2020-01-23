@@ -1,18 +1,76 @@
+"""returns float measurements and labels on product details"""
 import operator
+import json
 import decimal
 import base64
+from json.decoder import JSONDecodeError
 import webcolors
 import requests
-import json
-import io
 from PIL import Image as pimage
+from django.core.files.base import ContentFile
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
-from Products.models import ProductSubClass
-from .serializers import AdminFields
+from Products.models import Product
+
+class ProductSubClass(Product):
+    """returns float measurements and labels on product details"""
+    name_fields = []
+    admin_fields = []
+
+    class Meta:
+        abstract = True
+
+    def grouped_fields(self):
+        """returns attribute groups in product detail on front end"""
+        return {}
+
+    def geometries(self):
+        """returns float measurements and labels on product details"""
+        return {}
+
+    def get_width(self):
+        """returns float measurements and labels on product details"""
+        return 0
+
+    def get_height(self):
+        """returns float measurements and labels on product details"""
+        return 0
+
+    def get_depth(self):
+        """returns float measurements and labels on product details"""
+        return 0
+
+    def get_texture_map(self):
+        """returns float measurements and labels on product details"""
+        return None
+
+    def conversion_geometries(self):
+        from .serializers import SubproductGeometryConversionSerializer
+        """returns float measurements and labels on product details"""
+        return SubproductGeometryConversionSerializer(self).data
+
+    def presentation_geometries(self):
+        from .serializers import SubproductGeometryPresentationSerializer
+        """returns float measurements and labels on product details"""
+        return SubproductGeometryPresentationSerializer(self).data
+
+    @classmethod
+    def validate_sub(cls, sub: str):
+        """returns float measurements and labels on product details"""
+        return bool(sub.lower() in [klas.__name__.lower() for klas in cls.__subclasses__()])
+
+    @classmethod
+    def return_sub(cls, sub: str):
+        """returns float measurements and labels on product details"""
+        classes = [klas for klas in cls.__subclasses__() if klas.__name__.lower() == sub.lower()]
+        if classes:
+            return classes[0]
+        return None
+
 
 
 class FinishSurface(ProductSubClass):
+    """returns float measurements and labels on product details"""
 
     label_color = models.CharField(max_length=50, null=True, blank=True)
     actual_color = models.CharField(max_length=50, null=True, blank=True)
@@ -43,7 +101,6 @@ class FinishSurface(ProductSubClass):
     width = DecimalRangeField(null=True, blank=True)
     length = DecimalRangeField(null=True, blank=True)
 
-
     size = models.CharField(max_length=180, null=True, blank=True)
     actual_size = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     shape = models.CharField(max_length=80, null=True, blank=True)
@@ -61,6 +118,7 @@ class FinishSurface(ProductSubClass):
     scale_width = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
     scale_length = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
     scale_thickness = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
+
     admin_fields = [
         'scale_width',
         'scale_thickness',
@@ -87,67 +145,60 @@ class FinishSurface(ProductSubClass):
         'shade_variation'
         ]
 
-    def serialize(self):
-        main = self.serialize_remaining()
-        main.update(self.serialize_size())
-        main.update(self.serialize_applications())
-        return main
+    name_fields = [
+        'material',
+        'look',
+        'finish',
+        'sub_material',
+        'surface_coating'
+        ]
 
-    def serialize_special(self):
+    def grouped_fields(self):
         return {
-            'details': self.serialize_remaining(),
-            'size_and_shape': self.serialize_size(),
-            'applications': self.serialize_applications(),
-        }
-
-    def serialize_remaining(self):
-        return {
-            'label_color': self.label_color,
-            'material': self.material,
-            'sub_material': self.sub_material,
-            'finish': self.finish,
-            'surface_coating': self.surface_coating,
-            'look': self.look,
-            'shade_variation': self.shade_variation,
-            'lrv': self.lrv,
-            'cof': self.cof,
-            'edge': self.edge,
-            'end': self.end,
-            'install_type': self.install_type,
-            'sqft_per_carton': self.sqft_per_carton,
-            'slip_resistant':self.slip_resistant
+            'details': {
+                'label_color': self.label_color,
+                'material': self.material,
+                'sub_material': self.sub_material,
+                'finish': self.finish,
+                'surface_coating': self.surface_coating,
+                'look': self.look,
+                'shade_variation': self.shade_variation,
+                'lrv': self.lrv,
+                'cof': self.cof,
+                'edge': self.edge,
+                'end': self.end,
+                'install_type': self.install_type,
+                'sqft_per_carton': self.sqft_per_carton,
+                'slip_resistant':self.slip_resistant
+                },
+            'size_and_shaped': {
+                'thickness': self.thickness,
+                'width': self.width.lower if self.width else None,
+                'length': self.length.lower if self.length else None,
+                'size': self.size,
+                'square_inches': self.actual_size,
+                'shape': self.shape
+                },
+            'applications': {
+                'walls': self.walls,
+                'countertops': self.countertops,
+                'floors': self.floors,
+                'cabinet_fronts': self.cabinet_fronts,
+                'shower_floors': self.shower_floors,
+                'shower_walls': self.shower_walls,
+                'exterior_walls': self.exterior_walls,
+                'exterior_floors': self.exterior_floors,
+                'covered_walls': self.covered_walls,
+                'covered_floors': self.covered_floors,
+                'pool_linings': self.pool_linings,
+                'bullnose': self.bullnose,
+                'covebase': self.covebase,
+                'corner_covebase': self.corner_covebase
             }
-
-    def serialize_size(self):
-        return {
-            'thickness': self.thickness,
-            'width': self.width.lower if self.width else None,
-            'length': self.length.lower if self.length else None,
-            'size': self.size,
-            'square inches': self.actual_size,
-            'shape': self.shape
         }
-
-    def serialize_applications(self):
-        return {
-            'walls': self.walls,
-            'countertops': self.countertops,
-            'floors': self.floors,
-            'cabinet_fronts': self.cabinet_fronts,
-            'shower_floors': self.shower_floors,
-            'shower_walls': self.shower_walls,
-            'exterior_walls': self.exterior_walls,
-            'exterior_floors': self.exterior_floors,
-            'covered_walls': self.covered_walls,
-            'covered_floors': self.covered_floors,
-            'pool_linings': self.pool_linings,
-            'bullnose': self.bullnose,
-            'covebase': self.covebase,
-            'corner_covebase': self.corner_covebase
-            }
-
 
     def assign_size(self):
+        """returns float measurements and labels on product details"""
         if not (self.length and self.width):
             self.actual_size = None
             return
@@ -172,11 +223,11 @@ class FinishSurface(ProductSubClass):
         return
 
     def assign_shape(self):
+        """returns float measurements and labels on product details"""
         if not self.shape:
             if not self.actual_size:
                 self.shape = 'continuous'
                 return
-            print('actual size', self.actual_size)
             ratio = self.width.lower / self.length.lower
             if ratio < .9 or ratio > 1.2:
                 self.shape = 'rectangle'
@@ -184,6 +235,7 @@ class FinishSurface(ProductSubClass):
             self.shape = 'square'
 
     def set_actual_color(self):
+        """returns float measurements and labels on product details"""
         # pylint: disable=no-member
         image = self.swatch_image
         if not image:
@@ -191,13 +243,11 @@ class FinishSurface(ProductSubClass):
         try:
             image = pimage.open(image)
         except OSError:
-            print('deleting ' + self.name + 'from set_actual_color')
             self.delete()
             return
         try:
             image = image.convert('P', palette=pimage.ADAPTIVE, colors=1)
         except ValueError:
-            print('unable')
             return
         image = image.convert('RGB')
 
@@ -207,81 +257,79 @@ class FinishSurface(ProductSubClass):
         self.actual_color = real_color
         self.save()
 
-    def name_fields(self):
-        return [
-            'material',
-            'look',
-            'finish',
-            'sub_material',
-            'surface_coating'
-            ]
-
-    def geometries(self):
-        if self.scale_length:
-            length = self.scale_length
-        else:
-            length = self.length.lower if self.length else None
-        if self.scale_width:
-            width = self.scale_width
-        else:
-            width = self.width.lower if self.width else None
+    def get_height(self):
         if self.scale_thickness:
-            thickness = self.scale_thickness
-        else:
-            thickness = self.thickness
+            return float(self.scale_thickness)
+        return float(self.thickness) if self.thickness else 0
 
-        return {
-            'width': float(width),
-            'length': float(length),
-            'thickness': float(thickness)
-            }
+    def get_width(self):
+        if self.scale_length:
+            return float(self.scale_length)
+        return float(self.length.lower) if self.length else 0
 
-    def convert_objects(self):
-        geometries = self.geometries()
+    def get_depth(self):
+        if self.scale_width:
+            return float(self.scale_width)
+        return float(self.width.lower) if self.width else 0
+
+    def get_texture_map(self):
+        if self.tiling_image:
+            return self.tiling_image.url
+        return self.swatch_image.url if self.swatch_image else None
+
+    def convert_geometries(self):
         url = self.swatch_image.url
         image = base64.b64encode(requests.get(url).content)
         image = f'data:image/png; base64, {image}'
         url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
-        data = {
-            'width': geometries.get('width'),
-            'length': geometries.get('length'),
-            'thickness': geometries.get('thickness'),
-            'image': image,
-            'obj_file': self.obj_file.url if self.obj_file else None,
-            'mtl_file': self.mtl_file.url if self.mtl_file else None,
-            'gltf_file': self.gltf_file.url if self.gltf_file else None,
-            'stl_file': self.stl_file.url if self.stl_file else None,
-            'dae_file': self.dae_file.url if self.dae_file else None,
-            'three_json': self.three_json,
-            'geometry_clean': self.geometry_clean
-            }
-
-        response = json.loads(requests.post(url, data=data).text)
-        obj_content = response.get('obj_file')
-        three_json = response.get('three_json')
-        derived_depth = response.get('derived_depth')
-        derived_height = response.get('derived_height')
-        derived_width = response.get('derived_width')
+        data = self.conversion_geometries()
+        response = requests.post(url, data=data).text
+        try:
+            response = json.loads(response)
+        except JSONDecodeError:
+            return
+        obj_content: str = response.get('obj_file')
         if obj_content:
             name = str(self.bb_sku) + '.obj'
-            file = open(name, 'w')
-            file = file.write(obj_content)
-            file.close()
-            self.derived_obj_file = file
-        self.three_json = three_json
-        self.derived_depth = derived_depth
-        self.derived_height = derived_height
-        self.derived_width = derived_width
+            self.derived_obj_file.save(name, ContentFile(obj_content.encode('utf-8')))
+        self.three_json = response.get('three_json')
+        self.derived_depth = response.get('derived_depth')
+        self.derived_height = response.get('derived_height')
+        self.derived_width = response.get('derived_width')
         self.save()
-
-    def get_admin_fields(self):
-        return AdminFields(self).data
 
 
 class Appliance(ProductSubClass):
     appliance_type = models.CharField(max_length=100, blank=True, null=True)
     room_type = models.CharField(max_length=100, null=True, blank=True)
+    width = DecimalRangeField(null=True, blank=True)
+    height = DecimalRangeField(null=True, blank=True)
+    depth = DecimalRangeField(null=True, blank=True)
 
+    def convert_geometries(self):
+        url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
+        data = self.conversion_geometries()
+        response = requests.post(url, data=data).text
+        print(type(response))
+        try:
+            response = json.loads(response)
+        except JSONDecodeError:
+            return
+        three_json = response.get('three_json')
+        self.three_json = three_json
+        self.derived_depth = response.get('derived_depth')
+        self.derived_height = response.get('derived_height')
+        self.derived_width = response.get('derived_width')
+        self.save()
+
+    def get_height(self):
+        return float(self.height.lower) if self.height else None
+
+    def get_width(self):
+        return float(self.width.lower) if self.width else None
+
+    def get_depth(self):
+        return float(self.depth.lower) if self.depth else None
 
 class Cabinets(ProductSubClass):
     pass
@@ -308,3 +356,68 @@ class Lumber(ProductSubClass):
 
         # data = serialize_geometry(self)
         # url = 'http://localhost:5000/geoconverter/us-central1/helloWorld'
+
+
+    # def serialize(self):
+    #     main = self.serialize_remaining()
+    #     main.update(self.serialize_size())
+    #     main.update(self.serialize_applications())
+    #     return main
+
+    # def serialize_special(self):
+    #     return {
+    #         'details': self.serialize_remaining(),
+    #         'size_and_shape': self.serialize_size(),
+    #         'applications': self.serialize_applications(),
+    #     }
+
+    # def serialize_remaining(self):
+    #     return {
+    #         'label_color': self.label_color,
+    #         'material': self.material,
+    #         'sub_material': self.sub_material,
+    #         'finish': self.finish,
+    #         'surface_coating': self.surface_coating,
+    #         'look': self.look,
+    #         'shade_variation': self.shade_variation,
+    #         'lrv': self.lrv,
+    #         'cof': self.cof,
+    #         'edge': self.edge,
+    #         'end': self.end,
+    #         'install_type': self.install_type,
+    #         'sqft_per_carton': self.sqft_per_carton,
+    #         'slip_resistant':self.slip_resistant
+    #         }
+
+    # def serialize_size(self):
+    #     return {
+    #         'thickness': self.thickness,
+    #         'width': self.width.lower if self.width else None,
+    #         'length': self.length.lower if self.length else None,
+    #         'size': self.size,
+    #         'square_inches': self.actual_size,
+    #         'shape': self.shape
+    #     }
+
+    # def serialize_applications(self):
+    #     return {
+    #         'walls': self.walls,
+    #         'countertops': self.countertops,
+    #         'floors': self.floors,
+    #         'cabinet_fronts': self.cabinet_fronts,
+    #         'shower_floors': self.shower_floors,
+    #         'shower_walls': self.shower_walls,
+    #         'exterior_walls': self.exterior_walls,
+    #         'exterior_floors': self.exterior_floors,
+    #         'covered_walls': self.covered_walls,
+    #         'covered_floors': self.covered_floors,
+    #         'pool_linings': self.pool_linings,
+    #         'bullnose': self.bullnose,
+    #         'covebase': self.covebase,
+    #         'corner_covebase': self.corner_covebase
+    #         }
+
+                # temp_file = io.StringIO(obj_content)
+            # file = open(name, 'w')
+            # file = file.write(obj_content)
+            # file.close()

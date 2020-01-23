@@ -15,7 +15,7 @@ from django.db.models.functions import Concat
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode
 # from Products.serializers import serialize_product
-from Products.models import Product, ProductSubClass
+from Products.models import Product
 from Suppliers.models import SupplierProduct
 from .models import (
     construct_range_facet,
@@ -71,7 +71,7 @@ class Sorter:
     """
     Confusing af class - all functions are basically just steps used for the __call__ function:
     """
-    def __init__(self, product_type: ProductSubClass, request: HttpRequest, update=False, location_pk=None):
+    def __init__(self, product_type, request: HttpRequest, update=False, location_pk=None):
         self.request: HttpRequest = request
         self.product_type = product_type
         self.product_filter: ProductFilter = ProductFilter.get_filter(model=product_type)

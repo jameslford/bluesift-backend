@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import FinishSurface
+from .models import FinishSurface, Appliance, Cabinets
 
 admin.site.register(FinishSurface)
-# Register your models here.
+admin.site.register(Cabinets)
+admin.site.register(Appliance)

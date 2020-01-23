@@ -1,6 +1,12 @@
 from ProductFilter.models import ProductFilter
 from django.contrib.contenttypes.models import ContentType
-from SpecializedProducts.models import FinishSurface
+from SpecializedProducts.models import (
+    FinishSurface,
+    Appliance,
+    Cabinets,
+    # Furniture,
+    # Lumber
+    )
 
 def create_finish_surface():
     finish_surface = ContentType.objects.get_for_model(FinishSurface)
@@ -38,4 +44,32 @@ def create_finish_surface():
         'look',
         'shade_variation'
         ]
+    fs_filter.independent_range_fields = [
+        'size'
+        ]
+    indexes = fs_filter.query_indexes.all()
+    for indice in indexes:
+        others = indice.others.all()
+        others.delete()
+        indice.delete()
     fs_filter.save()
+
+
+def create_appliance():
+    appliance = ContentType.objects.get_for_model(Appliance)
+    if not appliance:
+        print('no appliance')
+        return
+    fs_filter: ProductFilter = ProductFilter.objects.get_or_create(sub_product=appliance)[0]
+    fs_filter.independent_range_fields = [
+        'width',
+        'depth',
+        'height'
+        ]
+    fs_filter.key_field = 'category'
+    indexes = fs_filter.query_indexes.all()
+    for indice in indexes:
+        others = indice.others.all()
+        others.delete()
+        indice.delete()
+

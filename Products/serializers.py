@@ -1,10 +1,11 @@
 from typing import Dict
-from .models import Product, ProductSubClass
+from .models import Product
+from SpecializedProducts.models import ProductSubClass
 
 
-def serialize_detail_quick(product):
+def serialize_detail_quick(product: ProductSubClass):
     stock = serialize_stock(product)
-    special = product.serialize_special()
+    special = product.grouped_fields()
     special.update({'warranty': serialize_warranty(product)})
     priced = [price.serialize_mini() for price in product.get_in_store_priced()]
     stock.update({
@@ -16,16 +17,16 @@ def serialize_detail_quick(product):
     return stock
 
 
-def serialize_detail(product):
+def serialize_detail(product: ProductSubClass):
     stock = serialize_stock(product)
-    special = product.serialize_special()
+    special = product.grouped_fields()
     special.update({'warranty': serialize_warranty(product)})
     priced = [price.serialize_mini() for price in product.get_in_store_priced()]
     stock.update({
         'manufacturer_url': product.manufacturer_url,
         'room_scene': product.room_scene.url if product.room_scene else None,
         'priced': priced,
-        'geometry': serialize_geometry(product),
+        'geometry': product.presentation_geometries(),
         'lists': special
         })
     return stock
@@ -76,22 +77,45 @@ def serialize_warranty(product):
         }
 
 
-def serialize_geometry(product: ProductSubClass):
-    geometries = product.geometries()
-    return {
-        'width': geometries.get('width'),
-        'length': geometries.get('length'),
-        'thickness': geometries.get('thickness'),
-        'obj_file': product.obj_file_url,
-        'mtl_file': product.mtl_file_url,
-        'gltf_file': product.gltf_file_url,
-        'stl_file': product.stl_file_url,
-        'dae_file': product.dae_file_url,
-        'rvt_file': product.initial_rvt_file.url if product.initial_rvt_file else None,
-        'ipt_file': product.initial_ipt.url if product.initial_ipt_file else None,
-        'three_json': product.three_json,
-        'geometry_clean': product.geometry_clean
-    }
+# def serialize_geometry(product: ProductSubClass):
+#     dxf_file = product.dxf_file.url if product.dxf_file else None
+#     dwg_3d_file = product.dwg_3d_file.url if product.dwg_3d_file else None
+#     dwg_2d_file = product.dwg_2d_file.url if product.dwg_2d_file else None
+#     obj_file = product.obj_file.url if product.obj_file else None
+#     mtl_file = product.mtl_file.url if product.mtl_file else None
+#     gltf_file = product.gltf_file.url if product.gltf_file else None
+#     stl_file = product.stl_file.url if product.stl_file else None
+#     dae_file = product.dae_file.url if product.dae_file else None
+#     rfa_file = product.rfa_file.url if product.rfa_file else None
+#     ipt_file = product.ipt_file.url if product.ipt_file else None
+#     if not obj_file:
+#         obj_file = product.derived_obj_file.url if product.derived_obj_file else None
+#     if not mtl_file:
+#         mtl_file = product.derived_mtl_file.url if product.derived_mtl_file else None
+#     if not gltf_file:
+#         gltf_file = product.derived_gltf_file.url if product.derived_gltf_file else None
+#     if not stl_file:
+#         stl_file = product.derived_stl_file.url if product.derived_stl_file else None
+#     if not dae_file:
+#         dae_file = product.derived_dae_file.url if product.derived_dae_file else None
+
+#     return {
+#         'width': product.get_width(),
+#         'depth': product.get_depth(),
+#         'height': product.get_height(),
+#         'dxf_file': dxf_file,
+#         'dwg_3d_file': dwg_3d_file,
+#         'dwg_2d_file': dwg_2d_file,
+#         'obj_file': obj_file,
+#         'mtl_file': mtl_file,
+#         'gltf_file': gltf_file,
+#         'stl_file': stl_file,
+#         'dae_file': dae_file,
+#         'rfa_file': rfa_file,
+#         'ipt_file': ipt_file,
+#         'three_json': product.three_json,
+#         'geometry_clean': product.geometry_clean
+#     }
 
 
 

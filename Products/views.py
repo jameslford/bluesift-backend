@@ -7,6 +7,7 @@ from config.globals import check_department_string
 from config.tasks import add_supplier_record
 from config.custom_permissions import IsAdminorReadOnly
 from ProductFilter.sorter import Sorter
+from SpecializedProducts.serializers import AdminFields
 from .models import Product
 from .tasks import add_detail_record
 from .serializers import serialize_detail, serialize_detail_quick
@@ -32,7 +33,7 @@ def product_detail(request, pk):
     if request.method == 'GET':
         response = serialize_detail(product)
         if request.user.is_authenticated and request.user.is_admin:
-            admin_fields = product.get_admin_fields()
+            admin_fields = AdminFields(product).data
             response.update({
                 'admin_fields' : admin_fields
             })
@@ -44,7 +45,7 @@ def product_detail(request, pk):
             setattr(product, k, v)
         product.save()
         response = serialize_detail(product)
-        admin_fields = product.get_admin_fields()
+        admin_fields = AdminFields(product).data
         response.update({
             'admin_fields' : admin_fields
         })

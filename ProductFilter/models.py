@@ -213,7 +213,11 @@ class QueryIndex(models.Model):
 
 class FacetOthersCollection(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
-    query_index = models.ForeignKey(QueryIndex, on_delete=models.CASCADE)
+    query_index = models.ForeignKey(
+        QueryIndex,
+        on_delete=models.CASCADE,
+        related_name='others'
+        )
     facet_name = models.CharField(max_length=100)
     products = models.ManyToManyField(
         'Products.Product',
@@ -493,6 +497,9 @@ class ProductFilter(models.Model):
         self.filter_dictionary = None
         if self.bool_groups or self.independent_multichoice_fields:
             self.check_fields()
+            self.add_filter_dictionary()
+        else:
+            self.add_product_facets()
             self.add_filter_dictionary()
         qis = self.query_indexes.all()
         if qis:
