@@ -6,9 +6,10 @@ from SpecializedProducts.models import FinishSurface, Appliance
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # products = Product.subclasses.all().select_subclasses()
-        apps = Appliance.objects.all()
-        fins = FinishSurface.objects.all()
+        # apps = Appliance.objects.filter(pk='8bb459c6-aa2a-4b86-aacb-b7e3c575c0d1')
+        apps = Appliance.objects.filter(geometry_clean=False)
         for prod in apps:
             prod.convert_geometries()
-        for fin in fins:
-            fin.convert_geometries()
+        # fins = FinishSurface.objects.all()
+        # for fin in fins:
+        #     fin.convert_geometries()

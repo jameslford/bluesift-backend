@@ -85,7 +85,7 @@ def _is_init_type(obj):
     # so it breaks the 'is iterable' check.
     # Basically:
     # FIXME!
-    elif not bool(obj):
+    if not bool(obj):
         return False
     tname = obj.__class__.__name__
     return not (tname[:2] == 'c_' or tname == 'Structure' \
@@ -322,8 +322,8 @@ def load(filename,
 
 def export(scene,
            filename,
-           file_type  = None,
-           processing = postprocess.aiProcess_Triangulate):
+           file_type=None,
+           processing=postprocess.aiProcess_Triangulate):
     '''
     Export a scene. On failure throws AssimpError.
 

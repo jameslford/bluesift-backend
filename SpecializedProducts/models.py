@@ -1,13 +1,15 @@
 """returns float measurements and labels on product details"""
+import os
 import operator
 import json
 import decimal
 import base64
+import pyassimp
 from json.decoder import JSONDecodeError
 import webcolors
 import requests
 from PIL import Image as pimage
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
 from Products.models import Product
@@ -278,25 +280,26 @@ class FinishSurface(ProductSubClass):
         return self.swatch_image.url if self.swatch_image else None
 
     def convert_geometries(self):
-        url = self.swatch_image.url
-        image = base64.b64encode(requests.get(url).content)
-        image = f'data:image/png; base64, {image}'
-        url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
-        data = self.conversion_geometries()
-        response = requests.post(url, data=data).text
-        try:
-            response = json.loads(response)
-        except JSONDecodeError:
-            return
-        obj_content: str = response.get('obj_file')
-        if obj_content:
-            name = str(self.bb_sku) + '.obj'
-            self.derived_obj_file.save(name, ContentFile(obj_content.encode('utf-8')))
-        self.three_json = response.get('three_json')
-        self.derived_depth = response.get('derived_depth')
-        self.derived_height = response.get('derived_height')
-        self.derived_width = response.get('derived_width')
-        self.save()
+        pass
+        # url = self.swatch_image.url
+        # image = base64.b64encode(requests.get(url).content)
+        # image = f'data:image/png; base64, {image}'
+        # url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
+        # data = self.conversion_geometries()
+        # response = requests.post(url, data=data).text
+        # try:
+        #     response = json.loads(response)
+        # except JSONDecodeError:
+        #     return
+        # obj_content: str = response.get('obj_file')
+        # if obj_content:
+        #     name = str(self.bb_sku) + '.obj'
+        #     self.derived_obj_file.save(name, ContentFile(obj_content.encode('utf-8')))
+        # self.three_json = response.get('three_json')
+        # self.derived_depth = response.get('derived_depth')
+        # self.derived_height = response.get('derived_height')
+        # self.derived_width = response.get('derived_width')
+        # self.save()
 
 
 class Appliance(ProductSubClass):
@@ -307,19 +310,57 @@ class Appliance(ProductSubClass):
     depth = DecimalRangeField(null=True, blank=True)
 
     def convert_geometries(self):
-        url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
-        data = self.conversion_geometries()
-        response = requests.post(url, data=data).text
-        print(type(response))
-        try:
-            response = json.loads(response)
-        except JSONDecodeError:
-            return
-        three_json = response.get('three_json')
-        self.three_json = three_json
-        self.derived_depth = response.get('derived_depth')
-        self.derived_height = response.get('derived_height')
-        self.derived_width = response.get('derived_width')
+        filetypes = [
+            {'reference': self.derived_dae_file, 'ext': '.dae', 'filetype': 'collada'},
+            {'reference': self.derived_gltf_file, 'ext': '.gltf', 'filetype': 'gltf2'}
+            # {'reference': self., 'ext': '', 'filetype': ''}
+        ]
+        request = requests.get(self.obj_file.url)
+        file_obj = ContentFile(request.content)
+        obj = pyassimp.load(file_obj, 'obj')
+        for ft in filetypes:
+            filename = self.name + ft['ext']
+            print(filename, ' running')
+            pyassimp.export(obj, filename, ft['filetype'])
+            print('pyassimp exported ', filename)
+            cwd = os.getcwd()
+            print(cwd)
+            cwd_files = os.listdir(cwd)
+            for cwd_file in cwd_files:
+                print(cwd_file)
+                if filename in cwd_file:
+                    new_file = open(cwd_file, 'rb')
+                    self.geometry_clean = True
+                    ft['reference'].save(filename, File(new_file), save=True)
+                    print(ft['filetype'] + ' created')
+                    os.remove(cwd_file)
+                    break
+
+
+        # path = os.getcwd() + self.name + '.obj'
+        # print(path)
+        # with open(path, 'wb') as f:
+        #     f.write(request.content)
+
+        # file_obj = ContentFile(request.text.encode('utf-8'))
+        # print(file_obj.file)
+
+        # self.derived_dae_file.save(filename, ContentFile(dae_content.encode('utf-8')))
+        # pyassimp.export(obj, filename, 'collada', pyassimp.postprocess.aiProcess_OptimizeMeshes)
+        # self.save()
+        # url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
+        # data = self.conversion_geometries()
+        # response = requests.post(url, data=data).text
+        # print(type(response))
+        # try:
+        #     response = json.loads(response)
+        # except JSONDecodeError:
+        #     return
+        # three_json = response.get('three_json')
+        # self.three_json = three_json
+        # self.derived_depth = response.get('derived_depth')
+        # self.derived_height = response.get('derived_height')
+        # self.derived_width = response.get('derived_width')
         self.save()
 
     def get_height(self):

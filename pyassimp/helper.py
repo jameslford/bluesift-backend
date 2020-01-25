@@ -232,7 +232,7 @@ def search_library():
                 """
                 if not 'assimp' in filename.lower():
                     continue
-                print('winner winer ', filename)
+                # print('winner winer ', filename)
                 library_path = os.path.join(curfolder, filename)
                 logger.debug('Try ' + library_path)
                 try:
@@ -253,6 +253,7 @@ def search_library():
         # get the newest library_path
         candidates = map(lambda x: (os.lstat(x[0])[-2], x), candidates)
         res = max(candidates, key=operator.itemgetter(0))[1]
+        # print(str(res))
         logger.debug('Using assimp library located at ' + res[0])
 
         # XXX: if there are 1000 dll/so files containing 'assimp'
