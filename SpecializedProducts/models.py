@@ -311,9 +311,18 @@ class Appliance(ProductSubClass):
 
     def convert_geometries(self):
         filetypes = [
-            {'reference': self.derived_dae_file, 'ext': '.dae', 'filetype': 'collada'},
-            {'reference': self.derived_gltf_file, 'ext': '.gltf', 'filetype': 'gltf2'}
-            # {'reference': self., 'ext': '', 'filetype': ''}
+            {
+                'reference': self.derived_dae_file, 
+                'ext': '.dae',
+                'filetype': 'collada',
+                'pp': pyassimp.postprocess.aiProcessPreset_TargetRealtime_MaxQuality
+            },
+            {
+                'reference': self.derived_gltf_file,
+                'ext': '.gltf',
+                'filetype': 'gltf2',
+                'pp': pyassimp.postprocess.aiProcessPreset_TargetRealtime_Fast
+                },
         ]
         request = requests.get(self.obj_file.url)
         file_obj = ContentFile(request.content)
@@ -321,7 +330,7 @@ class Appliance(ProductSubClass):
         for ft in filetypes:
             filename = self.name + ft['ext']
             print(filename, ' running')
-            pyassimp.export(obj, filename, ft['filetype'])
+            pyassimp.export(obj, filename, ft['filetype'], )
             print('pyassimp exported ', filename)
             cwd = os.getcwd()
             print(cwd)

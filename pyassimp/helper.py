@@ -25,7 +25,6 @@ additional_dirs, ext_whitelist = [],[]
 # populate search directories and lists of allowed file extensions
 # depending on the platform we're running on.
 if os.name=='posix':
-    print('running under posix')
     additional_dirs.append('./')
     additional_dirs.append('/usr/lib/')
     additional_dirs.append('/usr/lib/x86_64-linux-gnu')
@@ -49,7 +48,7 @@ if os.name=='posix':
     # libassimp.dylib in /usr/local/lib
     ext_whitelist.append('.dylib')
 
-elif os.name=='nt':
+elif os.name =='nt':
     ext_whitelist.append('.dll')
     path_dirs = os.environ['PATH'].split(';')
     additional_dirs.extend(path_dirs)

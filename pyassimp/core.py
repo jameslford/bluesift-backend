@@ -5,6 +5,21 @@ This is the main-module of PyAssimp.
 """
 
 import sys
+import ctypes
+import logging
+from ctypes import pointer
+from . import structs
+from . import helper
+from . import postprocess
+from .errors import AssimpError
+from .formats import available_formats
+
+
+try:
+    import numpy
+except ModuleNotFoundError:
+    numpy = None
+
 if sys.version_info < (2,6):
     raise 'pyassimp: need python 2.6 or newer'
 
@@ -13,32 +28,43 @@ if sys.version_info < (2,6):
 if sys.version_info >= (3,0):
     xrange = range
 
-import ctypes
-import os
 
-try: import numpy
-except: numpy = None
-
-import logging
 logger = logging.getLogger("pyassimp")
 # attach default null handler to logger so it doesn't complain
 # even if you don't attach another handler to logger
 logger.addHandler(logging.NullHandler())
 
-from . import structs
-from . import helper
-from . import postprocess
-from .errors import AssimpError
-from .formats import available_formats
 
 class AssimpLib(object):
     """
     Assimp-Singleton
     """
     load, load_mem, export, release, dll = helper.search_library()
+
+
+class PropertyGetter(dict):
+    def __getitem__(self, key):
+        semantic = 0
+        if isinstance(key, tuple):
+            key, semantic = key
+
+        return dict.__getitem__(self, (key, semantic))
+
+    def keys(self):
+        for k in dict.keys(self):
+            yield k[0]
+
+    def __iter__(self):
+        return self.keys()
+
+    def items(self):
+        for k, v in dict.items(self):
+            yield k[0], v
+
+
 _assimp_lib = AssimpLib()
 
-def make_tuple(ai_obj, type = None):
+def make_tuple(ai_obj):
     res = None
 
     #notes:
@@ -71,14 +97,14 @@ def _init_face(aiFace):
     aiFace.indices = [aiFace.mIndices[i] for i in range(aiFace.mNumIndices)]
 assimp_struct_inits = { structs.Face : _init_face }
 
-def call_init(obj, caller = None):
-    if helper.hasattr_silent(obj,'contents'): #pointer
+def call_init(obj, caller=None):
+    if helper.hasattr_silent(obj, 'contents'): #pointer
         _init(obj.contents, obj, caller)
     else:
-        _init(obj,parent=caller)
+        _init(obj, parent=caller)
 
 def _is_init_type(obj):
-    if helper.hasattr_silent(obj,'contents'): #pointer
+    if helper.hasattr_silent(obj, 'contents'): #pointer
         return _is_init_type(obj[0])
     # null-pointer case that arises when we reach a mesh attribute
     # like mBitangents which use mNumVertices rather than mNumBitangents
@@ -89,9 +115,10 @@ def _is_init_type(obj):
         return False
     tname = obj.__class__.__name__
     return not (tname[:2] == 'c_' or tname == 'Structure' \
-            or tname == 'POINTER') and not isinstance(obj,int)
+            or tname == 'POINTER') and not isinstance(obj, int)
 
-def _init(self, target = None, parent = None):
+
+def _init(self, target=None, parent=None):
     """
     Custom initialize() for C structs, adds safely accessible member functionality.
 
@@ -147,7 +174,7 @@ def _init(self, target = None, parent = None):
 
             if helper.hasattr_silent(self, 'mNum' + m[1:]):
 
-                length =  getattr(self, 'mNum' + m[1:])
+                length = getattr(self, 'mNum' + m[1:])
 
                 # -> special case: properties are
                 # stored as a dict.
@@ -224,7 +251,7 @@ def _init(self, target = None, parent = None):
     return self
 
 
-def pythonize_assimp(type, obj, scene):
+def pythonize_assimp(mod_type, obj, scene):
     """ This method modify the Assimp data structures
     to make them easier to work with in Python.
 
@@ -232,27 +259,28 @@ def pythonize_assimp(type, obj, scene):
      - MESH: replace a list of mesh IDs by reference to these meshes
      - ADDTRANSFORMATION: add a reference to an object's transformation taken from their associated node.
 
-    :param type: the type of modification to operate (cf above)
+    :param mod_type: the mod_type of modification to operate (cf above)
     :param obj: the input object to modify
     :param scene: a reference to the whole scene
     """
 
-    if type == "MESH":
+    if mod_type == "MESH":
         meshes = []
         for i in obj:
             meshes.append(scene.meshes[i])
         return meshes
 
-    if type == "ADDTRANSFORMATION":
+    if mod_type == "ADDTRANSFORMATION":
         def getnode(node, name):
-            if node.name == name: return node
+            if node.name == name:
+                return node
             for child in node.children:
                 n = getnode(child, name)
-                if n: return n
+                if n:
+                    return n
+            raise AssimpError("Object " + str(obj) + " has no associated node!")
 
         node = getnode(scene.rootnode, obj.name)
-        if not node:
-            raise AssimpError("Object " + str(obj) + " has no associated node!")
         setattr(obj, "transformation", node.transformation)
 
 def recur_pythonize(node, scene):
@@ -270,8 +298,8 @@ def recur_pythonize(node, scene):
         recur_pythonize(c, scene)
 
 def load(filename,
-         file_type  = None,
-         processing = postprocess.aiProcess_Triangulate):
+         file_type=None,
+         processing=postprocess.aiProcess_Triangulate):
     '''
     Load a model into a scene. On failure throws AssimpError.
 
@@ -303,9 +331,9 @@ def load(filename,
                                               unsigned int pFlags,
                                               const char* pHint)
         '''
-        if file_type == None:
+        if file_type is None:
             raise AssimpError('File type must be specified when passing file objects!')
-        data  = filename.read()
+        data = filename.read()
         model = _assimp_lib.load_mem(data,
                                      len(data),
                                      processing,
@@ -319,6 +347,7 @@ def load(filename,
     scene = _init(model.contents)
     recur_pythonize(scene.rootnode, scene)
     return scene
+
 
 def export(scene,
            filename,
@@ -341,15 +370,18 @@ def export(scene,
 
     '''
 
-    from ctypes import pointer
-    exportStatus = _assimp_lib.export(pointer(scene), file_type.encode("ascii"), filename.encode(sys.getfilesystemencoding()), processing)
-
-    if exportStatus != 0:
+    export_status = _assimp_lib.export(
+        pointer(scene), file_type.encode("ascii"),
+        filename.encode(sys.getfilesystemencoding()),
+        processing
+        )
+    if export_status != 0:
         raise AssimpError('Could not export scene!')
 
+
 def release(scene):
-    from ctypes import pointer
     _assimp_lib.release(pointer(scene))
+
 
 def _finalize_texture(tex, target):
     setattr(target, "achformathint", tex.achFormatHint)
@@ -358,6 +390,7 @@ def _finalize_texture(tex, target):
     else:
         data = [make_tuple(getattr(tex, "pcData")[i]) for i in range(tex.mWidth * tex.mHeight)]
     setattr(target, "data", data)
+
 
 def _finalize_mesh(mesh, target):
     """ Building of meshes is a bit specific.
@@ -411,26 +444,6 @@ def _finalize_mesh(mesh, target):
     else:
         faces = [f.indices for f in target.faces]
     setattr(target, 'faces', faces)
-
-
-class PropertyGetter(dict):
-    def __getitem__(self, key):
-        semantic = 0
-        if isinstance(key, tuple):
-            key, semantic = key
-
-        return dict.__getitem__(self, (key, semantic))
-
-    def keys(self):
-        for k in dict.keys(self):
-            yield k[0]
-
-    def __iter__(self):
-        return self.keys()
-
-    def items(self):
-        for k, v in dict.items(self):
-            yield k[0], v
 
 
 def _get_properties(properties, length):

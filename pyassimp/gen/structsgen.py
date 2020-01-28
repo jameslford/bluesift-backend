@@ -49,6 +49,8 @@ port/PyAssimp/gen
 
 import os
 import re
+skiplist = ("FileIO", "File", "locateFromAssimpHeap",'LogStream','MeshAnim','AnimMesh')
+
 
 #==[regexps]=================================================
 
@@ -88,43 +90,41 @@ RErpcom = re.compile(r''
                 , re.IGNORECASE + re.DOTALL)
 
 # Restructure
-def GetType(type, prefix='c_'):
-    t = type
+def GetType(stype, prefix='c_'):
+    t = stype
     while t.endswith('*'):
         t = t[:-1]
     if t[:5] == 'const':
         t = t[5:]
-
     # skip some types
     if t in skiplist:
-           return None
+        return None
 
-    t = t.strip()
+    tstrip = t.strip()
     types = {'unsigned int':'uint', 'unsigned char':'ubyte',}
-    if t in types:
-        t = types[t]
+    t = types.get(tstrip, tstrip)
     t = prefix + t
-    while type.endswith('*'):
+    while stype.endswith('*'):
         t = "POINTER(" + t + ")"
-        type = type[:-1]
+        stype = stype[:-1]
     return t
 
-def restructure( match ):
-    type = match.group("type")
+def restructure(match):
+    stype = match.group("stype")
     if match.group("struct") == "":
-        type = GetType(type)
+        stype = GetType(stype)
     elif match.group("struct") == "C_ENUM ":
-        type = "c_uint"
+        stype = "c_uint"
     else:
-        type = GetType(type[2:], '')
-        if type is None:
+        stype = GetType(stype[2:], '')
+        if stype is None:
            return ''
     if match.group("index"):
-        type = type + "*" + match.group("index")
+        stype = stype + "*" + match.group("index")
 
     result = ""
     for name in match.group("name").split(','):
-        result += "(\"" + name.strip() + "\", "+ type + "),"
+        result += "(\"" + name.strip() + "\", "+ stype + "),"
 
     return result
 
@@ -158,8 +158,6 @@ $NAME$._fields_ = [
             $FIELDS$
         ]
 """
-
-skiplist = ("FileIO", "File", "locateFromAssimpHeap",'LogStream','MeshAnim','AnimMesh')
 
 #============================================================
 def Structify(fileName):
