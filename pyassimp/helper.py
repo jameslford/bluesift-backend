@@ -8,6 +8,7 @@ import os
 import ctypes
 from ctypes import POINTER
 import operator
+import datetime
 
 from distutils.sysconfig import get_python_lib
 import re
@@ -20,7 +21,8 @@ import logging;logger = logging.getLogger("pyassimp")
 
 from .errors import AssimpError
 
-additional_dirs, ext_whitelist = [],[]
+additional_dirs = []
+ext_whitelist = []
 
 # populate search directories and lists of allowed file extensions
 # depending on the platform we're running on.
@@ -181,11 +183,13 @@ def try_load_functions(library_path, dll):
     '''
 
     try:
-        load     = dll.aiImportFile
-        release  = dll.aiReleaseImport
+        load = dll.aiImportFile
+        release = dll.aiReleaseImport
         load_mem = dll.aiImportFileFromMemory
-        export   = dll.aiExportScene
+        export = dll.aiExportScene
+        # export_to_blob = dll.aiExportSceneToBlob
     except AttributeError:
+        raise Exception('invalid function call')
         #OK, this is a library, but it doesn't have the functions we need
         return None
 
@@ -252,7 +256,7 @@ def search_library():
         # get the newest library_path
         candidates = map(lambda x: (os.lstat(x[0])[-2], x), candidates)
         res = max(candidates, key=operator.itemgetter(0))[1]
-        # print(str(res))
+        # print(res)
         logger.debug('Using assimp library located at ' + res[0])
 
         # XXX: if there are 1000 dll/so files containing 'assimp'

@@ -137,12 +137,11 @@ def _init(self, target=None, parent=None):
         if m.startswith('mNum'):
             if 'm' + m[4:] in dirself:
                 continue # will be processed later on
-            else:
-                name = m[1:].lower()
 
-                obj = getattr(self, m)
-                setattr(target, name, obj)
-                continue
+            name = m[1:].lower()
+            obj = getattr(self, m)
+            setattr(target, name, obj)
+            continue
 
         if m == 'mName':
             obj = self.mName
@@ -150,7 +149,7 @@ def _init(self, target=None, parent=None):
                 uni = unicode(obj.data, errors='ignore')
             except:
                 uni = str(obj.data, errors='ignore')
-            target.name = str( uni )
+            target.name = str(uni)
             target.__class__.__repr__ = lambda x: str(x.__class__) + "(" + x.name + ")"
             target.__class__.__str__ = lambda x: x.name
             continue

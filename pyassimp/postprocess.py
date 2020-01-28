@@ -411,12 +411,12 @@ aiProcess_FlipUVs = 0x800000
 #  x1
 # @endcode
 #
-aiProcess_FlipWindingOrder  = 0x1000000
+aiProcess_FlipWindingOrder = 0x1000000
 
 ## <hr>This step splits meshes with many bones into sub-meshes so that each
 # su-bmesh has fewer or as many bones as a given limit. 
 #
-aiProcess_SplitByBoneCount  = 0x2000000
+aiProcess_SplitByBoneCount = 0x2000000
 
 ## <hr>This step removes bones losslessly or according to some threshold.
 #

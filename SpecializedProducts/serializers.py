@@ -28,38 +28,41 @@ class AdminFields:
         return res
 
 
-class SubproductGeometryConversionSerializer:
+# class SubproductGeometryConversionSerializer:
 
-    def __init__(self, product: ProductSubClass):
-        self.width = product.get_width()
-        self.depth = product.get_depth()
-        self.height = product.get_height()
-        self.texture_map = product.get_texture_map()
-        self.obj_file = product.obj_file.url if product.obj_file else None
-        self.mtl_file = product.mtl_file.url if product.mtl_file else None
-        self.gltf_file = product.gltf_file.url if product.gltf_file else None
-        self.stl_file = product.stl_file.url if product.stl_file else None
-        self.dae_file = product.dae_file.url if product.dae_file else None
-        self.three_json = product.three_json
-        self.geometry_clean = product.geometry_clean
+#     def __init__(self, product: ProductSubClass):
+#         self.width = product.get_width()
+#         self.depth = product.get_depth()
+#         self.height = product.get_height()
+#         self.texture_map = product.get_texture_map()
+#         self.obj_file = product.obj_file.url if product.obj_file else None
+#         self.mtl_file = product.mtl_file.url if product.mtl_file else None
+#         self.gltf_file = product.gltf_file.url if product.gltf_file else None
+#         self.stl_file = product.stl_file.url if product.stl_file else None
+#         self.dae_file = product.dae_file.url if product.dae_file else None
+#         self.three_json = product.three_json
+#         self.geometry_clean = product.geometry_clean
 
-    @property
-    def data(self):
-        return self.__dict__
+#     @property
+#     def data(self):
+#         return self.__dict__
 
 
 class SubproductGeometryPresentationSerializer:
 
     def __init__(self, product: ProductSubClass):
         self.width = product.get_width() if product.get_width() else product.derived_width
-        self.depth = product.get_depth()
-        self.height = product.get_height()
+        self.depth = product.get_depth() if product.get_depth() else product.derived_depth
+        self.height = product.get_height() if product.get_height() else product.derived_height
         self.texture_map = product.get_texture_map()
-        self.obj_file = product.obj_file.url if product.obj_file else None
-        self.mtl_file = product.mtl_file.url if product.mtl_file else None
-        self.gltf_file = product.gltf_file.url if product.gltf_file else None
-        self.stl_file = product.stl_file.url if product.stl_file else None
-        self.dae_file = product.dae_file.url if product.dae_file else None
+        self.obj_file = product.get_obj_file()
+        self.mtl_file = product.get_mtl_file()
+        self.gltf_file = product.get_gltf_file()
+        self.stl_file = product.get_stl_file()
+        self.dae_file = product.get_dae_file()
+        self.rfa_file = product.rfa_file.url if product.rfa_file else None
+        self.ipt_file = product.ipt_file.url if product.ipt_file else None
+        self.geometry_model = product.get_geometry_model()
         self.three_json = product.three_json
         self.geometry_clean = product.geometry_clean
 

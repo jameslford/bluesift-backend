@@ -46,15 +46,53 @@ class ProductSubClass(Product):
         """returns float measurements and labels on product details"""
         return None
 
-    def conversion_geometries(self):
-        from .serializers import SubproductGeometryConversionSerializer
-        """returns float measurements and labels on product details"""
-        return SubproductGeometryConversionSerializer(self).data
+    def get_geometry_model(self):
+        return None
+
+    # def conversion_geometries(self):
+    #     """returns float measurements and labels on product details"""
+    #     from .serializers import SubproductGeometryConversionSerializer
+    #     return SubproductGeometryConversionSerializer(self).data
 
     def presentation_geometries(self):
-        from .serializers import SubproductGeometryPresentationSerializer
         """returns float measurements and labels on product details"""
+        from .serializers import SubproductGeometryPresentationSerializer
         return SubproductGeometryPresentationSerializer(self).data
+
+    def get_obj_file(self):
+        if self.obj_file:
+            return self.obj_file.url
+        if self.derived_obj_file:
+            return self.derived_obj_file.url
+        return None
+
+    def get_mtl_file(self):
+        if self.mtl_file:
+            return self.mtl_file.url
+        if self.derived_mtl_file:
+            return self.derived_mtl_file.url
+        return None
+
+    def get_gltf_file(self):
+        if self.gltf_file:
+            return self.gltf_file.url
+        if self.derived_gltf_file:
+            return self.derived_gltf_file.url
+        return None
+
+    def get_stl_file(self):
+        if self.stl_file:
+            return self.stl_file.url
+        if self.derived_stl_file:
+            return self.derived_stl_file.url
+        return None
+
+    def get_dae_file(self):
+        if self.dae_file:
+            return self.dae_file.url
+        if self.derived_dae_file:
+            return self.derived_dae_file.url
+        return None
 
     @classmethod
     def validate_sub(cls, sub: str):
@@ -301,6 +339,13 @@ class FinishSurface(ProductSubClass):
         # self.derived_width = response.get('derived_width')
         # self.save()
 
+class ConversionFormat:
+
+    def __init__(self, reference, extension, filetype):
+        self.reference = reference
+        self.extension = extension
+        self.filetype = filetype
+
 
 class Appliance(ProductSubClass):
     appliance_type = models.CharField(max_length=100, blank=True, null=True)
@@ -311,26 +356,18 @@ class Appliance(ProductSubClass):
 
     def convert_geometries(self):
         filetypes = [
-            {
-                'reference': self.derived_dae_file, 
-                'ext': '.dae',
-                'filetype': 'collada',
-                'pp': pyassimp.postprocess.aiProcessPreset_TargetRealtime_MaxQuality
-            },
-            {
-                'reference': self.derived_gltf_file,
-                'ext': '.gltf',
-                'filetype': 'gltf2',
-                'pp': pyassimp.postprocess.aiProcessPreset_TargetRealtime_Fast
-                },
-        ]
-        request = requests.get(self.obj_file.url)
-        file_obj = ContentFile(request.content)
+            # ConversionFormat(self.derived_dae_file, '.dae', 'collada'),
+            ConversionFormat(self.derived_gltf_file, '.glb', 'glb')
+            ]
+        print(self.name + ' pre request')
+        request = requests.get(self.obj_file.url, stream=True)
+        print(request.elapsed)
+        file_obj = ContentFile(request.text.encode('utf-8'))
         obj = pyassimp.load(file_obj, 'obj')
         for ft in filetypes:
-            filename = self.name + ft['ext']
+            filename = self.name + ft.extension
             print(filename, ' running')
-            pyassimp.export(obj, filename, ft['filetype'], )
+            pyassimp.export(obj, filename, ft.filetype)
             print('pyassimp exported ', filename)
             cwd = os.getcwd()
             print(cwd)
@@ -340,37 +377,13 @@ class Appliance(ProductSubClass):
                 if filename in cwd_file:
                     new_file = open(cwd_file, 'rb')
                     self.geometry_clean = True
-                    ft['reference'].save(filename, File(new_file), save=True)
-                    print(ft['filetype'] + ' created')
+                    ft.reference.save(filename, File(new_file), save=True)
+                    print(filename + ' created')
+                    new_file.close()
                     os.remove(cwd_file)
                     break
-
-
-        # path = os.getcwd() + self.name + '.obj'
-        # print(path)
-        # with open(path, 'wb') as f:
-        #     f.write(request.content)
-
-        # file_obj = ContentFile(request.text.encode('utf-8'))
-        # print(file_obj.file)
-
-        # self.derived_dae_file.save(filename, ContentFile(dae_content.encode('utf-8')))
-        # pyassimp.export(obj, filename, 'collada', pyassimp.postprocess.aiProcess_OptimizeMeshes)
+        pyassimp.release(obj)
         # self.save()
-        # url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
-        # data = self.conversion_geometries()
-        # response = requests.post(url, data=data).text
-        # print(type(response))
-        # try:
-        #     response = json.loads(response)
-        # except JSONDecodeError:
-        #     return
-        # three_json = response.get('three_json')
-        # self.three_json = three_json
-        # self.derived_depth = response.get('derived_depth')
-        # self.derived_height = response.get('derived_height')
-        # self.derived_width = response.get('derived_width')
-        self.save()
 
     def get_height(self):
         return float(self.height.lower) if self.height else None
@@ -380,6 +393,12 @@ class Appliance(ProductSubClass):
 
     def get_depth(self):
         return float(self.depth.lower) if self.depth else None
+
+    def get_geometry_model(self):
+        if self.derived_gltf_file:
+            return self.derived_gltf_file.url
+        return None
+
 
 class Cabinets(ProductSubClass):
     pass
@@ -471,3 +490,31 @@ class Lumber(ProductSubClass):
             # file = open(name, 'w')
             # file = file.write(obj_content)
             # file.close()
+
+
+
+
+        # path = os.getcwd() + self.name + '.obj'
+        # print(path)
+        # with open(path, 'wb') as f:
+        #     f.write(request.content)
+
+        # file_obj = ContentFile(request.text.encode('utf-8'))
+        # print(file_obj.file)
+
+        # self.derived_dae_file.save(filename, ContentFile(dae_content.encode('utf-8')))
+        # pyassimp.export(obj, filename, 'collada', pyassimp.postprocess.aiProcess_OptimizeMeshes)
+        # self.save()
+        # url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
+        # data = self.conversion_geometries()
+        # response = requests.post(url, data=data).text
+        # print(type(response))
+        # try:
+        #     response = json.loads(response)
+        # except JSONDecodeError:
+        #     return
+        # three_json = response.get('three_json')
+        # self.three_json = three_json
+        # self.derived_depth = response.get('derived_depth')
+        # self.derived_height = response.get('derived_height')
+        # self.derived_width = response.get('derived_width')

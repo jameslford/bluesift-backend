@@ -7,7 +7,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # products = Product.subclasses.all().select_subclasses()
         # apps = Appliance.objects.filter(pk='8bb459c6-aa2a-4b86-aacb-b7e3c575c0d1')
-        apps = Appliance.objects.filter(geometry_clean=False)
+        # apps = Appliance.objects.filter(geometry_clean=False)
+        apps = Appliance.objects.all()
         for prod in apps:
             prod.convert_geometries()
         # fins = FinishSurface.objects.all()
