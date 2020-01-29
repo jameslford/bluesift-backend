@@ -77,9 +77,9 @@ def transform(vector3, matrix4x4):
             ]
 
 def _inv(matrix4x4):
-    m0,m1,m2,m3 = matrix4x4
+    m0, m1, m2, m3 = matrix4x4
 
-    det  =  m0[3]*m1[2]*m2[1]*m3[0] - m0[2]*m1[3]*m2[1]*m3[0] - \
+    det =   m0[3]*m1[2]*m2[1]*m3[0] - m0[2]*m1[3]*m2[1]*m3[0] - \
             m0[3]*m1[1]*m2[2]*m3[0] + m0[1]*m1[3]*m2[2]*m3[0] + \
             m0[2]*m1[1]*m2[3]*m3[0] - m0[1]*m1[2]*m2[3]*m3[0] - \
             m0[3]*m1[2]*m2[0]*m3[1] + m0[2]*m1[3]*m2[0]*m3[1] + \
@@ -165,21 +165,20 @@ def try_load_functions(library_path, dll):
     Try to bind to aiImportFile and aiReleaseImport
 
     Arguments
-    ---------
+    --------
     library_path: path to current lib
-    dll:          ctypes handle to library
+    dll: ctypes handle to library
 
     Returns
-    ---------
-    If unsuccessful:
-        None
-    If successful:
-        Tuple containing (library_path,
-                          load from filename function,
-                          load from memory function,
-                          export to filename function,
-                          release function,
-                          ctypes handle to assimp library)
+    -------
+    If unsuccessful: - None
+
+    If successful: - Tuple containing (library_path,
+    load from filename function,
+    load from memory function,
+    export to filename function,
+    release function,
+    ctypes handle to assimp library)
     '''
 
     try:
@@ -200,71 +199,19 @@ def try_load_functions(library_path, dll):
     return (library_path, load, load_mem, export, release, dll)
 
 def search_library():
-    '''
-    Loads the assimp library.
-    Throws exception AssimpError if no library_path is found
 
-    Returns: tuple, (load from filename function,
-                     load from memory function,
-                     export to filename function,
-                     release function,
-                     dll)
-    '''
-    #this path
-    folder = os.path.dirname(__file__)
-
-    # silence 'DLL not found' message boxes on win
     try:
         ctypes.windll.kernel32.SetErrorMode(0x8007)
     except AttributeError:
         pass
 
-    candidates = []
-    # test every file
-    for curfolder in [folder]+additional_dirs:
-        if os.path.isdir(curfolder):
-            for filename in os.listdir(curfolder):
-                # our minimum requirement for candidates is that
-                # they should contain 'assimp' somewhere in
-                # their name
-                # print(filename)
-                """
-                if filename.lower().find('assimp')==-1 or\
-                    os.path.splitext(filename)[-1].lower() not in ext_whitelist:
-                    continue
-                """
-                if not 'assimp' in filename.lower():
-                    continue
-                # print('winner winer ', filename)
-                library_path = os.path.join(curfolder, filename)
-                logger.debug('Try ' + library_path)
-                try:
-                    dll = ctypes.cdll.LoadLibrary(library_path)
-                except Exception as e:
-                    logger.warning(str(e))
-                    # OK, this except is evil. But different OSs will throw different
-                    # errors. So just ignore any errors.
-                    continue
-                # see if the functions we need are in the dll
-                loaded = try_load_functions(library_path, dll)
-                if loaded: candidates.append(loaded)
+    library_path = 'lib/libassimp.so.5.0.1'
+    dll = ctypes.cdll.LoadLibrary(library_path)
+    loaded = try_load_functions(library_path, dll)
+    if not loaded:
+        raise AssimpException('assimp library not found')
+    return loaded[1:]
 
-    if not candidates:
-        # no library found
-        raise AssimpError("assimp library not found")
-    else:
-        # get the newest library_path
-        candidates = map(lambda x: (os.lstat(x[0])[-2], x), candidates)
-        res = max(candidates, key=operator.itemgetter(0))[1]
-        # print(res)
-        logger.debug('Using assimp library located at ' + res[0])
-
-        # XXX: if there are 1000 dll/so files containing 'assimp'
-        # in their name, do we have all of them in our address
-        # space now until gc kicks in?
-
-        # XXX: take version postfix of the .so on linux?
-        return res[1:]
 
 def hasattr_silent(object, name):
     """
@@ -278,3 +225,42 @@ def hasattr_silent(object, name):
         return hasattr(object, name)
     except:
         return False
+
+
+
+
+
+    # candidates = []
+    # # test every file
+    # for curfolder in [folder]+additional_dirs:
+    #     if os.path.isdir(curfolder):
+    #         for filename in os.listdir(curfolder):
+    #             if not 'assimp' in filename.lower():
+    #                 continue
+    #             # print('winner winer ', filename)
+    #             library_path = os.path.join(curfolder, filename)
+    #             logger.debug('Try ' + library_path)
+    #             try:
+    #                 dll = ctypes.cdll.LoadLibrary(library_path)
+    #             except Exception as e:
+    #                 logger.warning(str(e))
+    #                 continue
+    #             loaded = try_load_functions(library_path, dll)
+    #             if loaded: candidates.append(loaded)
+
+    # if not candidates:
+    #     # no library found
+    #     raise AssimpError("assimp library not found")
+    # else:
+    #     # get the newest library_path
+    #     candidates = map(lambda x: (os.lstat(x[0])[-2], x), candidates)
+    #     res = max(candidates, key=operator.itemgetter(0))[1]
+    #     # print(res)
+    #     logger.debug('Using assimp library located at ' + res[0])
+
+    #     # XXX: if there are 1000 dll/so files containing 'assimp'
+    #     # in their name, do we have all of them in our address
+    #     # space now until gc kicks in?
+
+    #     # XXX: take version postfix of the .so on linux?
+    #     return res[1:]

@@ -534,8 +534,19 @@ aiProcessPreset_TargetRealtime_MaxQuality = ( \
     aiProcess_OptimizeMeshes                 |  \
     0 )
 
-
 custom_import = ( \
-    aiProcessPreset_TargetRealtime_MaxQuality   |  \
-    aiProcess_OptimizeGraph                     |  \
+    aiProcessPreset_TargetRealtime_Quality   |  \
+    aiProcess_FindInstances                  |  \
+    aiProcess_ValidateDataStructure          |  \
+    aiProcess_OptimizeGraph                      |  \
+    aiProcess_OptimizeMeshes                 |  \
     0 )
+
+
+# custom_import = ( \
+#     aiProcess_Debone                             |  \
+#     aiProcess_CalcTangentSpace                   |  \
+#     aiProcess_GenNormals                         |  \
+#     aiProcess_JoinIdenticalVertices              |  \
+#     aiProcess_OptimizeMeshes                     |  \
+#     0 )

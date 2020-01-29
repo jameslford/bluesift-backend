@@ -45,13 +45,14 @@ class ApplianceConverter:
 
         with requests.get(self.initial_file.url, stream=True) as r:
             with open(self.initial_local_filename, 'wb') as f:
-                for chunk in r.iter_content(80111, True):
+                for chunk in r.iter_content(800111, True):
                     if chunk:
                         f.write(chunk)
         r.close()
         f.close()
         print(r.elapsed)
-        obj = pyassimp.load(self.initial_local_filename, 'obj', processing=pyassimp.postprocess.aiProcessPreset_TargetRealtime_MaxQuality)
+        # obj = pyassimp.load(self.initial_local_filename, 'obj', processing=pyassimp.postprocess.aiProcessPreset_TargetRealtime_MaxQuality)
+        obj = pyassimp.load(self.initial_local_filename, 'obj', pyassimp.postprocess.custom_import)
 
         for ftype in self.conversion_formats:
             pyassimp.export(
