@@ -1,8 +1,8 @@
 import dj_database_url
 from corsheaders.defaults import default_headers
+import config.passwords as passwords
 from .base import INSTALLED_APPS as baseApps
 from .base import *
-from ..passwords import *
 
 INSTALLED_APPS = baseApps + ['debug_toolbar']
 
@@ -20,6 +20,13 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_RESULT_SERIALIZER = 'json'
+
+SECRET_KEY = passwords.SECRET_KEY
+STAGING_DB_URI = passwords.STAGING_DB_URI
+AWS_ACCESS_KEY_ID = passwords.AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = passwords.AWS_SECRET_ACCESS_KEY
+SCRAPER_AUTH_HEADER = passwords.SCRAPER_AUTH_HEADER
+LOCAL_DB_PASSWORD = passwords.LOCAL_DB_PASSWORD
 
 STATIC_URL = '/static/'
 

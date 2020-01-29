@@ -194,6 +194,7 @@ class Product(models.Model):
     ipt_file = models.FileField(null=True, blank=True, upload_to='ipt/')
 
     derived_obj_file = models.FileField(null=True, blank=True, upload_to='derived/')
+    derived_bin_file = models.FileField(null=True, blank=True, upload_to='derived/')
     derived_mtl_file = models.FileField(null=True, blank=True, upload_to='derived/')
     derived_gltf_file = models.FileField(null=True, blank=True, upload_to='derived/')
     derived_stl_file = models.FileField(null=True, blank=True, upload_to='derived/')

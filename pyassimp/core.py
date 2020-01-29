@@ -382,6 +382,7 @@ def release(scene):
     _assimp_lib.release(pointer(scene))
 
 
+
 def _finalize_texture(tex, target):
     setattr(target, "achformathint", tex.achFormatHint)
     if numpy:

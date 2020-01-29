@@ -4,10 +4,8 @@ import operator
 import json
 import decimal
 import base64
-import pyassimp
 from json.decoder import JSONDecodeError
 import webcolors
-import requests
 from PIL import Image as pimage
 from django.core.files.base import ContentFile, File
 from django.contrib.postgres.fields import DecimalRangeField
@@ -48,6 +46,15 @@ class ProductSubClass(Product):
 
     def get_geometry_model(self):
         return None
+
+    def map_extension(self, ext: str):
+        ext_map = {
+            '.gltf': [self.derived_gltf_file, 'gltf'],
+            '.bin': [self.derived_bin_file, 'bin'],
+            '.glb': [self.derived_gltf_file, 'glb']
+            }
+        return ext_map.get(ext)
+
 
     # def conversion_geometries(self):
     #     """returns float measurements and labels on product details"""
@@ -339,13 +346,6 @@ class FinishSurface(ProductSubClass):
         # self.derived_width = response.get('derived_width')
         # self.save()
 
-class ConversionFormat:
-
-    def __init__(self, reference, extension, filetype):
-        self.reference = reference
-        self.extension = extension
-        self.filetype = filetype
-
 
 class Appliance(ProductSubClass):
     appliance_type = models.CharField(max_length=100, blank=True, null=True)
@@ -354,36 +354,7 @@ class Appliance(ProductSubClass):
     height = DecimalRangeField(null=True, blank=True)
     depth = DecimalRangeField(null=True, blank=True)
 
-    def convert_geometries(self):
-        filetypes = [
-            # ConversionFormat(self.derived_dae_file, '.dae', 'collada'),
-            ConversionFormat(self.derived_gltf_file, '.glb', 'glb')
-            ]
-        print(self.name + ' pre request')
-        request = requests.get(self.obj_file.url, stream=True)
-        print(request.elapsed)
-        file_obj = ContentFile(request.text.encode('utf-8'))
-        obj = pyassimp.load(file_obj, 'obj')
-        for ft in filetypes:
-            filename = self.name + ft.extension
-            print(filename, ' running')
-            pyassimp.export(obj, filename, ft.filetype)
-            print('pyassimp exported ', filename)
-            cwd = os.getcwd()
-            print(cwd)
-            cwd_files = os.listdir(cwd)
-            for cwd_file in cwd_files:
-                print(cwd_file)
-                if filename in cwd_file:
-                    new_file = open(cwd_file, 'rb')
-                    self.geometry_clean = True
-                    ft.reference.save(filename, File(new_file), save=True)
-                    print(filename + ' created')
-                    new_file.close()
-                    os.remove(cwd_file)
-                    break
-        pyassimp.release(obj)
-        # self.save()
+
 
     def get_height(self):
         return float(self.height.lower) if self.height else None

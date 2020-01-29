@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from Products.models import Product
 from SpecializedProducts.models import FinishSurface, Appliance
+from SpecializedProducts.conversion_formats import ApplianceConverter
 
 
 class Command(BaseCommand):
@@ -10,7 +11,9 @@ class Command(BaseCommand):
         # apps = Appliance.objects.filter(geometry_clean=False)
         apps = Appliance.objects.all()
         for prod in apps:
-            prod.convert_geometries()
+            conv = ApplianceConverter(prod)
+            conv.convert()
+            # prod.convert_geometries()
         # fins = FinishSurface.objects.all()
         # for fin in fins:
         #     fin.convert_geometries()

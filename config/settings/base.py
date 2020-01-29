@@ -1,6 +1,7 @@
 import os
 from django.core.exceptions import ImproperlyConfigured
 
+AWS_DEFAULT_ACL = None
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MARKUP = '1.10'

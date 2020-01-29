@@ -18,3 +18,4 @@ class MediaStorage(S3Boto3Storage):
     def base_path(cls):
         url_p = cls.url_protocol
         return f'https://{cls.custom_domain}/{cls.location}/'
+
