@@ -4,6 +4,7 @@ import boto3
 from django.conf import settings
 from django.core.files.base import ContentFile, File
 import pyassimp
+import PipAssimp
 from .models import ProductSubClass
 # from smart_open import open as smopen
 # from config.custom_storage import MediaStorage
