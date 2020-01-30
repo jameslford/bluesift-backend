@@ -1,0 +1,21 @@
+{
+    "uri": "48-w_tuscany-range_tvdr480.glb",
+    "mimeType": "model/gltf-binary",
+    "validatorVersion": "2.0.0-dev.3.2",
+    "validatedAt": "2020-01-30T05:53:34.799Z",
+    "issues": {
+        "numErrors": 1,
+        "numWarnings": 0,
+        "numInfos": 0,
+        "numHints": 0,
+        "messages": [
+            {
+                "code": "GLB_INVALID_VERSION",
+                "message": "Invalid GLB version value 1.",
+                "severity": 0,
+                "offset": 4
+            }
+        ],
+        "truncated": false
+    }
+}

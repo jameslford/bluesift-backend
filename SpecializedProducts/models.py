@@ -1,13 +1,8 @@
 """returns float measurements and labels on product details"""
-import os
 import operator
-import json
 import decimal
-import base64
-from json.decoder import JSONDecodeError
 import webcolors
 from PIL import Image as pimage
-from django.core.files.base import ContentFile, File
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
 from Products.models import Product
@@ -51,15 +46,9 @@ class ProductSubClass(Product):
         ext_map = {
             '.gltf': [self.derived_gltf_file, 'gltf'],
             '.bin': [self.derived_bin_file, 'bin'],
-            '.glb': [self.derived_gltf_file, 'glb']
+            '.glb': [self.derived_gltf_file, 'glb2']
             }
         return ext_map.get(ext)
-
-
-    # def conversion_geometries(self):
-    #     """returns float measurements and labels on product details"""
-    #     from .serializers import SubproductGeometryConversionSerializer
-    #     return SubproductGeometryConversionSerializer(self).data
 
     def presentation_geometries(self):
         """returns float measurements and labels on product details"""

@@ -3,11 +3,9 @@ import requests
 import boto3
 from django.conf import settings
 from django.core.files.base import ContentFile, File
-import pyassimp
 import PipAssimp
 from .models import ProductSubClass
-# from smart_open import open as smopen
-# from config.custom_storage import MediaStorage
+
 
 SESSION = {'session': boto3.Session(
     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -25,7 +23,6 @@ class ConversionFormat:
         self.filetype = file_type if file_type else alt_ftype
         self.filename = product.name + self.extension
         self.reference.save(self.filename, ContentFile(''))
-        # self.storage = f's3://{MediaStorage.bucket_name}/media/derived/'
 
 
 class ApplianceConverter:
@@ -52,15 +49,13 @@ class ApplianceConverter:
         r.close()
         f.close()
         print(r.elapsed)
-        # obj = pyassimp.load(self.initial_local_filename, 'obj', processing=pyassimp.postprocess.aiProcessPreset_TargetRealtime_MaxQuality)
-        obj = pyassimp.load(self.initial_local_filename, 'obj', pyassimp.postprocess.custom_import)
+        obj = PipAssimp.load(self.initial_local_filename, 'obj')
 
         for ftype in self.conversion_formats:
-            pyassimp.export(
+            PipAssimp.export(
                 obj,
                 'temp/' + ftype.filename,
                 ftype.filetype,
-                processing=pyassimp.postprocess.aiProcessPreset_TargetRealtime_MaxQuality
                 )
             temp_files = os.listdir('temp')
             for cwd_file in temp_files:
@@ -75,16 +70,8 @@ class ApplianceConverter:
                     file = open(local_path, 'rb')
                     ftype.reference.save(cwd_file, File(file), save=True)
                     file.close()
-                    # os.remove(local_path)
-            # os.remove(self.initial_local_filename)
-        pyassimp.release(obj)
+                    os.remove(local_path)
+            os.remove(self.initial_local_filename)
+        PipAssimp.release(obj)
         self.product.save()
 
-                    # filename = f'{self.product.name}/{cwd_file}'
-                    # url = 's3' + ftype.reference.url.split('s3')[-1]
-                    # print(url)
-                    # read = open(local_path, 'rb', encoding='utf-8')
-                    # with smopen(ftype.storage, 'wb', transport_params=SESSION) as fout:
-                    #     with open(local_path, 'rb') as read:
-                    #         for chunk in read.readlines():
-                    #             fout.write(chunk)
