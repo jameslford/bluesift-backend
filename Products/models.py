@@ -162,9 +162,9 @@ class Product(models.Model):
     manu_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_style = models.CharField(max_length=200, null=True, blank=True)
 
-    swatch_image = models.ImageField()
-    room_scene = models.ImageField(null=True, blank=True)
-    tiling_image = models.ImageField(null=True, blank=True)
+    swatch_image = models.ImageField(upload_to='swatches/')
+    room_scene = models.ImageField(upload_to='rooms/', null=True, blank=True)
+    tiling_image = models.ImageField(upload_to='tiles/', null=True, blank=True)
 
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True, blank=True)
@@ -197,7 +197,6 @@ class Product(models.Model):
     derived_depth = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
 
     geometry_clean = models.BooleanField(default=False)
-
     detail_response = pg_fields.JSONField(null=True, blank=True)
 
     manufacturer = models.ForeignKey(

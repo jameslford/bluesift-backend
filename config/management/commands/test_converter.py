@@ -2,7 +2,7 @@ import trimesh
 from django.core.management.base import BaseCommand
 from Products.models import Product
 from SpecializedProducts.models import FinishSurface, Appliance
-from SpecializedProducts.conversion_formats import ApplianceConverter, ConversionFormat
+from SpecializedProducts.conversion_formats import ApplianceConverter
 
 
 class Command(BaseCommand):

@@ -28,6 +28,7 @@ def download_bytes(url: str):
         for chunk in req.iter_content(80111, True):
             if chunk:
                 buffer.write(chunk)
+    buffer.seek(0)
     req.close()
     return buffer
 
@@ -44,15 +45,15 @@ def download_string(url: str):
 
 
 
-class ConversionFormat:
+# class ConversionFormat:
 
-    def __init__(self, product: ProductSubClass, extension: str, file_type=None):
+#     def __init__(self, product: ProductSubClass, extension: str, file_type=None):
 
-        ref, alt_ftype = product.map_extension(extension)
-        self.reference = ref
-        self.extension = extension
-        self.filetype = file_type if file_type else alt_ftype
-        self.filename = product.name + self.extension
+#         ref, alt_ftype = product.map_extension(extension)
+#         self.reference = ref
+#         self.extension = extension
+#         self.filetype = file_type if file_type else alt_ftype
+#         self.filename = product.name + self.extension
         # self.reference.save(self.filename, ContentFile(''))
 
 
@@ -92,37 +93,47 @@ class ApplianceConverter:
         data[index] = str(path).encode('utf-8')
         buffer = io.BytesIO()
         buffer.writelines(data)
-        self.product.derived_obj.save(filename, buffer, save=True)
-        print('line 100')
-        self.product.refresh_from_db()
+        # self.product.derived_obj.save(filename, buffer, save=True)
+        # print('line 100')
+        # self.product.refresh_from_db()
+        buffer.seek(0)
         self.resolver = WebResolver
-        return self.product.derived_obj
+        return buffer
+        # return self.product.derived_obj
 
 
     def get_initial(self) -> FileField:
-        if self.product.derived_obj:
-            return self.product.derived_obj
+        # if self.product.derived_obj:
+        #     file = download_bytes(self.product.derived_obj.url)
+        #     return file
         if not self.product.obj_file:
             return None
         if self.product.mtl_file:
             print(self.product.name, 'has mtlf')
             return self.create_derived_obj()
-        return self.product.obj_file
+        res = download_bytes(self.product.obj_file.url)
+        return res
+        # return self.product.obj_file
 
 
 
     def convert(self):
-        field: FieldFile = self.get_initial()
+        field: io.BytesIO = self.get_initial()
         if not field:
             return
-        file = download_bytes(field.url)
-        print(file, field.url)
-        file.seek(0)
-        mes: trimesh.Trimesh = trimesh.load(file, 'obj', resolver=self.resolver)
+        # file = download_bytes(field.url)
+        # print(file, field.url)
+        # file.seek(0)
+        mes: trimesh.Trimesh = trimesh.load(field, 'obj', resolver=self.resolver)
+        # mes: trimesh.Trimesh = trimesh.load(file, 'obj', resolver=self.resolver)
         blob: io.BytesIO = mes.export(None, 'glb')
         print(type(blob))
         name = str(self.product.bb_sku) + '.glb'
         self.product.derived_gbl.save(name, ContentFile(blob), save=True)
+
+
+    def assign_sizes(self):
+        pass
 
 
     # def get_file_object(self):
