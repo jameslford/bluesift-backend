@@ -10,6 +10,12 @@ DESIRED_IMAGE_SIZE = 350
 AWS_STATIC_BUCKET_NAME = 'pixidesk-development'
 AWS_MEDIA_BUCKET_NAME = "pixidesk-development-media"
 AWS_S3_REGION_NAME = 'us-east-1'
+AWS_IS_GZIPPED = True
+GZIP_CONTENT_TYPES = [
+    'model/gltf-binary',
+    'text/plain',
+    'application/octet-stream'
+    ]
 
 STATICFILES_LOCATION = 'static'
 STATICFILES_STORAGE = 'config.custom_storage.StaticStorage'

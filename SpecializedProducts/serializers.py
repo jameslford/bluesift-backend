@@ -35,16 +35,15 @@ class SubproductGeometryPresentationSerializer:
         self.width = product.get_width() if product.get_width() else product.derived_width
         self.depth = product.get_depth() if product.get_depth() else product.derived_depth
         self.height = product.get_height() if product.get_height() else product.derived_height
+        self.derived_width = product.derived_width
+        self.derived_depth = product.derived_depth
+        self.derived_height = product.derived_height
         self.texture_map = product.get_texture_map()
-        self.obj_file = product.get_obj_file()
-        self.mtl_file = product.get_mtl_file()
-        self.gltf_file = product.get_gltf_file()
-        self.stl_file = product.get_stl_file()
-        self.dae_file = product.get_dae_file()
+
         self.rfa_file = product.rfa_file.url if product.rfa_file else None
         self.ipt_file = product.ipt_file.url if product.ipt_file else None
-        self.geometry_model = product.get_geometry_model()
-        self.three_json = product.three_json
+        self.obj_file = product.derived_obj.url if product.derived_obj else None
+        self.geometry_model = product.derived_gbl.url if product.derived_gbl else None
         self.geometry_clean = product.geometry_clean
 
     @property

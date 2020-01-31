@@ -42,53 +42,10 @@ class ProductSubClass(Product):
     def get_geometry_model(self):
         return None
 
-    def map_extension(self, ext: str):
-        ext_map = {
-            '.gltf': [self.derived_gltf_file, 'gltf'],
-            '.bin': [self.derived_bin_file, 'bin'],
-            '.glb': [self.derived_gltf_file, 'glb2']
-            }
-        return ext_map.get(ext)
-
     def presentation_geometries(self):
         """returns float measurements and labels on product details"""
         from .serializers import SubproductGeometryPresentationSerializer
         return SubproductGeometryPresentationSerializer(self).data
-
-    def get_obj_file(self):
-        if self.obj_file:
-            return self.obj_file.url
-        if self.derived_obj_file:
-            return self.derived_obj_file.url
-        return None
-
-    def get_mtl_file(self):
-        if self.mtl_file:
-            return self.mtl_file.url
-        if self.derived_mtl_file:
-            return self.derived_mtl_file.url
-        return None
-
-    def get_gltf_file(self):
-        if self.gltf_file:
-            return self.gltf_file.url
-        if self.derived_gltf_file:
-            return self.derived_gltf_file.url
-        return None
-
-    def get_stl_file(self):
-        if self.stl_file:
-            return self.stl_file.url
-        if self.derived_stl_file:
-            return self.derived_stl_file.url
-        return None
-
-    def get_dae_file(self):
-        if self.dae_file:
-            return self.dae_file.url
-        if self.derived_dae_file:
-            return self.derived_dae_file.url
-        return None
 
     @classmethod
     def validate_sub(cls, sub: str):
@@ -313,8 +270,8 @@ class FinishSurface(ProductSubClass):
             return self.tiling_image.url
         return self.swatch_image.url if self.swatch_image else None
 
-    def convert_geometries(self):
-        pass
+    # def convert_geometries(self):
+    #     pass
         # url = self.swatch_image.url
         # image = base64.b64encode(requests.get(url).content)
         # image = f'data:image/png; base64, {image}'
@@ -344,7 +301,6 @@ class Appliance(ProductSubClass):
     depth = DecimalRangeField(null=True, blank=True)
 
 
-
     def get_height(self):
         return float(self.height.lower) if self.height else None
 
@@ -354,10 +310,6 @@ class Appliance(ProductSubClass):
     def get_depth(self):
         return float(self.depth.lower) if self.depth else None
 
-    def get_geometry_model(self):
-        if self.derived_gltf_file:
-            return self.derived_gltf_file.url
-        return None
 
 
 class Cabinets(ProductSubClass):

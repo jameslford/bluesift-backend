@@ -8,7 +8,6 @@ from django.contrib.gis.db import models
 from django.forms.models import model_to_dict
 from django.db.models import (
     Subquery,
-    Avg,
     OuterRef,
     CharField
 )
@@ -31,11 +30,6 @@ class Manufacturer(models.Model):
 
     def __str__(self):
         return self.label
-
-
-    def create_group(self, name: str, terms: dict):
-        term_dict = [{'term': k, 'value': v} for k, v in terms.items()]
-        return {'name': name, 'terms': term_dict}
 
 
 class ProductAvailabilityQuerySet(models.QuerySet):
@@ -147,6 +141,10 @@ class ProductPricingManager(models.Manager):
         return self.get_queryset().product_prices(location_pk)
 
 
+def get_3d_return_path(instance, filename=None):
+    return f'geometry/{instance.bb_sku}/{filename}'
+
+
 class Product(models.Model):
     SF = 'SF'
     EACH = 'EACH'
@@ -182,28 +180,22 @@ class Product(models.Model):
     light_commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
     commercial = models.BooleanField(default=False)
 
-    dwg_3d_file = models.FileField(null=True, blank=True, upload_to='dwg_3d/')
-    dwg_2d_file = models.FileField(null=True, blank=True, upload_to='dwg_2d/')
-    dxf_file = models.FileField(null=True, blank=True, upload_to='dxf/')
-    obj_file = models.FileField(null=True, blank=True, upload_to='objs/')
-    mtl_file = models.FileField(null=True, blank=True, upload_to='objs/')
-    gltf_file = models.FileField(null=True, blank=True, upload_to='gtlf/')
-    stl_file = models.FileField(null=True, blank=True, upload_to='stl/')
-    dae_file = models.FileField(null=True, blank=True, upload_to='dae/')
-    rfa_file = models.FileField(null=True, blank=True, upload_to='rvt/')
-    ipt_file = models.FileField(null=True, blank=True, upload_to='ipt/')
 
-    derived_obj_file = models.FileField(null=True, blank=True, upload_to='derived/')
-    derived_bin_file = models.FileField(null=True, blank=True, upload_to='derived/')
-    derived_mtl_file = models.FileField(null=True, blank=True, upload_to='derived/')
-    derived_gltf_file = models.FileField(null=True, blank=True, upload_to='derived/')
-    derived_stl_file = models.FileField(null=True, blank=True, upload_to='derived/')
-    derived_dae_file = models.FileField(null=True, blank=True, upload_to='derived/')
+    dxf_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    rfa_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    ipt_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    dwg_3d_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    dwg_2d_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+
+    obj_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    mtl_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    derived_obj = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    derived_gbl = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+
     derived_width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_height = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_depth = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
 
-    three_json = pg_fields.JSONField(null=True, blank=True)
     geometry_clean = models.BooleanField(default=False)
 
     detail_response = pg_fields.JSONField(null=True, blank=True)

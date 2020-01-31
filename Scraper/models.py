@@ -60,7 +60,7 @@ class ScraperDepartment(models.Model):
         return self.name[7:] if self.name.startswith('Scraper') else None
 
     def corresponding_class(self):
-        from Products.models import ProductSubClass
+        from SpecializedProducts.models import ProductSubClass
         stripped_name = self.get_stripped_name()
         matching_class = [cls for cls in ProductSubClass.__subclasses__() if cls.__name__ == stripped_name]
         return matching_class[0] if matching_class else None

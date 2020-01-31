@@ -1,5 +1,8 @@
+import io
 from config.celery import app
+from config.custom_storage import MediaStorage
 from Analytics.models import ViewRecord
+
 
 
 @app.task
@@ -8,3 +11,4 @@ def add_detail_record(path, pk):
     if record:
         record.product_detail_pk = pk
         record.save()
+
