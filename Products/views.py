@@ -7,7 +7,7 @@ from config.globals import check_department_string
 from config.tasks import add_supplier_record
 from config.custom_permissions import IsAdminorReadOnly
 from ProductFilter.sorter import Sorter
-from SpecializedProducts.serializers import AdminFields
+from SpecializedProducts.models import ProductSubClass
 from .models import Product
 from .tasks import add_detail_record
 from .serializers import serialize_detail, serialize_detail_quick
@@ -28,14 +28,13 @@ def products_list(request: HttpRequest, product_type: str, location_pk: int = No
 @permission_classes((IsAdminorReadOnly,))
 def product_detail(request, pk):
 
-    product = Product.subclasses.get_subclass(pk=pk)
+    product: ProductSubClass = Product.subclasses.get_subclass(pk=pk)
 
     if request.method == 'GET':
         response = serialize_detail(product)
         if request.user.is_authenticated and request.user.is_admin:
-            admin_fields = AdminFields(product).data
             response.update({
-                'admin_fields' : admin_fields
+                'admin_fields' : product.get_admin_fields()
             })
         add_detail_record.delay(request.get_full_path(), pk)
         return Response(response, status=status.HTTP_200_OK)
@@ -45,7 +44,7 @@ def product_detail(request, pk):
             setattr(product, k, v)
         product.save()
         response = serialize_detail(product)
-        admin_fields = AdminFields(product).data
+        admin_fields = product.get_admin_fields()
         response.update({
             'admin_fields' : admin_fields
         })

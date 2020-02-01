@@ -2,10 +2,13 @@
 import operator
 import decimal
 import webcolors
+import trimesh
+from trimesh.creation import box as tri_box
+from trimesh.visual import TextureVisuals
 from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
-from .base import ProductSubClass
+from .base import ProductSubClass, Converter
 
 class FinishSurface(ProductSubClass):
     """returns float measurements and labels on product details"""
@@ -211,9 +214,34 @@ class FinishSurface(ProductSubClass):
         return float(self.width.lower) if self.width else 0
 
     def get_texture_map(self):
-        if self.tiling_image:
-            return self.tiling_image.url
-        return self.swatch_image.url if self.swatch_image else None
+        return self.tiling_image if self.tiling_image else self.swatch_image
+
+    def convert_geometries(self):
+        converter = FinishSurfaceConverter(self)
+        converter.convert()
+
+
+class FinishSurfaceConverter(Converter):
+
+    def convert(self):
+        width = self.product.get_width()
+        depth = self.product.get_depth()
+        height = self.product.get_height()
+        image = self.product.get_texture_map().open('r')
+        image = pimage.open(image)
+        visual = TextureVisuals(image=image)
+        box: trimesh.Trimesh = tri_box((width, depth, height), visual=visual)
+        scene = box.scene()
+        self.product.save_derived_glb(scene)
+
+
+
+        # if self.tiling_image:
+        #     return self.tiling_image.url
+        # return self.swatch_image.url if self.swatch_image else None
+        # with open('test/test.glb', 'wb') as out:
+        #     scene.export(out, 'glb')
+        # return super().convert()
 
     # def convert_geometries(self):
     #     pass
