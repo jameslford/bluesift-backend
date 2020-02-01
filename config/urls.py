@@ -26,7 +26,7 @@ urlpatterns = [
     path('profiles/', include('Profiles.urls')),
     path('projects/', include('Projects.urls')),
     path('supplierss/', include('Suppliers.urls')),
-    path('scraper/', include('Scraper.urls')),
+    # path('scraper/', include('Scraper.urls')),
 
     path('add/', generic_add),
     path('add/<int:collection_pk>', generic_add),

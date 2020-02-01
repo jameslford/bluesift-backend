@@ -8,7 +8,7 @@ from trimesh.visual import TextureVisuals
 from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
-from .base import ProductSubClass, Converter
+from .base import ProductSubClass, Converter, Importer
 
 class FinishSurface(ProductSubClass):
     """returns float measurements and labels on product details"""
@@ -220,6 +220,11 @@ class FinishSurface(ProductSubClass):
         converter = FinishSurfaceConverter(self)
         converter.convert()
 
+    def import_data(self, **kwargs):
+        importer = FinishSurfaceImporter(**kwargs)
+        importer.add_data()
+        return super().import_data()
+
 
 class FinishSurfaceConverter(Converter):
 
@@ -233,6 +238,12 @@ class FinishSurfaceConverter(Converter):
         box: trimesh.Trimesh = tri_box((width, depth, height), visual=visual)
         scene = box.scene()
         self.product.save_derived_glb(scene)
+
+
+class FinishSurfaceImporter(Importer):
+
+    def __init__(self, **kwargs):
+        super().__init__()
 
 
 

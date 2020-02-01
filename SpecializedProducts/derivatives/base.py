@@ -5,13 +5,13 @@ from dataclasses import dataclass, asdict
 import requests
 import boto3
 import trimesh
-from django.db.models import FileField
+from django.db.models import FileField, QuerySet
 from django.core.files.base import ContentFile
 from django.conf import settings
 from Products.models import Product
 from Products.models import get_3d_return_path
 
-
+MATCH_THRESHOLD = .7
 
 class ProductSubClass(Product):
     """returns float measurements and labels on product details"""
@@ -58,6 +58,35 @@ class ProductSubClass(Product):
 
     def get_geometry_fields(self):
         return SubproductGeometryPresentationSerializer(self).data
+
+    def import_update(self, **kwargs):
+        self.save()
+
+    def import_new(self, **kwargs):
+        self.save()
+
+    # def import_match(self, queryset: QuerySet, **kwargs):
+    #     values = queryset.values()
+    #     matches = []
+    #     for prod in values:
+    #         score = 0
+    #         total = 0
+    #         for key, value in kwargs.items():
+    #             total += 1
+    #             prod_val = prod.get(key)
+    #             if prod_val:
+    #                 if prod_val == val:
+    #                     score += 1
+    #                     continue
+    #                 score -= 1
+    #         percentage = score / total
+    #         if percentage >= MATCH_THRESHOLD:
+    #             item = [percentage, prod]
+    #             matches.append(item)
+    #     if not matches()
+
+        # self.save()
+
 
     def save_derived_glb(self, mesh: trimesh.Trimesh):
         byteArray = mesh.export(None, 'gbl')
@@ -162,4 +191,26 @@ class Converter:
         return buffer
 
     def convert(self):
+        pass
+
+
+class Importer:
+
+    def __init__(self):
+        self.swatch_image = None
+        self.room_Scene = None
+        self.tiling_image = None
+
+        self.manufacturer_sku = None
+        self.manufacturer = None
+
+        super().__init__()
+
+    def add_data(self):
+        pass
+
+    def import_data(self, **kwargs):
+        pass
+
+    def match_fitness(self):
         pass

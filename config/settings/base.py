@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'Accounts',
     'Addresses',
     'Analytics',
-    'BBadmin',
     'Cards',
     'Carts',
     'config',
@@ -60,9 +59,6 @@ INSTALLED_APPS = [
     'Projects',
     'Ratings',
     'Suppliers',
-    'Scraper',
-    'Scraper.ScraperFinishSurface',
-    'Scraper.ScraperCleaner',
     'SpecializedProducts',
 ]
 
