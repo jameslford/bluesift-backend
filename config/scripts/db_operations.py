@@ -16,7 +16,6 @@ from config.custom_storage import MediaStorage
 # from Scraper.ScraperCleaner.models import ScraperCleaner
 from Products.models import Product
 from ProductFilter.models import ProductFilter
-from .lists import MODS
 from .check_settings import exclude_production, check_local
 from .colors import assign_label_color
 # from Scraper.ScraperFinishSurface.models import ScraperFinishSurface

@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     'Carts',
     'config',
     'Groups',
-    'MailingList',
     'Orders',
     'Plans',
     'ProductFilter',
