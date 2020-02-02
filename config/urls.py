@@ -21,7 +21,7 @@ urlpatterns = [
     path('addresses/', include('Addresses.urls')),
     path('analytics/', include('Analytics.urls')),
     path('groups/', include('Groups.urls')),
-    path('mailing-list/', include('MailingList.urls')),
+    # path('mailing-list/', include('MailingList.urls')),
     path('products/', include('Products.urls')),
     path('profiles/', include('Profiles.urls')),
     path('projects/', include('Projects.urls')),
