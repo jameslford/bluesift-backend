@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 ('unit', models.CharField(choices=[('SF', 'SF'), ('EACH', 'Each')], default='SF', max_length=10)),
                 ('manufacturer_url', models.URLField(blank=True, max_length=300, null=True)),
                 ('manufacturer_sku', models.CharField(blank=True, max_length=200, null=True)),
-                ('manu_collection', models.CharField(blank=True, max_length=200, null=True)),
+                ('manufacturer_collection', models.CharField(blank=True, max_length=200, null=True)),
                 ('manufacturer_style', models.CharField(blank=True, max_length=200, null=True)),
                 ('swatch_image', models.ImageField(upload_to='')),
                 ('room_scene', models.ImageField(blank=True, null=True, upload_to='')),

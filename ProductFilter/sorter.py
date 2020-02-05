@@ -6,7 +6,7 @@ from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List
 from django.db import models
-from django.core.files.storage import get_storage_class, default_storage
+from django.core.files.storage import get_storage_class
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
@@ -308,7 +308,7 @@ class Sorter:
             'pk',
             'unit',
             'manufacturer_style',
-            'manu_collection',
+            'manufacturer_collection',
             'manufacturer_sku',
             'name',
             'swatch_url',

@@ -7,7 +7,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MARKUP = '1.10'
 DESIRED_IMAGE_SIZE = 350
 
-AWS_STATIC_BUCKET_NAME = 'pixidesk-development'
+AWS_STATIC_BUCKET_NAME = 'pixidesk-development-media'
 AWS_MEDIA_BUCKET_NAME = "pixidesk-development-media"
 AWS_S3_REGION_NAME = 'us-east-1'
 AWS_IS_GZIPPED = True
@@ -70,7 +70,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 ROOT_URLCONF = 'config.urls'
 
-DATABASE_ROUTERS = ['config.db_routers.ScraperRouter']
+# DATABASE_ROUTERS = ['config.db_routers.ScraperRouter']
 
 SITE_ID = 1
 

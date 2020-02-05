@@ -214,16 +214,16 @@ class FinishSurface(ProductSubClass):
         return float(self.width.lower) if self.width else 0
 
     def get_texture_map(self):
-        return self.tiling_image if self.tiling_image else self.swatch_image
+        return self.tiling_image.url if self.tiling_image else self.swatch_image.url
 
     def convert_geometries(self):
         converter = FinishSurfaceConverter(self)
         converter.convert()
 
-    def import_data(self, **kwargs):
-        importer = FinishSurfaceImporter(**kwargs)
-        importer.add_data()
-        return super().import_data()
+    # def import_data(self, **kwargs):
+    #     importer = FinishSurfaceImporter(**kwargs)
+    #     importer.add_data()
+    #     return super().import_data()
 
 
 class FinishSurfaceConverter(Converter):

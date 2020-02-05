@@ -46,8 +46,8 @@ class FullSupplierProductSerializer(serpy.Serializer):
         return obj.product.manufacturer.label
 
     def get_manufacturer_collection(self, obj):
-        """ gets manu_collection from retailer.product object """
-        return obj.product.manu_collection.lower().title()
+        """ gets manufacturer_collection from retailer.product object """
+        return obj.product.manufacturer_collection.lower().title()
 
     def get_unit(self, obj):
         """ gets unit from retailer.product object """

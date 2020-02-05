@@ -159,7 +159,7 @@ class Product(models.Model):
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
     manufacturer_sku = models.CharField(max_length=200, null=True, blank=True)
-    manu_collection = models.CharField(max_length=200, null=True, blank=True)
+    manufacturer_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_style = models.CharField(max_length=200, null=True, blank=True)
 
     swatch_image = models.ImageField(upload_to='swatches/')
@@ -180,18 +180,23 @@ class Product(models.Model):
     light_commercial_warranty = models.CharField(max_length=100, null=True, blank=True)
     commercial = models.BooleanField(default=False)
 
+    _dxf_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    _rfa_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    _ipt_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    _dwg_3d_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    _dwg_2d_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    _obj_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    _mtl_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
 
-    dxf_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
-    rfa_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
-    ipt_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
-    dwg_3d_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
-    dwg_2d_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
+    dxf_file = models.URLField(null=True, blank=True, max_length=1000)
+    rfa_file = models.URLField(null=True, blank=True, max_length=1000)
+    ipt_file = models.URLField(null=True, blank=True, max_length=1000)
+    dwg_3d_file = models.URLField(null=True, blank=True, max_length=1000)
+    dwg_2d_file = models.URLField(null=True, blank=True, max_length=1000)
+    obj_file = models.URLField(null=True, blank=True, max_length=1000)
+    mtl_file = models.URLField(null=True, blank=True, max_length=1000)
 
-    obj_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
-    mtl_file = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
-    derived_obj = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
     derived_gbl = models.FileField(null=True, blank=True, upload_to=get_3d_return_path)
-
     derived_width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_height = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_depth = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
@@ -209,8 +214,11 @@ class Product(models.Model):
     objects = ProductPricingManager()
     subclasses = InheritanceManager()
 
+    class Meta:
+        unique_together = ('manufacturer', 'manufacturer_sku')
+
     def __str__(self):
-        return f'{self.manufacturer.label}, {self.manu_collection}, {self.manufacturer_style}'
+        return f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'
 
     def save(self, *args, **kwargs):
         if not self.name:
@@ -263,7 +271,7 @@ class Product(models.Model):
         fields = [
             'manufacturer',
             'manufacturer_style',
-            'manu_collection',
+            'manufacturer_collection',
             'manufacturer_sku'
             ] + sub.name_fields
         vals = list(model_to_dict(sub, fields=fields).values())

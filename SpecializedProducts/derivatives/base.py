@@ -89,10 +89,10 @@ class ProductSubClass(Product):
 
 
     def save_derived_glb(self, mesh: trimesh.Trimesh):
-        byteArray = mesh.export(None, 'gbl')
+        byteArray = mesh.export(None, 'glb')
         file = ContentFile(byteArray)
-        name = str(self.bb_sku) + '.gbl'
-        self.derived_gbl(name, file, save=True)
+        name = str(self.bb_sku) + '.glb'
+        self.derived_gbl.save(name, file, save=True)
 
 
     @classmethod
@@ -145,9 +145,12 @@ class SubproductGeometryPresentationSerializer:
         self.derived_height = product.derived_height
         self.texture_map = product.get_texture_map()
 
-        self.rfa_file = product.rfa_file.url if product.rfa_file else None
-        self.ipt_file = product.ipt_file.url if product.ipt_file else None
-        self.obj_file = product.derived_obj.url if product.derived_obj else None
+        self.rfa_file = product.rfa_file
+        self.ipt_file = product.ipt_file
+        self.obj_file = product.obj_file
+        # self.rfa_file = product.rfa_file.url if product.rfa_file else None
+        # self.ipt_file = product.ipt_file.url if product.ipt_file else None
+        # self.obj_file = product.derived_obj.url if product.derived_obj else None
         self.geometry_model = product.derived_gbl.url if product.derived_gbl else None
         self.geometry_clean = product.geometry_clean
 
@@ -198,7 +201,7 @@ class Importer:
 
     def __init__(self):
         self.swatch_image = None
-        self.room_Scene = None
+        self.room_scene = None
         self.tiling_image = None
 
         self.manufacturer_sku = None
