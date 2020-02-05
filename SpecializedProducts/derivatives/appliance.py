@@ -1,4 +1,5 @@
 import io
+import zipfile
 import decimal
 from django.db import models
 from django.contrib.postgres.fields import DecimalRangeField
@@ -55,23 +56,45 @@ class ApplianceConverter(Converter):
         super().__init__(product)
 
     def create_derived_obj(self):
-        index = None
-        data = self.product._obj_file.readlines()
-        for num, line in enumerate(data):
-            if 'mtllib'.encode('utf-8') in line:
-                print(line)
-                index = num
-                break
-        if not index:
-            return self.product._obj_file
-        path = self.product._mtl_file.url
-        data[index] = str(path).encode('utf-8')
-        buffer = io.BytesIO()
+        with self.product._obj_file.open('r') as data:
+            buffer = io.StringIO()
+            for line in data.readlines():
+                line = line.decode()
+                if 'mtllib' in line:
+                    print(line)
+                    new_line = 'mtllib ' + self.product._mtl_file.url
+                    buffer.write(new_line)
+                else:
+                    buffer.write(line)
+            buffer.seek(0)
+            for line in buffer.readlines():
+                if 'mtllib' in line:
+                    print(line)
+            buffer.seek(0)
+            self.resolver = WebResolver
+            return buffer
+        # return buffer
+            #         print(line)
+            #         index = num
+            #         break
+            # if not index:
+            #     return self.product._obj_file
+        # data = self.product._obj_file.readlines()
+        # for num, line in enumerate(data):
+        #     if 'mtllib'.encode('utf-8') in line:
+        #         print(line)
+        #         index = num
+        #         break
+        # if not index:
+        #     return self.product._obj_file
+        # path = self.product._mtl_file.url
+        # data[index] = str(path).encode('utf-8')
+        # buffer = io.BytesIO()
         
-        buffer.writelines(data)
-        buffer.seek(0)
-        self.resolver = WebResolver
-        return buffer
+        # buffer.writelines(data)
+        # buffer.seek(0)
+        # self.resolver = WebResolver
+        # return buffer
 
 
     def get_initial(self) -> io.BytesIO:
@@ -80,14 +103,22 @@ class ApplianceConverter(Converter):
         if self.product._mtl_file:
             print(self.product.name, 'has mtlf')
             return self.create_derived_obj()
+        print(self.product.name, 'no mtl file')
         res = self.download_bytes(self.product._obj_file.url)
         return res
 
     def convert(self):
-        field: io.BytesIO = self.get_initial()
-        if not field:
+        # field: io.BytesIO = self.get_initial()
+        # if not field:
+        #     return
+        if not self.product.obj_file:
+            self.product.delete()
             return
-        mes: trimesh.Trimesh = trimesh.load(field, 'obj', resolver=self.resolver)
+        try:
+            mes: trimesh.Trimesh = trimesh.load_remote(self.product.obj_file)
+        except zipfile.BadZipFile:
+            self.product.delete()
+            return
         conversion_unit = self.product.cm
         if conversion_unit != self.product.inches:
             mes.units = conversion_unit
@@ -97,9 +128,12 @@ class ApplianceConverter(Converter):
 
     def assign_sizes(self, mes: trimesh.Trimesh):
         length, height, depth = mes.extents
+        center = mes.centroid
+        print(center.tolist(), type(center))
         length = decimal.Decimal(round(length, 2))
         depth = decimal.Decimal(round(depth, 2))
         height = decimal.Decimal(round(height, 2))
+        self.product.derived_center = center.tolist()
         self.product.derived_depth = depth
         self.product.derived_height = height
         self.product.derived_width = length

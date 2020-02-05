@@ -28,7 +28,11 @@ def scrape(category: str):
     soup = BeautifulSoup(data, 'lxml')
     figures = soup.find_all('figure')
     for figure in figures:
-        anch = figure.find('a')
+        anch = figure.find('figcaption').find('a')
+        name = anch.text
+        name_split = name.split('-')
+        if len(name_split) > 1:
+            name = name_split[0]
         img = figure.find('img')
         pid = figure.find('input', {'class': 'comparison-product-id'})['value']
         path = base + anch['href'].split(';')[0]
@@ -73,10 +77,12 @@ def scrape(category: str):
                 if search in link:
                     print(link)
                     rec_downloads.append(base + link)
-
+            save = False
             for download in rec_downloads:
                 if download.endswith('obj.zip'):
-                    download_obj_zip(download, product)
+                    # download_obj_zip(download, product)
+                    save = True
+                    product.obj_file = download
                 elif download.endswith('_.DWG'):
                     product.dwg_3d_file = download
                 elif download.endswith('.dwg'):
@@ -85,20 +91,27 @@ def scrape(category: str):
                     product.dwg_3d_file = download
                 elif download.endswith('_.rfa'):
                     product.rfa_file = download
-                product.save()
+                if save:
+                    product.name = name
+                    product.save()
+                else:
+                    try:
+                        product.delete()
+                    except AssertionError:
+                        continue
 
 
-def download_obj_zip(download, product):
-    res = requests.get(download, stream=True)
-    try:
-        zipped = zipfile.ZipFile(io.BytesIO(res.content))
-    except zipfile.BadZipfile:
-        return
-    product.obj_file = download
-    for name in zipped.namelist():
-        if name.endswith('.obj'):
-            file = ContentFile(zipped.read(name))
-            product._obj_file.save(name, file, save=True)
-        if name.endswith('.mtl'):
-            file = ContentFile(zipped.read(name))
-            product._mtl_file.save(name, file, save=True)
+# def download_obj_zip(download, product):
+#     res = requests.get(download, stream=True)
+#     try:
+#         zipped = zipfile.ZipFile(io.BytesIO(res.content))
+#     except zipfile.BadZipfile:
+#         return
+#     product.obj_file = download
+#     for name in zipped.namelist():
+#         if name.endswith('.obj'):
+#             file = ContentFile(zipped.read(name))
+#             product._obj_file.save(name, file, save=True)
+#         if name.endswith('.mtl'):
+#             file = ContentFile(zipped.read(name))
+#             product._mtl_file.save(name, file, save=True)

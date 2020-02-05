@@ -140,6 +140,7 @@ class SubproductGeometryPresentationSerializer:
         self.width = product.get_width() if product.get_width() else product.derived_width
         self.depth = product.get_depth() if product.get_depth() else product.derived_depth
         self.height = product.get_height() if product.get_height() else product.derived_height
+        self.center = product.derived_center
         self.derived_width = product.derived_width
         self.derived_depth = product.derived_depth
         self.derived_height = product.derived_height

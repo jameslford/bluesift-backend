@@ -200,6 +200,7 @@ class Product(models.Model):
     derived_width = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_height = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
     derived_depth = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    derived_center = pg_fields.ArrayField(models.FloatField(null=True, blank=True), null=True, blank=True, size=3)
 
     geometry_clean = models.BooleanField(default=False)
     detail_response = pg_fields.JSONField(null=True, blank=True)
