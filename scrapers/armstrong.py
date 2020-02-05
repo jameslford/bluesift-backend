@@ -1,38 +1,8 @@
 
-category_map = {
-        'residential_engineeredtile':
-        'https://www.armstrongflooring.com/residential/en-us/engineered-tile/_jcr_content.browseresults.json?pageSize=139&currPageIndex=1',
-        'residential_hardwood':
-        'https://www.armstrongflooring.com/residential/en-us/hardwood-flooring/_jcr_content.browseresults.json?pageSize=386&currPageIndex=1',
-        'residential_laminate':
-        'https://www.armstrongflooring.com/residential/en-us/laminate-flooring/_jcr_content.browseresults.json?pageSize=93&currPageIndex=1',
-        'residential_lvt':
-        'https://www.armstrongflooring.com/residential/en-us/vinyl-flooring/luxury-vinyl-tile/_jcr_content.browseresults.json?pageSize=111&currPageIndex=1',
-        'residential_rigidcore':
-        'https://www.armstrongflooring.com/residential/en-us/rigid-core/_jcr_content.browseresults.json?pageSize=78&currPageIndex=1',
-        'residential_vinylsheet':
-        'https://www.armstrongflooring.com/residential/en-us/vinyl-flooring/vinyl-sheet/_jcr_content.browseresults.json?pageSize=252&currPageIndex=1',
-        'residential_vinyltile':
-        'https://www.armstrongflooring.com/residential/en-us/vinyl-flooring/vinyl-tile/_jcr_content.browseresults.json?pageSize=26&currPageIndex=1',
-        'commercial_hardwood':
-        'https://www.armstrongflooring.com/commercial/en-us/products/commercial-hardwood/browse/_jcr_content.browseresults.json?category=hw&pageSize=60&currPageIndex=1',
-        'commercial_heterovinyl':
-        'https://www.armstrongflooring.com/commercial/en-us/products/het/browse/_jcr_content.browseresults.json?category=het&pageSize=167&currPageIndex=1',
-        'commercial_homovinyl':
-        'https://www.armstrongflooring.com/commercial/en-us/products/hom/browse/_jcr_content.browseresults.json?category=hom&pageSize=89&currPageIndex=1',
-        'commercial_laminate':
-        'https://www.armstrongflooring.com/commercial/en-us/products/commercial-laminate/browse/_jcr_content.browseresults.json?category=lam&pageSize=27&currPageIndex=1',
-        'commercial_linoleum':
-        'https://www.armstrongflooring.com/commercial/en-us/products/linoleum/browse/_jcr_content.browseresults.json?category=lin&pageSize=92&currPageIndex=1',
-        'commercial_vct':
-        'https://www.armstrongflooring.com/commercial/en-us/products/vinyl-composition-tile/browse/_jcr_content.browseresults.json?category=vct&pageSize=386&currPageIndex=1',
-        'commercial_luxuryflooring':
-        'https://www.armstrongflooring.com/commercial/en-us/products/lvt-luxury-flooring/browse/_jcr_content.browseresults.json?category=lvt&pageSize=320&currPageIndex=1',
-}
-
 
 def scrape(category):
-    url = category_map.get(category)
+        pass
+#     url = category_map.get(category)
     # if not url:
     #     raise Exception(f'{category} is not a valid category for armstrong')
     # results = requests.get(self.subgroup.base_scraping_url).json()

@@ -55,7 +55,10 @@ def scrape(category: str):
             search = sku.replace('-', '')
             rec_downloads = []
             img_src = img.get('src')
-            product: Appliance = Appliance.objects.get_or_create(manufacturer=manufacturer, manufacturer_sku=sku, appliance_type=appliance_type)[0]
+            product: Appliance = Appliance.objects.get_or_create(
+                manufacturer=manufacturer,
+                manufacturer_sku=sku,
+                appliance_type=appliance_type)[0]
             if img_src:
                 print(img_src)
                 img_name = img_src.split('/')[-1]
@@ -73,22 +76,7 @@ def scrape(category: str):
 
             for download in rec_downloads:
                 if download.endswith('obj.zip'):
-                    res = requests.get(download, stream=True)
-                    try:
-                        zipped = zipfile.ZipFile(io.BytesIO(res.content))
-                    except zipfile.BadZipfile:
-                        product.save()
-                        continue
-                    product.obj_file = download
-                    for name in zipped.namelist():
-                        if name.endswith('.obj'):
-                            file = ContentFile(zipped.read(name))
-                            product._obj_file.save(name, file, save=True)
-                            print(name, ' saved')
-                        if name.endswith('.mtl'):
-                            file = ContentFile(zipped.read(name))
-                            product._mtl_file.save(name, file, save=True)
-                            print(name, ' saved')
+                    download_obj_zip(download, product)
                 elif download.endswith('_.DWG'):
                     product.dwg_3d_file = download
                 elif download.endswith('.dwg'):
@@ -98,3 +86,19 @@ def scrape(category: str):
                 elif download.endswith('_.rfa'):
                     product.rfa_file = download
                 product.save()
+
+
+def download_obj_zip(download, product):
+    res = requests.get(download, stream=True)
+    try:
+        zipped = zipfile.ZipFile(io.BytesIO(res.content))
+    except zipfile.BadZipfile:
+        return
+    product.obj_file = download
+    for name in zipped.namelist():
+        if name.endswith('.obj'):
+            file = ContentFile(zipped.read(name))
+            product._obj_file.save(name, file, save=True)
+        if name.endswith('.mtl'):
+            file = ContentFile(zipped.read(name))
+            product._mtl_file.save(name, file, save=True)

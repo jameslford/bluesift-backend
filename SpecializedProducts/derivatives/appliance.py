@@ -67,6 +67,7 @@ class ApplianceConverter(Converter):
         path = self.product._mtl_file.url
         data[index] = str(path).encode('utf-8')
         buffer = io.BytesIO()
+        
         buffer.writelines(data)
         buffer.seek(0)
         self.resolver = WebResolver
