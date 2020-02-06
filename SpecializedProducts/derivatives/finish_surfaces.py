@@ -220,6 +220,28 @@ class FinishSurface(ProductSubClass):
         converter = FinishSurfaceConverter(self)
         converter.convert()
 
+    def save(self, *args, **kwargs):
+        floors = bool(self.floors or self.shower_floors or self.covered_floors)
+        walls = bool(self.walls or self.shower_walls or self.covered_walls)
+        trim = bool(self.corner_covebase or self.bullnose)
+        multiple = sum([floors, walls, self.countertops, self.cabinet_fronts])
+        if multiple > 1:
+            self.category = 'multi-surface'
+        elif self.cabinet_fronts:
+            self.category = 'cabinet-fronts'
+        elif trim:
+            self.category = 'trim'
+        elif self.countertops:
+            self.category = 'countertops'
+        elif walls:
+            self.category = 'walls'
+        elif floors:
+            self.category = 'floors'
+        else:
+            self.category = 'unclassified'
+        return super().save(*args, **kwargs)
+
+
     # def import_data(self, **kwargs):
     #     importer = FinishSurfaceImporter(**kwargs)
     #     importer.add_data()

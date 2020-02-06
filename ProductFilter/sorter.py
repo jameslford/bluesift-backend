@@ -311,6 +311,7 @@ class Sorter:
             'manufacturer_collection',
             'manufacturer_sku',
             'name',
+            'hash_value',
             'swatch_url',
             'swatch_image',
             'manufacturer__label',

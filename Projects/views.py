@@ -6,8 +6,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin
-from .models import Project
-from .serializers import serialize_project_detail, reserialize_task, DAY
+from Profiles.models import LibraryProduct
+from .models import Project, ProjectProduct
+from .serializers import serialize_project_detail, reserialize_task, resource_serializer
+
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
@@ -17,16 +19,22 @@ def all_projects(request):
         min_date=Min('tasks__start_date'), 
         max_date=Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day')),
         material_cost=Sum(
-            F('tasks__retailer_product__in_store_ppu') * F('tasks__quantity_needed'),
+            F('products__retailer_product__in_store_ppu') * F('products__quantity_needed'),
             output_field=DecimalField(decimal_places=2)),
         additional_costs_sum=Sum('additional_costs__amount'),
         duration=ExpressionWrapper(
             (Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day'))) -
             (Min('tasks__start_date')), output_field=DurationField()
             ),
+        address_string=F('address__address_string'),
+        lat=F('address__coordinates__lat'),
+        lng=F('address__coordinates__lng'),
         ).values(
             'pk',
             'nickname',
+            'address_string',
+            'lat',
+            'lng',
             'deadline',
             'min_date',
             'max_date',
@@ -74,9 +82,9 @@ def dashboard(request: Request, project_pk=None):
 
 
 @api_view(['POST', 'DELETE'])
+@permission_classes((IsAuthenticated, OwnerOrAdmin))
 def tasks(request: Request, project_pk, task_pk=None):
     project = Project.objects.get_user_projects(request.user, project_pk)
-
     if request.method == 'POST':
         data = request.data
         children = data.get('children', None)
@@ -91,5 +99,27 @@ def tasks(request: Request, project_pk, task_pk=None):
         task.delete()
         return Response(status=status.HTTP_200_OK)
 
+            # 'product__product__product',
+            # 'product__product__product__priced'
 
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes((IsAuthenticated, OwnerOrAdmin))
+def resources(request, pk):
 
+    if request.method == 'GET':
+        products = ProjectProduct.objects.select_related(
+            'product__product').filter(project__owner__user__pk=request.user.pk, project__pk=pk)
+        products = [resource_serializer(prod) for prod in products]
+        return Response(products, status=status.HTTP_200_OK)
+
+    if request.method == 'POST':
+        library_product = request.POST.get('library_product')
+        library_product = LibraryProduct.objects.get(pk=library_product)
+        project: Project = Project.objects.get(pk=pk)
+        ProjectProduct.objects.get_or_create(
+            project=project,
+            product=library_product
+        )
+        return Response(status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

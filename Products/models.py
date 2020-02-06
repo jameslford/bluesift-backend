@@ -155,7 +155,9 @@ class Product(models.Model):
 
     name = models.CharField(max_length=1200, blank=True)
     bb_sku = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4, editable=False)
+    hash_value = models.CharField(max_length=1200, blank=True, null=True, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF, blank=True)
+    category = models.CharField(max_length=60, editable=False, null=True)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
     manufacturer_sku = models.CharField(max_length=200, null=True, blank=True)
@@ -222,8 +224,8 @@ class Product(models.Model):
         return f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'
 
     def save(self, *args, **kwargs):
-        if not self.name:
-            self.name = str(self.bb_sku)
+        if not self.hash_value:
+            self.set_hash()
         super(Product, self).save(*args, **kwargs)
 
     def get_in_store(self):
@@ -267,7 +269,7 @@ class Product(models.Model):
         self.locations = points
         self.save()
 
-    def set_name(self):
+    def set_hash(self):
         sub = Product.subclasses.get_subclass(pk=self.pk)
         fields = [
             'manufacturer',
@@ -277,4 +279,4 @@ class Product(models.Model):
             ] + sub.name_fields
         vals = list(model_to_dict(sub, fields=fields).values())
         vals = [str(val) for val in vals]
-        self.name = '*$'.join(vals)
+        self.hash_value = '*$'.join(vals)

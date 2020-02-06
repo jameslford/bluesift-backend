@@ -5,7 +5,8 @@ from Accounts.models import User
 from Accounts.serializers import user_serializer
 from Suppliers.models import SupplierLocation, SupplierProduct
 from Profiles.models import SupplierEmployeeProfile, ConsumerProfile
-from Projects.models import Project, Project, LibraryProduct
+# from Profiles.models import LibraryProduct
+# from Projects.models import Project
 from Plans.serializers import PlanSerializer
 from Groups.models import SupplierCompany
 from .globals import BusinessType
@@ -79,7 +80,7 @@ class BusinessSerializer:
                 self.locations = [BusinessSerializer(loc).getData() for loc in locations]
             return self.serialize()
         return
-   
+
 
 class ProfileSerializer:
 

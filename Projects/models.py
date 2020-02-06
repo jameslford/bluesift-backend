@@ -4,9 +4,8 @@ from django.core.exceptions import ValidationError
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
-from Suppliers.models import SupplierLocation, SupplierProduct
-from Products.models import Product
-from Profiles.models import ConsumerProfile
+from Suppliers.models import SupplierProduct
+from Profiles.models import ConsumerProfile, LibraryProduct
 
 DAY = 60*60*24*1000
 
@@ -122,49 +121,6 @@ class Project(models.Model):
         return super().save(*args, **kwargs)
 
 
-class LibraryProductManager(models.Manager):
-
-    def add_product(self, user, product_pk):
-        if user.is_supplier:
-            raise Exception('supplier cannot add libraryproduct')
-        product = Product.objects.get(pk=product_pk)
-        group = user.get_group()
-        LibraryProduct.objects.get_or_create(product=product, owner=group)
-        return True
-
-    def delete_product(self, user, product_pk):
-        if user.is_supplier:
-            raise Exception('supplier cannot delete libraryproduct')
-        product = Product.objects.get(pk=product_pk)
-        group = user.get_group()
-        product = LibraryProduct.objects.get(product=product, owner=group)
-        product.delete()
-        return True
-
-
-class LibraryProduct(models.Model):
-    product = models.ForeignKey(
-        Product,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='project_products'
-        )
-    owner = models.ForeignKey(
-        ConsumerProfile,
-        on_delete=models.CASCADE,
-        related_name='products'
-        )
-
-    objects = LibraryProductManager()
-    subclasses = InheritanceManager()
-
-    class Meta:
-        unique_together = ('product', 'owner')
-
-    def __str__(self):
-        return self.product.name
-
-
 class ProjectTask(models.Model):
     DEPENDENCIES = Choices(('FTS', 'Finish to Start'), ('STS', 'Start to Start'), ('FTF', 'Finish to Finish'))
     name = models.CharField(max_length=80)
@@ -176,8 +132,6 @@ class ProjectTask(models.Model):
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(null=True)
     level = models.IntegerField(default=0)
-    quantity_needed = models.IntegerField(null=True, blank=True)
-    procured = models.BooleanField(default=False)
     predecessor = models.ForeignKey(
         'self',
         null=True,
@@ -195,32 +149,10 @@ class ProjectTask(models.Model):
         on_delete=models.CASCADE,
         related_name='tasks'
         )
-    product = models.ForeignKey(
-        Product,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='task'
-        )
-    selected_retailer = models.ForeignKey(
-        SupplierLocation,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='task'
-        )
-    retailer_product = models.ForeignKey(
-        SupplierProduct,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='task'
-        )
 
-    def save(self, *args, **kwargs):
-        if self.product and self.selected_retailer:
-            self.retailer_product = SupplierProduct.objects.filter(
-                retailer=self.selected_retailer,
-                product=self.product).first()
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.count_parents()
-        super(ProjectTask, self).save(*args, **kwargs)
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def count_parents(self):
         level = 0
@@ -243,6 +175,37 @@ class ProjectTask(models.Model):
             'duration': self.duration / DAY if self.duration else None,
             'children': [child.mini_serialize() for child in self.children.all()],
             }
+
+class ProjectProduct(models.Model):
+    quantity_needed = models.IntegerField(null=True, blank=True)
+    procured = models.BooleanField(default=False)
+    project = models.ForeignKey(
+        Project,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='products'
+        )
+    product = models.ForeignKey(
+        LibraryProduct,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name='projects'
+        )
+    retailer_product = models.ForeignKey(
+        SupplierProduct,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='projects'
+        )
+    linked_tasks = models.ManyToManyField(ProjectTask)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.retailer_product:
+            if self.retailer_product.product != self.product:
+                raise ValidationError('retailer product does not match product')
+        if self.product.owner != self.project.owner:
+            raise ValidationError('product not in user library')
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 class AddtionalProjectCosts(models.Model):
     project = models.ForeignKey(

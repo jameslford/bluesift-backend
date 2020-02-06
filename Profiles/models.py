@@ -3,6 +3,7 @@ from django.conf import settings
 from model_utils.managers import InheritanceManager
 from Groups.models import SupplierCompany
 from Plans.models import ConsumerPlan
+from Products.models import Product
 
 
 class ProfileManager(models.Manager):
@@ -123,3 +124,47 @@ class SupplierEmployeeProfile(BaseProfile):
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
         super(SupplierEmployeeProfile, self).save(*args, **kwargs)
+
+
+
+class LibraryProductManager(models.Manager):
+
+    def add_product(self, user, product_pk):
+        if user.is_supplier:
+            raise Exception('supplier cannot add libraryproduct')
+        product = Product.objects.get(pk=product_pk)
+        group = user.get_group()
+        LibraryProduct.objects.get_or_create(product=product, owner=group)
+        return True
+
+    def delete_product(self, user, product_pk):
+        if user.is_supplier:
+            raise Exception('supplier cannot delete libraryproduct')
+        product = Product.objects.get(pk=product_pk)
+        group = user.get_group()
+        product = LibraryProduct.objects.get(product=product, owner=group)
+        product.delete()
+        return True
+
+
+class LibraryProduct(models.Model):
+    product = models.ForeignKey(
+        Product,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='project_products'
+        )
+    owner = models.ForeignKey(
+        ConsumerProfile,
+        on_delete=models.CASCADE,
+        related_name='products'
+        )
+
+    objects = LibraryProductManager()
+    subclasses = InheritanceManager()
+
+    class Meta:
+        unique_together = ('product', 'owner')
+
+    def __str__(self):
+        return self.product.name

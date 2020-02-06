@@ -18,6 +18,100 @@ from Suppliers.models import SupplierLocation
 # from UserProductCollections.models import SupplierLocation
 
 
+
+
+# XXX Expirimental #######################################
+
+'''
+class FacetBase(models.Model):
+    # queryset = models.ManyToManyField(Product)
+    attribute = models.CharField(max_length=60)
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('attribute', 'content_type')
+
+class QueryIndex(models.Model):
+    """
+    cache relating query strings to json responses
+    """
+    query_dict = models.CharField(max_length=1000)
+    query_path = models.CharField(max_length=500)
+    response = pg_fields.JSONField(null=True)
+    dirty = models.BooleanField(default=True)
+    retailer_location = models.ForeignKey(
+        SupplierLocation,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='qis'
+        )
+    product_filter = models.ForeignKey(
+        'ProductFilter',
+        on_delete=models.CASCADE,
+        related_name='query_indexes'
+    )
+    products = models.ManyToManyField(
+        'Products.Product',
+        related_name='query_indexes'
+        )
+    created = models.DateTimeField(auto_now=True)
+    last_retrieved = models.DateTimeField(auto_now_add=True, null=True)
+    times_accessed = models.PositiveIntegerField(null=True, default=1)
+
+    objects = QueryIndexManager()
+
+    class Meta:
+        unique_together = ('query_dict', 'query_path')
+
+    def __str__(self):
+        return f'{self.query_path}_{self.query_dict}'
+
+    def refresh(self):
+        """ DO NOT USE!
+        this method should only ever be called by celery task.
+        """
+        view, args, kwargs = dj_resolve(self.query_path)
+        request = HttpRequest()
+        request.method = 'GET'
+        request.path = self.query_path
+        request.GET = QueryDict(self.query_dict)
+        # view(request, update=True, *args, **kwargs)
+
+    def get_product_pks(self):
+        return self.products.values_list('pk', flat=True)
+
+    def get_products(self, select_related=None):
+        model = self.product_filter.get_content_model()
+        pks = self.products.all().values_list('pk', flat=True)
+        if select_related:
+            return model.objects.select_related(select_related).filter(pk__in=pks)
+        return model.objects.filter(pk__in=pks)
+
+
+class FacetOthersCollection(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
+    query_index = models.ForeignKey(
+        QueryIndex,
+        on_delete=models.CASCADE,
+        related_name='others'
+        )
+    facet_name = models.CharField(max_length=100)
+    products = models.ManyToManyField(
+        'Products.Product',
+        related_name='facet_collections'
+    )
+
+    class Meta:
+        unique_together = ('query_index', 'facet_name')
+
+'''
+
+
+# XXX ############################################################################
+
+
+
 AVAILABILITY_FACET = 'AvailabilityFacet'
 BOOLGROUP_FACET = 'BoolGroupFacet'
 COLOR_FACET = 'ColorFacet'

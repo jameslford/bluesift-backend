@@ -135,7 +135,7 @@ class User(AbstractBaseUser):
         if self.is_supplier:
             from Suppliers.models import SupplierProduct
             return SupplierProduct
-        from Projects.models import LibraryProduct
+        from Profiles.models import LibraryProduct
         return LibraryProduct
 
     def get_library_links(self):

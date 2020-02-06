@@ -1,6 +1,6 @@
 ''' profiles.urls.py '''
 from django.urls import path
-from .views import all_projects, dashboard, tasks
+from .views import all_projects, dashboard, tasks, resources
 
 
 urlpatterns = [
@@ -9,4 +9,5 @@ urlpatterns = [
     path('dashboard', dashboard),
     path('tasks/<int:project_pk>', tasks),
     path('tasks/<int:project_pk>/<int:task_pk>', tasks),
+    path('resources/<int:pk>', resources)
 ]

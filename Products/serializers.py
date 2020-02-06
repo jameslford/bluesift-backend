@@ -36,6 +36,7 @@ def serialize_product(product: Product) -> Dict[str, any]:
     return {
         'pk': product.pk,
         'unit': product.unit,
+        'hash_value': product.hash_value,
         'manufacturer_style': product.manufacturer_style,
         'manufacturer_collection': product.manufacturer_collection,
         'manufacturer_sku': product.manufacturer_sku,

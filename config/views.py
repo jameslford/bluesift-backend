@@ -8,7 +8,7 @@ from rest_framework import status
 from config.globals import check_department_string
 from ProductFilter.models import ProductFilter
 from Groups.models import SupplierCompany
-from Projects.models import LibraryProduct
+from Profiles.models import LibraryProduct
 from Suppliers.models import SupplierProduct, SupplierLocation
 from .models import UserTypeStatic
 from .tasks import add_supplier_record
