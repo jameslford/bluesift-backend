@@ -57,7 +57,7 @@ class ProductAvailabilityQuerySet(models.QuerySet):
             return pks
         return self.filter(pk__in=Subquery(pks))
 
-    def retailer_products(self, location_pk=None):
+    def supplier_products(self, location_pk=None):
         from Suppliers.models import SupplierProduct
         if location_pk:
             sup_prods = SupplierProduct.objects.filter(
@@ -128,9 +128,9 @@ class ProductPricingManager(models.Manager):
         """ just points to qset """
         return self.get_queryset().available_in_store(location_pk)
 
-    def retailer_products(self, location_pk=None):
+    def supplier_products(self, location_pk=None):
         """ just points to qset """
-        return self.get_queryset().retailer_products(location_pk)
+        return self.get_queryset().supplier_products(location_pk)
 
     def safe_availability_commands(self):
         """ just points to qset """

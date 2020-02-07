@@ -42,7 +42,7 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
         #     'pk': task.product.pk
         #     } if task.product else None,
         # 'selected_retailer': task.selected_retailer.pk if task.selected_retailer else None,
-        # 'retailer_product': task.retailer_product.pk if task.retailer_product else None,
+        # 'supplier_product': task.supplier_product.pk if task.supplier_product else None,
         # 'product': serialize_product_priced(task.product) if task.product else None,
 
 
@@ -76,12 +76,14 @@ def reserialize_task(project, data, parent: ProjectTask = None):
     for child in children:
         reserialize_task(project, child, task)
 
+
 def resource_serializer(product: ProjectProduct):
     return {
-        'tasks': product.project.tasks.values('pk', 'name'),
-        'linked_tasks': product.linked_tasks.values('pk', 'name'),
+        'pk': product.pk,
+        'linked_tasks': {'pk': product.linked_tasks.pk, 'name': product.linked_tasks.name} if product.linked_tasks else None,
         'quantity': product.quantity_needed,
         'procured': product.procured,
+        'supplier_product': product.supplier_product.get_priced() if product.supplier_product else None,
         'product': serialize_product(product.product.product),
         'priced': [pro.get_priced() for pro in product.product.product.priced.all()]
     }

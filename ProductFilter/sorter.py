@@ -434,7 +434,7 @@ class Sorter:
         if not price_indices:
             return _products
         if self.location_pk:
-            sup_prods = products.retailer_products(self.location_pk)
+            sup_prods = products.supplier_products(self.location_pk)
             sup_prods = self.__range_iterator(sup_prods, price_indices[0])
             return self.product_type.objects.filter(pk__in=models.Subquery(sup_prods.values('product__pk')))
         return self.__range_iterator(_products, price_indices[0])

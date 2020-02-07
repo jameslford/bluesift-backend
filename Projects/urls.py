@@ -9,5 +9,6 @@ urlpatterns = [
     path('dashboard', dashboard),
     path('tasks/<int:project_pk>', tasks),
     path('tasks/<int:project_pk>/<int:task_pk>', tasks),
-    path('resources/<int:pk>', resources)
+    path('resources/<int:project_pk>', resources),
+    path('resources/<int:project_pk>/<int:product_pk>', resources)
 ]

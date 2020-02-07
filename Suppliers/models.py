@@ -266,7 +266,7 @@ class SupplierProduct(models.Model):
             'name': self.location.nickname,
             'qty_in_store': self.units_available_in_store,
             'lead_time': self.lead_time_ts,
-            'price': self.in_store_ppu
+            'price': self.in_store_ppu,
             }
 
     def percentage_off(self):

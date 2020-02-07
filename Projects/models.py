@@ -191,18 +191,24 @@ class ProjectProduct(models.Model):
         on_delete=models.PROTECT,
         related_name='projects'
         )
-    retailer_product = models.ForeignKey(
+    supplier_product = models.ForeignKey(
         SupplierProduct,
         null=True,
         on_delete=models.SET_NULL,
         related_name='projects'
         )
-    linked_tasks = models.ManyToManyField(ProjectTask)
+    linked_tasks = models.ForeignKey(
+        ProjectTask,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products'
+    )
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.retailer_product:
-            if self.retailer_product.product != self.product:
-                raise ValidationError('retailer product does not match product')
+        if self.supplier_product:
+            if self.supplier_product.product != self.product.product:
+                raise ValidationError(f'retailer product does not match product')
         if self.product.owner != self.project.owner:
             raise ValidationError('product not in user library')
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)

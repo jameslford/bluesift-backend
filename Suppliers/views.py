@@ -55,7 +55,7 @@ def crud_location(request: Request, pk: int = None):
 
 @api_view(['GET', 'PUT'])
 @permission_classes((IsAuthenticated, RetailerPermission))
-def retailer_products(request: HttpRequest, product_type=None, location_pk=None):
+def supplier_products(request: HttpRequest, product_type=None, location_pk=None):
 
     if request.method == 'GET':
         model = check_department_string(product_type)

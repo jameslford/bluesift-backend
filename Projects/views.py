@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from config.custom_permissions import OwnerOrAdmin
 from Profiles.models import LibraryProduct
-from .models import Project, ProjectProduct
+from Suppliers.models import SupplierProduct
+from .models import Project, ProjectProduct, ProjectTask
 from .serializers import serialize_project_detail, reserialize_task, resource_serializer
 
 
@@ -19,7 +20,7 @@ def all_projects(request):
         min_date=Min('tasks__start_date'), 
         max_date=Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day')),
         material_cost=Sum(
-            F('products__retailer_product__in_store_ppu') * F('products__quantity_needed'),
+            F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
             output_field=DecimalField(decimal_places=2)),
         additional_costs_sum=Sum('additional_costs__amount'),
         duration=ExpressionWrapper(
@@ -104,22 +105,52 @@ def tasks(request: Request, project_pk, task_pk=None):
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes((IsAuthenticated, OwnerOrAdmin))
-def resources(request, pk):
+def resources(request, project_pk, product_pk=None):
 
+    project = Project.objects.prefetch_related('tasks', 'products').get(owner__user=request.user, pk=project_pk)
     if request.method == 'GET':
-        products = ProjectProduct.objects.select_related(
-            'product__product').filter(project__owner__user__pk=request.user.pk, project__pk=pk)
-        products = [resource_serializer(prod) for prod in products]
-        return Response(products, status=status.HTTP_200_OK)
+        response = {
+            'tasks': project.tasks.values('pk', 'name'),
+            'project_products': [resource_serializer(prod) for prod in project.products.all()]
+        }
+        return Response(response, status=status.HTTP_200_OK)
 
     if request.method == 'POST':
         library_product = request.POST.get('library_product')
         library_product = LibraryProduct.objects.get(pk=library_product)
-        project: Project = Project.objects.get(pk=pk)
         ProjectProduct.objects.get_or_create(
             project=project,
             product=library_product
         )
         return Response(status=status.HTTP_200_OK)
+
+    if request.method == 'PUT':
+        data = request.data
+        for group in data:
+            pk = group.get('pk')
+            prod: ProjectProduct = ProjectProduct.objects.get(project=project, pk=pk)
+            quant = group.get('quantity', prod.quantity_needed)
+            procured = group.get('procured', prod.procured)
+            sup = group.get('supplier')
+            if sup:
+                supplier_product = SupplierProduct.objects.get(pk=sup)
+                prod.supplier_product = supplier_product
+            task = group.get('task')
+            if task:
+                ptask = ProjectTask.objects.get(project=project, pk=task)
+                prod.linked_tasks = ptask
+            prod.quantity_needed = quant
+            prod.procured = procured
+            prod.save()
+        return Response(status=status.HTTP_200_OK)
+
+    if request.method == 'DELETE':
+        prod = ProjectProduct.objects.get(project=project, pk=product_pk)
+        prod.delete()
+        return Response(status=status.HTTP_200_OK)
+
+
+
+
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

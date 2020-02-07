@@ -121,7 +121,7 @@ def create_child_tasks():
             child_task.start_date = task.start_date + datetime.timedelta(tdelt)
 
 @transaction.atomic
-def create_retailer_products():
+def create_supplier_products():
     locations: List[SupplierLocation] = SupplierLocation.objects.all()
     min_count = 30
     for location in locations:
@@ -159,7 +159,7 @@ def create_retailer_products():
 
 
 def add_additonal():
-    create_retailer_products()
+    create_supplier_products()
     create_group_products()
     create_parent_tasks()
     create_child_tasks()
