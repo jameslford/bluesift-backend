@@ -13,6 +13,9 @@ from django.db.models.query import QuerySet
 from django.http import HttpRequest, QueryDict
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
+from django.contrib.gis.measure import D
+from rest_framework.request import Request
+from Addresses.models import Zipcode
 from Products.models import Product
 from Suppliers.models import SupplierLocation
 # from UserProductCollections.models import SupplierLocation
@@ -22,90 +25,236 @@ from Suppliers.models import SupplierLocation
 
 # XXX Expirimental #######################################
 
-'''
 class FacetBase(models.Model):
     # queryset = models.ManyToManyField(Product)
     attribute = models.CharField(max_length=60)
+    name = models.CharField(max_length=20)
     content_type = models.ForeignKey(
         ContentType, on_delete=models.CASCADE)
+    # name: str
+    # facet_type: str
+    # quer_value: str
+    # # values: List = dfield(default_factory=lambda: [])
+    # order: int = 10
+    # key: bool = False
+    selected: bool = False
+    # total_count: int = 0
+    qterms: List[str] = None
+    queryset: QuerySet = None
+    intersection: QuerySet = None
+    collection_pk: str = None
+    return_values: List = dfield(default_factory=lambda: [])
 
     class Meta:
+        abstract = True
         unique_together = ('attribute', 'content_type')
 
-class QueryIndex(models.Model):
-    """
-    cache relating query strings to json responses
-    """
-    query_dict = models.CharField(max_length=1000)
-    query_path = models.CharField(max_length=500)
-    response = pg_fields.JSONField(null=True)
-    dirty = models.BooleanField(default=True)
-    retailer_location = models.ForeignKey(
-        SupplierLocation,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name='qis'
-        )
-    product_filter = models.ForeignKey(
-        'ProductFilter',
-        on_delete=models.CASCADE,
-        related_name='query_indexes'
-    )
-    products = models.ManyToManyField(
-        'Products.Product',
-        related_name='query_indexes'
-        )
-    created = models.DateTimeField(auto_now=True)
-    last_retrieved = models.DateTimeField(auto_now_add=True, null=True)
-    times_accessed = models.PositiveIntegerField(null=True, default=1)
+    @property
+    def model(self):
+        return self.content_type.model_class()
 
-    objects = QueryIndexManager()
+    @property
+    def values(self):
+        raise Exception('Facet must be subclassed!')
+
+    def parse_request(self, params: QueryDict):
+        raise Exception('Facet must be subclassed!')
+
+
+    def set_queryset(self, products: QuerySet):
+        raise Exception('Facet must be subclassed!')
+
+
+class MultiFacet(FacetBase):
+
+    @property
+    def values(self):
+        return self.model.objects.values_list(self.attribute, flat=True).distinct()
+
+    def parse_request(self, params: QueryDict):
+        qterms = params.getlist(self.attribute, [])
+        if qterms:
+            qterms = qterms.split(',')
+        self.qterms = [term for term in qterms if term in self.values]
+
+    def set_queryset(self, products: QuerySet):
+        if not self.qterms:
+            self.queryset = products
+            return
+        for term in self.qterms:
+            q_object |= models.Q(**{self.attribute: term})
+            self.selected = True
+        self.queryset = products.filter(q_object)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if not hasattr(self.model, self.attribute):
+            raise Exception(f'Attribute --- {self.attribute} --- does not exist on {self.content_type.name}')
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+class RadiusFacet(FacetBase):
+
+    radius = None
+    zipcode = None
+
+    @property
+    def values(self):
+        return [5, 10, 15, 25, 50, 100]
+        # return self.model.objects.values_list(self.attribute, flat=True).distinct()
+
+    def parse_request(self, params: QueryDict):
+        self.radius = params.get('radius')
+        self.zipcode = params.get('zipcode')
+
+    def set_queryset(self, products: QuerySet):
+        radius = D(mi=int(self.radius))
+        coords = Zipcode.objects.filter(code=self.zipcode).first().centroid.point
+        if not radius and coords:
+            self.queryset = products
+        self.queryset = products.filter(locations__distance_lte=(coords, radius))
+
+class BoolFacet(FacetBase):
+
+    attributes = pg_fields.ArrayField(
+        models.CharField(max_length=60)
+        )
 
     class Meta:
-        unique_together = ('query_dict', 'query_path')
+        unique_together = ('attributes', 'facet_base__content_type')
 
-    def __str__(self):
-        return f'{self.query_path}_{self.query_dict}'
+    @property
+    def values(self):
+        return list(self.attributes)
 
-    def refresh(self):
-        """ DO NOT USE!
-        this method should only ever be called by celery task.
-        """
-        view, args, kwargs = dj_resolve(self.query_path)
-        request = HttpRequest()
-        request.method = 'GET'
-        request.path = self.query_path
-        request.GET = QueryDict(self.query_dict)
-        # view(request, update=True, *args, **kwargs)
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        for attr in self.attributes:
+            if not hasattr(self.model, attr):
+                raise Exception(f'Attribute --- {attr} --- does not exist on {self.content_type.name}')
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
-    def get_product_pks(self):
-        return self.products.values_list('pk', flat=True)
+    def parse_request(self, params: QueryDict):
+        qterms = params.getlist(self.name)
+        self.qterms = [term for term in qterms if term in self.attributes]
 
-    def get_products(self, select_related=None):
-        model = self.product_filter.get_content_model()
-        pks = self.products.all().values_list('pk', flat=True)
-        if select_related:
-            return model.objects.select_related(select_related).filter(pk__in=pks)
-        return model.objects.filter(pk__in=pks)
+    def set_queryset(self, products: QuerySet):
+        if not self.qterms:
+            self.queryset = products
+            return
+        terms = {}
+        for term in self.qterms:
+            terms[term] = True
+            self.selected = True
+        self.queryset = products.filter(**terms)
 
 
-class FacetOthersCollection(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
-    query_index = models.ForeignKey(
-        QueryIndex,
-        on_delete=models.CASCADE,
-        related_name='others'
-        )
-    facet_name = models.CharField(max_length=100)
-    products = models.ManyToManyField(
-        'Products.Product',
-        related_name='facet_collections'
-    )
+class RangeFacet(FacetBase):
 
-    class Meta:
-        unique_together = ('query_index', 'facet_name')
+    abs_min = None
+    abs_max = None
+    selected_min = None
+    selected_max = None
 
-'''
+    @property
+    def values(self):
+        values = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
+        self.abs_min = values.get(f'{self.attribute}__min', None)
+        self.abs_max = values.get(f'{self.attribute}__max', None)
+        return [self.abs_min, self.abs_max]
+
+    def parse_request(self, params: QueryDict):
+        qterms = params.getlist(self.attribute, [])
+        self.qterms = [term for term in qterms if term in self.values]
+
+    def set_queryset(self, products: QuerySet):
+        if not self.qterms:
+            self.queryset = products
+            return
+        for term in self.qterms:
+            q_object |= models.Q(**{self.attribute: term})
+            self.selected = True
+        self.queryset = products.filter(q_object)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if not hasattr(self.model, self.attribute):
+            raise Exception(f'Attribute --- {self.attribute} --- does not exist on {self.content_type.name}')
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+
+
+
+# class QueryIndex(models.Model):
+#     """
+#     cache relating query strings to json responses
+#     """
+#     query_dict = models.CharField(max_length=1000)
+#     query_path = models.CharField(max_length=500)
+#     response = pg_fields.JSONField(null=True)
+#     dirty = models.BooleanField(default=True)
+#     retailer_location = models.ForeignKey(
+#         SupplierLocation,
+#         null=True,
+#         on_delete=models.CASCADE,
+#         related_name='qis'
+#         )
+#     product_filter = models.ForeignKey(
+#         'ProductFilter',
+#         on_delete=models.CASCADE,
+#         related_name='query_indexes'
+#     )
+#     products = models.ManyToManyField(
+#         'Products.Product',
+#         related_name='query_indexes'
+#         )
+#     created = models.DateTimeField(auto_now=True)
+#     last_retrieved = models.DateTimeField(auto_now_add=True, null=True)
+#     times_accessed = models.PositiveIntegerField(null=True, default=1)
+
+#     objects = QueryIndexManager()
+
+#     class Meta:
+#         unique_together = ('query_dict', 'query_path')
+
+#     def __str__(self):
+#         return f'{self.query_path}_{self.query_dict}'
+
+#     def refresh(self):
+#         """ DO NOT USE!
+#         this method should only ever be called by celery task.
+#         """
+#         view, args, kwargs = dj_resolve(self.query_path)
+#         request = HttpRequest()
+#         request.method = 'GET'
+#         request.path = self.query_path
+#         request.GET = QueryDict(self.query_dict)
+#         # view(request, update=True, *args, **kwargs)
+
+#     def get_product_pks(self):
+#         return self.products.values_list('pk', flat=True)
+
+#     def get_products(self, select_related=None):
+#         model = self.product_filter.get_content_model()
+#         pks = self.products.all().values_list('pk', flat=True)
+#         if select_related:
+#             return model.objects.select_related(select_related).filter(pk__in=pks)
+#         return model.objects.filter(pk__in=pks)
+
+
+# class FacetOthersCollection(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
+#     query_index = models.ForeignKey(
+#         QueryIndex,
+#         on_delete=models.CASCADE,
+#         related_name='others'
+#         )
+#     facet_name = models.CharField(max_length=100)
+#     products = models.ManyToManyField(
+#         'Products.Product',
+#         related_name='facet_collections'
+#     )
+
+#     class Meta:
+#         unique_together = ('query_index', 'facet_name')
+
+
 
 
 # XXX ############################################################################
