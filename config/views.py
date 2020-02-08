@@ -61,9 +61,7 @@ def generic_business_detail(request: HttpRequest, category: str, pk: int):
 
 
 @api_view(['GET'])
-def generic_business_list(request: HttpRequest):
-    service_type = request.GET.get('service_type', None)
-
+def generic_business_list(request: HttpRequest, category=None):
     suppliers = SupplierLocation.objects.select_related(
         'address',
         'address__postal_code',
@@ -71,8 +69,8 @@ def generic_business_list(request: HttpRequest):
         ).prefetch_related(
             'products',
             ).all().annotate(prod_count=Count('products'))
-    if service_type:
-        prod_class = check_department_string(service_type)
+    if category:
+        prod_class = check_department_string(category)
         if prod_class is None:
             return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
         supplier_product_pks = prod_class.objects.values('priced__location__pk').distinct()

@@ -37,6 +37,7 @@ urlpatterns = [
     path('pl_status/<str:pk>', pl_status_for_product),
 
     path('business-detail/<str:category>/<int:pk>', generic_business_detail),
+    path('businesses', generic_business_list),
     path('businesses/<str:category>', generic_business_list),
     path('landing', landing),
     path('task-progress', task_progress),

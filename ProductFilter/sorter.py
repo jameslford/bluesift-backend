@@ -208,7 +208,7 @@ class Sorter:
     def get_products(self, select_related=None):
         """ Returns applicable product subclass instances """
         if self.location_pk:
-            pks = SupplierProduct.objects.filter(retailer__pk=self.location_pk).values_list('product__pk', flat=True)
+            pks = SupplierProduct.objects.filter(location__pk=self.location_pk).values_list('product__pk', flat=True)
             return self.product_type.objects.all().prefetch_related('priced').filter(pk__in=pks)
         if select_related:
             return self.product_type.objects.select_related(select_related).all()

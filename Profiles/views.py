@@ -12,17 +12,44 @@ from .models import BaseProfile, LibraryProduct
 
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'DELETE', 'POST'])
 @permission_classes((IsAuthenticated,))
 def profile_crud(request: Request):
 
     if request.method == 'GET':
-        return Response(ProfileSerializer(request.user).data, status=status.HTTP_200_OK)
+        return Response(ProfileSerializer(request.user).full_data, status=status.HTTP_200_OK)
 
     if request.method == 'PUT':
         data = request.data
         BaseProfile.objects.update_profile(request.user, **data)
         return Response(ProfileSerializer(request.user).data)
+
+    if request.method == 'POST':
+        pass
+
+    if request.method == 'DELETE':
+        pass
+
+    return Response('unsupported method')
+
+
+@api_view(['GET', 'PUT' 'POST', 'DELETE'])
+@permission_classes((IsAuthenticated,))
+def collaborators(request: Request, pk=None):
+
+    if request.method == 'GET':
+        profile = BaseProfile.subclasses.select_related('consumerprofile', 'supplieremployeeprofile').get_subclass(user=request.user)
+        res = [ProfileSerializer(col).data for col in profile.collaborators.all()]
+        return Response(res, status=status.HTTP_200_OK)
+
+    if request.method == 'PUT':
+        pass
+
+    if request.method == 'POST':
+        pass
+
+    if request.method == 'DELETE':
+        pass
 
     return Response('unsupported method')
 
