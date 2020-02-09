@@ -54,7 +54,7 @@ class Sorter:
 
     def build_query_index(self):
         products = self.get_products()
-        all_querysets = [facet.set_queryset() for facet in self.facets]
+        all_querysets = [facet.set_queryset(products) for facet in self.facets]
 
         # for facet in self.facets:
 

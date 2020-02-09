@@ -15,7 +15,6 @@ from django.http import HttpRequest, QueryDict
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.measure import D
-from rest_framework.request import Request
 from Addresses.models import Zipcode
 from Products.models import Product
 from Suppliers.models import SupplierLocation
@@ -23,7 +22,7 @@ from .tasks import add_facet_others_delay
 # from UserProductCollections.models import SupplierLocation
 
 
-
+"""
 
 # XXX Expirimental #######################################
 
@@ -89,6 +88,12 @@ class FacetBase(models.Model):
         raise Exception('Facet must be subclassed!')
 
     @property
+    def widget(self):
+        if self.widget:
+            return self.widget
+        return 'checkbox'
+
+    @property
     def query_terms(self):
         raise Exception('Facet must be subclassed!')
 
@@ -96,13 +101,17 @@ class FacetBase(models.Model):
     def return_values(self):
         raise Exception('Facet must be subclassed!')
 
-    def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
-        _facets = [facet.queryset for facet in facets if facet is not self]
-        self.__set_intersection(query_index_pk, products, _facets)
+    def get_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+        return None
+
+    # def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+    #     _facets = [facet.queryset for facet in facets if facet is not self]
+    #     self.__set_intersection(query_index_pk, products, _facets)
 
     def __set_intersection(self, query_index_pk, products: QuerySet, *querysets: List[QuerySet]):
-        self.others_intersection = products.intersection(*querysets).values_list('pk', flat=True)
-        add_facet_others_delay.delay(query_index_pk, self.pk, list(self.others_intersection))
+        others_intersection = products.intersection(*querysets).values_list('pk', flat=True)
+        add_facet_others_delay.delay(query_index_pk, self.pk, list(others_intersection))
+        return others_intersection
 
     def parse_request(self, params: QueryDict):
         raise Exception('Facet must be subclassed!')
@@ -132,6 +141,11 @@ class MultiFacet(FacetBase):
         return self.qterms
 
 
+    def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+        _facets = [facet.queryset for facet in facets if facet is not self]
+        self.__set_intersection(query_index_pk, products, _facets)
+
+
     def parse_request(self, params: QueryDict):
         qterms = params.getlist(self.attribute, [])
         if qterms:
@@ -151,9 +165,18 @@ class MultiFacet(FacetBase):
         return self.queryset
 
 
-    def count_self(self, products):
+# TODO figure out method below for assigning others and counting
+# TODO want to be able to call same methods on all facets and non counted just do nothing
+    def count_self(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+        if not self.others_intersection:
+            foc = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet_name=self.name).first()
+            if foc:
+        _facets = [facet.queryset for facet in facets if facet is not self]
+        others = self.__set_intersection(query_index_pk, products, _facets)
         values = products.values(self.attribute).annotate(val_count=models.Count(self.attribute))
         self.return_values = [FacetValue(k, v, bool(k in self.query_terms)) for k, v in values.items()]
+
+
 
 
 
@@ -337,81 +360,7 @@ class DecimalFacet(FacetBase):
         self.queryset = products.filter(**args)
         return self.queryset
 
-
-
-# class QueryIndex(models.Model):
-#     """
-#     cache relating query strings to json responses
-#     """
-#     query_dict = models.CharField(max_length=1000)
-#     query_path = models.CharField(max_length=500)
-#     response = pg_fields.JSONField(null=True)
-#     dirty = models.BooleanField(default=True)
-#     retailer_location = models.ForeignKey(
-#         SupplierLocation,
-#         null=True,
-#         on_delete=models.CASCADE,
-#         related_name='qis'
-#         )
-#     product_filter = models.ForeignKey(
-#         'ProductFilter',
-#         on_delete=models.CASCADE,
-#         related_name='query_indexes'
-#     )
-#     products = models.ManyToManyField(
-#         'Products.Product',
-#         related_name='query_indexes'
-#         )
-#     created = models.DateTimeField(auto_now=True)
-#     last_retrieved = models.DateTimeField(auto_now_add=True, null=True)
-#     times_accessed = models.PositiveIntegerField(null=True, default=1)
-
-#     objects = QueryIndexManager()
-
-#     class Meta:
-#         unique_together = ('query_dict', 'query_path')
-
-#     def __str__(self):
-#         return f'{self.query_path}_{self.query_dict}'
-
-#     def refresh(self):
-#         """ DO NOT USE!
-#         this method should only ever be called by celery task.
-#         """
-#         view, args, kwargs = dj_resolve(self.query_path)
-#         request = HttpRequest()
-#         request.method = 'GET'
-#         request.path = self.query_path
-#         request.GET = QueryDict(self.query_dict)
-#         # view(request, update=True, *args, **kwargs)
-
-#     def get_product_pks(self):
-#         return self.products.values_list('pk', flat=True)
-
-#     def get_products(self, select_related=None):
-#         model = self.product_filter.get_content_model()
-#         pks = self.products.all().values_list('pk', flat=True)
-#         if select_related:
-#             return model.objects.select_related(select_related).filter(pk__in=pks)
-#         return model.objects.filter(pk__in=pks)
-
-
-# class FacetOthersCollection(models.Model):
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
-#     query_index = models.ForeignKey(
-#         QueryIndex,
-#         on_delete=models.CASCADE,
-#         related_name='others'
-#         )
-#     facet_name = models.CharField(max_length=100)
-#     products = models.ManyToManyField(
-#         'Products.Product',
-#         related_name='facet_collections'
-#     )
-
-#     class Meta:
-#         unique_together = ('query_index', 'facet_name')
-
+"""
 
 
 
