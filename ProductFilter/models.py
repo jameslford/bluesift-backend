@@ -5,6 +5,7 @@ from decimal import Decimal
 from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List, Tuple
+from model_utils.managers import InheritanceManager
 from django.db import models, transaction
 from django.db.models import Min, Max
 from django.core.exceptions import FieldError
@@ -18,6 +19,7 @@ from rest_framework.request import Request
 from Addresses.models import Zipcode
 from Products.models import Product
 from Suppliers.models import SupplierLocation
+from .tasks import add_facet_others_delay
 # from UserProductCollections.models import SupplierLocation
 
 
@@ -27,8 +29,12 @@ from Suppliers.models import SupplierLocation
 
 class FacetBase(models.Model):
     # queryset = models.ManyToManyField(Product)
-    attribute = models.CharField(max_length=60)
     name = models.CharField(max_length=20)
+    attribute = models.CharField(max_length=60, null=True, blank=True)
+    widget_type = models.CharField(max_length=50, null=True, blank=True)
+    attribute_list = pg_fields.ArrayField(
+        models.CharField(max_length=60, null=True, blank=True)
+        )
     content_type = models.ForeignKey(
         ContentType, on_delete=models.CASCADE)
     # name: str
@@ -37,147 +43,299 @@ class FacetBase(models.Model):
     # # values: List = dfield(default_factory=lambda: [])
     # order: int = 10
     # key: bool = False
-    selected: bool = False
     # total_count: int = 0
-    qterms: List[str] = None
+    # intersection: QuerySet = None
+    # collection_pk: str = None
+    # return_values: List = dfield(default_factory=lambda: [])
+
+    selected: bool = False
     queryset: QuerySet = None
-    intersection: QuerySet = None
-    collection_pk: str = None
-    return_values: List = dfield(default_factory=lambda: [])
+    others_intersection: List[uuid] = None
+    field_type = 'CharField'
+
+    subclasses = InheritanceManager()
 
     class Meta:
-        abstract = True
         unique_together = ('attribute', 'content_type')
 
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.attribute_list and self.attribute:
+            raise Exception('Facet cannot have both attribute and attribute_list')
+        if self.attribute:
+            field = self.model._meta.get_field(self.attribute)
+            actual_type = field.get_internal_type()
+            if self.field_type != field.get_internal_type():
+                raise Exception(f'Attribute -{self.attribute}\'s- field type {actual_type} != {self.field_type}')
+            if not self.name:
+                self.name = self.attribute
+        elif self.attribute_list:
+            for attr in self.attribute_list:
+                field = self.model._meta.get_field(attr)
+                actual_type = field.get_internal_type()
+                if self.field_type != field.get_internal_type():
+                    raise Exception(f'Attribute -{attr}\'s- field type {actual_type} != {self.field_type}')
+        else:
+            raise Exception('Facet must have either attribute or attribute_list')
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+
     @property
-    def model(self):
+    def model(self) -> models.Model:
         return self.content_type.model_class()
 
     @property
     def values(self):
         raise Exception('Facet must be subclassed!')
 
+    @property
+    def query_terms(self):
+        raise Exception('Facet must be subclassed!')
+
+    @property
+    def return_values(self):
+        raise Exception('Facet must be subclassed!')
+
+    def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+        _facets = [facet.queryset for facet in facets if facet is not self]
+        self.__set_intersection(query_index_pk, products, _facets)
+
+    def __set_intersection(self, query_index_pk, products: QuerySet, *querysets: List[QuerySet]):
+        self.others_intersection = products.intersection(*querysets).values_list('pk', flat=True)
+        add_facet_others_delay.delay(query_index_pk, self.pk, list(self.others_intersection))
+
     def parse_request(self, params: QueryDict):
         raise Exception('Facet must be subclassed!')
 
+    def count_self(self, products: QuerySet):
+        return
 
     def set_queryset(self, products: QuerySet):
         raise Exception('Facet must be subclassed!')
 
 
+
+
 class MultiFacet(FacetBase):
+
+    field_type = 'CharField'
+    qterms: List[str] = None
+
 
     @property
     def values(self):
         return self.model.objects.values_list(self.attribute, flat=True).distinct()
+
+
+    @property
+    def query_terms(self):
+        return self.qterms
+
 
     def parse_request(self, params: QueryDict):
         qterms = params.getlist(self.attribute, [])
         if qterms:
             qterms = qterms.split(',')
         self.qterms = [term for term in qterms if term in self.values]
+        return params
+
 
     def set_queryset(self, products: QuerySet):
         if not self.qterms:
             self.queryset = products
-            return
+            return self.queryset
         for term in self.qterms:
             q_object |= models.Q(**{self.attribute: term})
             self.selected = True
         self.queryset = products.filter(q_object)
+        return self.queryset
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if not hasattr(self.model, self.attribute):
-            raise Exception(f'Attribute --- {self.attribute} --- does not exist on {self.content_type.name}')
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    def count_self(self, products):
+        values = products.values(self.attribute).annotate(val_count=models.Count(self.attribute))
+        self.return_values = [FacetValue(k, v, bool(k in self.query_terms)) for k, v in values.items()]
+
+
+
 
 class RadiusFacet(FacetBase):
 
+    field_type = 'MultiPointField'
     radius = None
     zipcode = None
+
 
     @property
     def values(self):
         return [5, 10, 15, 25, 50, 100]
-        # return self.model.objects.values_list(self.attribute, flat=True).distinct()
+
+
+    @property
+    def query_terms(self):
+        return [self.radius, self.zipcode]
+
 
     def parse_request(self, params: QueryDict):
-        self.radius = params.get('radius')
-        self.zipcode = params.get('zipcode')
+        try:
+            self.radius = params.pop('radius')
+            self.zipcode = params.pop('zipcode')
+            return params
+        except KeyError:
+            return params
+
 
     def set_queryset(self, products: QuerySet):
-        radius = D(mi=int(self.radius))
-        coords = Zipcode.objects.filter(code=self.zipcode).first().centroid.point
-        if not radius and coords:
+        if not (self.radius and self.zipcode):
             self.queryset = products
+            return products
+        try:
+            radius = D(mi=int(self.radius))
+        except ValueError:
+            self.queryset = products
+            return products
+        coords = Zipcode.objects.filter(code=self.zipcode).first().centroid.point
+        if coords:
+            self.queryset = products
+            return products
+        self.selected = True
         self.queryset = products.filter(locations__distance_lte=(coords, radius))
+        return self.queryset
+
+
+
 
 class BoolFacet(FacetBase):
 
-    attributes = pg_fields.ArrayField(
-        models.CharField(max_length=60)
-        )
+    field_type = 'BooleanField'
+    qterms: List[str] = None
 
-    class Meta:
-        unique_together = ('attributes', 'facet_base__content_type')
 
     @property
     def values(self):
-        return list(self.attributes)
+        return list(self.attribute_list)
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        for attr in self.attributes:
-            if not hasattr(self.model, attr):
-                raise Exception(f'Attribute --- {attr} --- does not exist on {self.content_type.name}')
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    @property
+    def query_terms(self):
+        return self.qterms
+
+
+    def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+        _facets = [facet.queryset for facet in facets]
+        self.__set_intersection(query_index_pk, products, _facets)
+
 
     def parse_request(self, params: QueryDict):
         qterms = params.getlist(self.name)
-        self.qterms = [term for term in qterms if term in self.attributes]
+        self.qterms = [term for term in qterms if term in list(self.attribute_list)]
+        return params
+
 
     def set_queryset(self, products: QuerySet):
         if not self.qterms:
             self.queryset = products
-            return
+            return products
         terms = {}
         for term in self.qterms:
             terms[term] = True
-            self.selected = True
         self.queryset = products.filter(**terms)
+        return self.queryset
+
+
+    def count_self(self, products: QuerySet):
+        args = {value: models.Count(value, filter=models.Q(**{value: True})) for value in self.values}
+        bool_values = products.aggregate(**args)
+        self.return_values = [FacetValue(k, v, bool(k in self.query_terms)) for k, v in bool_values.items()]
+
+
 
 
 class RangeFacet(FacetBase):
 
+    field_type = 'RangeField'
     abs_min = None
     abs_max = None
     selected_min = None
     selected_max = None
 
+
     @property
     def values(self):
+        if self.abs_max and self.abs_min:
+            return [self.abs_min, self.abs_max]
         values = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
         self.abs_min = values.get(f'{self.attribute}__min', None)
         self.abs_max = values.get(f'{self.attribute}__max', None)
         return [self.abs_min, self.abs_max]
 
+
+    @property
+    def query_terms(self):
+        return [self.selected_min, self.selected_max]
+
+
     def parse_request(self, params: QueryDict):
-        qterms = params.getlist(self.attribute, [])
-        self.qterms = [term for term in qterms if term in self.values]
+        try:
+            self.selected_min = params.pop(f'{self.attribute}_selected_min', self.abs_min)
+            self.selected_max = params.pop(f'{self.attribute}_selected_max', self.abs_max)
+            return params
+        except KeyError:
+            return params
+
 
     def set_queryset(self, products: QuerySet):
-        if not self.qterms:
-            self.queryset = products
-            return
-        for term in self.qterms:
-            q_object |= models.Q(**{self.attribute: term})
-            self.selected = True
-        self.queryset = products.filter(q_object)
+        args = {}
+        if self.selected_max:
+            args.update({f'{self.attribute}__lte': self.selected_max})
+        if self.selected_min:
+            args.update({f'{self.attribute}__gte': self.selected_min})
+        self.queryset = products.filter(**args)
+        return self.queryset
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if not hasattr(self.model, self.attribute):
-            raise Exception(f'Attribute --- {self.attribute} --- does not exist on {self.content_type.name}')
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
+
+
+class DecimalFacet(FacetBase):
+
+    field_type = 'DecimalField'
+    abs_min = None
+    abs_max = None
+    selected_min = None
+    selected_max = None
+
+
+    @property
+    def values(self):
+        if self.abs_max and self.abs_min:
+            return [self.abs_min, self.abs_max]
+        values = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
+        self.abs_min = values.get(f'{self.attribute}__min', None)
+        self.abs_max = values.get(f'{self.attribute}__max', None)
+        return [self.abs_min, self.abs_max]
+
+
+    @property
+    def query_terms(self):
+        return [self.selected_min, self.selected_max]
+
+
+    def parse_request(self, params: QueryDict):
+        try:
+            self.selected_min = params.pop(f'{self.attribute}_selected_min', self.abs_min)
+            self.selected_max = params.pop(f'{self.attribute}_selected_max', self.abs_max)
+            return params
+        except KeyError:
+            return params
+
+
+    def set_queryset(self, products: QuerySet):
+        args = {}
+        if self.selected_max:
+            args.update({f'{self.attribute}__lte': self.selected_max})
+        if self.selected_min:
+            args.update({f'{self.attribute}__gte': self.selected_min})
+        self.queryset = products.filter(**args)
+        return self.queryset
 
 
 
