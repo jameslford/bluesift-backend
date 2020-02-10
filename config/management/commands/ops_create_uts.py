@@ -1,6 +1,6 @@
 
 from django.core.management.base import BaseCommand
-from config.scripts.create_usertypes import create_usertypes
+from scripts.create_usertypes import create_usertypes
 
 
 

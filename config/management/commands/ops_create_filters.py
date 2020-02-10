@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from config.scripts.create_filters import create_finish_surface, create_appliance
+from scripts.create_filters import create_finish_surface, create_appliance
 
 class Command(BaseCommand):
 

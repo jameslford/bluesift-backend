@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from config.scripts.add_zips import add_zips
+from scripts.add_zips import add_zips
 
 
 class Command(BaseCommand):

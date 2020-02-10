@@ -14,7 +14,7 @@ from Analytics.models import ViewRecord
 from Suppliers.models import SupplierLocation
 from Groups.models import SupplierCompany
 from config.celery import app
-from config.scripts.db_operations import (
+from scripts.db_operations import (
     backup_db,
     clean_backups,
     )
