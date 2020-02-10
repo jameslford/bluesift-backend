@@ -6,11 +6,11 @@ from dataclasses import dataclass, asdict
 from dataclasses import field as dfield
 from typing import List
 from django.db import models
-from django.core.files.storage import get_storage_class
 from django.contrib.postgres.search import SearchVector
 from django.contrib.gis.measure import D
 from django.db.models.query import QuerySet
 from django.db.models import Value, CharField
+from django.core.files.storage import get_storage_class
 from django.db.models.functions import Concat
 from django.http import HttpRequest, QueryDict
 from Addresses.models import Zipcode

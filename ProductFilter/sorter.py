@@ -1,9 +1,14 @@
 from typing import List
+from django.core.files.storage import get_storage_class
+from django.db.models.functions import Concat
 from rest_framework.request import Request
 from config.globals import check_department_string
 from django.http import QueryDict
+from django.db.models.query import QuerySet, Value
+from django.db.models import CharField
 from django.contrib.contenttypes.models import ContentType
 from Suppliers.models import SupplierProduct
+from Products.models import Product
 from .models import FacetBase, QueryIndex
 
 
@@ -18,8 +23,9 @@ class Sorter:
     def __init__(self, product_type, request: Request, supplier_pk=None):
         self.product_type = check_department_string(product_type)
         self.request = request
-        self.query_index = None
+        self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
+        self._products = None
         model_types = self.product_type._meta.get_parent_list() + [self.product_type]
         parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
         self.facets: List[FacetBase] = FacetBase.subclasses.filter(content_type__in=parents).select_subclasses()
@@ -28,12 +34,17 @@ class Sorter:
 
     def get_products(self, select_related=None):
         """ Returns applicable product subclass instances """
+        if self._products:
+            return self._products
         if self.supplier_pk:
             pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list('product__pk', flat=True)
-            return self.product_type.objects.all().prefetch_related('priced').filter(pk__in=pks)
+            self._products = self.product_type.objects.all().prefetch_related('priced').filter(pk__in=pks)
+            return self._products
         if select_related:
-            return self.product_type.objects.select_related(select_related).all()
-        return self.product_type.objects.all()
+            self._products = self.product_type.objects.select_related(select_related).all()
+            return self._products
+        self._products = self.product_type.objects.all()
+        return self._products
 
 
     def __process_request(self):
@@ -47,16 +58,67 @@ class Sorter:
             )
         self.query_index = query_index
         if query_index.dirty or created:
-            self.build_query_index()
+            static_queryset = self.build_query_index()
+            return self.calculate_response(static_queryset)
+        return self.calculate_response()
 
 
+    def calculate_response(self, static_queryset: QuerySet = None):
+        if not static_queryset:
+            static_queryset = self.query_index.products.all()
+        dynamic_queryset = [
+            facet.filter_self(self.get_products()) for facet in self.facets if facet.dynamically_counted
+            ]
+        products = static_queryset.intersection(*dynamic_queryset)
+
+        return {
+            'facets': [facet.count_self(self.query_index.pk, self.get_products(), self.facets)
+                       for facet in self.facets],
+            'products': self.serialize_products(products)
+        }
 
 
     def build_query_index(self):
         products = self.get_products()
-        all_querysets = [facet.set_queryset(products) for facet in self.facets]
+        static_querysets = [
+            facet.filter_self() for facet in self.facets if not facet.dynamically_counted
+            ]
+        new_prods = products.intersection(*static_querysets).values_list('pk', flat=True)
+        self.query_index.products.clear()
+        self.query_index.products.add(*new_prods)
+        self.query_index.save()
+        return Product.objects.filter(pk__in=new_prods)
 
+
+    def serialize_products(self, products):
+        if not products:
+            return []
+        imageurl = get_storage_class().base_path()
+        return products.annotate(
+            swatch_url=Concat(Value(imageurl), 'swatch_image', output_field=CharField())
+            ).values(
+                'pk',
+                'unit',
+                'manufacturer_style',
+                'manufacturer_collection',
+                'manufacturer_sku',
+                'name',
+                'hash_value',
+                'swatch_url',
+                'swatch_image',
+                'manufacturer__label',
+                'low_price'
+            )
+
+            # if facet.initially_counted:
+
+        # counted_querysets = [
+        #     facet.filter_self(products) for facet in self.facets if facet.used_in_initial_calculation
+        #     ]
+        # counted_querysets = [qset for qset in counted_querysets if qset.coun]
         # for facet in self.facets:
+        #     facet.set_intersection(self.query_index.pk, products, self.facets)
+
 
 
 

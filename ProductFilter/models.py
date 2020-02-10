@@ -21,21 +21,6 @@ from Suppliers.models import SupplierLocation
 from .tasks import add_facet_others_delay
 # from UserProductCollections.models import SupplierLocation
 
-
-"""
-
-# XXX Expirimental #######################################
-
-class FacetBase(models.Model):
-    # queryset = models.ManyToManyField(Product)
-    name = models.CharField(max_length=20)
-    attribute = models.CharField(max_length=60, null=True, blank=True)
-    widget_type = models.CharField(max_length=50, null=True, blank=True)
-    attribute_list = pg_fields.ArrayField(
-        models.CharField(max_length=60, null=True, blank=True)
-        )
-    content_type = models.ForeignKey(
-        ContentType, on_delete=models.CASCADE)
     # name: str
     # facet_type: str
     # quer_value: str
@@ -46,11 +31,37 @@ class FacetBase(models.Model):
     # intersection: QuerySet = None
     # collection_pk: str = None
     # return_values: List = dfield(default_factory=lambda: [])
+    # queryset = models.ManyToManyField(Product)
 
-    selected: bool = False
+   # def get_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+    #     return None
+
+    # def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+    #     raise Exception('Facet must be subclassed!')
+    # def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
+    #     _facets = [facet.queryset for facet in facets if facet is not self]
+    #     self.__set_intersection(query_index_pk, products, _facets)
+
+
+
+
+# XXX Expirimental #######################################
+
+class FacetBase(models.Model):
+    name = models.CharField(max_length=20)
+    attribute = models.CharField(max_length=60, null=True, blank=True)
+    widget_type = models.CharField(max_length=50, null=True, blank=True)
+    dynamically_counted = models.BooleanField(default=False)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    attribute_list = pg_fields.ArrayField(
+        models.CharField(max_length=60, null=True, blank=True)
+        )
+
+    selected = False
+    field_type = 'CharField'
+
     queryset: QuerySet = None
     others_intersection: List[uuid] = None
-    field_type = 'CharField'
 
     subclasses = InheritanceManager()
 
@@ -83,9 +94,11 @@ class FacetBase(models.Model):
     def model(self) -> models.Model:
         return self.content_type.model_class()
 
+
     @property
     def values(self):
         raise Exception('Facet must be subclassed!')
+
 
     @property
     def widget(self):
@@ -93,35 +106,51 @@ class FacetBase(models.Model):
             return self.widget
         return 'checkbox'
 
+
     @property
     def query_terms(self):
         raise Exception('Facet must be subclassed!')
+
 
     @property
     def return_values(self):
         raise Exception('Facet must be subclassed!')
 
-    def get_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
-        return None
-
-    # def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
-    #     _facets = [facet.queryset for facet in facets if facet is not self]
-    #     self.__set_intersection(query_index_pk, products, _facets)
 
     def __set_intersection(self, query_index_pk, products: QuerySet, *querysets: List[QuerySet]):
-        others_intersection = products.intersection(*querysets).values_list('pk', flat=True)
-        add_facet_others_delay.delay(query_index_pk, self.pk, list(others_intersection))
-        return others_intersection
+        self.others_intersection = products.intersection(*querysets).values_list('pk', flat=True)
+        add_facet_others_delay.delay(query_index_pk, self.pk, list(self.others_intersection))
+        return self.others_intersection
+
+
+    def get_intersection(self, query_index_pk, products, *facets):
+        if self.others_intersection:
+            return self.others_intersection
+        others = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet_name=self.name).first()
+        if others:
+            return others.values_list('products__pk', flat=True)
+        _facets = [facet.queryset for facet in facets if facet is not self]
+        return self.__set_intersection(query_index_pk, products, _facets)
+
 
     def parse_request(self, params: QueryDict):
         raise Exception('Facet must be subclassed!')
 
-    def count_self(self, products: QuerySet):
+
+    def count_self(self, query_index_pk, products, *facets):
         return
 
-    def set_queryset(self, products: QuerySet):
+
+    def filter_self(self, products: QuerySet):
         raise Exception('Facet must be subclassed!')
 
+
+    @classmethod
+    def all_sublclasses(cls, content_type: ContentType):
+        for sub in cls.__subclasses__():
+            sub.objects.fiter(content_type=content_type)
+            if sub:
+                yield sub
 
 
 
@@ -141,11 +170,6 @@ class MultiFacet(FacetBase):
         return self.qterms
 
 
-    def set_intersection(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
-        _facets = [facet.queryset for facet in facets if facet is not self]
-        self.__set_intersection(query_index_pk, products, _facets)
-
-
     def parse_request(self, params: QueryDict):
         qterms = params.getlist(self.attribute, [])
         if qterms:
@@ -154,7 +178,7 @@ class MultiFacet(FacetBase):
         return params
 
 
-    def set_queryset(self, products: QuerySet):
+    def filter_self(self, products: QuerySet):
         if not self.qterms:
             self.queryset = products
             return self.queryset
@@ -165,65 +189,10 @@ class MultiFacet(FacetBase):
         return self.queryset
 
 
-# TODO figure out method below for assigning others and counting
-# TODO want to be able to call same methods on all facets and non counted just do nothing
-    def count_self(self, query_index_pk, products: QuerySet, *facets: List[FacetBase]):
-        if not self.others_intersection:
-            foc = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet_name=self.name).first()
-            if foc:
-        _facets = [facet.queryset for facet in facets if facet is not self]
-        others = self.__set_intersection(query_index_pk, products, _facets)
-        values = products.values(self.attribute).annotate(val_count=models.Count(self.attribute))
+    def count_self(self, query_index_pk, products, *facets):
+        others = self.get_intersection(query_index_pk, products, *facets)
+        values = others.values(self.attribute).annotate(val_count=models.Count(self.attribute))
         self.return_values = [FacetValue(k, v, bool(k in self.query_terms)) for k, v in values.items()]
-
-
-
-
-
-
-class RadiusFacet(FacetBase):
-
-    field_type = 'MultiPointField'
-    radius = None
-    zipcode = None
-
-
-    @property
-    def values(self):
-        return [5, 10, 15, 25, 50, 100]
-
-
-    @property
-    def query_terms(self):
-        return [self.radius, self.zipcode]
-
-
-    def parse_request(self, params: QueryDict):
-        try:
-            self.radius = params.pop('radius')
-            self.zipcode = params.pop('zipcode')
-            return params
-        except KeyError:
-            return params
-
-
-    def set_queryset(self, products: QuerySet):
-        if not (self.radius and self.zipcode):
-            self.queryset = products
-            return products
-        try:
-            radius = D(mi=int(self.radius))
-        except ValueError:
-            self.queryset = products
-            return products
-        coords = Zipcode.objects.filter(code=self.zipcode).first().centroid.point
-        if coords:
-            self.queryset = products
-            return products
-        self.selected = True
-        self.queryset = products.filter(locations__distance_lte=(coords, radius))
-        return self.queryset
-
 
 
 
@@ -254,7 +223,7 @@ class BoolFacet(FacetBase):
         return params
 
 
-    def set_queryset(self, products: QuerySet):
+    def filter_self(self, products: QuerySet):
         if not self.qterms:
             self.queryset = products
             return products
@@ -265,102 +234,146 @@ class BoolFacet(FacetBase):
         return self.queryset
 
 
-    def count_self(self, products: QuerySet):
+    def count_self(self, query_index_pk, products, *facets):
+        others = self.get_intersection(query_index_pk, products, *facets)
         args = {value: models.Count(value, filter=models.Q(**{value: True})) for value in self.values}
         bool_values = products.aggregate(**args)
         self.return_values = [FacetValue(k, v, bool(k in self.query_terms)) for k, v in bool_values.items()]
 
 
 
+class RadiusFacet(FacetBase):
 
-class RangeFacet(FacetBase):
+    field_type = 'MultiPointField'
+    radius = None
+    zipcode = None
+
+
+    @property
+    def values(self):
+        return [5, 10, 15, 25, 50, 100]
+
+
+    @property
+    def query_terms(self):
+        return [self.radius, self.zipcode]
+
+
+    def parse_request(self, params: QueryDict):
+        try:
+            self.radius = params.pop('radius')
+            self.zipcode = params.pop('zipcode')
+            return params
+        except KeyError:
+            return params
+
+
+    def filter_self(self, products: QuerySet):
+        if not (self.radius and self.zipcode):
+            self.queryset = products
+            return products
+        try:
+            radius = D(mi=int(self.radius))
+        except ValueError:
+            self.queryset = products
+            return products
+        coords = Zipcode.objects.filter(code=self.zipcode).first().centroid.point
+        if coords:
+            self.queryset = products
+            return products
+        self.selected = True
+        self.queryset = products.filter(locations__distance_lte=(coords, radius))
+        return self.queryset
+
+
+
+class BaseNumericFacet(FacetBase):
+    tick = models.DecimalField(max_digits=7, decimal_places=2, default=Decimal(1.00))
+
+    _abs_min = None
+    _abs_max = None
+    selected_min = None
+    selected_max = None
+
+    class Meta:
+        abstract = True
+
+
+    @property
+    def values(self):
+        products = self.model.objects.all()
+        return products.aggregate(Min(self.attribute), Max(self.attribute))
+
+
+    @property
+    def query_terms(self):
+        return [self.selected_min, self.selected_max]
+
+
+    @property
+    def abs_min(self):
+        if self._abs_min:
+            return self.abs_min
+        self._abs_min = self.values.get(f'{self.attribute}__min', None)
+        return self._abs_min
+
+
+    @property
+    def abs_max(self):
+        if self._abs_max:
+            return self.abs_max
+        self._abs_min = self.values.get(f'{self.attribute}__max', None)
+        return self._abs_max
+
+
+    def parse_request(self, params: QueryDict):
+        try:
+            self.selected_min = params.pop(f'{self.attribute}_selected_min', self.abs_min)
+            self.selected_max = params.pop(f'{self.attribute}_selected_max', self.abs_max)
+            return params
+        except KeyError:
+            return params
+
+
+    def filter_self(self, products: QuerySet):
+        args = {}
+        if self.selected_max:
+            args.update({f'{self.attribute}__lte': self.selected_max})
+        if self.selected_min:
+            args.update({f'{self.attribute}__gte': self.selected_min})
+        self.queryset = products.filter(**args)
+        return self.queryset
+
+
+
+class DynamicRangeFacet(BaseNumericFacet):
 
     field_type = 'RangeField'
-    abs_min = None
-    abs_max = None
-    selected_min = None
-    selected_max = None
 
 
-    @property
-    def values(self):
-        if self.abs_max and self.abs_min:
-            return [self.abs_min, self.abs_max]
-        values = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
-        self.abs_min = values.get(f'{self.attribute}__min', None)
-        self.abs_max = values.get(f'{self.attribute}__max', None)
-        return [self.abs_min, self.abs_max]
-
-
-    @property
-    def query_terms(self):
-        return [self.selected_min, self.selected_max]
-
-
-    def parse_request(self, params: QueryDict):
-        try:
-            self.selected_min = params.pop(f'{self.attribute}_selected_min', self.abs_min)
-            self.selected_max = params.pop(f'{self.attribute}_selected_max', self.abs_max)
-            return params
-        except KeyError:
-            return params
-
-
-    def set_queryset(self, products: QuerySet):
-        args = {}
-        if self.selected_max:
-            args.update({f'{self.attribute}__lte': self.selected_max})
-        if self.selected_min:
-            args.update({f'{self.attribute}__gte': self.selected_min})
-        self.queryset = products.filter(**args)
-        return self.queryset
-
-
-
-
-class DecimalFacet(FacetBase):
+class DynamicDecimalFacet(BaseNumericFacet):
 
     field_type = 'DecimalField'
-    abs_min = None
-    abs_max = None
-    selected_min = None
-    selected_max = None
 
 
-    @property
-    def values(self):
-        if self.abs_max and self.abs_min:
-            return [self.abs_min, self.abs_max]
-        values = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
-        self.abs_min = values.get(f'{self.attribute}__min', None)
-        self.abs_max = values.get(f'{self.attribute}__max', None)
-        return [self.abs_min, self.abs_max]
+class StaticRangeFacet(BaseNumericFacet):
+
+    _abs_min = pg_fields.ArrayField(
+        models.DecimalField(max_digits=8, decimal_places=2)
+        )
+    _abs_max = pg_fields.ArrayField(
+        models.DecimalField(max_digits=8, decimal_places=2)
+        )
+    field_type = 'RangeField'
 
 
-    @property
-    def query_terms(self):
-        return [self.selected_min, self.selected_max]
+class StaticDecimalFacet(BaseNumericFacet):
+
+    _abs_min = models.DecimalField(max_digits=8, decimal_places=2)
+    _abs_max = models.DecimalField(max_digits=8, decimal_places=2)
+    field_type = 'DecimalField'
 
 
-    def parse_request(self, params: QueryDict):
-        try:
-            self.selected_min = params.pop(f'{self.attribute}_selected_min', self.abs_min)
-            self.selected_max = params.pop(f'{self.attribute}_selected_max', self.abs_max)
-            return params
-        except KeyError:
-            return params
-
-
-    def set_queryset(self, products: QuerySet):
-        args = {}
-        if self.selected_max:
-            args.update({f'{self.attribute}__lte': self.selected_max})
-        if self.selected_min:
-            args.update({f'{self.attribute}__gte': self.selected_min})
-        self.queryset = products.filter(**args)
-        return self.queryset
-
-"""
 
 
 
@@ -486,22 +499,22 @@ def complete_range(products: QuerySet, quer_value, query, direction: str):
     return products.filter(**argument)
 
 
-class QueryIndexManager(models.Manager):
-    def get_or_create_qi(self, **kwargs):
-        query_dict = kwargs.get('query_dict')
-        query_path = kwargs.get('query_path')
-        product_filter = kwargs.get('product_filter')
-        retailer_location = kwargs.get('retailer_location')
-        args = {
-            'query_dict': query_dict,
-            'query_path': query_path,
-            'product_filter': product_filter
-            }
-        if retailer_location:
-            location = SupplierLocation.objects.get(pk=retailer_location)
-            args['retailer_location'] = location
-        query_index = self.model.objects.get_or_create(**args)
-        return query_index
+# class QueryIndexManager(models.Manager):
+#     def get_or_create_qi(self, **kwargs):
+#         query_dict = kwargs.get('query_dict')
+#         query_path = kwargs.get('query_path')
+#         product_filter = kwargs.get('product_filter')
+#         retailer_location = kwargs.get('retailer_location')
+#         args = {
+#             'query_dict': query_dict,
+#             'query_path': query_path,
+#             'product_filter': product_filter
+#             }
+#         if retailer_location:
+#             location = SupplierLocation.objects.get(pk=retailer_location)
+#             args['retailer_location'] = location
+#         query_index = self.model.objects.get_or_create(**args)
+#         return query_index
 
 
 class QueryIndex(models.Model):
@@ -531,7 +544,7 @@ class QueryIndex(models.Model):
     last_retrieved = models.DateTimeField(auto_now_add=True, null=True)
     times_accessed = models.PositiveIntegerField(null=True, default=1)
 
-    objects = QueryIndexManager()
+    # objects = QueryIndexManager()
 
     class Meta:
         unique_together = ('query_dict', 'query_path')
@@ -539,16 +552,6 @@ class QueryIndex(models.Model):
     def __str__(self):
         return f'{self.query_path}_{self.query_dict}'
 
-    def refresh(self):
-        """ DO NOT USE!
-        this method should only ever be called by celery task.
-        """
-        view, args, kwargs = dj_resolve(self.query_path)
-        request = HttpRequest()
-        request.method = 'GET'
-        request.path = self.query_path
-        request.GET = QueryDict(self.query_dict)
-        # view(request, update=True, *args, **kwargs)
 
     def get_product_pks(self):
         return self.products.values_list('pk', flat=True)
@@ -559,6 +562,7 @@ class QueryIndex(models.Model):
         if select_related:
             return model.objects.select_related(select_related).filter(pk__in=pks)
         return model.objects.filter(pk__in=pks)
+
 
 
 class FacetOthersCollection(models.Model):
@@ -858,3 +862,16 @@ class ProductFilter(models.Model):
 
     def __str__(self):
         return self.get_content_model().__name__ + ' Filter'
+
+
+
+    # def refresh(self):
+    #     """ DO NOT USE!
+    #     this method should only ever be called by celery task.
+    #     """
+    #     view, args, kwargs = dj_resolve(self.query_path)
+    #     request = HttpRequest()
+    #     request.method = 'GET'
+    #     request.path = self.query_path
+    #     request.GET = QueryDict(self.query_dict)
+        # view(request, update=True, *args, **kwargs)
