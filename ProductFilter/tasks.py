@@ -1,9 +1,9 @@
 from config.celery import app
-from ProductFilter.models import QueryIndex, FacetOthersCollection
 
 
 @app.task
 def add_facet_others_delay(qi_pk, facet_name, intersection_pks):
+    from ProductFilter.models import QueryIndex, FacetOthersCollection
     print('in celery qi_pk = ', str(qi_pk))
     query_index = QueryIndex.objects.filter(pk=qi_pk).first()
     if not query_index:

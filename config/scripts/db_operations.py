@@ -15,7 +15,7 @@ from config.custom_storage import MediaStorage
 #     )
 # from Scraper.ScraperCleaner.models import ScraperCleaner
 from Products.models import Product
-from ProductFilter.models import ProductFilter
+# from ProductFilter.models import ProductFilter
 from .check_settings import exclude_production, check_local
 from .colors import assign_label_color
 # from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
@@ -70,10 +70,10 @@ def migrate_all():
         call_command('migrate', db_arg)
 
 
-def refresh_filters():
-    p_filters = ProductFilter.objects.all()
-    for p_filter in p_filters:
-        p_filter.save()
+# def refresh_filters():
+#     p_filters = ProductFilter.objects.all()
+#     for p_filter in p_filters:
+#         p_filter.save()
 
 
 @transaction.atomic()

@@ -12,16 +12,10 @@ from Products.models import Product
 from .models import FacetBase, QueryIndex
 
 
-
-
-
-
-
-
 class Sorter:
 
     def __init__(self, product_type, request: Request, supplier_pk=None):
-        self.product_type = check_department_string(product_type)
+        self.product_type = product_type
         self.request = request
         self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
@@ -29,21 +23,27 @@ class Sorter:
         model_types = self.product_type._meta.get_parent_list() + [self.product_type]
         parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
         self.facets: List[FacetBase] = FacetBase.subclasses.filter(content_type__in=parents).select_subclasses()
-        self.__process_request()
 
 
-    def get_products(self, select_related=None):
+    @property
+    def data(self):
+        return self.__process_request()
+
+    def get_products(self, select_related='manufacturer'):
         """ Returns applicable product subclass instances """
+        # XXX maybe able to remove slect related entirely
         if self._products:
             return self._products
         if self.supplier_pk:
-            pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list('product__pk', flat=True)
-            self._products = self.product_type.objects.all().prefetch_related('priced').filter(pk__in=pks)
+            pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
+                'product__pk', flat=True)
+            self._products = self.product_type.objects.all().prefetch_related(
+                'priced').select_related(select_related).filter(pk__in=pks).product_prices(self.supplier_pk)
             return self._products
         if select_related:
-            self._products = self.product_type.objects.select_related(select_related).all()
+            self._products = self.product_type.objects.select_related(select_related).all().product_prices()
             return self._products
-        self._products = self.product_type.objects.all()
+        self._products = self.product_type.objects.select_related(select_related).all().product_prices()
         return self._products
 
 
@@ -66,8 +66,9 @@ class Sorter:
     def calculate_response(self, static_queryset: QuerySet = None):
         if not static_queryset:
             static_queryset = self.query_index.products.all()
+        products = self.get_products()
         dynamic_queryset = [
-            facet.filter_self(self.get_products()) for facet in self.facets if facet.dynamically_counted
+            facet.filter_self(products) for facet in self.facets if facet.dynamically_counted
             ]
         products = static_queryset.intersection(*dynamic_queryset)
 

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from config.globals import check_department_string
-from ProductFilter.models import ProductFilter
+# from ProductFilter.models import ProductFilter
 from Groups.models import SupplierCompany
 from Profiles.models import LibraryProduct
 from Suppliers.models import SupplierProduct, SupplierLocation
@@ -31,7 +31,9 @@ def get_short_lib(request, pk=None):
 @api_view(['GET'])
 def user_config(request: HttpRequest):
     user = request.user if request.user and request.user.is_authenticated else None
-    deps = [dep.serialize_pt_attributes() for dep in ProductFilter.objects.all()]
+    # deps = [dep.serialize_pt_attributes() for dep in ProductFilter.objects.all()]
+    # TODO makes deps recursive
+    deps = []
     res_dict = {
         'profile': ProfileSerializer(user).full_data,
         'departments': sorted(deps, key=lambda k: k['label']),
