@@ -110,6 +110,10 @@ class Sorter:
             'products': self.serialize_products(products)
         }
 
+    def calculate_availability_facet(self):
+        pass
+
+
 
     def build_query_index(self):
         products = self.get_products()

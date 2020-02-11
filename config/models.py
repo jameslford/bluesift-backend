@@ -5,6 +5,17 @@ These models hold/relay static materials served for front end
 from xml.dom import minidom
 from django.db import models
 from model_utils import Choices
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import JSONField
+
+class SubclassTree(models.Model):
+    content_type = models.OneToOneField(
+        ContentType,
+        on_delete=models.CASCADE
+        )
+    tree = JSONField(null=True)
+
+
 
 class LibraryLink(models.Model):
     '''

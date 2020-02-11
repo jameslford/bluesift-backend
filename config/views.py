@@ -1,6 +1,7 @@
 from celery.result import AsyncResult
 from django.http.request import HttpRequest
 from django.db.models import Count
+from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -10,10 +11,12 @@ from config.globals import check_department_string
 from Groups.models import SupplierCompany
 from Profiles.models import LibraryProduct
 from Suppliers.models import SupplierProduct, SupplierLocation
+from Products.models import Product
 from .models import UserTypeStatic
 from .tasks import add_supplier_record
 from .serializers import BusinessSerializer, ProfileSerializer, ShortLib, ProductStatus
 from .globals import BusinessType
+
 
 
 @api_view(['GET'])
@@ -31,9 +34,8 @@ def get_short_lib(request, pk=None):
 @api_view(['GET'])
 def user_config(request: HttpRequest):
     user = request.user if request.user and request.user.is_authenticated else None
-    # deps = [dep.serialize_pt_attributes() for dep in ProductFilter.objects.all()]
-    # TODO makes deps recursive
-    deps = []
+    prod = ContentType.objects.get_for_model(Product)
+    deps = prod.subclass_tree
     res_dict = {
         'profile': ProfileSerializer(user).full_data,
         'departments': sorted(deps, key=lambda k: k['label']),
