@@ -48,9 +48,9 @@ DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 DATABASES['default']['OPTIONS'] = {'options': '-c search_path=default'}
 
-DATABASES['staging'] = dj_database_url.config(STAGING_DB_URL)
-DATABASES['staging']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
+# DATABASES['staging'] = dj_database_url.config(STAGING_DB_URL)
+# DATABASES['staging']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+# DATABASES['staging']['OPTIONS'] = {'options': '-c search_path=default,postgis'}
 
 
 REST_FRAMEWORK = {

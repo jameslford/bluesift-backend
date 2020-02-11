@@ -9,5 +9,5 @@
     "python.linting.pylintArgs": [
         "--load-plugins=pylint_django",
         "--max-line-length=120"
-    ]
+    ],
 }
