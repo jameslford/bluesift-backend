@@ -1,6 +1,6 @@
-from .derivatives.appliance import Appliance
+from .derivatives.appliances import Appliance, Range, ColdStorage
 from .derivatives.finish_surfaces import FinishSurface
-from .derivatives.cabinets import Cabinets
+from .derivatives.millwork import Cabinets
 from .derivatives.base import ProductSubClass
 
 

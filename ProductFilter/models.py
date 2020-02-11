@@ -31,8 +31,13 @@ class BaseReturnValue:
 
 
 class BaseFacet(models.Model):
+    limit = models.Q(app_label='SpecializedProducts') | models.Q(app_label='Products', model='Product')
     name = models.CharField(max_length=20, blank=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        limit_choices_to=limit
+        )
     attribute = models.CharField(max_length=60, null=True, blank=True)
     attribute_list = pg_fields.ArrayField(
         models.CharField(max_length=60, null=True, blank=True)

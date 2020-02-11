@@ -70,7 +70,7 @@ MIDDLEWARE = [
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'config.custom_middleware.LastSeenMiddleware',
+    # 'config.custom_middleware.LastSeenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'debug_panel.middleware.DebugPanelMiddleware',

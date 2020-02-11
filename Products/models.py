@@ -228,6 +228,9 @@ class Product(models.Model):
             self.set_hash()
         super(Product, self).save(*args, **kwargs)
 
+    def paternity_test(self):
+        print(type(self))
+
     def get_in_store(self):
         return self.priced.select_related(
             'location',

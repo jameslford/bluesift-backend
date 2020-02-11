@@ -16,10 +16,9 @@ class FinishSurface(ProductSubClass):
     label_color = models.CharField(max_length=50, null=True, blank=True)
     actual_color = models.CharField(max_length=50, null=True, blank=True)
 
-    material = models.CharField(max_length=200)
-    sub_material = models.CharField(max_length=200, null=True, blank=True)
+    # material = models.CharField(max_length=200)
+    # sub_material = models.CharField(max_length=200, null=True, blank=True)
     finish = models.CharField(max_length=200, null=True, blank=True)
-    surface_coating = models.CharField(max_length=200, null=True, blank=True)
     look = models.CharField(max_length=200, null=True, blank=True)
     shade_variation = models.CharField(max_length=200, null=True, blank=True)
 
@@ -44,7 +43,6 @@ class FinishSurface(ProductSubClass):
 
     size = models.CharField(max_length=180, null=True, blank=True)
     actual_size = models.DecimalField(max_digits=9, decimal_places=2, null=True)
-    shape = models.CharField(max_length=80, null=True, blank=True)
 
     lrv = models.CharField(max_length=60, null=True, blank=True)
     cof = models.CharField(max_length=60, null=True)
@@ -78,8 +76,6 @@ class FinishSurface(ProductSubClass):
         'bullnose',
         'covebase',
         'corner_covebase',
-        'material',
-        'sub_material',
         'finish',
         'surface_coating',
         'look',
@@ -87,21 +83,15 @@ class FinishSurface(ProductSubClass):
         ]
 
     name_fields = [
-        'material',
         'look',
         'finish',
-        'sub_material',
-        'surface_coating'
         ]
 
     def grouped_fields(self):
         return {
             'details': {
                 'label_color': self.label_color,
-                'material': self.material,
-                'sub_material': self.sub_material,
                 'finish': self.finish,
-                'surface_coating': self.surface_coating,
                 'look': self.look,
                 'shade_variation': self.shade_variation,
                 'lrv': self.lrv,
@@ -118,7 +108,6 @@ class FinishSurface(ProductSubClass):
                 'length': self.length.lower if self.length else None,
                 'size': self.size,
                 'square_inches': self.actual_size,
-                'shape': self.shape
                 },
             'applications': {
                 'walls': self.walls,
@@ -163,17 +152,6 @@ class FinishSurface(ProductSubClass):
             self.actual_size = None
         return
 
-    def assign_shape(self):
-        """returns float measurements and labels on product details"""
-        if not self.shape:
-            if not self.actual_size:
-                self.shape = 'continuous'
-                return
-            ratio = self.width.lower / self.length.lower
-            if ratio < .9 or ratio > 1.2:
-                self.shape = 'rectangle'
-                return
-            self.shape = 'square'
 
     def set_actual_color(self):
         """returns float measurements and labels on product details"""
@@ -220,33 +198,6 @@ class FinishSurface(ProductSubClass):
         converter = FinishSurfaceConverter(self)
         converter.convert()
 
-    def save(self, *args, **kwargs):
-        floors = bool(self.floors or self.shower_floors or self.covered_floors)
-        walls = bool(self.walls or self.shower_walls or self.covered_walls)
-        trim = bool(self.corner_covebase or self.bullnose)
-        multiple = sum([floors, walls, self.countertops, self.cabinet_fronts])
-        if multiple > 1:
-            self.category = 'multi-surface'
-        elif self.cabinet_fronts:
-            self.category = 'cabinet-fronts'
-        elif trim:
-            self.category = 'trim'
-        elif self.countertops:
-            self.category = 'countertops'
-        elif walls:
-            self.category = 'walls'
-        elif floors:
-            self.category = 'floors'
-        else:
-            self.category = 'unclassified'
-        return super().save(*args, **kwargs)
-
-
-    # def import_data(self, **kwargs):
-    #     importer = FinishSurfaceImporter(**kwargs)
-    #     importer.add_data()
-    #     return super().import_data()
-
 
 class FinishSurfaceConverter(Converter):
 
@@ -262,39 +213,52 @@ class FinishSurfaceConverter(Converter):
         self.product.save_derived_glb(scene)
 
 
-class FinishSurfaceImporter(Importer):
-
-    def __init__(self, **kwargs):
-        super().__init__()
-
+class TileAndStone(FinishSurface):
+    shape = models.CharField(max_length=20, null=True, blank=True)
+    material_type = models.CharField(max_length=20, null=True, blank=True)
 
 
-        # if self.tiling_image:
-        #     return self.tiling_image.url
-        # return self.swatch_image.url if self.swatch_image else None
-        # with open('test/test.glb', 'wb') as out:
-        #     scene.export(out, 'glb')
-        # return super().convert()
+# TODO create better shape algo for tile and stone - not continous but possbly mosaic
+    # def assign_shape(self):
+    # """returns float measurements and labels on product details"""
+    #     if not self.shape:
+    #         if not self.actual_size:
+    #             self.shape = 'continuous'
+    #             return
+    #         ratio = self.width.lower / self.length.lower
+    #         if ratio < .9 or ratio > 1.2:
+    #             self.shape = 'rectangle'
+    #             return
+    #         self.shape = 'square'
 
-    # def convert_geometries(self):
-    #     pass
-        # url = self.swatch_image.url
-        # image = base64.b64encode(requests.get(url).content)
-        # image = f'data:image/png; base64, {image}'
-        # url = 'http://localhost:5001/encoded-joy-257818/us-central1/helloWorld'
-        # data = self.conversion_geometries()
-        # response = requests.post(url, data=data).text
-        # try:
-        #     response = json.loads(response)
-        # except JSONDecodeError:
-        #     return
-        # obj_content: str = response.get('obj_file')
-        # if obj_content:
-        #     name = str(self.bb_sku) + '.obj'
-        #     self.derived_obj_file.save(name, ContentFile(obj_content.encode('utf-8')))
-        # self.three_json = response.get('three_json')
-        # self.derived_depth = response.get('derived_depth')
-        # self.derived_height = response.get('derived_height')
-        # self.derived_width = response.get('derived_width')
-        # self.save()
 
+class Hardwood(FinishSurface):
+    composition = models.CharField(max_length=20, null=True, blank=True)
+    species = models.CharField(max_length=20, null=True, blank=True)
+
+
+class LaminateFlooring(FinishSurface):
+    surface_coating = models.CharField(max_length=80, null=True, blank=True)
+    species = models.CharField(max_length=20, null=True, blank=True)
+
+
+class VinylVariants(FinishSurface):
+    surface_coating = models.CharField(max_length=80, null=True, blank=True)
+    shape = models.CharField(max_length=20, null=True, blank=True)
+    material_type = models.CharField(max_length=20, null=True, blank=True)
+
+    def assign_shape(self):
+        """returns float measurements and labels on product details"""
+        if not self.shape:
+            if not self.actual_size:
+                self.shape = 'continuous'
+                return
+            ratio = self.width.lower / self.length.lower
+            if ratio < .9 or ratio > 1.2:
+                self.shape = 'rectangle'
+                return
+            self.shape = 'square'
+
+
+class CabinetLaminate(FinishSurface):
+    pass
