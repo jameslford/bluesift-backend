@@ -1,5 +1,5 @@
 from .derivatives.appliances import Appliance, Range, ColdStorage
-from .derivatives.finish_surfaces import FinishSurface
+from .derivatives.finish_surfaces import FinishSurface, TileAndStone, Resilient, Hardwood, CabinetLaminate, LaminateFlooring
 from .derivatives.millwork import Cabinets
 from .derivatives.base import ProductSubClass
 

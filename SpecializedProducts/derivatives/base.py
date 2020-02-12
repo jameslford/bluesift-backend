@@ -5,7 +5,7 @@ from dataclasses import dataclass, asdict
 import requests
 import boto3
 import trimesh
-from django.db.models import FileField, QuerySet
+from django.db.models import FileField
 from django.core.files.base import ContentFile
 from django.conf import settings
 from Products.models import Product
@@ -58,35 +58,6 @@ class ProductSubClass(Product):
 
     def get_geometry_fields(self):
         return SubproductGeometryPresentationSerializer(self).data
-
-    def import_update(self, **kwargs):
-        self.save()
-
-    def import_new(self, **kwargs):
-        self.save()
-
-    # def import_match(self, queryset: QuerySet, **kwargs):
-    #     values = queryset.values()
-    #     matches = []
-    #     for prod in values:
-    #         score = 0
-    #         total = 0
-    #         for key, value in kwargs.items():
-    #             total += 1
-    #             prod_val = prod.get(key)
-    #             if prod_val:
-    #                 if prod_val == val:
-    #                     score += 1
-    #                     continue
-    #                 score -= 1
-    #         percentage = score / total
-    #         if percentage >= MATCH_THRESHOLD:
-    #             item = [percentage, prod]
-    #             matches.append(item)
-    #     if not matches()
-
-        # self.save()
-
 
     def save_derived_glb(self, mesh: trimesh.Trimesh):
         byteArray = mesh.export(None, 'glb')
@@ -149,9 +120,6 @@ class SubproductGeometryPresentationSerializer:
         self.rfa_file = product.rfa_file
         self.ipt_file = product.ipt_file
         self.obj_file = product.obj_file
-        # self.rfa_file = product.rfa_file.url if product.rfa_file else None
-        # self.ipt_file = product.ipt_file.url if product.ipt_file else None
-        # self.obj_file = product.derived_obj.url if product.derived_obj else None
         self.geometry_model = product.derived_gbl.url if product.derived_gbl else None
         self.geometry_clean = product.geometry_clean
 

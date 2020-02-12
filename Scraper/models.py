@@ -1,3 +1,4 @@
+import importlib
 from django.db import models, transaction
 from django.contrib.contenttypes.models import ContentType
 from Products.models import Manufacturer
@@ -20,19 +21,15 @@ class ScraperGroup(models.Model):
     base_url = models.URLField(max_length=2000, null=True, blank=True)
 
     def path(self):
-        return f'utils/{self.manufacturer.label}/{self.module_name}.py'
+        return f'Scraper.derivatives.{self.manufacturer.label}.{self.module_name}'
+
+    def get_model(self):
+        return self.category.model_class()
 
     @transaction.atomic
     def scrape(self):
-        '''get the module and run some arbitrary name i.e Scrape
-        curry functions for nested modules (pass in funcs as args)
-        get products back and do cleaning/validation here
-            -validate same as content type
-            -check against existing before saving
-            -clean
-            -all at once for each group
-            beautiful
-        '''
-        pass
-
-
+        path = self.path()
+        mod = importlib.import_module(path)
+        mod.run(self)
+        self.scraped = True
+        self.save()

@@ -214,8 +214,8 @@ class FinishSurfaceConverter(Converter):
 
 
 class TileAndStone(FinishSurface):
-    shape = models.CharField(max_length=20, null=True, blank=True)
-    material_type = models.CharField(max_length=20, null=True, blank=True)
+    shape = models.CharField(max_length=40, null=True, blank=True)
+    material_type = models.CharField(max_length=40, null=True, blank=True)
 
 
 # TODO create better shape algo for tile and stone - not continous but possbly mosaic
@@ -242,7 +242,7 @@ class LaminateFlooring(FinishSurface):
     species = models.CharField(max_length=20, null=True, blank=True)
 
 
-class VinylVariants(FinishSurface):
+class Resilient(FinishSurface):
     surface_coating = models.CharField(max_length=80, null=True, blank=True)
     shape = models.CharField(max_length=20, null=True, blank=True)
     material_type = models.CharField(max_length=20, null=True, blank=True)

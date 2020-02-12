@@ -26,7 +26,7 @@ def availability_getter(query_term, location_pk=None):
 
 
 class Manufacturer(models.Model):
-    label = models.CharField(max_length=200)
+    label = models.CharField(max_length=200, unique=True)
 
     def __str__(self):
         return self.label
@@ -112,6 +112,7 @@ class ProductAvailabilityQuerySet(models.QuerySet):
 
 
 class ProductPricingManager(models.Manager):
+
     def get_queryset(self):
         """ just points to qset """
         return ProductAvailabilityQuerySet(self.model, using=self._db)
@@ -160,9 +161,13 @@ class Product(models.Model):
     category = models.CharField(max_length=60, editable=False, null=True)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
-    manufacturer_sku = models.CharField(max_length=200, null=True, blank=True)
+    manufacturer_sku = models.CharField(max_length=200)
     manufacturer_collection = models.CharField(max_length=200, null=True, blank=True)
     manufacturer_style = models.CharField(max_length=200, null=True, blank=True)
+
+    swatch_image_original = models.URLField(max_length=1000)
+    room_scene_original = models.URLField(max_length=1000, null=True, blank=True)
+    tiling_image_original = models.URLField(max_length=1000, null=True, blank=True)
 
     swatch_image = models.ImageField(upload_to='swatches/')
     room_scene = models.ImageField(upload_to='rooms/', null=True, blank=True)
@@ -217,19 +222,19 @@ class Product(models.Model):
     objects = ProductPricingManager()
     subclasses = InheritanceManager()
 
+    name_fields = []
+
     class Meta:
         unique_together = ('manufacturer', 'manufacturer_sku')
+
 
     def __str__(self):
         return f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'
 
-    def save(self, *args, **kwargs):
-        if not self.hash_value:
-            self.set_hash()
-        super(Product, self).save(*args, **kwargs)
-
-    def paternity_test(self):
-        print(type(self))
+    # def save(self, *args, **kwargs):
+    #     if not self.hash_value:
+    #         self.set_hash()
+    #     super(Product, self).save(*args, **kwargs)
 
     def get_in_store(self):
         return self.priced.select_related(
@@ -273,13 +278,37 @@ class Product(models.Model):
         self.save()
 
     def set_hash(self):
-        sub = Product.subclasses.get_subclass(pk=self.pk)
         fields = [
             'manufacturer',
             'manufacturer_style',
             'manufacturer_collection',
             'manufacturer_sku'
-            ] + sub.name_fields
-        vals = list(model_to_dict(sub, fields=fields).values())
+            ] + self.name_fields
+        vals = list(model_to_dict(self, fields=fields).values())
         vals = [str(val) for val in vals]
         self.hash_value = '*$'.join(vals)
+
+    def scraper_save(self):
+        if not self.manufacturer_sku:
+            return
+        alt_prod = Product.subclasses.filter(
+            manufacturer=self.manufacturer,
+            manufacturer_sku=self.manufacturer_sku
+            ).select_subclasses()
+        if not alt_prod:
+            self.save()
+            return
+        if alt_prod.count() > 1:
+            return
+        alt_prod = alt_prod.first()
+        original_values = alt_prod.__dict__
+        new_values = self.__dict__
+        print(original_values, new_values)
+        for field, value in original_values.items():
+            if value:
+                continue
+            new_val = new_values.get(field)
+            if new_val:
+                setattr(alt_prod, field, new_val)
+        alt_prod.save()
+        return
