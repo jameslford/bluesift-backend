@@ -10,14 +10,9 @@ from django.contrib.contenttypes.models import ContentType
 from Suppliers.models import SupplierProduct
 from Products.models import Product
 from .models import (
+    AvailabilityFacet,
     BaseFacet,
     QueryIndex,
-    BoolFacet,
-    MultiFacet,
-    DynamicDecimalFacet,
-    DynamicRangeFacet,
-    StaticDecimalFacet,
-    StaticRangeFacet
     )
 
 
@@ -44,6 +39,9 @@ class FilterResponse:
     # enabled_values: List[EnabledValue] = dfield(default_factory=list)
 
 
+
+
+
 class Sorter:
 
     def __init__(self, product_type, request: Request, supplier_pk=None):
@@ -51,10 +49,11 @@ class Sorter:
         self.request = request
         self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
-        self._products = None
+        self.products = self.get_products()
+        avi_facet = [AvailabilityFacet(self.supplier_pk)]
         model_types = self.product_type._meta.get_parent_list() + [self.product_type]
         parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
-        self.facets: List[BaseFacet] = BaseFacet.subclasses.filter(content_type__in=parents).select_subclasses()
+        self.facets: List[BaseFacet] = avi_facet + list(BaseFacet.subclasses.filter(content_type__in=parents).select_subclasses())
 
 
     @property
@@ -62,21 +61,12 @@ class Sorter:
         return self.__process_request()
 
     def get_products(self, select_related='manufacturer'):
-        """ Returns applicable product subclass instances """
-        # XXX maybe able to remove slect related entirely
-        if self._products:
-            return self._products
         if self.supplier_pk:
             pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
                 'product__pk', flat=True)
-            self._products = self.product_type.objects.all().prefetch_related(
+            return self.product_type.objects.all().prefetch_related(
                 'priced').select_related(select_related).filter(pk__in=pks).product_prices(self.supplier_pk)
-            return self._products
-        if select_related:
-            self._products = self.product_type.objects.select_related(select_related).all().product_prices()
-            return self._products
-        self._products = self.product_type.objects.select_related(select_related).all().product_prices()
-        return self._products
+        return self.product_type.objects.select_related(select_related).all().product_prices()
 
 
     def __process_request(self):
@@ -98,21 +88,19 @@ class Sorter:
     def calculate_response(self, static_queryset: QuerySet = None):
         if not static_queryset:
             static_queryset = self.query_index.products.all()
-        products = self.get_products()
         dynamic_queryset = [
-            facet.filter_self(products) for facet in self.facets if facet.dynamically_counted
+            facet.filter_self(self.products) for facet in self.facets if facet.dynamically_counted
             ]
         products = static_queryset.intersection(*dynamic_queryset)
-
+        facets = [facet.count_self(self.query_index.pk, self.products, self.facets) 
+        for facet in self.facets]
+        enabled_values = [facet.enabled_values.asdict() for facet in facets]
         return {
-            'facets': [facet.count_self(self.query_index.pk, self.get_products(), self.facets)
-                       for facet in self.facets],
-            'products': self.serialize_products(products)
-        }
-
-    def calculate_availability_facet(self):
-        pass
-
+            'product_count': products.count(),
+            'facets': facets,
+            'products': self.serialize_products(products),
+            'enabled_values': enabled_values
+            }
 
 
     def build_query_index(self):
@@ -147,6 +135,12 @@ class Sorter:
                 'low_price'
             )
 
+
+
+        # availability_facet = self.calculate_availability_facet(products)
+    # def calculate_availability_facet(self, ):
+
+    #     pass
             # if facet.initially_counted:
 
         # counted_querysets = [
@@ -155,42 +149,6 @@ class Sorter:
         # counted_querysets = [qset for qset in counted_querysets if qset.coun]
         # for facet in self.facets:
         #     facet.set_intersection(self.query_index.pk, products, self.facets)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # """
@@ -671,3 +629,12 @@ class Sorter:
 #                         ) for value in facet.values
 #                     ]
 #         self.response.message = 'No results'
+
+            # self._products = self.product_type.objects.all().prefetch_related(
+            #     'priced').select_related(select_related).filter(pk__in=pks).product_prices(self.supplier_pk)
+            # return self._products
+        # if select_related:
+        #     self._products = self.product_type.objects.select_related(select_related).all().product_prices()
+        #     return self._products
+        # self._products = self.product_type.objects.select_related(select_related).all().product_prices()
+        # return self._products

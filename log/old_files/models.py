@@ -69,7 +69,6 @@
 
 
 
-# # XXX Expirimental #######################################
 
 # class FacetBase(models.Model):
 #     name = models.CharField(max_length=20)
@@ -397,7 +396,6 @@
 
 
 
-# # XXX ############################################################################
 #     # objects = QueryIndexManager()
 #     # response = pg_fields.JSONField(null=True)
 #     # product_filter = models.ForeignKey(

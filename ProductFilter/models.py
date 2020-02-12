@@ -10,6 +10,7 @@ from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.measure import D
 from Addresses.models import Zipcode
 from Suppliers.models import SupplierLocation
+from Products.models import Product
 from .tasks import add_facet_others_delay
 
 
@@ -27,6 +28,55 @@ class BaseReturnValue:
             'count': self.count,
             'expression': self.expression,
             'value': self.value
+            }
+
+class AvailabilityFacet:
+
+    def __init__(self, location_pk):
+        self.name = 'availability'
+        self.qterms = []
+        self.location_pk = location_pk
+        self.queryset: QuerySet = None
+        self.selected = False
+        self.values = Product.objects.safe_availability_commands()
+        self.return_values = []
+        self.enabled_values = []
+
+    def parse_request(self, params: QueryDict):
+        qterms = params.getlist(self.name)
+        qterms = [term for term in qterms if term in self.values]
+        for term in qterms:
+            nterm = params.pop(term)
+            self.qterms.append(nterm)
+        return params
+
+    def filter_self(self, products: QuerySet):
+        if not self.qterms:
+            self.queryset = products
+            return products
+        self.selected = True
+        products = products.filter_availability(self.qterms, self.location_pk, True)
+        self.queryset = products
+        return products
+
+    def count_self(self, query_index_pk, products, *facets):
+        _facets = [facet.queryset for facet in facets if facet is not self]
+        others = products.intersection(*_facets).values_list('pk', flat=True)
+        for value in self.values:
+            count = products.filter(pk__in=others).filter_availability(value, self.location_pk).count()
+            selected = bool(value in self.qterms)
+            expression = f'{self.name}={value}'
+            self.return_values.append(BaseReturnValue(expression, self.name, count, selected))
+            if selected:
+                self.enabled_values.append(BaseReturnValue(expression, self.name, count, selected))
+
+    def serialize_self(self):
+        return {
+            'name': self.name,
+            'selected': self.selected,
+            'widget': 'checkbox',
+            'all_values': [value.asdict() for value in self.return_values],
+            # 'enabled_values': [value.asdict() for value in self.enabled_values]
             }
 
 
@@ -58,18 +108,19 @@ class BaseFacet(models.Model):
     def model(self) -> models.Model:
         return self.content_type.model_class()
 
-    def __set_intersection(self, query_index_pk, products: QuerySet, *querysets: List[QuerySet]):
-        self.others_intersection = products.intersection(*querysets).values_list('pk', flat=True)
-        add_facet_others_delay.delay(query_index_pk, self.pk, list(self.others_intersection))
-        return self.others_intersection
 
     def get_intersection(self, query_index_pk, products, *others: List[QuerySet]):
         if self.others_intersection:
             return self.others_intersection
+        if self.dynamic:
+            return products.intersection(*others).values_list('pk', flat=True)
         others = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet_name=self).first()
         if others:
-            return others.values_list('products__pk', flat=True)
-        return self.__set_intersection(query_index_pk, products, *others)
+            return others.values_list('pk', flat=True)
+        others = products.intersection(*others).values_list('pk', flat=True)
+        add_facet_others_delay.delay(query_index_pk, self.pk, list(others))
+        return others
+
 
     def parse_request(self, params: QueryDict):
         raise Exception('Facet must be subclassed!')
@@ -93,6 +144,8 @@ class BaseSingleFacet(BaseFacet):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if not self.attribute:
             raise Exception(f'must provide attribute for {self.name} facet')
+        if self.attribute == 'low_price':
+            return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
         field = self.model._meta.get_field(self.attribute)
         actual_type = field.get_internal_type()
         if self.field_type != field.get_internal_type():
@@ -122,11 +175,11 @@ class BaseNumericFacet(BaseSingleFacet):
         if self.abs_max and self.abs_min:
             return [self.abs_max, self.abs_min]
         absolutes = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
+        self.abs_min = absolutes.get(f'{self.attribute}__min')
+        self.abs_max = absolutes.get(f'{self.attribute}__max')
         if not self.dynamic:
             self.save()
-            abs_min = absolutes.get(f'{self.attribute}__min')
-            abs_max = absolutes.get(f'{self.attribute}__max')
-            return [abs_max, abs_min]
+        return [self.abs_max, self.abs_min]
 
 
     def parse_request(self, params: QueryDict):
@@ -188,6 +241,7 @@ class MultiFacet(BaseSingleFacet):
         if not self.qterms:
             self.queryset = products
             return self.queryset
+        q_object = models.Q()
         for term in self.qterms:
             q_object |= models.Q(**{self.attribute: term})
             self.selected = True
@@ -443,6 +497,17 @@ class FacetOthersCollection(models.Model):
 
     def get_product_pks(self):
         return self.products.values_list('pk', flat=True)
+
+
+    # def __set_intersection(self, query_index_pk, products: QuerySet, *querysets: List[QuerySet]):
+    #     self.others_intersection = products.intersection(*querysets).values_list('pk', flat=True)
+    #     add_facet_others_delay.delay(query_index_pk, self.pk, list(self.others_intersection))
+    #     return self.others_intersection
+            # self.others_intersection = products.intersection(*others).values_list('pk', flat=True)
+            # return self.others_intersection
+        #     return others.values_list('products__pk', flat=True)
+
+        # return self.__set_intersection(query_index_pk, products, *others)
 
     # def get_fresh_qs(self):
     #     pks = self.get_product_pks()

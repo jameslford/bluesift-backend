@@ -23,10 +23,6 @@ def get_special(product: Hardwood, item):
         else:
             gloss = 'high gloss'
     product.finish = gloss
-    construction = item['Construction']
-    species = item['Species']
-    if construction:
-        product.species = construction + ' ' + species
-    else:
-        product.species = item['Species']
+    product.composition = item['Construction']
+    product.species = item['Species']
     return product
