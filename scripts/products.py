@@ -1,45 +1,12 @@
 import io
-import requests
-from PIL import Image as pimage
 from django.conf import settings
 from Products.models import Product
-
-
-
-def download_image(url):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0'}
-    respone = requests.get(url, headers=headers)
-    if not respone.status_code == 200:
-        print('bad request')
-        return None
-    try:
-        image: pimage.Image = pimage.open(io.BytesIO(respone.content))
-        image = image.convert('RGB')
-        image = resize_image(image)
-        return image
-    except (OSError, ValueError):
-        return None
-
-
-def resize_image(image):
-    desired_size = settings.DESIRED_IMAGE_SIZE
-    width, height = image.size
-    if width == desired_size and height <= desired_size:
-        return image
-    w_ratio = desired_size/width
-    height_adjust = int(round(height * w_ratio))
-    image = image.resize((desired_size, height_adjust))
-    if image.size[1] > desired_size:
-        image = image.crop((
-            0,
-            0,
-            desired_size,
-            desired_size
-            ))
-    return image
+from utils.downloads import url_to_pimage
+from utils.images import resize_image
 
 
 def get_final_images(product: Product, update=False):
+    desired_size = settings.DESIRED_IMAGE_SIZE
     img_groups = [
         [product.swatch_image_original, product.swatch_image],
         [product.room_scene_original, product.room_scene],
@@ -54,7 +21,9 @@ def get_final_images(product: Product, update=False):
         if not update and destination:
             print('already got final')
             continue
-        image = download_image(original.url)
+        image = url_to_pimage(original.url)
+        image = image.convert('RGB')
+        image = resize_image(image, desired_size)
         if not image:
             continue
         buffer = io.BytesIO()
