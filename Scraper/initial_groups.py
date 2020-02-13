@@ -53,7 +53,7 @@ groups = [
         armstrong,
         ARMSTRONG_COMMERCIAL_LVT,
         Resilient,
-        'commercial_lvt'
+        'commercial_luxuryflooring'
     ],
     # [
     #     armstrong,

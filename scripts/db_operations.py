@@ -1,24 +1,13 @@
 import os
 import datetime
+import glob
 from stat import S_ISREG, ST_CTIME, ST_MODE
 from django.conf import settings
 from django.db import transaction
-import glob
 from django.core.management import call_command
 from config.custom_storage import MediaStorage
-# from Scraper.models import (
-#     ScraperBaseProduct,
-#     ScraperCategory,
-#     ScraperSubgroup,
-#     ScraperManufacturer,
-#     ScraperDepartment
-#     )
-# from Scraper.ScraperCleaner.models import ScraperCleaner
 from Products.models import Product
-# from ProductFilter.models import ProductFilter
-from .check_settings import exclude_production, check_local
-from .colors import assign_label_color
-# from Scraper.ScraperFinishSurface.models import ScraperFinishSurface
+
 
 def rename():
     prods = Product.objects.all()
@@ -70,12 +59,6 @@ def migrate_all():
         call_command('migrate', db_arg)
 
 
-# def refresh_filters():
-#     p_filters = ProductFilter.objects.all()
-#     for p_filter in p_filters:
-#         p_filter.save()
-
-
 @transaction.atomic()
 def reset_supplier_products():
     from Suppliers.models import SupplierProduct
@@ -84,7 +67,6 @@ def reset_supplier_products():
 
 @transaction.atomic()
 def load_from_backup():
-    exclude_production()
     if os.name == 'nt':
         path = 'z_backups\\local\\scraper_default\\*.json'
     else:
@@ -92,6 +74,12 @@ def load_from_backup():
     backups = glob.glob(path)
     latest = max(backups, key=os.path.getctime)
     call_command('loaddata', latest, '--database=scraper_default')
+
+
+# def refresh_filters():
+#     p_filters = ProductFilter.objects.all()
+#     for p_filter in p_filters:
+#         p_filter.save()
 
 # @transaction.atomic(using='scraper_revised')
 # def scraper_to_revised():

@@ -1,19 +1,22 @@
-import decimal
+from psycopg2.extras import NumericRange
 from SpecializedProducts.models import TileAndStone
 from utils.measurements import clean_value
-from psycopg2.extras import NumericRange
+from Scraper.models import ScraperGroup
+from .base import scrape
 
+def run(group: ScraperGroup):
+    scrape(group, get_special)
 
 def get_special(product: TileAndStone, item):
     product.width = NumericRange(clean_value(item['WIDTH']))
     product.length = NumericRange(clean_value(item['LengthDimension']))
-    product.thickness = decimal.Decimal(clean_value(item['Thickness']))
-    product.look = item['Look']
+    look = item.get('Look', '')
+    product.look = look
     product.material_type = item['CeramicConstruction']
     product.finish = item['SurfaceFinish']
     product.cof = item['WetCof']
-    if 'MOSAIC' in item['look']:
+    if look and 'MOSAIC' in look:
         product.shape = 'mosaic'
-    if 'GLASS' in item['look']:
+    if look and 'GLASS' in look:
         product.material_type = 'glass'
     return product

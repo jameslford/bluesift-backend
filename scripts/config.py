@@ -1,4 +1,7 @@
-from config.models import UserTypeStatic
+from django.contrib.contenttypes.models import ContentType
+from config.models import UserTypeStatic, SubclassTree, LibraryLink
+from utils.tree import Tree
+from Products.models import Product
 
 
 retailer_tag = 'Increase your web exposure, immediately'
@@ -17,13 +20,6 @@ or gamble on installing an unseen ecommerce product in your long standing projec
 Instead it's all in one place - including the pros that can help you bring your project to life. '''
 
 
-# pro_tag = ''' Get more clients. Streamline project management '''
-# pro_short = ''' Architects, contractors, designers - if your business helps construction projects come to life, we can help '''
-# pro_full = ''' Once you join BlueSift, your company becomes visible to every user.
-# Users - including other pros - can add you to their projects and vice versa.
-# Shared project schedules allow you to easily assign materials and users to project tasks.
-# More efficiency + more clients = growth'''
-
 def create_usertypes():
     UserTypeStatic.objects.get_or_create(
         label='supplier',
@@ -37,3 +33,30 @@ def create_usertypes():
         full_text=user_full,
         tagline=user_tag
         )
+
+def __looper(current: object, parent: Tree):
+    if not current._meta.abstract:
+        new_tree = Tree(current)
+        parent.children.append(new_tree)
+        for sub in current.__subclasses__():
+            __looper(sub, new_tree)
+    else:
+        for child in current.__subclasses__():
+            __looper(child, parent)
+
+def refresh_product_tree():
+    tree_product = Tree(Product)
+    for sub in Product.__subclasses__():
+        __looper(sub, tree_product)
+    serialized = tree_product.serialize()
+    content_type = ContentType.objects.get_for_model(Product)
+    stree = SubclassTree.objects.get_or_create(content_type=content_type)[0]
+    stree.tree = serialized
+    stree.save()
+
+# pro_tag = ''' Get more clients. Streamline project management '''
+# pro_short = ''' Architects, contractors, designers - if your business helps construction projects come to life, we can help '''
+# pro_full = ''' Once you join BlueSift, your company becomes visible to every user.
+# Users - including other pros - can add you to their projects and vice versa.
+# Shared project schedules allow you to easily assign materials and users to project tasks.
+# More efficiency + more clients = growth'''

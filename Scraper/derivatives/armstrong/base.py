@@ -64,8 +64,8 @@ def get_detail(product: FinishSurface, func):
         image_div = soup.find('div', {'class': 'image-viewer__thumbnails'})
         if image_div:
             images = image_div.find_all('a')
-        if len(images) > 1:
-            product.room_scene_original = images[1].get('href', None)
+            if len(images) > 1:
+                product.room_scene_original = images[1].get('href', None)
         res_tables = soup.find_all('table', {'class': 'table--definitions'})
         if not res_tables:
             return product
@@ -90,10 +90,10 @@ def get_detail(product: FinishSurface, func):
     return product
 
 
-def clean(self):
-    clean_func = self.get_clean_func()
-    products = self.subgroup.get_products()
-    for product in products:
-        if clean_func:
-            print('running clean func for ' + self.subgroup.__str__())
-            clean_func(product)
+# def clean(self):
+#     clean_func = self.get_clean_func()
+#     products = self.subgroup.get_products()
+#     for product in products:
+#         if clean_func:
+#             print('running clean func for ' + self.subgroup.__str__())
+#             clean_func(product)

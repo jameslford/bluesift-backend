@@ -53,10 +53,11 @@ def run(group:ScraperGroup):
             #     appliance_type=appliance_type)[0]
             if img_src:
                 print(img_src)
-                img_name = img_src.split('/')[-1]
-                img_content = requests.get(img_src).content
-                img_file = ContentFile(img_content)
-                product.swatch_image.save(img_name, img_file)
+                # img_name = img_src.split('/')[-1]
+                product.swatch_image_original = img_src
+                # img_content = requests.get(img_src).content
+                # img_file = ContentFile(img_content)
+                # product.swatch_image.save(img_name, img_file)
             product.manufacturer_url = path
             if product.obj_file:
                 product.scraper_save()

@@ -5,36 +5,38 @@ from utils.downloads import url_to_pimage
 from utils.images import resize_image
 
 
-def get_final_images(product: Product, update=False):
-    desired_size = settings.DESIRED_IMAGE_SIZE
-    img_groups = [
-        [product.swatch_image_original, product.swatch_image],
-        [product.room_scene_original, product.room_scene],
-        [product.tiling_image_original, product.tiling_image]
-    ]
-    for img_group in img_groups:
-        original = img_group[0]
-        destination = img_group[1]
-        if not original:
-            print('no local')
-            continue
-        if not update and destination:
-            print('already got final')
-            continue
-        image = url_to_pimage(original.url)
-        image = image.convert('RGB')
-        image = resize_image(image, desired_size)
-        if not image:
-            continue
-        buffer = io.BytesIO()
-        try:
-            image.save(buffer, 'JPEG')
-        except IOError:
-            print('io error')
-            continue
-        images_name = str(product.manufacturer_sku) + '.jpg'
-        destination.save(images_name, buffer, save=True)
-        print('getting final for ' + product.name)
+def get_final_images(update=False):
+    products = Product.objects.all()
+    for product in products:
+        desired_size = settings.DESIRED_IMAGE_SIZE
+        img_groups = [
+            [product.swatch_image_original, product.swatch_image],
+            [product.room_scene_original, product.room_scene],
+            [product.tiling_image_original, product.tiling_image]
+        ]
+        for img_group in img_groups:
+            original = img_group[0]
+            destination = img_group[1]
+            if not original:
+                print('no local')
+                continue
+            if not update and destination:
+                print('already got final')
+                continue
+            image = url_to_pimage(original)
+            image = image.convert('RGB')
+            image = resize_image(image, desired_size)
+            if not image:
+                continue
+            buffer = io.BytesIO()
+            try:
+                image.save(buffer, 'JPEG')
+            except IOError:
+                print('io error')
+                continue
+            images_name = str(product.manufacturer_sku) + '.jpg'
+            destination.save(images_name, buffer, save=True)
+            print('getting final for ' + product.name)
 
 
 

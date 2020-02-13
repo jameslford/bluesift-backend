@@ -1,7 +1,7 @@
 
 
-rmv_list = ['thk', 'thick', 'long', 'wide', 'panel', '+']
-inch_list = ['-inch', '(in)', 'in.', 'in']
+rmv_list = ['thk', 'thick', 'long', 'wide', 'panel', '+', 'up to' '<br/>']
+inch_list = ['-inch', '(in)', 'in.', 'in', '"']
 cm_list = ['(cm)', 'cm.', 'cm']
 mm_list = ['(mm)', 'mm.', 'mm']
 ft_list = ['(ft)', 'ft.', 'ft']
@@ -21,6 +21,13 @@ def clean_value(value):
     conversion = 1
     print('initial ', value)
     value = str(value).strip().lower()
+    if 'mixed' in value:
+        print('mixed')
+        return None
+        # value = value.replace('mixed', '')
+        # vals = value.split('/')
+        # vals = [float(val.strip()) for val in vals]
+        # return [min(vals), max(vals)]
     for k in rmv_list:
         if k in value:
             value = value.replace(k, '')

@@ -1,3 +1,5 @@
+import decimal
+from psycopg2.extras import NumericRange
 from SpecializedProducts.models import Resilient
 from utils.measurements import clean_value
 from Scraper.models import ScraperGroup
@@ -17,9 +19,9 @@ def get_special(product: Resilient, item):
 
     dims = att_list[0].split('x')
     if len(dims) > 2:
-        product.width = clean_value(dims[0])
-        product.length = clean_value(dims[1])
-        product.thickness = clean_value(dims[2])
+        product.width = NumericRange(clean_value(dims[0]))
+        product.length = NumericRange(clean_value(dims[1]))
+        product.thickness = decimal.Decimal(clean_value(dims[2]))
     product.finish = att_list[1].lower()
     product.material_type = 'vinyl composite tile'
     return product

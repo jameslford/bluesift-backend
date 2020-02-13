@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 from ProductFilter.models import (
     BoolFacet,
     MultiFacet,
@@ -21,8 +22,9 @@ from SpecializedProducts.models import (
     )
 from Products.models import Product
 
-def create_facets():
 
+@transaction.atomic
+def create_facets():
     cproduct = ContentType.objects.get_for_model(Product)
     cfs = ContentType.objects.get_for_model(FinishSurface)
     capp = ContentType.objects.get_for_model(Appliance)

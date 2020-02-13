@@ -20,6 +20,9 @@ class ScraperGroup(models.Model):
     scraped = models.BooleanField(default=False)
     base_url = models.URLField(max_length=2000, null=True, blank=True)
 
+    def __str__(self):
+        return f'{self.manufacturer.label}, {self.module_name}'
+
     def path(self):
         return f'Scraper.derivatives.{self.manufacturer.label}.{self.module_name}'
 

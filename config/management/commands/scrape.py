@@ -3,22 +3,22 @@
 # import io
 # from bs4 import BeautifulSoup
 # from django.core.files.base import ContentFile
-from django.core.management.base import BaseCommand
-from scrapers import route_scrape
-# from Products.models import Manufacturer
+# from django.core.management.base import BaseCommand
+# from scrapers import route_scrape
+# # from Products.models import Manufacturer
 
 
-class Command(BaseCommand):
+# class Command(BaseCommand):
 
-    def add_arguments(self, parser):
-        parser.add_argument('manufacturer', type=str)
-        parser.add_argument('category', type=str)
+#     def add_arguments(self, parser):
+#         parser.add_argument('manufacturer', type=str)
+#         parser.add_argument('category', type=str)
 
 
-    def handle(self, *args, **options):
-        manufacturer = options.get('manufacturer')
-        category = options.get('category')
-        route_scrape(manufacturer, category)
+#     def handle(self, *args, **options):
+#         manufacturer = options.get('manufacturer')
+#         category = options.get('category')
+#         route_scrape(manufacturer, category)
         # manufacturer = Manufacturer.objects.get_or_create(label='Viking')[0]
         # appliance_type = 'range'
         # url = 'https://www.vikingrange.com/consumer/products/tabs/subcategory_find_products_tab.jsp?id=cat12360038'

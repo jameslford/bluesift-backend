@@ -303,7 +303,6 @@ class Product(models.Model):
         alt_prod = alt_prod.first()
         original_values = alt_prod.__dict__
         new_values = self.__dict__
-        print(original_values, new_values)
         for field, value in original_values.items():
             if value:
                 continue

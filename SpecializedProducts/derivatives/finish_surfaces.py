@@ -132,6 +132,9 @@ class FinishSurface(ProductSubClass):
         if not (self.length and self.width):
             self.actual_size = None
             return
+        if self.actual_size:
+            print(self.bb_sku, 'has size')
+        print('assigning size to ', self.bb_sku)
         for dim in [self.width, self.length]:
             lower = dim.lower
             upper = dim.upper
@@ -157,6 +160,7 @@ class FinishSurface(ProductSubClass):
         """returns float measurements and labels on product details"""
         # pylint: disable=no-member
         image = self.swatch_image
+        print('getting actual color for ', self.bb_sku)
         if not image:
             return
         try:
@@ -217,19 +221,15 @@ class TileAndStone(FinishSurface):
     shape = models.CharField(max_length=40, null=True, blank=True)
     material_type = models.CharField(max_length=40, null=True, blank=True)
 
-
-# TODO create better shape algo for tile and stone - not continous but possbly mosaic
-    # def assign_shape(self):
-    # """returns float measurements and labels on product details"""
-    #     if not self.shape:
-    #         if not self.actual_size:
-    #             self.shape = 'continuous'
-    #             return
-    #         ratio = self.width.lower / self.length.lower
-    #         if ratio < .9 or ratio > 1.2:
-    #             self.shape = 'rectangle'
-    #             return
-    #         self.shape = 'square'
+    def assign_shape(self):
+        if not self.shape:
+            if not self.actual_size:
+                return
+            ratio = self.width.lower / self.length.lower
+            if ratio < .9 or ratio > 1.2:
+                self.shape = 'rectangle'
+                return
+            self.shape = 'square'
 
 
 class Hardwood(FinishSurface):

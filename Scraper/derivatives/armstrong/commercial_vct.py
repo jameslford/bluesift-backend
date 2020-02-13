@@ -1,8 +1,8 @@
 import decimal
+from psycopg2.extras import NumericRange
 from SpecializedProducts.models import Resilient
 from utils.measurements import clean_value
 from Scraper.models import ScraperGroup
-from psycopg2.extras import NumericRange
 from .base import scrape
 
 def run(group: ScraperGroup):

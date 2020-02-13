@@ -1,3 +1,5 @@
+import decimal
+from psycopg2.extras import NumericRange
 from SpecializedProducts.models import Resilient
 from utils.measurements import clean_value
 from Scraper.models import ScraperGroup
@@ -21,18 +23,23 @@ def get_special(product: Resilient, item):
         if tag in product.manufacturer_style:
             look = 'stone'
     product.look = look
-    width, length, thickness = att_list[1].split('x')
-    product.width = clean_value(width)
-    product.length = clean_value(length)
-    product.thickness = clean_value(thickness)
+    print(att_list)
+    width, length, thickness = att_list[0].split('x')
+    product.width = NumericRange(clean_value(width))
+    product.length = NumericRange(clean_value(length))
+    product.thickness = decimal.Decimal(clean_value(thickness))
+    product.finish = att_list[1]
+    product.install_type = att_list[2]
     product.material_type = 'rigid core'
     product.commercial = True
     return product
 
 def get_special_detail(product: Resilient, empty_dict: dict):
-    product.finish = empty_dict.get('gloss', None)
-    product.install_type = empty_dict.get('Installation Method', None)
-    product.sub_material = empty_dict.get('Wood Species', None)
+    if not product.finish:
+        product.finish = empty_dict.get('gloss', None)
+    if not product.install_type:
+        product.install_type = empty_dict.get('Installation Method', None)
+    # product.material_type = empty_dict.get('Wood Species', None)
     product.sqft_per_carton = empty_dict.get('Coverage Per Carton', None)
     edge_end = empty_dict.get('Edge Detail', None)
     end = None

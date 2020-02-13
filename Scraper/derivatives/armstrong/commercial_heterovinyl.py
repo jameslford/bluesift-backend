@@ -1,3 +1,5 @@
+import decimal
+from psycopg2.extras import NumericRange
 from SpecializedProducts.models import Resilient
 from utils.measurements import clean_value
 from Scraper.models import ScraperGroup
@@ -20,9 +22,9 @@ def get_special(product: Resilient, item):
     width, length, thickness = att_list[1].split('x')
     print(width, length, thickness)
     product.manufacturer_collection = collection
-    product.width = clean_value(width)
-    product.length = clean_value(length)
-    product.thickness = clean_value(thickness)
+    product.width = NumericRange(clean_value(width))
+    product.length = NumericRange(clean_value(length))
+    product.thickness = decimal.Decimal(clean_value(thickness))
     return product
 
 
@@ -33,41 +35,61 @@ def get_special_detail(product: Resilient, empty_dict: dict):
     product.finish = gloss
     product.install_type = install_type
     product.lrv = lrv
-    return product
-
-
-def clean(product: Resilient):
-    default_product: Resilient = Resilient.objects.get(pk=product.pk)
     look = 'shaded / specked'
-    if 'ambigu' in default_product.manufacturer_collection.lower():
+    if 'ambigu' in product.manufacturer_collection.lower():
         look = 'textile'
-    elif 'stonerun' in default_product.manufacturer_collection.lower():
+    elif 'stonerun' in product.manufacturer_collection.lower():
         look = 'stone'
-    elif 'timber' in default_product.manufacturer_collection.lower():
+    elif 'timber' in product.manufacturer_collection.lower():
         look = 'wood'
     else:
         for tag in textile_tags:
-            if tag in default_product.manufacturer_style.lower():
+            if tag in product.manufacturer_style.lower():
                 look = 'textile'
         for tag in wood_tags:
-            if tag in default_product.manufacturer_style.lower():
+            if tag in product.manufacturer_style.lower():
                 look = 'wood'
         for tag in stone_tags:
-            if tag in default_product.manufacturer_style.lower():
+            if tag in product.manufacturer_style.lower():
                 look = 'stone'
-        if 'steel' in default_product.manufacturer_style.lower():
+        if 'steel' in product.manufacturer_style.lower():
             look = 'metal'
     product.look = look
     product.shape = 'continuous'
-    if default_product.width:
-        width = default_product.width.replace('ft.', '').strip()
-        width = round((float(width) * 12), 2)
-        product.width = '0-' + str(width)
-    if default_product.length:
-        length = default_product.length.replace('up to', '')
-        length = length.replace('ft.', '').strip()
-        length = round((float(length) * 12), 2)
-        product.length = '0-' + str(length)
-    if default_product.thickness:
-        product.thickness = default_product.thickness.replace('in.', '').strip()
-    product.save()
+    return product
+
+
+# def clean(product: Resilient):
+#     look = 'shaded / specked'
+#     if 'ambigu' in product.manufacturer_collection.lower():
+#         look = 'textile'
+#     elif 'stonerun' in product.manufacturer_collection.lower():
+#         look = 'stone'
+#     elif 'timber' in product.manufacturer_collection.lower():
+#         look = 'wood'
+#     else:
+#         for tag in textile_tags:
+#             if tag in product.manufacturer_style.lower():
+#                 look = 'textile'
+#         for tag in wood_tags:
+#             if tag in product.manufacturer_style.lower():
+#                 look = 'wood'
+#         for tag in stone_tags:
+#             if tag in product.manufacturer_style.lower():
+#                 look = 'stone'
+#         if 'steel' in product.manufacturer_style.lower():
+#             look = 'metal'
+#     product.look = look
+#     product.shape = 'continuous'
+#     if default_product.width:
+#         width = default_product.width.replace('ft.', '').strip()
+#         width = round((float(width) * 12), 2)
+#         product.width = '0-' + str(width)
+#     if default_product.length:
+#         length = default_product.length.replace('up to', '')
+#         length = length.replace('ft.', '').strip()
+#         length = round((float(length) * 12), 2)
+#         product.length = '0-' + str(length)
+#     if default_product.thickness:
+#         product.thickness = default_product.thickness.replace('in.', '').strip()
+#     product.save()

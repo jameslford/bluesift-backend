@@ -69,6 +69,8 @@ class LibraryLink(models.Model):
             'includeCollections': self.include_collections
             }
 
+
+# TODO convert this to script
     @classmethod
     def create_links(cls):
         admin = cls.objects.get_or_create(label='admin')[0]

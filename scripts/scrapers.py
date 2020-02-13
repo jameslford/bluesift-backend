@@ -4,6 +4,14 @@ from Scraper.initial_groups import groups
 from Products.models import Manufacturer
 
 
+def scrape(update=False):
+    if update:
+        scrapers = ScraperGroup.objects.all()
+    else:
+        scrapers = ScraperGroup.objects.filter(scraped=False)
+    for scraper in scrapers:
+        scraper.scrape()
+
 
 def create_scrapers():
     for group in groups:

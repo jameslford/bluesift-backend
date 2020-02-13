@@ -16,7 +16,6 @@ def scrape(group: ScraperGroup, get_special):
         product.manufacturer_sku = item.get('UniqueId', None)
         product.manufacturer_collection = item.get('SellingStyleName', None)
         product.manufacturer_style = item.get('SellingColorName', None)
-        product.thickness = decimal.Decimal(clean_value(item['Thickness']))
         base_product_url = base_url + '/flooring'
         product_url = (
             f'{base_product_url}/{group.module_name}/details/'
@@ -33,6 +32,10 @@ def scrape(group: ScraperGroup, get_special):
             f'https://shawfloors.scene7.com/is/image/ShawIndustries/{product.manufacturer_sku}_ROOM'
             f'?fmt=Jpeg&qlt=60&wid=1024'
             )
+        try:
+            product.thickness = decimal.Decimal(clean_value(item['Thickness']))
+        except TypeError:
+            print('couldnt convert')
         product = get_special(product, item)
         product.swatch_image_original = image
         product.room_scene_original = image2

@@ -1,3 +1,4 @@
+from psycopg2.extras import NumericRange
 from utils.measurements import clean_value
 from SpecializedProducts.models import Hardwood
 from Scraper.models import ScraperGroup
@@ -8,9 +9,8 @@ def run(group: ScraperGroup):
 
 def get_special(product: Hardwood, item):
     product.floors = True
-    product.width = clean_value(item['PlankWidth'])
-    product.length = clean_value(item['PlankLength'])
-
+    product.width = NumericRange(clean_value(item['PlankWidth']))
+    product.length = NumericRange(clean_value(item['PlankLength']))
     product.install_type = item['InstallationType']
     product.shade_variation = item['ColorVariationRatingShortDesc']
     gloss = None

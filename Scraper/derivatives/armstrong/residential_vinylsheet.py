@@ -1,6 +1,7 @@
+import decimal
+from psycopg2.extras import NumericRange
 from SpecializedProducts.models import Resilient
 from utils.measurements import clean_value
-from psycopg2.extras import NumericRange
 from Scraper.models import ScraperGroup
 from .base import scrape
 
@@ -59,6 +60,8 @@ def get_special(product: Resilient, item):
     product.material_type = 'vinyl sheet'
     product.look = assign_look(product)
     product.shape = 'continuous'
+    thickness = thk_dic.get(product.manufacturer_collection, None)
+    product.thickness = decimal.Decimal(thickness)
     return product
 
 

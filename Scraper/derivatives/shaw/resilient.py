@@ -1,14 +1,17 @@
-import decimal
+from psycopg2.extras import NumericRange
+from Scraper.models import ScraperGroup
 from SpecializedProducts.models import Resilient
 from utils.measurements import clean_value
-from psycopg2.extras import NumericRange
+from .base import scrape
+
+def run(group: ScraperGroup):
+    scrape(group, get_special)
 
 
 def get_special(product: Resilient, item):
     product.floors = True
     product.width = NumericRange(clean_value(item['SizeWidth']))
     product.length = NumericRange(clean_value(item['SizeLength']))
-    product.thickness = decimal.Decimal(clean_value(item['Thickness']))
     product.surface_coating = item['Finish']
     wear_layer_thickness = item.get('WearLayer')
     if wear_layer_thickness:
