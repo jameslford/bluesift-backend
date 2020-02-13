@@ -7,8 +7,7 @@ from Products.models import Manufacturer
 class ScraperGroup(models.Model):
     manufacturer = models.ForeignKey(
         Manufacturer,
-        on_delete=models.SET_NULL,
-        null=True,
+        on_delete=models.CASCADE,
         )
     category = models.ForeignKey(
         ContentType,

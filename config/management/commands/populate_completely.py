@@ -12,9 +12,9 @@ from scripts.demo_data import create_demo_users, add_additonal
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        # create_scrapers()
-        # scrape()
-        # get_final_images()
+        create_scrapers()
+        scrape()
+        get_final_images()
         assign_size()
         assign_label_color()
         convert_geometries()

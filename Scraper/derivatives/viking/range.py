@@ -45,6 +45,7 @@ def run(group:ScraperGroup):
             rec_downloads = []
             img_src = img.get('src')
             product: Range = Range()
+            product.scraper_group = group
             product.manufacturer = group.manufacturer
             product.manufacturer_sku = sku
             # product: Appliance = Appliance.objects.get_or_create(

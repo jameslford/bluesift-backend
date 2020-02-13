@@ -12,6 +12,8 @@ def scrape(group: ScraperGroup, get_special):
     for item in items:
         model = group.get_model()
         product = model()
+        product.scraper_group = group
+        product.manfuacter = group.manufacturer
         style_number = item['SellingStyleNbr']
         product.manufacturer_sku = item.get('UniqueId', None)
         product.manufacturer_collection = item.get('SellingStyleName', None)

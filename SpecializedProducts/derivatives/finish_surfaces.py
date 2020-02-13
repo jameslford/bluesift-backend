@@ -160,7 +160,7 @@ class FinishSurface(ProductSubClass):
         """returns float measurements and labels on product details"""
         # pylint: disable=no-member
         image = self.swatch_image
-        print('getting actual color for ', self.bb_sku)
+        print('getting actual color for ', self.manufacturer.label, self.manufacturer_collection)
         if not image:
             return
         try:
@@ -188,7 +188,13 @@ class FinishSurface(ProductSubClass):
     def get_width(self):
         if self.scale_length:
             return float(self.scale_length)
-        return float(self.length.lower) if self.length else 0
+        print(self.length)
+        if self.length:
+            if self.length.lower:
+                return float(self.length.lower)
+            return float(self.length.upper) if self.length.upper else 0
+        return 0
+        # return float(self.length.lower) if self.length else 0
 
     def get_depth(self):
         if self.scale_width:
@@ -196,7 +202,7 @@ class FinishSurface(ProductSubClass):
         return float(self.width.lower) if self.width else 0
 
     def get_texture_map(self):
-        return self.tiling_image.url if self.tiling_image else self.swatch_image.url
+        return self.tiling_image if self.tiling_image else self.swatch_image
 
     def convert_geometries(self):
         converter = FinishSurfaceConverter(self)
@@ -209,6 +215,10 @@ class FinishSurfaceConverter(Converter):
         width = self.product.get_width()
         depth = self.product.get_depth()
         height = self.product.get_height()
+        image = self.product.get_texture_map()
+        if not image:
+            print('np image for ', self.product.manufacturer.label, self.product.manufacturer_collection)
+            return
         image = self.product.get_texture_map().open('r')
         image = pimage.open(image)
         visual = TextureVisuals(image=image)

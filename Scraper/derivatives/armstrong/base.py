@@ -9,7 +9,9 @@ def scrape(group: ScraperGroup, list_function, detail_function):
     results = requests.get(group.base_url).json()
     items = results['items']
     for item in items:
-        product = model_type()
+        product: FinishSurface = model_type()
+        product.scraper_group = group
+        product.manufacturer = group.manufacturer
         product.product_url = group.base_url + item.get('link', None)
         product.manufacturer_sku = item.get('sku', None)
         collection = item.get('lineName', None)

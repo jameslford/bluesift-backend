@@ -8,6 +8,8 @@ from utils.images import resize_image
 def get_final_images(update=False):
     products = Product.objects.all()
     for product in products:
+        if not update and product.swatch_image:
+            return
         desired_size = settings.DESIRED_IMAGE_SIZE
         img_groups = [
             [product.swatch_image_original, product.swatch_image],
@@ -36,7 +38,8 @@ def get_final_images(update=False):
                 continue
             images_name = str(product.manufacturer_sku) + '.jpg'
             destination.save(images_name, buffer, save=True)
-            print('getting final for ' + product.name)
+            product.save()
+            print('getting final for ' + product.manufacturer.label, product.bb_sku)
 
 
 

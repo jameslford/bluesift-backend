@@ -219,6 +219,13 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         )
 
+    scraper_group = models.ForeignKey(
+        'Scraper.ScraperGroup',
+        null=True,
+        related_name='products',
+        on_delete=models.SET_NULL,
+        )
+
     objects = ProductPricingManager()
     subclasses = InheritanceManager()
 

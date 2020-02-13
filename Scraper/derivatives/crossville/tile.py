@@ -62,8 +62,9 @@ def run(group: ScraperGroup):
             pattern_type = var.get('PatternType', None)
             if pattern_type and pattern_type == 'Mosaic':
                 product.shape = 'mosaic'
-
+            product.scraper_group = group
             product.look = look
+            product.manafacturer = group.manufacturer
             product.material_type = submaterial
             product.manufacturer_collection = manufacturer_collection
             product.manufacturer_style = manufacturer_style
