@@ -1,5 +1,6 @@
 import requests
 import decimal
+from SpecializedProducts.models import FinishSurface
 from utils.measurements import clean_value
 from Scraper.models import ScraperGroup
 
@@ -11,9 +12,9 @@ def scrape(group: ScraperGroup, get_special):
     items = results['value']
     for item in items:
         model = group.get_model()
-        product = model()
+        product: FinishSurface = model()
         product.scraper_group = group
-        product.manfuacter = group.manufacturer
+        product.manufacturer = group.manufacturer
         style_number = item['SellingStyleNbr']
         product.manufacturer_sku = item.get('UniqueId', None)
         product.manufacturer_collection = item.get('SellingStyleName', None)

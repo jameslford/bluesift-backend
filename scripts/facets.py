@@ -39,39 +39,39 @@ def create_facets():
         attribute='low_price'
         )
     StaticDecimalFacet.objects.get_or_create(
-        contente_type=cfs,
+        content_type=cfs,
         attribute='thickness'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=cfs,
+        content_type=cfs,
         attribute='look'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=cfs,
+        content_type=cfs,
         attribute='finish'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=cfs,
+        content_type=cfs,
         attribute='shade_variation'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=chardwood,
+        content_type=chardwood,
         attribute='composition'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=chardwood,
+        content_type=chardwood,
         attribute='species'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=cresilient,
+        content_type=cresilient,
         attribute='material_type'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=cresilient,
+        content_type=cresilient,
         attribute='surface_coating'
         )
     MultiFacet.objects.get_or_create(
-        contente_type=ctas,
+        content_type=ctas,
         attribute='material_type'
         )
     BoolFacet.objects.get_or_create(

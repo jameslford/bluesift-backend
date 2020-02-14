@@ -7,7 +7,7 @@ def resize_image(image: Image.Image, desired_size) -> Image.Image:
         return image
     w_ratio = desired_size/width
     height_adjust = int(round(height * w_ratio))
-    image = image.resize((desired_size, height_adjust))
+    image = image.resize((desired_size, height_adjust), Image.LANCZOS)
     if image.size[1] > desired_size:
         image = image.crop((
             0,
@@ -16,3 +16,8 @@ def resize_image(image: Image.Image, desired_size) -> Image.Image:
             desired_size
             ))
     return image
+
+def remove_background():
+    im: Image.Image = Image.open('test/centered.jpg')
+    print(im.height)
+    im.show()

@@ -1,10 +1,14 @@
 from django.core.management.base import BaseCommand
-from Scraper.models import ScraperGroup
+from utils.images import remove_background
+from Products.models import Product
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        scraper: ScraperGroup = ScraperGroup.objects.get(manufacturer__label='crossville')
-        scraper.scrape()
-        # for scrap in scrapers:
-        #     scrap.scrape()
+        # products = Product.subclasses.all().select_subclasses()
+        products = Product.subclasses.filter().select_subclasses()
+        print(products.query)
+        # remove_background()
+
+
+

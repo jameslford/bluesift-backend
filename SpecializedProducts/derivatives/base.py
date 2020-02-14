@@ -63,6 +63,7 @@ class ProductSubClass(Product):
         byteArray = mesh.export(None, 'glb')
         file = ContentFile(byteArray)
         name = str(self.bb_sku) + '.glb'
+        print(name)
         self.derived_gbl.save(name, file, save=True)
 
 

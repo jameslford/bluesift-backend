@@ -6,6 +6,7 @@ from django.db.models.functions import Concat
 from django.http import QueryDict
 from django.db.models.query import QuerySet, Value
 from django.db.models import CharField
+from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
 from Suppliers.models import SupplierProduct
 from Products.models import Product
@@ -69,6 +70,7 @@ class Sorter:
         return self.product_type.objects.select_related(select_related).all().product_prices()
 
 
+    @transaction.atomic
     def __process_request(self):
         query_dict: QueryDict = QueryDict(self.request.GET.urlencode(), mutable=True)
         for facet in self.facets:
@@ -84,35 +86,50 @@ class Sorter:
             return self.calculate_response(static_queryset)
         return self.calculate_response()
 
+    def get_enabled_values(self, facet):
+        for val in facet.enabled_values:
+            val = val.asdict()
+            yield val
+
 
     def calculate_response(self, static_queryset: QuerySet = None):
+        # import itertools
         if not static_queryset:
-            static_queryset = self.query_index.products.all()
+            pks = self.query_index.get_product_pks()
+            static_queryset = self.product_type.objects.filter(pk__in=pks).product_prices()
         dynamic_queryset = [
-            facet.filter_self(self.products) for facet in self.facets if facet.dynamically_counted
+            facet.filter_self(self.products) for facet in self.facets if facet and facet.dynamic
             ]
-        products = static_queryset.intersection(*dynamic_queryset)
-        facets = [facet.count_self(self.query_index.pk, self.products, self.facets) 
-        for facet in self.facets]
-        enabled_values = [facet.enabled_values.asdict() for facet in facets]
+        products = static_queryset.intersection(*dynamic_queryset).values_list('pk', flat=True)
+        # force the queryset to evalute here so that it can be renewed on the annoate call later
+        product_count = len(products)
+        products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()
+        for facet in self.facets:
+            facet.count_self(self.query_index.pk, self.products, self.facets)
+        serialized_facets = [facet.serialize_self() for facet in self.facets]
+        enabled_values = [facet.enabled_values for facet in self.facets if facet]
+        print(enabled_values)
         return {
-            'product_count': products.count(),
-            'facets': facets,
+            'product_count': product_count,
+            'facets': serialized_facets,
+            'enabled_values': enabled_values,
             'products': self.serialize_products(products),
-            'enabled_values': enabled_values
             }
+            # static_queryset = self.query_index.products.all()
+        # enabled_values = list(itertools.chain.from_iterable(enabled_values))
+        # enabled_values = [a.asdict() for a in enabled_values]
+        # enabled_values = [self.get_enabled_values(facet) for facet in self.facets if facet]
 
 
     def build_query_index(self):
-        products = self.get_products()
         static_querysets = [
-            facet.filter_self() for facet in self.facets if not facet.dynamically_counted
+            facet.filter_self(self.products) for facet in self.facets if not facet.dynamic
             ]
-        new_prods = products.intersection(*static_querysets).values_list('pk', flat=True)
+        new_prods = self.products.intersection(*static_querysets).values_list('pk', flat=True)
         self.query_index.products.clear()
         self.query_index.products.add(*new_prods)
         self.query_index.save()
-        return Product.objects.filter(pk__in=new_prods)
+        return self.products.filter(pk__in=new_prods)
 
 
     def serialize_products(self, products):

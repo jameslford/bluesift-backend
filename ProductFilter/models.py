@@ -1,6 +1,7 @@
 import uuid
 from decimal import Decimal
 from typing import List
+from model_utils.managers import InheritanceManager
 from django.db import models
 from django.db.models import Min, Max
 from django.db.models.query import QuerySet
@@ -27,7 +28,7 @@ class BaseReturnValue:
             'name': self.name,
             'count': self.count,
             'expression': self.expression,
-            'value': self.value
+            'selected': self.value
             }
 
 class AvailabilityFacet:
@@ -38,6 +39,7 @@ class AvailabilityFacet:
         self.location_pk = location_pk
         self.queryset: QuerySet = None
         self.selected = False
+        self.dynamic = True
         self.values = Product.objects.safe_availability_commands()
         self.return_values = []
         self.enabled_values = []
@@ -59,16 +61,17 @@ class AvailabilityFacet:
         self.queryset = products
         return products
 
-    def count_self(self, query_index_pk, products, *facets):
+    def count_self(self, query_index_pk, products, facets):
         _facets = [facet.queryset for facet in facets if facet is not self]
         others = products.intersection(*_facets).values_list('pk', flat=True)
         for value in self.values:
             count = products.filter(pk__in=others).filter_availability(value, self.location_pk).count()
             selected = bool(value in self.qterms)
             expression = f'{self.name}={value}'
+            return_value = BaseReturnValue(expression, self.name, count, selected)
             self.return_values.append(BaseReturnValue(expression, self.name, count, selected))
             if selected:
-                self.enabled_values.append(BaseReturnValue(expression, self.name, count, selected))
+                self.enabled_values.append(return_value.asdict())
 
     def serialize_self(self):
         return {
@@ -90,15 +93,19 @@ class BaseFacet(models.Model):
         )
     attribute = models.CharField(max_length=60, null=True, blank=True)
     attribute_list = pg_fields.ArrayField(
-        models.CharField(max_length=60, null=True, blank=True)
+        models.CharField(max_length=60, null=True, blank=True),
+        null=True,
+        blank=True
         )
+
+    subclasses = InheritanceManager()
 
     dynamic = False
     selected = False
     field_type = 'CharField'
 
     queryset: QuerySet = None
-    others_intersection: List[uuid.UUID] = None
+    others_intersection: QuerySet = None
 
 
     class Meta:
@@ -109,23 +116,28 @@ class BaseFacet(models.Model):
         return self.content_type.model_class()
 
 
-    def get_intersection(self, query_index_pk, products, *others: List[QuerySet]):
+    def get_intersection(self, query_index_pk, products, others: List[QuerySet]):
         if self.others_intersection:
             return self.others_intersection
         if self.dynamic:
-            return products.intersection(*others).values_list('pk', flat=True)
-        others = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet_name=self).first()
-        if others:
-            return others.values_list('pk', flat=True)
-        others = products.intersection(*others).values_list('pk', flat=True)
-        add_facet_others_delay.delay(query_index_pk, self.pk, list(others))
-        return others
+            opks = list(products.intersection(*others).values_list('pk', flat=True))
+            self.others_intersection = products.filter(pk__in=opks)
+            return self.others_intersection
+        cached_others = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet=self).first()
+        if cached_others:
+            opks = list(cached_others.values_list('pk', flat=True))
+            self.others_intersection = products.filter(pk__in=opks).product_prices()
+            return cached_others.values_list('pk', flat=True)
+        others = list(products.intersection(*others).values_list('pk', flat=True))
+        add_facet_others_delay.delay(query_index_pk, self.pk, others)
+        self.others_intersection = products.filter(pk__in=others).product_prices()
+        return self.others_intersection
 
 
     def parse_request(self, params: QueryDict):
         raise Exception('Facet must be subclassed!')
 
-    def count_self(self, query_index_pk, products, *facets):
+    def count_self(self, query_index_pk, products, facets):
         return
 
     def filter_self(self, products: QuerySet):
@@ -174,7 +186,7 @@ class BaseNumericFacet(BaseSingleFacet):
     def __get_absolutes(self):
         if self.abs_max and self.abs_min:
             return [self.abs_max, self.abs_min]
-        absolutes = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
+        absolutes = self.others_intersection.aggregate(Min(self.attribute), Max(self.attribute))
         self.abs_min = absolutes.get(f'{self.attribute}__min')
         self.abs_max = absolutes.get(f'{self.attribute}__max')
         if not self.dynamic:
@@ -194,13 +206,18 @@ class BaseNumericFacet(BaseSingleFacet):
     def filter_self(self, products: QuerySet):
         args = {}
         if self.selected_max:
-            self.enabled_values.append(BaseReturnValue(f'{self.name}_max={self.selected_max}', f'Max {self.name}'))
+            self.enabled_values.append(BaseReturnValue(f'{self.name}_max={self.selected_max}', f'Max {self.name}', None, True))
             args.update({f'{self.attribute}__lte': self.selected_max})
         if self.selected_min:
-            self.enabled_values.append(BaseReturnValue(f'{self.name}_min={self.selected_min}', f'Min {self.name}'))
+            self.enabled_values.append(BaseReturnValue(f'{self.name}_min={self.selected_min}', f'Min {self.name}', None, True))
             args.update({f'{self.attribute}__gte': self.selected_min})
         self.queryset = products.filter(**args)
         return self.queryset
+
+    def count_self(self, query_index_pk, products, facets):
+        _facets = [facet.queryset for facet in facets if facet is not self]
+        self.get_intersection(query_index_pk, products, _facets)
+        return super().count_self(query_index_pk, products, facets)
 
 
     def serialize_self(self):
@@ -225,8 +242,6 @@ class MultiFacet(BaseSingleFacet):
     all_values: List[BaseReturnValue] = []
     enabled_values: List[BaseReturnValue] = []
 
-    class Meta:
-        abstract = True
 
     def parse_request(self, params: QueryDict):
         qterms = params.getlist(self.name, [])
@@ -249,9 +264,9 @@ class MultiFacet(BaseSingleFacet):
         return self.queryset
 
 
-    def count_self(self, query_index_pk, products, *facets):
+    def count_self(self, query_index_pk, products, facets):
         _facets = [facet.queryset for facet in facets if facet is not self]
-        others = self.get_intersection(query_index_pk, products, *_facets)
+        others = self.get_intersection(query_index_pk, products, _facets)
         values = others.values(self.attribute).annotate(val_count=models.Count(self.attribute))
         for val in values:
             name = val[self.attribute]
@@ -261,7 +276,8 @@ class MultiFacet(BaseSingleFacet):
             return_value = BaseReturnValue(expression, name, count, selected)
             self.all_values.append(return_value)
             if selected:
-                self.enabled_values.append(return_value)
+                self.enabled_values.append(return_value.asdict())
+            # return return_value
 
 
     def serialize_self(self):
@@ -322,9 +338,9 @@ class BoolFacet(BaseFacet):
         return self.queryset
 
 
-    def count_self(self, query_index_pk, products, *facets):
+    def count_self(self, query_index_pk, products, facets):
         _facets = [facet.queryset for facet in facets]
-        others = self.get_intersection(query_index_pk, products, *_facets)
+        others = self.get_intersection(query_index_pk, products, _facets)
         args = {value: models.Count(value, filter=models.Q(**{value: True})) for value in self.values}
         bool_values = others.aggregate(**args)
         for name, count in bool_values.items():
@@ -333,7 +349,8 @@ class BoolFacet(BaseFacet):
             return_value = BaseReturnValue(expression, name, count, selected)
             self.all_values.append(return_value)
             if selected:
-                self.enabled_values.append(return_value)
+                self.enabled_values.append(return_value.asdict())
+            # return return_value
 
     def serialize_self(self):
         return {
@@ -382,7 +399,7 @@ class RadiusFacet(BaseFacet):
         self.selected = True
         expression = f'radius={self.radius}*{self.zipcode}'
         name = f'Within {self.radius} mi.'
-        self.enabled_value = BaseReturnValue(expression, name)
+        self.enabled_value = BaseReturnValue(expression, name, None, True)
         self.queryset = products.filter(locations__distance_lte=(coords, radius))
         return self.queryset
 
@@ -413,24 +430,35 @@ class DynamicDecimalFacet(BaseNumericFacet):
 
 class StaticRangeFacet(BaseNumericFacet):
 
-    abs_min = pg_fields.ArrayField(
-        models.DecimalField(max_digits=8, decimal_places=2)
-        )
-    abs_max = pg_fields.ArrayField(
-        models.DecimalField(max_digits=8, decimal_places=2)
-        )
+    abs_min = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    abs_max = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     field_type = 'RangeField'
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 
 class StaticDecimalFacet(BaseNumericFacet):
 
-    abs_min = models.DecimalField(max_digits=8, decimal_places=2)
-    abs_max = models.DecimalField(max_digits=8, decimal_places=2)
+    abs_min = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    abs_max = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     field_type = 'DecimalField'
+
+
+class QueryIndexManager(models.Manager):
+    def get_or_create_qi(self, **kwargs):
+        query_dict = kwargs.get('query_dict')
+        query_path = kwargs.get('query_path')
+        # product_filter = kwargs.get('product_filter')
+        retailer_location = kwargs.get('retailer_location')
+        args = {
+            'query_dict': query_dict,
+            'query_path': query_path,
+            # 'product_filter': product_filter
+            }
+        if retailer_location:
+            location = SupplierLocation.objects.get(pk=retailer_location)
+            args['retailer_location'] = location
+        query_index = self.model.objects.get_or_create(**args)
+        return query_index
 
 
 
@@ -454,6 +482,8 @@ class QueryIndex(models.Model):
     created = models.DateTimeField(auto_now=True)
     last_retrieved = models.DateTimeField(auto_now_add=True, null=True)
     times_accessed = models.PositiveIntegerField(null=True, default=1)
+
+    objects = QueryIndexManager()
 
     class Meta:
         unique_together = ('query_dict', 'query_path')

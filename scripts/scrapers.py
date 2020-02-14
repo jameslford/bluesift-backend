@@ -9,6 +9,7 @@ def scrape(update=False):
         scrapers = ScraperGroup.objects.all()
     else:
         scrapers = ScraperGroup.objects.filter(scraped=False)
+    print('scraper_count = ', scrapers.count())
     for scraper in scrapers:
         scraper.scrape()
 

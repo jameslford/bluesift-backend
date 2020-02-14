@@ -188,7 +188,6 @@ class FinishSurface(ProductSubClass):
     def get_width(self):
         if self.scale_length:
             return float(self.scale_length)
-        print(self.length)
         if self.length:
             if self.length.lower:
                 return float(self.length.lower)
@@ -199,6 +198,10 @@ class FinishSurface(ProductSubClass):
     def get_depth(self):
         if self.scale_width:
             return float(self.scale_width)
+        if self.width:
+            if self.width.lower:
+                return float(self.width.lower)
+            return float(self.width.upper) if self.width.upper else 0
         return float(self.width.lower) if self.width else 0
 
     def get_texture_map(self):
@@ -212,6 +215,9 @@ class FinishSurface(ProductSubClass):
 class FinishSurfaceConverter(Converter):
 
     def convert(self):
+        if self.product.derived_gbl:
+            print('already got glb for ', self.product.bb_sku)
+            return
         width = self.product.get_width()
         depth = self.product.get_depth()
         height = self.product.get_height()

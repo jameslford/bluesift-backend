@@ -1,6 +1,6 @@
 
 
-rmv_list = ['thk', 'thick', 'long', 'wide', 'panel', '+', 'up to' '<br/>']
+rmv_list = ['thk', 'thick', 'long', 'wide', 'panel', '+', 'up to', '<br/>']
 inch_list = ['-inch', '(in)', 'in.', 'in', '"']
 cm_list = ['(cm)', 'cm.', 'cm']
 mm_list = ['(mm)', 'mm.', 'mm']
@@ -22,12 +22,7 @@ def clean_value(value):
     print('initial ', value)
     value = str(value).strip().lower()
     if 'mixed' in value:
-        print('mixed')
         return None
-        # value = value.replace('mixed', '')
-        # vals = value.split('/')
-        # vals = [float(val.strip()) for val in vals]
-        # return [min(vals), max(vals)]
     for k in rmv_list:
         if k in value:
             value = value.replace(k, '')
@@ -55,71 +50,84 @@ def clean_value(value):
     except ValueError:
         return None
 
+
+
+
+
+
+
+
+
+
+
     # if 'in.' in value:
     #     print('in')
     #     value = value.replace('in.', '')
 
-
-def unified_measurement(value):
-    # returns a uniform lenght/width/tickness in inches
-    conversion_dict = {
-        '-inch': 1,
-        '(in)': 1,
-        '"': 1,
-        'in.': 1,
-        'in': 1,
-        '(mm)': .0393,
-        'mm': .0393,
-        '(ft)': 12,
-        'ft': 12,
-        "'": 12,
-        '(cm)': .393,
-        'cm': .393,
-        '(m)': 39.3,
-    }
-    conversion = 1
-    _value = value
-    for key in conversion_dict:
-        if key in _value:
-            conversion = conversion_dict.get(key, 1)
-            _value = _value.replace(key, '')
-    letter_count = 0
-    for char in _value:
-        if char.isalpha():
-            letter_count += 1
-    # if letter_count > 0:
-    #     return value.lower()
-    # _value = _value.strip()
-    if ',' in _value:
-        sizes = []
-        val_lest = _value.split(',')
-        for val in val_lest:
-            sizes.append(unified_measurement(val))
-        return ', '.join(sizes)
-    space_split = _value.split(' ')
-    if len(space_split) < 2:
-        if '/' in _value:
-            num, den = _value.split('/')
-            rval = str(round((float(num) / float(den) * conversion)), 3)
-            return rval.replace(' .', '')
-        else:
-            try:
-                _value = float(_value.strip()) * conversion
-                return str(_value)
-            except ValueError:
-                return 'N/A'
-                # return str(_value)
-    first = float(space_split[0])
-    second = space_split[1]
-    if '/' in second:
-        num, den = second.split('/')
-        add = round((float(num) / float(den)), 3)
-        nval = add + first
-        rval = str(nval * conversion)
-        return rval.replace(' .', '')
-    _value = _value.replace(' .', '')
-    try:
-        _value = round((float(_value) * conversion), 3)
-        return str(_value)
-    except ValueError:
-        return _value
+        # value = value.replace('mixed', '')
+        # vals = value.split('/')
+        # vals = [float(val.strip()) for val in vals]
+        # return [min(vals), max(vals)]
+# def unified_measurement(value):
+#     # returns a uniform lenght/width/tickness in inches
+#     conversion_dict = {
+#         '-inch': 1,
+#         '(in)': 1,
+#         '"': 1,
+#         'in.': 1,
+#         'in': 1,
+#         '(mm)': .0393,
+#         'mm': .0393,
+#         '(ft)': 12,
+#         'ft': 12,
+#         "'": 12,
+#         '(cm)': .393,
+#         'cm': .393,
+#         '(m)': 39.3,
+#     }
+#     conversion = 1
+#     _value = value
+#     for key in conversion_dict:
+#         if key in _value:
+#             conversion = conversion_dict.get(key, 1)
+#             _value = _value.replace(key, '')
+#     letter_count = 0
+#     for char in _value:
+#         if char.isalpha():
+#             letter_count += 1
+#     # if letter_count > 0:
+#     #     return value.lower()
+#     # _value = _value.strip()
+#     if ',' in _value:
+#         sizes = []
+#         val_lest = _value.split(',')
+#         for val in val_lest:
+#             sizes.append(unified_measurement(val))
+#         return ', '.join(sizes)
+#     space_split = _value.split(' ')
+#     if len(space_split) < 2:
+#         if '/' in _value:
+#             num, den = _value.split('/')
+#             rval = str(round((float(num) / float(den) * conversion)), 3)
+#             return rval.replace(' .', '')
+#         else:
+#             try:
+#                 _value = float(_value.strip()) * conversion
+#                 return str(_value)
+#             except ValueError:
+#                 return 'N/A'
+#                 # return str(_value)
+#     first = float(space_split[0])
+#     second = space_split[1]
+#     if '/' in second:
+#         num, den = second.split('/')
+#         add = round((float(num) / float(den)), 3)
+#         nval = add + first
+#         rval = str(nval * conversion)
+#         return rval.replace(' .', '')
+#     _value = _value.replace(' .', '')
+#     try:
+#         _value = round((float(_value) * conversion), 3)
+#         return str(_value)
+#     except ValueError:
+#         return _value

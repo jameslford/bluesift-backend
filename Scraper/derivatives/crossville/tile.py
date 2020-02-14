@@ -64,7 +64,7 @@ def run(group: ScraperGroup):
                 product.shape = 'mosaic'
             product.scraper_group = group
             product.look = look
-            product.manafacturer = group.manufacturer
+            product.manufacturer = group.manufacturer
             product.material_type = submaterial
             product.manufacturer_collection = manufacturer_collection
             product.manufacturer_style = manufacturer_style
@@ -80,8 +80,9 @@ def run(group: ScraperGroup):
             if len(size) > 1:
                 product.width = NumericRange(clean_value(size[0]))
                 product.length = NumericRange(clean_value(size[1]))
-            print(product.width, product.length)
-            if not (product.thickness, product.width, product.length):
+            print(product.width, product.length, product.thickness)
+            if not (product.thickness and product.width and product.length):
+                print('bad values')
                 continue
 
             product.floors = bool('Interior floors dry' in applications)

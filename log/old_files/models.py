@@ -785,22 +785,22 @@
 
 
 
-# # class QueryIndexManager(models.Manager):
-# #     def get_or_create_qi(self, **kwargs):
-# #         query_dict = kwargs.get('query_dict')
-# #         query_path = kwargs.get('query_path')
-# #         product_filter = kwargs.get('product_filter')
-# #         retailer_location = kwargs.get('retailer_location')
-# #         args = {
-# #             'query_dict': query_dict,
-# #             'query_path': query_path,
-# #             'product_filter': product_filter
-# #             }
-# #         if retailer_location:
-# #             location = SupplierLocation.objects.get(pk=retailer_location)
-# #             args['retailer_location'] = location
-# #         query_index = self.model.objects.get_or_create(**args)
-# #         return query_index
+# class QueryIndexManager(models.Manager):
+#     def get_or_create_qi(self, **kwargs):
+#         query_dict = kwargs.get('query_dict')
+#         query_path = kwargs.get('query_path')
+#         # product_filter = kwargs.get('product_filter')
+#         retailer_location = kwargs.get('retailer_location')
+#         args = {
+#             'query_dict': query_dict,
+#             'query_path': query_path,
+#             # 'product_filter': product_filter
+#             }
+#         if retailer_location:
+#             location = SupplierLocation.objects.get(pk=retailer_location)
+#             args['retailer_location'] = location
+#         query_index = self.model.objects.get_or_create(**args)
+#         return query_index
 
 # # AVAILABILITY_FACET = 'AvailabilityFacet'
 # # BOOLGROUP_FACET = 'BoolGroupFacet'

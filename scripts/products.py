@@ -7,10 +7,9 @@ from utils.images import resize_image
 
 def get_final_images(update=False):
     products = Product.objects.all()
+    print(products.count())
+    desired_size = settings.DESIRED_IMAGE_SIZE
     for product in products:
-        if not update and product.swatch_image:
-            return
-        desired_size = settings.DESIRED_IMAGE_SIZE
         img_groups = [
             [product.swatch_image_original, product.swatch_image],
             [product.room_scene_original, product.room_scene],
@@ -26,13 +25,16 @@ def get_final_images(update=False):
                 print('already got final')
                 continue
             image = url_to_pimage(original)
+            if not image:
+                continue
             image = image.convert('RGB')
             image = resize_image(image, desired_size)
             if not image:
+                print('unable to convert')
                 continue
             buffer = io.BytesIO()
             try:
-                image.save(buffer, 'JPEG')
+                image.save(buffer, 'JPEG', quality=90)
             except IOError:
                 print('io error')
                 continue
