@@ -31,6 +31,7 @@ class BaseReturnValue:
             'selected': self.value
             }
 
+
 class AvailabilityFacet:
 
     def __init__(self, location_pk):
@@ -84,7 +85,7 @@ class AvailabilityFacet:
 
 
 class BaseFacet(models.Model):
-    limit = models.Q(app_label='SpecializedProducts') | models.Q(app_label='Products', model='Product')
+    limit = models.Q(app_label='Products') | models.Q(app_label='SpecializedProducts')
     name = models.CharField(max_length=20, blank=True)
     content_type = models.ForeignKey(
         ContentType,
@@ -111,6 +112,9 @@ class BaseFacet(models.Model):
     class Meta:
         unique_together = ('attribute', 'content_type', 'attribute_list')
 
+
+    def __str__(self):
+        return f'{self.attribute}, {self.name}'
     @property
     def model(self) -> models.Model:
         return self.content_type.model_class()
@@ -150,7 +154,6 @@ class BaseFacet(models.Model):
         raise Exception('Facet must be subclassed!')
 
 
-
 class BaseSingleFacet(BaseFacet):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -168,7 +171,6 @@ class BaseSingleFacet(BaseFacet):
 
     class Meta:
         abstract = True
-
 
 
 class BaseNumericFacet(BaseSingleFacet):
@@ -233,22 +235,24 @@ class BaseNumericFacet(BaseSingleFacet):
             }
 
 
-
-
 class MultiFacet(BaseSingleFacet):
 
     field_type = 'CharField'
     qterms: List[str] = None
-    all_values: List[BaseReturnValue] = []
-    enabled_values: List[BaseReturnValue] = []
+    all_values: List[BaseReturnValue] = None
+    enabled_values: List[BaseReturnValue] = None
 
 
     def parse_request(self, params: QueryDict):
+        print(self.name)
         qterms = params.getlist(self.name, [])
-        if qterms:
-            qterms = qterms.split(',')
-        values = self.model.objects.values_list(self.attribute, flat=True).distinct()
+        qterms = qterms[0].split(',') if qterms else []
+        # qterms = qterms[0]
+        print('initial qterms =', qterms )
+        values = list(self.model.objects.values_list(self.attribute, flat=True).distinct())
+        # print('multi values = ', values)
         self.qterms = [term for term in qterms if term in values]
+        print('multi qterms = ', self.qterms)
         return params
 
 
@@ -268,6 +272,8 @@ class MultiFacet(BaseSingleFacet):
         _facets = [facet.queryset for facet in facets if facet is not self]
         others = self.get_intersection(query_index_pk, products, _facets)
         values = others.values(self.attribute).annotate(val_count=models.Count(self.attribute))
+        self.all_values = []
+        self.enabled_values = []
         for val in values:
             name = val[self.attribute]
             count = val['val_count']
@@ -290,13 +296,12 @@ class MultiFacet(BaseSingleFacet):
             }
 
 
-
 class BoolFacet(BaseFacet):
 
     field_type = 'BooleanField'
     qterms: List[str] = None
-    all_values: List[BaseReturnValue] = []
-    enabled_values: List[BaseReturnValue] = []
+    all_values: List[BaseReturnValue] = None
+    enabled_values: List[BaseReturnValue] = None
 
 
 
@@ -343,6 +348,8 @@ class BoolFacet(BaseFacet):
         others = self.get_intersection(query_index_pk, products, _facets)
         args = {value: models.Count(value, filter=models.Q(**{value: True})) for value in self.values}
         bool_values = others.aggregate(**args)
+        self.all_values = []
+        self.enabled_values = []
         for name, count in bool_values.items():
             selected = bool(name in self.query_terms)
             expression = f'{self.name}={name}'
@@ -360,8 +367,6 @@ class BoolFacet(BaseFacet):
             'all_values': [value.asdict() for value in self.all_values],
             # 'enabled_values': [value.asdict() for value in self.enabled_values]
             }
-
-
 
 
 class RadiusFacet(BaseFacet):
@@ -420,12 +425,10 @@ class DynamicRangeFacet(BaseNumericFacet):
     dynamic = True
 
 
-
 class DynamicDecimalFacet(BaseNumericFacet):
 
     field_type = 'DecimalField'
     dynamic = True
-
 
 
 class StaticRangeFacet(BaseNumericFacet):
@@ -433,7 +436,6 @@ class StaticRangeFacet(BaseNumericFacet):
     abs_min = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     abs_max = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     field_type = 'RangeField'
-
 
 
 class StaticDecimalFacet(BaseNumericFacet):
@@ -459,7 +461,6 @@ class QueryIndexManager(models.Manager):
             args['retailer_location'] = location
         query_index = self.model.objects.get_or_create(**args)
         return query_index
-
 
 
 class QueryIndex(models.Model):
@@ -494,7 +495,6 @@ class QueryIndex(models.Model):
 
     def get_product_pks(self):
         return self.products.values_list('pk', flat=True)
-
 
 
 class FacetOthersCollection(models.Model):

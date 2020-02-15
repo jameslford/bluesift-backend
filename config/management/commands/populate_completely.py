@@ -12,7 +12,6 @@ from scripts.demo_data import create_demo_users, add_additonal
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        pass
         # create_scrapers()
         # scrape()
         # get_final_images()
@@ -21,7 +20,7 @@ class Command(BaseCommand):
         # convert_geometries()
         # add_zips()
         # create_facets()
-        # refresh_product_tree()
+        refresh_product_tree()
         # create_usertypes()
         # LibraryLink.create_links()
         # create_demo_users()

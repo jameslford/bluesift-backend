@@ -14,8 +14,16 @@ from .serializers import serialize_detail, serialize_detail_quick
 
 
 @api_view(['GET'])
-def products_list(request: HttpRequest, product_type: str, location_pk: int = None):
-    product_type = check_department_string(product_type)
+def products_list(request: HttpRequest, product_type: str = None, sub_product: str = None):
+    location_pk = None
+    if 'location_pk' in request.GET:
+        location_pk = request.GET.get('location_pk')
+    if sub_product:
+        product_type = check_department_string(sub_product)
+    elif product_type:
+        product_type = check_department_string(product_type)
+    else:
+        product_type = Product
     if not product_type:
         return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
     if location_pk:

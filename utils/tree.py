@@ -3,7 +3,7 @@ from typing import List
 class Tree:
 
     def __init__(self, cls):
-        self.name = cls.__name__
+        self.name = cls._meta.verbose_name_plural.lower().strip()
         self.count = cls.objects.count()
         self.children: List[Tree] = []
 

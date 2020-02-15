@@ -1,3 +1,4 @@
+import itertools
 from typing import List
 from dataclasses import field as dfield
 from rest_framework.request import Request
@@ -61,6 +62,7 @@ class Sorter:
     def data(self):
         return self.__process_request()
 
+
     def get_products(self, select_related='manufacturer'):
         if self.supplier_pk:
             pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
@@ -86,11 +88,6 @@ class Sorter:
             return self.calculate_response(static_queryset)
         return self.calculate_response()
 
-    def get_enabled_values(self, facet):
-        for val in facet.enabled_values:
-            val = val.asdict()
-            yield val
-
 
     def calculate_response(self, static_queryset: QuerySet = None):
         # import itertools
@@ -108,6 +105,7 @@ class Sorter:
             facet.count_self(self.query_index.pk, self.products, self.facets)
         serialized_facets = [facet.serialize_self() for facet in self.facets]
         enabled_values = [facet.enabled_values for facet in self.facets if facet]
+        enabled_values = list(itertools.chain.from_iterable(enabled_values))
         print(enabled_values)
         return {
             'product_count': product_count,
