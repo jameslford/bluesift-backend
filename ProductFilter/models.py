@@ -227,6 +227,7 @@ class BaseNumericFacet(BaseSingleFacet):
         return {
             'name': self.name,
             'selected': self.selected,
+            'editable': False,
             'widget': 'range',
             'abs_min': abs_list[1],
             'abs_max': abs_list[0],
@@ -291,6 +292,7 @@ class MultiFacet(BaseSingleFacet):
             'name': self.name,
             'selected': self.selected,
             'widget': 'checkbox',
+            'editable': True,
             'all_values': [value.asdict() for value in self.all_values],
             # 'enabled_values': [value.asdict() for value in self.enabled_values]
             }
@@ -364,6 +366,7 @@ class BoolFacet(BaseFacet):
             'name': self.name,
             'selected': self.selected,
             'widget': 'checkbox',
+            'editable': False,
             'all_values': [value.asdict() for value in self.all_values],
             # 'enabled_values': [value.asdict() for value in self.enabled_values]
             }
@@ -415,6 +418,7 @@ class RadiusFacet(BaseFacet):
             'widget': 'radius',
             'radii': [5, 10, 25, 50, 100, 200],
             'zipcode': self.zipcode,
+            'editable': False,
             'radius': self.radius,
         }
 

@@ -1,16 +1,31 @@
 ''' Products.views.py '''
 from django.http import HttpRequest
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework import status
 from config.globals import check_department_string
 from config.tasks import add_supplier_record
 from config.custom_permissions import IsAdminorReadOnly
 from ProductFilter.sorter import Sorter
 from SpecializedProducts.models import ProductSubClass
-from .models import Product
+from .models import Product, ValueCleaner
 from .tasks import add_detail_record
 from .serializers import serialize_detail, serialize_detail_quick
+
+@api_view(['POST'])
+@permission_classes((IsAdminUser,))
+def create_value_cleaner(request: Request, model_type):
+    product_type = check_department_string(model_type)
+    data = request.data
+    field = data.get('field')
+    new_value = data.get('new_value')
+    old_value = data.get('old_value')
+    if not (field and new_value and old_value):
+        return Response('need field, new value and old value', status=status.HTTP_400_BAD_REQUEST)
+    ValueCleaner.objects.create_and_apply(product_type, field, old_value, new_value)
+    return Response(status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])

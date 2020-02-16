@@ -9,12 +9,15 @@ from django.forms.models import model_to_dict
 from django.db.models import (
     Subquery,
     OuterRef,
-    CharField
+    CharField,
+    QuerySet
 )
 from django.db.models.functions import Least
+from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos import MultiPoint
 from model_utils.managers import InheritanceManager
 from Addresses.models import Coordinate
+
 
 
 def availability_getter(query_term, location_pk=None):
@@ -30,6 +33,36 @@ class Manufacturer(models.Model):
 
     def __str__(self):
         return self.label
+
+class InitialProductValues(models.Model):
+    product = models.ForeignKey(
+        'Products.Product',
+        on_delete=models.CASCADE
+        )
+    values = JSONField()
+
+
+class ValueCleanerManager(models.Manager):
+
+    def create_and_apply(self, model_type, field, old_value, new_value):
+        from .tasks import add_value_cleaner
+        lookup_arg = {field: old_value}
+        products: QuerySet = model_type.objects.filter(**lookup_arg)
+        new_arg = {field: new_value}
+        products.update(**new_arg)
+        product_pks = products.values_list('pk', flat=True)
+        add_value_cleaner.delay(product_pks, field, new_value)
+
+
+class ValueCleaner(models.Model):
+    product = models.ForeignKey(
+        'Products.Product',
+        on_delete=models.CASCADE
+        )
+    field = models.CharField(max_length=60)
+    new_value = models.CharField(max_length=200)
+
+    objects = ValueCleanerManager()
 
 
 class ProductAvailabilityQuerySet(models.QuerySet):
