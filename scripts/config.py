@@ -1,7 +1,8 @@
 from django.contrib.contenttypes.models import ContentType
-from config.models import UserTypeStatic, SubclassTree, LibraryLink
+from config.models import UserTypeStatic, LibraryLink
 from utils.tree import Tree
 from Products.models import Product
+from Suppliers.models import SupplierLocation
 
 
 retailer_tag = 'Increase your web exposure, immediately'
@@ -34,25 +35,7 @@ def create_usertypes():
         tagline=user_tag
         )
 
-def __looper(current: object, parent: Tree):
-    if not current._meta.abstract:
-        new_tree = Tree(current)
-        parent.children.append(new_tree)
-        for sub in current.__subclasses__():
-            __looper(sub, new_tree)
-    else:
-        for child in current.__subclasses__():
-            __looper(child, parent)
 
-def refresh_product_tree():
-    tree_product = Tree(Product)
-    for sub in Product.__subclasses__():
-        __looper(sub, tree_product)
-    serialized = tree_product.serialize()
-    content_type = ContentType.objects.get_for_model(Product)
-    stree = SubclassTree.objects.get_or_create(content_type=content_type)[0]
-    stree.tree = serialized
-    stree.save()
 
 # pro_tag = ''' Get more clients. Streamline project management '''
 # pro_short = ''' Architects, contractors, designers - if your business helps construction projects come to life, we can help '''

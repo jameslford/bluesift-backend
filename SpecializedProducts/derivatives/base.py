@@ -5,6 +5,7 @@ from dataclasses import dataclass, asdict
 import requests
 import boto3
 import trimesh
+from django.db import models
 from django.db.models import FileField
 from django.core.files.base import ContentFile
 from django.conf import settings

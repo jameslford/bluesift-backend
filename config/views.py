@@ -12,7 +12,7 @@ from Groups.models import SupplierCompany
 from Profiles.models import LibraryProduct
 from Suppliers.models import SupplierProduct, SupplierLocation
 from Products.models import Product
-from .models import UserTypeStatic, SubclassTree
+from .models import UserTypeStatic, ConfigTree
 from .tasks import add_supplier_record
 from .serializers import BusinessSerializer, ProfileSerializer, ShortLib, ProductStatus
 from .globals import BusinessType
@@ -34,11 +34,14 @@ def get_short_lib(request, pk=None):
 @api_view(['GET'])
 def user_config(request: HttpRequest):
     user = request.user if request.user and request.user.is_authenticated else None
-    prod = ContentType.objects.get_for_model(Product)
-    deps: SubclassTree = prod.subclasstree
+    # prod = ContentType.objects.get_for_model(Product)
+    # prod = ContentType.objects.get_for_model(SupplierLocation)
+    # deps: SubclassTree = prod.subclasstree
+    conf_tree: ConfigTree = ConfigTree.load()
     res_dict = {
         'profile': ProfileSerializer(user).full_data,
-        'departments': deps.tree
+        'departments': conf_tree.product_tree,
+        'suppliers': conf_tree.supplier_tree
         # 'departments':  sorted(deps, key=lambda k: k['label']),
         }
     return Response(res_dict)

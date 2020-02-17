@@ -5,15 +5,57 @@ These models hold/relay static materials served for front end
 from xml.dom import minidom
 from django.db import models
 from model_utils import Choices
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
+from utils.tree import Tree
+from Products.models import Product
+from Suppliers.models import SupplierLocation
 
-class SubclassTree(models.Model):
-    content_type = models.OneToOneField(
-        ContentType,
-        on_delete=models.CASCADE
-        )
-    tree = JSONField(null=True)
+
+class ConfigTree(models.Model):
+    ''' singleton used for navigations and counts on user GUI. to be refreshed daily '''
+    product_tree = JSONField(null=True)
+    supplier_tree = JSONField(null=True)
+
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super(ConfigTree, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @classmethod
+    def refresh(cls):
+        tree = cls.load()
+        tree.__refresh_product_tree()
+        tree.__refresh_supplier_tree()
+
+    def __refresh_product_tree(self):
+        name = Product._meta.verbose_name_plural.lower().strip()
+        count = Product.objects.count()
+        tree_product = Tree(name, count)
+        for sub in Product.__subclasses__():
+            Tree.loop_product(sub, tree_product)
+        serialized = tree_product.serialize()
+        self.product_tree = serialized
+        self.save()
+
+
+    def __refresh_supplier_tree(self):
+        name = 'suppliers'
+        sups = SupplierLocation.objects.all()
+        count = sups.count()
+        sup_tree = Tree(name, count)
+        for sub in Product.__subclasses__():
+            Tree.loop_supplier(sub, sup_tree)
+        serialized = sup_tree.serialize()
+        self.supplier_tree = serialized
+        self.save()
 
 
 
