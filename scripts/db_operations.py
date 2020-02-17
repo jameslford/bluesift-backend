@@ -28,7 +28,7 @@ def backup_db():
         filename = f'{env_path}{dt_string}.json'
         db_arg = f'--database={database}'
         with open(filename, 'w+') as f:
-            call_command('dumpdata', db_arg, stdout=f)
+            call_command('dumpdata', indent=2, stdout=f)
 
 
 def clean_backups():

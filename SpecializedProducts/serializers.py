@@ -1,1 +1,1 @@
-from .derivatives.base import SubproductGeometryPresentationSerializer
+from .models.base import SubproductGeometryPresentationSerializer
