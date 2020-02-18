@@ -98,7 +98,11 @@ class BaseFacet(models.Model):
         null=True,
         blank=True
         )
+    values = pg_fields.JSONField(null=True, blank=True)
+    # dynamic = models.BooleanField(default=False)
+    # group_object = models.BooleanField(default=False)
 
+    objects = models.Manager()
     subclasses = InheritanceManager()
 
     dynamic = False
@@ -153,6 +157,17 @@ class BaseFacet(models.Model):
     def enabled_values(self):
         raise Exception('Facet must be subclassed!')
 
+# class StaticGroup(BaseFacet):
+#     pass
+
+# class StaticSingle(BaseFacet):
+#     pass
+
+# class DynamicGroup(BaseFacet):
+#     pass
+
+# class DynamicSingle(BaseFacet):
+#     pass
 
 class BaseSingleFacet(BaseFacet):
 
@@ -163,7 +178,7 @@ class BaseSingleFacet(BaseFacet):
             return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
         field = self.model._meta.get_field(self.attribute)
         actual_type = field.get_internal_type()
-        if self.field_type != field.get_internal_type():
+        if not self.field_type in field.get_internal_type():
             raise Exception(f'Attribute -{self.attribute}\'s- field type {actual_type} != {self.field_type}')
         if not self.name:
             self.name = self.attribute
@@ -240,20 +255,21 @@ class MultiFacet(BaseSingleFacet):
 
     field_type = 'CharField'
     qterms: List[str] = None
+    allow_multiple = models.BooleanField(default=True)
+    widget = models.CharField(max_length=30, default='checkbox')
     all_values: List[BaseReturnValue] = None
     enabled_values: List[BaseReturnValue] = None
 
 
     def parse_request(self, params: QueryDict):
-        print(self.name)
-        qterms = params.getlist(self.name, [])
-        qterms = qterms[0].split(',') if qterms else []
-        # qterms = qterms[0]
-        print('initial qterms =', qterms )
-        values = list(self.model.objects.values_list(self.attribute, flat=True).distinct())
-        # print('multi values = ', values)
-        self.qterms = [term for term in qterms if term in values]
-        print('multi qterms = ', self.qterms)
+        if self.allow_multiple:
+            qterms = params.getlist(self.name, [])
+            qterms = qterms[0].split(',') if qterms else []
+            values = list(self.model.objects.values_list(self.attribute, flat=True).distinct())
+            self.qterms = [term for term in qterms if term in values]
+            return params
+        qterms = params.get(self.name, None)
+        self.qterms = [qterms] if qterms else []
         return params
 
 
@@ -291,7 +307,7 @@ class MultiFacet(BaseSingleFacet):
         return {
             'name': self.name,
             'selected': self.selected,
-            'widget': 'checkbox',
+            'widget': self.widget,
             'editable': True,
             'all_values': [value.asdict() for value in self.all_values],
             # 'enabled_values': [value.asdict() for value in self.enabled_values]
@@ -359,7 +375,7 @@ class BoolFacet(BaseFacet):
             self.all_values.append(return_value)
             if selected:
                 self.enabled_values.append(return_value.asdict())
-            # return return_value
+
 
     def serialize_self(self):
         return {
@@ -368,7 +384,76 @@ class BoolFacet(BaseFacet):
             'widget': 'checkbox',
             'editable': False,
             'all_values': [value.asdict() for value in self.all_values],
-            # 'enabled_values': [value.asdict() for value in self.enabled_values]
+            }
+
+
+class NonNullFacet(BaseFacet):
+
+    field_type = 'any'
+    qterms: List[str] = None
+    all_values: List[BaseReturnValue] = None
+    enabled_values: List[BaseReturnValue] = None
+
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if not self.attribute_list:
+            raise Exception(f'must provide attribute for {self.name} facet')
+        for attr in self.attribute_list:
+            self.model._meta.get_field(attr)
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    @property
+    def values(self):
+        return list(self.attribute_list)
+
+
+    @property
+    def query_terms(self):
+        return self.qterms
+
+
+    def parse_request(self, params: QueryDict):
+        qterms = params.getlist(self.name)
+        self.qterms = [term for term in qterms if term in list(self.attribute_list)]
+        return params
+
+
+    def filter_self(self, products: QuerySet):
+        if not self.qterms:
+            self.queryset = products
+            return products
+        terms = {}
+        for term in self.qterms:
+            key = f'{term}__isnull'
+            terms[key] = False
+            self.selected = True
+        self.queryset = products.filter(**terms)
+        return self.queryset
+
+
+    def count_self(self, query_index_pk, products, facets):
+        _facets = [facet.queryset for facet in facets]
+        others = self.get_intersection(query_index_pk, products, _facets)
+        args = {value: models.Count(value, filter=models.Q(**{f'{value}__isnull': False})) for value in self.values}
+        bool_values = others.aggregate(**args)
+        self.all_values = []
+        self.enabled_values = []
+        for name, count in bool_values.items():
+            selected = bool(name in self.query_terms)
+            expression = f'{self.name}={name}'
+            return_value = BaseReturnValue(expression, name, count, selected)
+            self.all_values.append(return_value)
+            if selected:
+                self.enabled_values.append(return_value.asdict())
+
+
+    def serialize_self(self):
+        return {
+            'name': self.name,
+            'selected': self.selected,
+            'widget': 'checkbox',
+            'editable': False,
+            'all_values': [value.asdict() for value in self.all_values],
             }
 
 
@@ -377,7 +462,7 @@ class RadiusFacet(BaseFacet):
     field_type = 'MultiPointField'
     radius = None
     zipcode = None
-    enabled_value: BaseReturnValue = None
+    enabled_values: List[BaseReturnValue] = None
 
 
     def parse_request(self, params: QueryDict):
@@ -391,6 +476,7 @@ class RadiusFacet(BaseFacet):
 
 
     def filter_self(self, products: QuerySet):
+        self.enabled_values = []
         if not (self.radius and self.zipcode):
             self.queryset = products
             return products
@@ -407,9 +493,10 @@ class RadiusFacet(BaseFacet):
         self.selected = True
         expression = f'radius={self.radius}*{self.zipcode}'
         name = f'Within {self.radius} mi.'
-        self.enabled_value = BaseReturnValue(expression, name, None, True)
+        self.enabled_values.append(BaseReturnValue(expression, name, None, True).asdict())
         self.queryset = products.filter(locations__distance_lte=(coords, radius))
         return self.queryset
+
 
     def serialize_self(self):
         return {
@@ -421,6 +508,7 @@ class RadiusFacet(BaseFacet):
             'editable': False,
             'radius': self.radius,
         }
+
 
 
 class DynamicRangeFacet(BaseNumericFacet):

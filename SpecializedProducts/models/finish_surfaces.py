@@ -62,24 +62,24 @@ class FinishSurface(ProductSubClass):
         'scale_width',
         'scale_thickness',
         'scale_length',
-        'walls',
-        'countertops',
-        'floors',
-        'cabinet_fronts',
-        'shower_floors',
-        'shower_walls',
-        'exterior_walls',
-        'exterior_floors',
-        'covered_walls',
-        'covered_floors',
-        'pool_linings',
-        'bullnose',
-        'covebase',
-        'corner_covebase',
+        # 'walls',
+        # 'countertops',
+        # 'floors',
+        # 'cabinet_fronts',
+        # 'shower_floors',
+        # 'shower_walls',
+        # 'exterior_walls',
+        # 'exterior_floors',
+        # 'covered_walls',
+        # 'covered_floors',
+        # 'pool_linings',
+        # 'bullnose',
+        # 'covebase',
+        # 'corner_covebase',
         'finish',
-        'surface_coating',
+        # 'surface_coating',
         'look',
-        'shade_variation'
+        # 'shade_variation'
         ]
 
     name_fields = [
@@ -215,22 +215,23 @@ class FinishSurface(ProductSubClass):
 class FinishSurfaceConverter(Converter):
 
     def convert(self):
-        if self.product.derived_gbl:
-            print('already got glb for ', self.product.bb_sku)
-            return
-        width = self.product.get_width()
-        depth = self.product.get_depth()
-        height = self.product.get_height()
-        image = self.product.get_texture_map()
-        if not image:
-            print('np image for ', self.product.manufacturer.label, self.product.manufacturer_collection)
-            return
-        image = self.product.get_texture_map().open('r')
-        image = pimage.open(image)
-        visual = TextureVisuals(image=image)
-        box: trimesh.Trimesh = tri_box((width, depth, height), visual=visual)
-        scene = box.scene()
-        self.product.save_derived_glb(scene)
+        return
+        # if self.product.derived_gbl:
+        #     print('already got glb for ', self.product.bb_sku)
+        #     return
+        # width = self.product.get_width()
+        # depth = self.product.get_depth()
+        # height = self.product.get_height()
+        # image = self.product.get_texture_map()
+        # if not image:
+        #     print('np image for ', self.product.manufacturer.label, self.product.manufacturer_collection)
+        #     return
+        # image = self.product.get_texture_map().open('r')
+        # image = pimage.open(image)
+        # visual = TextureVisuals(image=image)
+        # box: trimesh.Trimesh = tri_box((width, depth, height), visual=visual)
+        # scene = box.scene()
+        # self.product.save_derived_glb(scene)
 
 
 class TileAndStone(FinishSurface):

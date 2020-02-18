@@ -1,4 +1,4 @@
-from django.urls import path, include, re_path
+from django.urls import path
 from .views import product_detail, products_list, product_detail_quick
 
 urlpatterns = [

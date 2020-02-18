@@ -94,6 +94,7 @@ class Sorter:
         if not static_queryset:
             pks = self.query_index.get_product_pks()
             static_queryset = self.product_type.objects.filter(pk__in=pks).product_prices()
+        print('filtering dynamic -----------------------------------------')
         dynamic_queryset = [
             facet.filter_self(self.products) for facet in self.facets if facet and facet.dynamic
             ]

@@ -7,13 +7,14 @@ from ProductFilter.models import (
     StaticRangeFacet,
     RadiusFacet,
     DynamicDecimalFacet,
-    DynamicRangeFacet
+    DynamicRangeFacet,
+    NonNullFacet
 )
 from SpecializedProducts.models import (
     FinishSurface,
     Appliance,
     Range,
-    ColdStorage,
+    # ColdStorage,
     Hardwood,
     Resilient,
     TileAndStone,
@@ -74,6 +75,44 @@ def create_facets():
         content_type=ctas,
         attribute='material_type'
         )
+    StaticRangeFacet.objects.get_or_create(
+        content_type=capp,
+        attribute='width',
+        name='width'
+        )
+    StaticRangeFacet.objects.get_or_create(
+        content_type=capp,
+        attribute='depth',
+        name='depth'
+        )
+    StaticRangeFacet.objects.get_or_create(
+        content_type=capp,
+        attribute='height',
+        name='height'
+        )
+    MultiFacet.objects.get_or_create(
+        content_type=cfs,
+        attribute='label_color',
+        name='color',
+        widget='color',
+        allow_multiple=False
+        )
+    RadiusFacet.objects.get_or_create(
+        content_type=cproduct,
+        attribute='locations',
+        name='Location'
+    )
+    NonNullFacet.objects.get_or_create(
+        content_type=cproduct,
+        name='file_types',
+        attribute_list=[
+            'dxf_file',
+            'rfa_file',
+            'ipt_file',
+            'dwg_3d_file',
+            'dwg_2d_file'
+            ]
+        )
     BoolFacet.objects.get_or_create(
         content_type=cfs,
         attribute_list=[
@@ -92,4 +131,4 @@ def create_facets():
             'covebase',
             'corner_covebase'
             ]
-            )
+        )
