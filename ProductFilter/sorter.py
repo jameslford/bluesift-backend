@@ -31,7 +31,7 @@ class FilterResponse:
             'legit_queries': self.legit_queries,
             'product_count': self.product_count,
             'facets': self.facets,
-            'products': self.products,
+            # 'products': self.products,
         }
     # page: int = 1
     # load_more: bool = True
@@ -51,11 +51,11 @@ class Sorter:
         self.request = request
         self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
-        self.products = self.get_products()
+        # self.products = self.get_products()
         avi_facet = [AvailabilityFacet(self.supplier_pk)]
         model_types = self.product_type._meta.get_parent_list() + [self.product_type]
         parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
-        self.facets: List[BaseFacet] = avi_facet + list(BaseFacet.subclasses.filter(content_type__in=parents).select_subclasses())
+        self.facets: List[BaseFacet] = avi_facet + list(BaseFacet.objects.filter(content_type__in=parents))
 
 
     @property
@@ -90,23 +90,27 @@ class Sorter:
 
 
     def calculate_response(self, static_queryset: QuerySet = None):
-        # import itertools
         if not static_queryset:
             pks = self.query_index.get_product_pks()
-            static_queryset = self.product_type.objects.filter(pk__in=pks).product_prices()
+            static_queryset = Product.objects.filter(pk__in=pks).product_prices()
         print('filtering dynamic -----------------------------------------')
-        dynamic_queryset = [
-            facet.filter_self(self.products) for facet in self.facets if facet and facet.dynamic
-            ]
-        products = static_queryset.intersection(*dynamic_queryset).values_list('pk', flat=True)
+        # dynamic_queryset = [
+        #     facet.filter_self() for facet in self.facets if facet and facet.dynamic
+        #     ]
+        products = static_queryset
+        for facet in self.facets:
+            if facet and facet.dynamic:
+                pks = facet.filter_self()
+                products = products.filter(pk__in=pks)
+        # products = static_queryset.intersection(*dynamic_queryset).values_list('pk', flat=True)
+        enabled_values = [facet.count_self(self.query_index.pk, self.get_products(), self.facets) for facet in self.facets]
+        enabled_values = [facet for facet in enabled_values if facet]
+        print(enabled_values)
+        enabled_values = list(itertools.chain.from_iterable(enabled_values))
         # force the queryset to evalute here so that it can be renewed on the annoate call later
         product_count = len(products)
         products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()
-        for facet in self.facets:
-            facet.count_self(self.query_index.pk, self.products, self.facets)
         serialized_facets = [facet.serialize_self() for facet in self.facets]
-        enabled_values = [facet.enabled_values for facet in self.facets if facet]
-        enabled_values = list(itertools.chain.from_iterable(enabled_values))
         print(enabled_values)
         return {
             'product_count': product_count,
@@ -115,6 +119,8 @@ class Sorter:
             'products': self.serialize_products(products),
             }
             # static_queryset = self.query_index.products.all()
+        # for facet in self.facets:
+        #     facet.count_self(self.query_index.pk, self.products, self.facets)
         # enabled_values = list(itertools.chain.from_iterable(enabled_values))
         # enabled_values = [a.asdict() for a in enabled_values]
         # enabled_values = [self.get_enabled_values(facet) for facet in self.facets if facet]
@@ -122,13 +128,13 @@ class Sorter:
 
     def build_query_index(self):
         static_querysets = [
-            facet.filter_self(self.products) for facet in self.facets if not facet.dynamic
+            facet.filter_self() for facet in self.facets if not facet.dynamic
             ]
-        new_prods = self.products.intersection(*static_querysets).values_list('pk', flat=True)
+        new_prods = self.get_products().intersection(*static_querysets).values_list('pk', flat=True)
         self.query_index.products.clear()
         self.query_index.products.add(*new_prods)
         self.query_index.save()
-        return self.products.filter(pk__in=new_prods)
+        return self.get_products().filter(pk__in=new_prods)
 
 
     def serialize_products(self, products):

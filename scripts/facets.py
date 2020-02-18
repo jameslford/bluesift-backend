@@ -1,14 +1,15 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from ProductFilter.models import (
-    BoolFacet,
-    MultiFacet,
-    StaticDecimalFacet,
-    StaticRangeFacet,
-    RadiusFacet,
-    DynamicDecimalFacet,
-    DynamicRangeFacet,
-    NonNullFacet
+    BaseFacet
+    # BoolFacet,
+    # MultiFacet,
+    # StaticDecimalFacet,
+    # StaticRangeFacet,
+    # RadiusFacet,
+    # DynamicDecimalFacet,
+    # DynamicRangeFacet,
+    # NonNullFacet
 )
 from SpecializedProducts.models import (
     FinishSurface,
@@ -35,86 +36,96 @@ def create_facets():
 
 
 
-    DynamicDecimalFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cproduct,
-        attribute='low_price'
+        attribute='low_price',
+        field_type='DecimalField'
         )
-    StaticDecimalFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cfs,
-        attribute='thickness'
+        attribute='thickness',
+        field_type='DecimalField'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='look'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='finish'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='shade_variation'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=chardwood,
         attribute='composition'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=chardwood,
         attribute='species'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cresilient,
         attribute='material_type'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cresilient,
         attribute='surface_coating'
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=ctas,
         attribute='material_type'
         )
-    StaticRangeFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=capp,
         attribute='width',
+        field_type='DecimalRangeField',
         name='width'
         )
-    StaticRangeFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=capp,
         attribute='depth',
+        field_type='DecimalRangeField',
         name='depth'
         )
-    StaticRangeFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=capp,
         attribute='height',
+        field_type='DecimalRangeField',
         name='height'
+
         )
-    MultiFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='label_color',
         name='color',
         widget='color',
         allow_multiple=False
         )
-    RadiusFacet.objects.get_or_create(
+    BaseFacet.objects.get_or_create(
         content_type=cproduct,
         attribute='locations',
+        field_type='MultiPointField',
         name='Location'
     )
-    NonNullFacet.objects.get_or_create(
-        content_type=cproduct,
-        name='file_types',
-        attribute_list=[
-            'dxf_file',
-            'rfa_file',
-            'ipt_file',
-            'dwg_3d_file',
-            'dwg_2d_file'
-            ]
-        )
-    BoolFacet.objects.get_or_create(
+    # TODO create url field for facet
+    # BaseFacet.objects.get_or_create(
+    #     content_type=cproduct,
+    #     name='file_types',
+    #     attribute_list=[
+    #         'dxf_file',
+    #         'rfa_file',
+    #         'ipt_file',
+    #         'dwg_3d_file',
+    #         'dwg_2d_file'
+    #         ]
+    #     )
+    BaseFacet.objects.get_or_create(
         content_type=cfs,
+        field_type='BooleanField',
+        name='applications',
         attribute_list=[
             'walls',
             'countertops',
