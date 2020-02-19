@@ -2,7 +2,7 @@ import datetime
 from django.http.request import HttpRequest
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from config.globals import check_department_string
@@ -22,7 +22,8 @@ def locations(request):
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
-@permission_classes((IsAuthenticated, RetailerPermission))
+# @permission_classes((IsAuthenticated, RetailerPermission))
+@permission_classes((IsAuthenticatedOrReadOnly,))
 def crud_location(request: Request, pk: int = None):
     """
     create, update, delete endpoint for SupplierLocation objects
@@ -30,7 +31,10 @@ def crud_location(request: Request, pk: int = None):
     user = request.user
 
     if request.method == 'GET':
-        location = user.get_collections().get(pk=pk)
+        if pk:
+            location = SupplierLocation.objects.get(pk=pk)
+        elif user and user.is_authenticated:
+            location = user.get_collections().get(pk=pk)
         return Response(BusinessSerializer(location, True).getData(), status=status.HTTP_200_OK)
 
     if request.method == 'POST':

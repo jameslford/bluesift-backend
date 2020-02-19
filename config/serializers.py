@@ -53,7 +53,7 @@ class BusinessSerializer:
             self.image = business.image.url if business.image else None
             self.address = AddressSerializer(business.address).data
             self.address_string = business.address_string()
-            self.product_types = business.product_types()
+            # self.product_types = business.product_types()
             if self.full:
                 self.info = business.company.info
                 if business.local_admin:
