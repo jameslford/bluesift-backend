@@ -57,14 +57,15 @@ class AvailabilityFacet:
         products = Product.objects.all()
         if not self.qterms:
             self.queryset = products.values_list('pk', flat=True)
-            return products
+            return self.queryset
         self.selected = True
         products = products.filter_availability(self.qterms, self.location_pk, True)
         self.queryset = products.values_list('pk', flat=True)
-        return products
+        return self.queryset
 
     def count_self(self, query_index_pk, products, facets):
-        _facets = [facet.queryset for facet in facets if facet is not self]
+        _facets = [facet.queryset for facet in facets if facet.queryset and facet is not self]
+        # _facets = [facet for facet in facets if facet]
         others = products.intersection(*_facets).values_list('pk', flat=True)
         enabled_values = []
         for value in self.values:
@@ -204,7 +205,7 @@ class BaseFacet(models.Model):
 
     def __return_stock(self):
         self.queryset = self.model.objects.values_list('pk', flat=True)
-        return Product.objects.filter(pk__in=self.queryset)
+        return self.queryset
 
 
     def __filter_boolean(self):
@@ -213,13 +214,13 @@ class BaseFacet(models.Model):
         if self.allow_multiple:
             term = {self.qterms[-1] : True}
             self.queryset = self.model.objects.filter(**term).values_list('pk', flat=True)
-            return Product.objects.filter(pk__in=self.queryset)
+            return self.queryset
         terms = {}
         for term in self.qterms:
             terms[term] = True
             self.selected = True
         self.queryset = self.model.objects.filter(**terms).values_list('pk', flat=True)
-        return Product.objects.filter(pk__in=self.queryset)
+        return self.queryset
 
 
     def __filter_charfield(self):
@@ -230,7 +231,7 @@ class BaseFacet(models.Model):
             q_object |= models.Q(**{self.attribute: term})
             self.selected = True
         self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
-        return Product.objects.filter(pk__in=self.queryset)
+        return self.queryset
 
 
     def __filter_radius(self):
@@ -250,7 +251,7 @@ class BaseFacet(models.Model):
         self.enabled_values.append(BaseReturnValue(expression, name, None, True).asdict())
         prods = Product.objects.filter(locations__distance_lte=(coords, radius))
         self.queryset = prods.values_list('pk', flat=True)
-        return prods
+        return self.queryset
 
 
     def __filter_numeric(self):
@@ -266,22 +267,30 @@ class BaseFacet(models.Model):
             self.queryset = qset.filter(**args).values_list('pk', flat=True)
         else:
             self.queryset = self.model.objects.filter(**args).values_list('pk', flat=True)
-        return Product.objects.filter(pk__in=self.queryset)
+        return self.queryset
 
 
     def filter_self(self):
 
         if self.field_type in ['DecimalField', 'FloatField', 'RangeField', 'DecimalRangeField', 'FloatRangeField']:
-            return self.__filter_numeric()
+            qs = self.__filter_numeric()
+            print(qs.first())
+            return qs
 
         if self.field_type == 'CharField':
-            return self.__filter_charfield()
+            qs = self.__filter_charfield()
+            print(qs.first())
+            return qs
 
         if self.field_type == 'BooleanField':
-            return self.__filter_boolean()
+            qs = self.__filter_boolean()
+            print(qs.first())
+            return qs
 
         if self.field_type == 'MultiPointField':
-            return self.__filter_radius()
+            qs = self.__filter_radius()
+            print(qs.first())
+            return qs
 
         raise Exception(f'invalid field type -- {self.field_type}')
 
@@ -333,8 +342,9 @@ class BaseFacet(models.Model):
 
 
     def __calc_intersections(self, products, others):
-        for facet in others:
-            products = products.filter(pk__in=facet)
+        for qset in others:
+            if qset:
+                products = products.filter(pk__in=qset)
         return products
 
 
@@ -463,7 +473,8 @@ class QueryIndex(models.Model):
         return f'{self.query_path}_{self.query_dict}'
 
     def add_products(self, products):
-        products = products.values_list('pk', flat=True)
+        # print(products)
+        # products = products.values_list('pk', flat=True)
         add_query_index.delay(self.pk, products)
 
 

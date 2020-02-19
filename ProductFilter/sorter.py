@@ -67,9 +67,15 @@ class Sorter:
         if self.supplier_pk:
             pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
                 'product__pk', flat=True)
-            return self.product_type.objects.all().prefetch_related(
-                'priced').select_related(select_related).filter(pk__in=pks).product_prices(self.supplier_pk)
-        return self.product_type.objects.select_related(select_related).all().product_prices()
+            return self.product_type.objects.filter(pk__in=pks)
+        return self.product_type.objects.all()
+    # def get_products(self, select_related='manufacturer'):
+    #     if self.supplier_pk:
+    #         pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
+    #             'product__pk', flat=True)
+    #         return self.product_type.objects.all().prefetch_related(
+    #             'priced').select_related(select_related).filter(pk__in=pks).product_prices(self.supplier_pk)
+    #     return self.product_type.objects.select_related(select_related).all().product_prices()
 
 
     @transaction.atomic
@@ -83,25 +89,42 @@ class Sorter:
             retailer_location=self.supplier_pk
             )
         self.query_index = query_index
+        print(query_index.dirty, created)
         if query_index.dirty or created:
             static_queryset = self.build_query_index()
             return self.calculate_response(static_queryset)
         return self.calculate_response()
 
 
+    def build_query_index(self):
+        print('no static')
+        pk_sets = [facet.filter_self() for facet in self.facets if facet and not facet.dynamic]
+        all_pks = list(itertools.chain.from_iterable(pk_sets))
+        all_pks = list(set(all_pks))
+        print('static pks' + str(len(all_pks)))
+        self.query_index.add_products(all_pks)
+        return self.get_products().filter(pk__in=all_pks)
+
+
     def calculate_response(self, static_queryset: QuerySet = None):
         if not static_queryset:
+            print('before')
             pks = self.query_index.get_product_pks()
-            static_queryset = Product.objects.filter(pk__in=pks).product_prices()
+            static_queryset = self.get_products().filter(pk__in=pks)
         print('filtering dynamic -----------------------------------------')
         # dynamic_queryset = [
         #     facet.filter_self() for facet in self.facets if facet and facet.dynamic
         #     ]
-        products = static_queryset
-        for facet in self.facets:
-            if facet and facet.dynamic:
-                pks = facet.filter_self()
-                products = products.filter(pk__in=pks)
+        # products = static_queryset
+        # for facet in self.facets:
+        #     if facet and facet.dynamic:
+        #         pks = facet.filter_self()
+        #         products = products.filter(pk__in=pks)
+        pk_sets = [facet.filter_self() for facet in self.facets if facet and facet.dynamic]
+        all_pks = list(itertools.chain.from_iterable(pk_sets))
+        all_pks = list(set(all_pks))
+        print(len(all_pks))
+        products = static_queryset.filter(pk__in=all_pks)
         # products = static_queryset.intersection(*dynamic_queryset).values_list('pk', flat=True)
         enabled_values = [facet.count_self(self.query_index.pk, self.get_products(), self.facets) for facet in self.facets]
         enabled_values = [facet for facet in enabled_values if facet]
@@ -126,17 +149,14 @@ class Sorter:
         # enabled_valsues = [self.get_enabled_values(facet) for facet in self.facets if facet]
 
 
-    def build_query_index(self):
-        print('no static')
-        static_querysets = [
-            facet.filter_self() for facet in self.facets if not facet.dynamic
-            ]
-        new_prods = self.get_products().intersection(*static_querysets)
-        self.query_index.add_products(new_prods)
+        # static_querysets = [
+        #     facet.filter_self() for facet in self.facets if not facet.dynamic
+        #     ]
+        # new_prods = self.get_products().intersection(*static_querysets)
         # self.query_index.products.clear()
         # self.query_index.products.add(*new_prods)
         # self.query_index.save()
-        return self.get_products().filter(pk__in=new_prods)
+        # return self.get_products().filter(pk__in=new_prods)
 
 
     def serialize_products(self, products):

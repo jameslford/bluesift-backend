@@ -269,7 +269,7 @@ class Product(models.Model):
 
 
     def __str__(self):
-        return f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'
+        return f'{self.manufacturer_collection}, {self.manufacturer_style}'
 
     # def save(self, *args, **kwargs):
     #     if not self.hash_value:

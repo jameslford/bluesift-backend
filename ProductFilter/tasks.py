@@ -21,6 +21,12 @@ def add_query_index(qi_pk, product_pks):
     from ProductFilter.models import QueryIndex
     qindex: QueryIndex = QueryIndex.objects.filter(pk=qi_pk).first()
     if not qindex:
-        return
+        print('no qi')
+        return f'failed for {qi_pk}'
+    print('got qi')
     qindex.products.clear()
     qindex.products.add(*product_pks)
+    qindex.dirty = False
+    qindex.save()
+    return f'suceeded for {qi_pk}'
+
