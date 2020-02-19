@@ -14,3 +14,13 @@ def add_facet_others_delay(qi_pk, facet_pk, intersection_pks):
         )[0]
     facet.assign_new_products(intersection_pks)
     return f'FacetOthersCollection created for facet: {facet_pk}, and QueryIndex: {qi_pk}'
+
+
+@app.task
+def add_query_index(qi_pk, product_pks):
+    from ProductFilter.models import QueryIndex
+    qindex: QueryIndex = QueryIndex.objects.filter(pk=qi_pk).first()
+    if not qindex:
+        return
+    qindex.products.clear()
+    qindex.products.add(*product_pks)

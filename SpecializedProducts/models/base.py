@@ -117,7 +117,8 @@ class SubproductGeometryPresentationSerializer:
         self.derived_width = product.derived_width
         self.derived_depth = product.derived_depth
         self.derived_height = product.derived_height
-        self.texture_map = product.get_texture_map().url
+        texture_map = product.get_texture_map()
+        self.texture_map = texture_map.url.replace('https://', 'http://') if texture_map else None
 
         self.rfa_file = product.rfa_file
         self.ipt_file = product.ipt_file

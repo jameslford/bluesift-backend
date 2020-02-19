@@ -1,9 +1,12 @@
 import decimal
+import io
 import webcolors
 import scipy
 import scipy.cluster
 import numpy as np
+from PIL import Image, ImageChops
 from django.db import transaction
+from django.conf import settings
 from django.db.models import QuerySet, FloatField
 from django.db.models.functions import Cast
 from SpecializedProducts.models import FinishSurface
@@ -24,6 +27,44 @@ def assign_label_color():
         print(label_color)
         product.label_color = label_color
         product.save()
+
+def assign_tiling_image(product: FinishSurface):
+    # desired_size = settings.DESIRED_IMAGE_SIZE - 2
+    if product.tiling_image:
+        print('tiling image')
+        return
+    if not product.swatch_image:
+        print('no swatch')
+        return
+    image: Image.Image = Image.open(product.swatch_image)
+    width, height = image.size
+    width = width - 2
+    height = height - 2
+    image = image.convert('RGB')
+    tl = image.getpixel((0, 0))
+    tr = image.getpixel((width, 0))
+    bl = image.getpixel((0, height))
+    br = image.getpixel((width, height))
+    color_set = set([tl, tr, bl, br])
+    if len(color_set) != 1:
+        print('not equal')
+        return
+    new_img = Image.new(image.mode, image.size, tl)
+    print(image.size)
+    diff: Image.Image = ImageChops.difference(image, new_img)
+    diff = ImageChops.add(diff, diff, 2.0, -100)
+    bbox = diff.getbbox()
+    if bbox:
+        tile_image = image.crop(bbox)
+        buffer = io.BytesIO()
+        try:
+            tile_image.save(buffer, 'JPEG', quality=90)
+        except IOError:
+            print('io error')
+            return
+        name = 'tiling_' + str(product.bb_sku) + '.jpg'
+        product.tiling_image.save(name, buffer, save=True)
+
 
 
 @transaction.atomic

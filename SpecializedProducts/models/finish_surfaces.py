@@ -211,6 +211,12 @@ class FinishSurface(ProductSubClass):
         converter = FinishSurfaceConverter(self)
         converter.convert()
 
+    def presentation_geometries(self):
+        dim = 35
+        ret_dict = super().presentation_geometries()
+        ret_dict.update({'camera': {'x': dim, 'y': dim, 'z': dim}})
+        return ret_dict
+
 
 class FinishSurfaceConverter(Converter):
 

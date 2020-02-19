@@ -95,14 +95,13 @@ def create_facets():
         attribute='height',
         field_type='DecimalRangeField',
         name='height'
-
         )
     BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='label_color',
         name='color',
         widget='color',
-        allow_multiple=False
+        editable=False
         )
     BaseFacet.objects.get_or_create(
         content_type=cproduct,

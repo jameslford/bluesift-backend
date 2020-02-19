@@ -1,10 +1,10 @@
 import uuid
-from decimal import Decimal
 from typing import List
 from model_utils.managers import InheritanceManager
 from django.db import models
 from django.db.models import Min, Max
 from django.db.models.query import QuerySet
+from django.db.models.functions import Upper, Lower
 from django.http import QueryDict
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres import fields as pg_fields
@@ -12,7 +12,8 @@ from django.contrib.gis.measure import D
 from Addresses.models import Zipcode
 from Suppliers.models import SupplierLocation
 from Products.models import Product
-from .tasks import add_facet_others_delay
+from .tasks import add_facet_others_delay, add_query_index
+# from decimal import Decimal
 
 
 
@@ -165,23 +166,40 @@ class BaseFacet(models.Model):
 
 
     def __get_absolutes(self):
-        if self.field_type in ['DecimalField', 'FloatField', 'RangeField', 'DecimalRangeField', 'FloatRangeField']:
-            if self.abs_min and self.abs_max:
-                return [self.abs_max, self.abs_min]
-            if self.attribute == 'low_price':
-                absolutes = Product.objects.product_prices().aggregate(Min(self.attribute), Max(self.attribute))
-            elif self.others_intersection:
-                absolutes = self.others_intersection.aggregate(Min(self.attribute), Max(self.attribute))
+        if self.field_type not in ['DecimalField', 'FloatField', 'RangeField', 'DecimalRangeField', 'FloatRangeField']:
+            return None
+
+        if self.abs_min and self.abs_max:
+            return [self.abs_max, self.abs_min]
+
+
+        if self.attribute == 'low_price':
+            absolutes = Product.objects.product_prices().aggregate(Min(self.attribute), Max(self.attribute))
+
+        else:
+
+            if self.field_type in ['RangeField', 'DecimalRangeField', 'FloatRangeField']:
+                kwargs = {'min': Min(Lower(self.attribute)), 'max': Max(Upper(self.attribute))}
             else:
-                absolutes = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
-            abs_min = absolutes.get(f'{self.attribute}__min')
-            abs_max = absolutes.get(f'{self.attribute}__max')
-            if not self.dynamic:
-                self.abs_min = abs_min
-                self.abs_max = abs_max
-                self.save()
-            return [abs_max, abs_min]
-        return None
+                kwargs = {'min': Min(self.attribute), 'max': Max(self.attribute)}
+
+                # args = [Min(self.attribute), Max(self.attribute)]
+
+            if self.others_intersection:
+                absolutes = self.others_intersection.aggregate(**kwargs)
+                # absolutes = self.others_intersection.aggregate(Min(self.attribute), Max(self.attribute))
+            else:
+                absolutes = self.model.objects.aggregate(**kwargs)
+                # absolutes = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
+
+        print(absolutes)
+        abs_min = absolutes.get(f'{self.attribute}__min')
+        abs_max = absolutes.get(f'{self.attribute}__max')
+        if not self.dynamic:
+            self.abs_min = abs_min
+            self.abs_max = abs_max
+            self.save()
+        return [abs_max, abs_min]
 
 
     def __return_stock(self):
@@ -443,6 +461,10 @@ class QueryIndex(models.Model):
 
     def __str__(self):
         return f'{self.query_path}_{self.query_dict}'
+
+    def add_products(self, products):
+        products = products.values_list('pk', flat=True)
+        add_query_index.delay(self.pk, products)
 
 
     def get_product_pks(self):

@@ -123,17 +123,19 @@ class Sorter:
         #     facet.count_self(self.query_index.pk, self.products, self.facets)
         # enabled_values = list(itertools.chain.from_iterable(enabled_values))
         # enabled_values = [a.asdict() for a in enabled_values]
-        # enabled_values = [self.get_enabled_values(facet) for facet in self.facets if facet]
+        # enabled_valsues = [self.get_enabled_values(facet) for facet in self.facets if facet]
 
 
     def build_query_index(self):
+        print('no static')
         static_querysets = [
             facet.filter_self() for facet in self.facets if not facet.dynamic
             ]
-        new_prods = self.get_products().intersection(*static_querysets).values_list('pk', flat=True)
-        self.query_index.products.clear()
-        self.query_index.products.add(*new_prods)
-        self.query_index.save()
+        new_prods = self.get_products().intersection(*static_querysets)
+        self.query_index.add_products(new_prods)
+        # self.query_index.products.clear()
+        # self.query_index.products.add(*new_prods)
+        # self.query_index.save()
         return self.get_products().filter(pk__in=new_prods)
 
 

@@ -88,7 +88,7 @@ class ProfileSerializer:
         self.user: User = None
         self.profile = None
 
-        if user.is_authenticated:
+        if user and user.is_authenticated:
             self.user = user
             self.profile = user.get_profile()
 
