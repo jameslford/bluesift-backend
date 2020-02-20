@@ -45,6 +45,36 @@ class OwnerDeleteAdminEdit(permissions.BasePermission):
                 return True
         return False
 
+class PrivateSupplierCrud(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user.is_supplier:
+            return False
+        profile = user.get_profile()
+
+        if request.method == 'POST' and profile:
+            if profile.owner:
+                return True
+
+        if request.method == 'DELETE':
+            if profile.owner:
+                return True
+
+        if request.method == 'PUT':
+            if profile.owner or profile.admin:
+                return True
+
+        if request.method == 'GET':
+            return True
+
+        return False
+
+
+    # def has_object_permission(self, request, view, obj):
+    #     pass
+
+
 class StagingAdminOnly(permissions.BasePermission):
     """only allows view if user is admin and on staging server
     """

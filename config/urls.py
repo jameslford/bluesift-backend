@@ -5,9 +5,6 @@ from django.urls import path, include
 from .views import (
     user_config,
     landing,
-    task_progress,
-    generic_business_list,
-    # generic_business_detail,
     generic_add,
     generic_delete,
     get_short_lib,
@@ -21,12 +18,10 @@ urlpatterns = [
     path('addresses/', include('Addresses.urls')),
     path('analytics/', include('Analytics.urls')),
     path('groups/', include('Groups.urls')),
-    # path('mailing-list/', include('MailingList.urls')),
     path('products/', include('Products.urls')),
     path('profiles/', include('Profiles.urls')),
     path('projects/', include('Projects.urls')),
     path('suppliers/', include('Suppliers.urls')),
-    # path('scraper/', include('Scraper.urls')),
 
     path('add/', generic_add),
     path('add/<int:collection_pk>', generic_add),
@@ -36,11 +31,8 @@ urlpatterns = [
     path('shortLib/<str:pk>', get_short_lib),
     path('pl_status/<str:pk>', pl_status_for_product),
 
-    # path('business-detail/<str:category>/<int:pk>', generic_business_detail),
-    path('businesses', generic_business_list),
-    path('businesses/<str:category>', generic_business_list),
+
     path('landing', landing),
-    path('task-progress', task_progress),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:
@@ -48,3 +40,14 @@ if settings.DEBUG:
     urlpatterns = [
         path('__debug__', include(debug_toolbar.urls))
     ] + urlpatterns
+
+    # task_progress,
+    # generic_business_list,
+    # generic_business_detail,
+
+    # path('task-progress', task_progress),
+    # path('mailing-list/', include('MailingList.urls')),
+    # path('scraper/', include('Scraper.urls')),
+    # path('business-detail/<str:category>/<int:pk>', generic_business_detail),
+    # path('businesses', generic_business_list),
+    # path('businesses/<str:category>', generic_business_list),

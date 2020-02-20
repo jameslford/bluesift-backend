@@ -3,8 +3,8 @@ These models hold/relay static materials served for front end
 '''
 
 from xml.dom import minidom
-from django.db import models
 from model_utils import Choices
+from django.db import models
 from django.contrib.postgres.fields import JSONField
 from utils.tree import Tree
 from Products.models import Product
@@ -35,12 +35,37 @@ class ConfigTree(models.Model):
         tree.__refresh_product_tree()
         tree.__refresh_supplier_tree()
 
+    def __loop_product(self, current: object, parent):
+        if not current._meta.abstract:
+            name = current._meta.verbose_name_plural.lower().strip()
+            count = current.objects.count()
+            new_tree = Tree(name, count)
+            parent.children.append(new_tree)
+            for sub in current.__subclasses__():
+                self.__loop_product(sub, new_tree)
+        else:
+            for child in current.__subclasses__():
+                self.__loop_product(child, parent)
+
+    def __loop_supplier(self, current: object, parent):
+        if not current._meta.abstract:
+            name = current._meta.verbose_name_plural.lower().strip()
+            supplier_product_pks = current.objects.values('priced__location__pk').distinct()
+            count = SupplierLocation.objects.filter(pk__in=supplier_product_pks).count()
+            new_tree = Tree(name, count)
+            parent.children.append(new_tree)
+            for sub in current.__subclasses__():
+                self.__loop_product(sub, new_tree)
+        else:
+            for child in current.__subclasses__():
+                self.__loop_product(child, parent)
+
     def __refresh_product_tree(self):
         name = Product._meta.verbose_name_plural.lower().strip()
         count = Product.objects.count()
         tree_product = Tree(name, count)
         for sub in Product.__subclasses__():
-            Tree.loop_product(sub, tree_product)
+            self.__loop_product(sub, tree_product)
         serialized = tree_product.serialize()
         self.product_tree = serialized
         self.save()
@@ -52,7 +77,7 @@ class ConfigTree(models.Model):
         count = sups.count()
         sup_tree = Tree(name, count)
         for sub in Product.__subclasses__():
-            Tree.loop_supplier(sub, sup_tree)
+            self.__loop_supplier(sub, sup_tree)
         serialized = sup_tree.serialize()
         self.supplier_tree = serialized
         self.save()

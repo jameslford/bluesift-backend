@@ -1,15 +1,13 @@
-from celery.result import AsyncResult
 from django.http.request import HttpRequest
-from django.db.models import Count, F
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from config.globals import check_department_string
 from Profiles.models import LibraryProduct
-from Suppliers.models import SupplierProduct, SupplierLocation
+from Profiles.serializers import serialize_profile
+from Suppliers.models import SupplierProduct
 from .models import UserTypeStatic, ConfigTree
-from .serializers import ProfileSerializer, ShortLib, ProductStatus
+from .serializers import LinkSerializer, ShortLib, ProductStatus
 
 
 @api_view(['GET'])
@@ -29,46 +27,12 @@ def user_config(request: HttpRequest):
     user = request.user if request.user and request.user.is_authenticated else None
     conf_tree: ConfigTree = ConfigTree.load()
     res_dict = {
-        'profile': ProfileSerializer(user).full_data,
+        'profile': serialize_profile(user.get_profile()) if user else None,
+        'links': LinkSerializer(user).serialized,
         'departments': conf_tree.product_tree,
         'suppliers': conf_tree.supplier_tree
         }
     return Response(res_dict)
-
-
-@api_view(['GET'])
-def generic_business_list(request: HttpRequest, category=None):
-    suppliers = SupplierLocation.objects.select_related(
-        'address',
-        'address__postal_code',
-        'address__coordinates',
-        ).prefetch_related(
-            'products',
-            ).all()
-    if category:
-        prod_class = check_department_string(category)
-        if prod_class is None:
-            return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
-        supplier_product_pks = prod_class.objects.values('priced__location__pk').distinct()
-        suppliers = suppliers.filter(pk__in=supplier_product_pks)
-    res = suppliers.annotate(
-        product_count=Count('products'),
-        lat=F('address__coordinates__lat'),
-        lng=F('address__coordinates__lng'),
-        address_string=F('address__address_string')
-        ).values(
-            'nickname',
-            'pk',
-            'product_count',
-            'phone_number',
-            'email',
-            'lat',
-            'lng',
-            'address_string'
-            )
-
-    return Response(res, status=status.HTTP_200_OK)
-
 
 
 @api_view(['POST'])
@@ -100,14 +64,49 @@ def landing(request):
     return Response([ut.serialize() for ut in uts])
 
 
-@api_view(['GET'])
-def task_progress(request):
-    job_id = request.GET.get('job_id')
-    if not job_id:
-        return Response('no job id')
-    task = AsyncResult(job_id)
-    data = task.state or task.result
-    return Response(data)
+# @api_view(['GET'])
+# def task_progress(request):
+#     job_id = request.GET.get('job_id')
+#     if not job_id:
+#         return Response('no job id')
+#     task = AsyncResult(job_id)
+#     data = task.state or task.result
+#     return Response(data)
+
+
+
+# @api_view(['GET'])
+# def generic_business_list(request: HttpRequest, category=None):
+#     suppliers = SupplierLocation.objects.select_related(
+#         'address',
+#         'address__postal_code',
+#         'address__coordinates',
+#         ).prefetch_related(
+#             'products',
+#             ).all()
+#     if category:
+#         prod_class = check_department_string(category)
+#         if prod_class is None:
+#             return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
+#         supplier_product_pks = prod_class.objects.values('priced__location__pk').distinct()
+#         suppliers = suppliers.filter(pk__in=supplier_product_pks)
+#     res = suppliers.annotate(
+#         product_count=Count('products'),
+#         lat=F('address__coordinates__lat'),
+#         lng=F('address__coordinates__lng'),
+#         address_string=F('address__address_string')
+#         ).values(
+#             'nickname',
+#             'pk',
+#             'product_count',
+#             'phone_number',
+#             'email',
+#             'lat',
+#             'lng',
+#             'address_string'
+#             )
+
+#     return Response(res, status=status.HTTP_200_OK)
 
 
 

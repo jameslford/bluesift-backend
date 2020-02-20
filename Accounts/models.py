@@ -145,7 +145,8 @@ class User(AbstractBaseUser):
             term = {'for_admin': True}
         else:
             term = {'for_user': True}
-        return [link.custom_serialize() for link in LibraryLink.objects.filter(**term)]
+        return [link for link in LibraryLink.objects.filter(**term)]
+        # return [link.custom_serialize() for link in LibraryLink.objects.filter(**term)]
 
     @property
     def is_staff(self):

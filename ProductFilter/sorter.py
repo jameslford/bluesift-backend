@@ -1,6 +1,6 @@
 import itertools
 from typing import List
-from dataclasses import field as dfield
+# from dataclasses import field as dfield
 from rest_framework.request import Request
 from django.core.files.storage import get_storage_class
 from django.db.models.functions import Concat
@@ -19,27 +19,41 @@ from .models import (
 
 
 class FilterResponse:
-    def __init__(self):
-        self.legit_queries: List[str] = dfield(default_factory=list)
-        self.product_count: int = 0
-        self.facets: List[dict] = []
-        self.products: List[dict] = None
+    def __init__(self, product_count: int, facets: List[BaseFacet], products: QuerySet, enabled_values):
+        self.product_count = product_count
+        self.facets = [facet.serialize_self() for facet in facets]
+        self.products = products
+        self.enabled_values = enabled_values
 
-
-    def asdict(self):
+    @property
+    def serialized(self):
         return {
-            'legit_queries': self.legit_queries,
             'product_count': self.product_count,
             'facets': self.facets,
-            # 'products': self.products,
-        }
-    # page: int = 1
-    # load_more: bool = True
-    # return_products: bool = True
-    # message: Message = None
-    # filter_dict: List[dict] = None
-    # enabled_values: List[EnabledValue] = dfield(default_factory=list)
+            'enabled_values': self.enabled_values,
+            'products': self.serialize_products(),
+            }
 
+
+    def serialize_products(self):
+        if not self.products:
+            return []
+        imageurl = get_storage_class().base_path()
+        return self.products.annotate(
+            swatch_url=Concat(Value(imageurl), 'swatch_image', output_field=CharField())
+            ).values(
+                'pk',
+                'unit',
+                'manufacturer_style',
+                'manufacturer_collection',
+                'manufacturer_sku',
+                'name',
+                'hash_value',
+                'swatch_url',
+                'swatch_image',
+                'manufacturer__label',
+                'low_price'
+                )
 
 
 
@@ -51,31 +65,29 @@ class Sorter:
         self.request = request
         self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
-        # self.products = self.get_products()
         avi_facet = [AvailabilityFacet(self.supplier_pk)]
         model_types = self.product_type._meta.get_parent_list() + [self.product_type]
         parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
         self.facets: List[BaseFacet] = avi_facet + list(BaseFacet.objects.filter(content_type__in=parents))
+        self.content = self.__process_request()
 
 
     @property
     def data(self):
-        return self.__process_request()
+        return self.content
 
 
-    def get_products(self, select_related='manufacturer'):
+    @property
+    def serialized(self):
+        return self.content.serialized
+
+
+    def get_products(self):
         if self.supplier_pk:
             pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
                 'product__pk', flat=True)
             return self.product_type.objects.filter(pk__in=pks)
         return self.product_type.objects.all()
-    # def get_products(self, select_related='manufacturer'):
-    #     if self.supplier_pk:
-    #         pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
-    #             'product__pk', flat=True)
-    #         return self.product_type.objects.all().prefetch_related(
-    #             'priced').select_related(select_related).filter(pk__in=pks).product_prices(self.supplier_pk)
-    #     return self.product_type.objects.select_related(select_related).all().product_prices()
 
 
     @transaction.atomic
@@ -101,9 +113,10 @@ class Sorter:
         pk_sets = [facet.filter_self() for facet in self.facets if facet and not facet.dynamic]
         all_pks = list(itertools.chain.from_iterable(pk_sets))
         all_pks = list(set(all_pks))
-        print('static pks' + str(len(all_pks)))
+        # print('static pks' + str(len(all_pks)))
         self.query_index.add_products(all_pks)
         return self.get_products().filter(pk__in=all_pks)
+
 
 
     def calculate_response(self, static_queryset: QuerySet = None):
@@ -112,6 +125,52 @@ class Sorter:
             pks = self.query_index.get_product_pks()
             static_queryset = self.get_products().filter(pk__in=pks)
         print('filtering dynamic -----------------------------------------')
+        pk_sets = [facet.filter_self() for facet in self.facets if facet and facet.dynamic]
+        all_pks = list(itertools.chain.from_iterable(pk_sets))
+        all_pks = list(set(all_pks))
+        print(len(all_pks))
+        products = static_queryset.filter(pk__in=all_pks)
+        enabled_values = [facet.count_self(self.query_index.pk, self.get_products(), self.facets) for facet in self.facets]
+        enabled_values = [facet for facet in enabled_values if facet]
+        enabled_values = list(itertools.chain.from_iterable(enabled_values))
+        product_count = len(products)
+        products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()
+        return FilterResponse(product_count, self.facets, products, enabled_values)
+
+
+        # serialized_facets = [facet.serialize_self() for facet in self.facets]
+        # return {
+        #     'product_count': product_count,
+        #     'facets': serialized_facets,
+        #     'enabled_values': enabled_values,
+        #     'products': self.serialize_products(products),
+        #     }
+
+
+
+    # def asdict(self):
+    #     return {
+    #         'legit_queries': self.legit_queries,
+    #         'product_count': self.product_count,
+    #         'facets': self.facets,
+    #     }
+    # page: int = 1
+    # load_more: bool = True
+    # return_products: bool = True
+    # message: Message = None
+    # filter_dict: List[dict] = None
+    # enabled_values: List[EnabledValue] = dfield(default_factory=list)
+
+
+    # def get_products(self, select_related='manufacturer'):
+    #     if self.supplier_pk:
+    #         pks = SupplierProduct.objects.filter(location__pk=self.supplier_pk).values_list(
+    #             'product__pk', flat=True)
+    #         return self.product_type.objects.all().prefetch_related(
+    #             'priced').select_related(select_related).filter(pk__in=pks).product_prices(self.supplier_pk)
+    #     return self.product_type.objects.select_related(select_related).all().product_prices()
+
+
         # dynamic_queryset = [
         #     facet.filter_self() for facet in self.facets if facet and facet.dynamic
         #     ]
@@ -120,33 +179,15 @@ class Sorter:
         #     if facet and facet.dynamic:
         #         pks = facet.filter_self()
         #         products = products.filter(pk__in=pks)
-        pk_sets = [facet.filter_self() for facet in self.facets if facet and facet.dynamic]
-        all_pks = list(itertools.chain.from_iterable(pk_sets))
-        all_pks = list(set(all_pks))
-        print(len(all_pks))
-        products = static_queryset.filter(pk__in=all_pks)
-        # products = static_queryset.intersection(*dynamic_queryset).values_list('pk', flat=True)
-        enabled_values = [facet.count_self(self.query_index.pk, self.get_products(), self.facets) for facet in self.facets]
-        enabled_values = [facet for facet in enabled_values if facet]
-        print(enabled_values)
-        enabled_values = list(itertools.chain.from_iterable(enabled_values))
-        # force the queryset to evalute here so that it can be renewed on the annoate call later
-        product_count = len(products)
-        products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()
-        serialized_facets = [facet.serialize_self() for facet in self.facets]
-        print(enabled_values)
-        return {
-            'product_count': product_count,
-            'facets': serialized_facets,
-            'enabled_values': enabled_values,
-            'products': self.serialize_products(products),
-            }
+
             # static_queryset = self.query_index.products.all()
         # for facet in self.facets:
         #     facet.count_self(self.query_index.pk, self.products, self.facets)
         # enabled_values = list(itertools.chain.from_iterable(enabled_values))
         # enabled_values = [a.asdict() for a in enabled_values]
         # enabled_valsues = [self.get_enabled_values(facet) for facet in self.facets if facet]
+        # products = static_queryset.intersection(*dynamic_queryset).values_list('pk', flat=True)
+        # force the queryset to evalute here so that it can be renewed on the annoate call later
 
 
         # static_querysets = [
@@ -157,29 +198,6 @@ class Sorter:
         # self.query_index.products.add(*new_prods)
         # self.query_index.save()
         # return self.get_products().filter(pk__in=new_prods)
-
-
-    def serialize_products(self, products):
-        if not products:
-            return []
-        imageurl = get_storage_class().base_path()
-        return products.annotate(
-            swatch_url=Concat(Value(imageurl), 'swatch_image', output_field=CharField())
-            ).values(
-                'pk',
-                'unit',
-                'manufacturer_style',
-                'manufacturer_collection',
-                'manufacturer_sku',
-                'name',
-                'hash_value',
-                'swatch_url',
-                'swatch_image',
-                'manufacturer__label',
-                'low_price'
-            )
-
-
 
         # availability_facet = self.calculate_availability_facet(products)
     # def calculate_availability_facet(self, ):

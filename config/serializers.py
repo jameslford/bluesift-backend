@@ -9,6 +9,7 @@ from Profiles.models import SupplierEmployeeProfile, ConsumerProfile
 # from Projects.models import Project
 from Plans.serializers import PlanSerializer
 from Groups.models import SupplierCompany
+from utils.tree import Tree
 from .globals import BusinessType
 
 
@@ -52,12 +53,13 @@ class BusinessSerializer:
             self.name = business.nickname
             self.image = business.image.url if business.image else None
             self.address = AddressSerializer(business.address).data
-            self.address_string = business.address_string()
+            self.info = business.company.info
+            # self.address_string = business.address_string()
             # self.product_types = business.product_types()
             if self.full:
                 self.info = business.company.info
-                if business.local_admin:
-                    self.location_manager = ProfileSerializer(business.local_admin.user).data
+                # if business.local_admin:
+                    # self.location_manager = ProfileSerializer(business.local_admin.user).data
             return self.serialize()
         if isinstance(self.business, SupplierCompany):
             ret_company: SupplierCompany = self.business
@@ -82,82 +84,64 @@ class BusinessSerializer:
         return
 
 
-class ProfileSerializer:
+class LinkTree:
+    def __init__(self, name=None, link=None, icon=None, description=None, children=None, pk=None, count=None, tree: Tree = None):
+        self.name = name
+        self.link = link
+        self.icon = icon
+        self.description = description
+        self.pk = pk
+        self.count = count
+        # self.children = children if children else []
+        self.children = []
+        if children:
+            self.children = [LinkTree(**child) for child in children]
+        if tree:
+            self.name = tree.name
+            self.count = tree.count
+            self.children = [LinkTree(**child) for child in tree.children]
+
+    @property
+    def serialized(self):
+        return {
+            'name': self.name,
+            'link': self.link,
+            'icon': self.icon,
+            'description': self.description,
+            'pk': self.pk,
+            'count': self.count,
+            'children': [child.serialized for child in self.children]
+        }
+
+
+class LinkSerializer:
 
     def __init__(self, user: User):
-        self.user: User = None
-        self.profile = None
+        self.avatar = None
+        self.library_links = []
 
         if user and user.is_authenticated:
-            self.user = user
-            self.profile = user.get_profile()
-
-        self.pk = None
-        self.avatar: str = None
-        self.user_type: str = None
-        self.group_name: str = None
-        self.owner = False
-        self.admin = False
-        self.title = False
-        self.plan = None
-        self.phone_number = None
-        self.tasks = []
-        self.collections = None
-        self.group = None
-        self.library_links = None
-
-
-    def retrieve_values(self, full=False):
-        self.pk = self.profile.pk
-        self.avatar = self.profile.avatar.url if self.profile.avatar else None
-        self.collections = self.user.get_collections().values('pk', 'nickname')
-        self.library_links = self.user.get_library_links()
-
-        if isinstance(self.profile, SupplierEmployeeProfile):
-            self.user_type = 'retailer'
-            self.admin = self.profile.admin
-            self.owner = self.profile.owner
-            self.title = self.profile.title
-            self.group_name = self.user.get_group().name
-            if full:
-                self.group = BusinessSerializer(self.user.get_group()).getData()
-        if isinstance(self.profile, ConsumerProfile):
-            self.user_type = 'user'
-            self.group_name = self.user.get_first_name() if self.user else None
-            if full:
-                self.plan = PlanSerializer(self.profile.plan).data if self.profile.plan else None
-
-        self.user = user_serializer(self.user) if self.user.is_authenticated else None
-
-    def get_dict(self):
-        return {
-            'pk': self.pk,
-            'user': self.user,
-            'avatar': self.avatar,
-            'user_type': self.user_type,
-            'group_name': self.group_name,
-            'owner': self.owner,
-            'admin': self.admin,
-            'title': self.title,
-            'plan': self.plan,
-            'phone_number': self.phone_number,
-            'tasks': self.tasks,
-            'libraryLinks': self.library_links,
-            'group': self.group,
-            'collections': self.collections,
-            }
+            profile = user.get_profile()
+            self.avatar = profile.avatar.url if profile.avatar else None
+            self.library_links = [LinkTree(name=child.label, link=child.link) for child in user.get_library_links()]
+            if user.is_supplier:
+                trees = [ptree['product_tree__tree'] for ptree in user.get_collections().values('product_tree__tree')]
+                self.library_links.append(LinkTree(name='locations', count=None, children=trees))
+            else:
+                plinks = [LinkTree(name=val['nickname']) for val in user.get_collections().values('pk', 'nickname')]
+                self.library_links.append(LinkTree(name='projects', children=plinks))
 
     @property
-    def data(self):
-        if self.profile:
-            self.retrieve_values()
-        return self.get_dict()
+    def serialized(self):
+        return [link.serialized for link in self.library_links]
+            
 
-    @property
-    def full_data(self):
-        if self.profile:
-            self.retrieve_values(True)
-        return self.get_dict()
+                # print(trees)
+                # for tree in trees:
+                #     print(tree)
+                # collections_links = [LinkTree(**ptree) for ptree in trees]
+                # collections_links = [ptree.product_tree.get_trees() for ptree in user.get_collections()]
+
 
 
 class CollectionNote:

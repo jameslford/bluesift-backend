@@ -44,7 +44,7 @@ def products_list(request: HttpRequest, product_type: str = None, sub_product: s
     if location_pk:
         add_supplier_record.delay(request.get_full_path(), pk=location_pk)
     content = Sorter(product_type, request=request, supplier_pk=location_pk)
-    return Response(content.data, status=status.HTTP_200_OK)
+    return Response(content.serialized, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST'])
