@@ -1,6 +1,10 @@
 import datetime
 from django.http.request import HttpRequest
-from django.db.models import Count, F
+from django.core.files.storage import get_storage_class
+from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
+from django.db.models import Count, F, CharField
+from django.db.models.query import Value
+from django.db.models.functions import Concat
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -121,6 +125,10 @@ def crud_location(request: Request, pk: int = None):
 @permission_classes((PrivateSupplierCrud,))
 def crud_supplier_products(request: HttpRequest, product_type=None, location_pk=None):
 
+    imageurl = get_storage_class().base_path()
+        # return self.products.annotate(
+        #     swatch_url=Concat(Value(imageurl), 'swatch_image', output_field=CharField())
+
     if request.method == 'GET':
         if not (product_type and location_pk):
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -131,7 +139,11 @@ def crud_supplier_products(request: HttpRequest, product_type=None, location_pk=
         sup_prods = location.products.select_related(
             'product',
             'product__manufacturer'
-        ).filter(pk__in=product_pks)
+        ).filter(product__pk__in=product_pks).annotate(
+            swatch_url=Concat(Value(imageurl), 'product__swatch_image', output_field=CharField()),
+            # lead_time_to_store=ExpressionWrapper(F('lead_time_ts'), output_field=DateTimeField('day'))
+        )
+
         serialized_prods = sup_prods.values(
             'pk',
             'in_store_ppu',
@@ -143,13 +155,13 @@ def crud_supplier_products(request: HttpRequest, product_type=None, location_pk=
             'publish_in_store_availability',
             'publish_in_store_price',
             'publish_online_price',
+            'swatch_url',
             'product__pk',
             'product__unit',
             'product__manufacturer_style',
             'product__manufacturer_collection',
             'product__manufacturer_sku',
-            'product__swatch_image',
-            'manufacturer__label',
+            'product__manufacturer__label',
             )
         return Response(
             {

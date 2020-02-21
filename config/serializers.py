@@ -48,7 +48,7 @@ class BusinessSerializer:
             business: SupplierLocation = self.business
             self.business_type = BusinessType.RETAILER_LOCATION.value
             self.email = business.email
-            self.product_count = business.product_count()
+            self.product_count = business.products.count()
             self.phone_number = business.phone_number
             self.name = business.nickname
             self.image = business.image.url if business.image else None
@@ -95,6 +95,7 @@ class LinkTree:
         # self.children = children if children else []
         self.children = []
         if children:
+            print(children)
             self.children = [LinkTree(**child) for child in children]
         if tree:
             self.name = tree.name
@@ -128,7 +129,8 @@ class LinkSerializer:
                 trees = [ptree['product_tree__tree'] for ptree in user.get_collections().values('product_tree__tree')]
                 self.library_links.append(LinkTree(name='locations', count=None, children=trees))
             else:
-                plinks = [LinkTree(name=val['nickname']) for val in user.get_collections().values('pk', 'nickname')]
+                plinks = [{'name': val['nickname'], 'link': val['pk']} for val in user.get_collections().values('pk', 'nickname')]
+                # plinks = [LinkTree(name=val['nickname']) for val in user.get_collections().values('pk', 'nickname')]
                 self.library_links.append(LinkTree(name='projects', children=plinks))
 
     @property
@@ -219,7 +221,7 @@ class ProductStatus:
         group = self.user.get_group()
         if self.user.is_supplier:
             collections = SupplierLocation.objects.prefetch_related('products').filter(company=group)
-            subquery = SupplierProduct.objects.filter(retailer=OuterRef('pk'))
+            subquery = SupplierProduct.objects.filter(location=OuterRef('pk'))
             res = collections.annotate(removed=Exists(subquery)).values('nickname', 'pk', 'removed')
             self.pl_list = [CollectionNote(col['nickname'], col['pk'], not col['removed']).serialize() for col in res]
         else:
