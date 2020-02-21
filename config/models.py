@@ -158,15 +158,15 @@ class LibraryLink(models.Model):
         palette.for_user = True
         palette.save()
 
-        locations = cls.objects.get_or_create(label='locations')[0]
-        locations.for_supplier = True
-        locations.include_collections = True
-        locations.save()
+        # locations = cls.objects.get_or_create(label='locations')[0]
+        # locations.for_supplier = True
+        # locations.include_collections = True
+        # locations.save()
 
-        projects = cls.objects.get_or_create(label='projects')[0]
-        projects.for_user = True
-        projects.include_collections = True
-        projects.save()
+        # projects = cls.objects.get_or_create(label='projects')[0]
+        # projects.for_user = True
+        # projects.include_collections = True
+        # projects.save()
 
 
 class UserFeature(models.Model):

@@ -24,7 +24,7 @@ def availability_getter(query_term, location_pk=None):
     from Suppliers.models import SupplierProduct
     term = {query_term: True}
     if location_pk:
-        term['retailer_id'] = location_pk
+        term['location__pk'] = location_pk
     return SupplierProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
 
 

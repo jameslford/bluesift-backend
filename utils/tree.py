@@ -15,3 +15,22 @@ class Tree:
             'count': self.count,
             'children': [child.serialize() for child in self.children]
             }
+
+
+class SupplierLocationTree:
+
+    def __init__(self, name, count, link, children=None):
+        self.name = name
+        self.count = count
+        self.link = link
+        self.children: List[Tree] = []
+        if children:
+            self.children = [SupplierLocationTree(**child) for child in children if child]
+
+    def serialize(self):
+        return {
+            'name': self.name,
+            'count': self.count,
+            'link': self.link,
+            'children': [child.serialize() for child in self.children]
+            }

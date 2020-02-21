@@ -467,7 +467,7 @@ class QueryIndex(models.Model):
     objects = QueryIndexManager()
 
     class Meta:
-        unique_together = ('query_dict', 'query_path')
+        unique_together = ('query_dict', 'query_path', 'retailer_location')
 
     def __str__(self):
         return f'{self.query_path}_{self.query_dict}'

@@ -1,15 +1,38 @@
+from .models import ConsumerProfile, SupplierEmployeeProfile
+
 
 def serialize_profile(profile):
-    return {
+    ret_dict = {
         'avatar' : profile.avatar.url if profile.avatar else None,
-        # 'user_type' : profile.user_type,
-        # 'group_name' : profile.group_name,
+        }
+    if isinstance(profile, ConsumerProfile):
+        ret_dict.update(serialize_consumer(profile))
+    elif isinstance(profile, SupplierEmployeeProfile):
+        ret_dict.update(serialize_employee(profile))
+    return ret_dict
+    # return {
+    #     'avatar' : profile.avatar.url if profile.avatar else None,
+    #     # 'user_type' : profile.user_type,
+    #     # 'group_name' : profile.group_name,
+    #     'owner' : profile.owner,
+    #     'admin' : profile.admin,
+    #     'title' : profile.title,
+    #     # 'plan' : profile.plan,
+        # 'phone_number' : profile.phone_number,
+    #     }
+
+def serialize_consumer(profile: ConsumerProfile):
+    return {
+        'plan' : profile.plan,
+        'phone_number' : profile.phone_number
+        }
+
+def serialize_employee(profile: SupplierEmployeeProfile):
+    return {
         'owner' : profile.owner,
         'admin' : profile.admin,
-        'title' : profile.title,
-        # 'plan' : profile.plan,
-        # 'phone_number' : profile.phone_number,
         }
+
 
 
 

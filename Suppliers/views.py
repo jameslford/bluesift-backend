@@ -56,10 +56,11 @@ def public_location_detail_view(request: HttpRequest, pk: int):
         'company'
         ).prefetch_related('products', 'products__product').get(pk=pk)
 
-    categories = [tree.serialized for tree in model.product_tree.get_trees()]
+    # categories = [tree.serialized for tree in model.product_tree.get_trees()]
+    tree = model.product_tree.get_trees().serialize()
 
     ret = {
-        'product_types': categories,
+        'tree': tree,
         'info': serialize_location_public_detail(model)
         }
     return Response(ret, status=status.HTTP_200_OK)

@@ -31,8 +31,8 @@ def create_value_cleaner(request: Request, model_type):
 @api_view(['GET'])
 def products_list(request: HttpRequest, product_type: str = None, sub_product: str = None):
     location_pk = None
-    if 'location_pk' in request.GET:
-        location_pk = request.GET.get('location_pk')
+    if 'supplier_pk' in request.GET:
+        location_pk = request.GET.get('supplier_pk')
     if sub_product:
         product_type = check_department_string(sub_product)
     elif product_type:

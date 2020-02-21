@@ -8,7 +8,7 @@ from Addresses.models import Address
 from Products.models import Product
 from Groups.models import SupplierCompany
 from Profiles.models import SupplierEmployeeProfile
-from utils.tree import Tree
+from utils.tree import Tree, SupplierLocationTree
 
 
 
@@ -319,7 +319,7 @@ class SupplierProductTree(models.Model):
         return self.product_pks
 
     def get_trees(self):
-        return Tree(**self.tree)
+        return SupplierLocationTree(**self.tree)
 
     def __looper(self, current, parent):
         if not current._meta.abstract:
@@ -327,7 +327,8 @@ class SupplierProductTree(models.Model):
             count = current.objects.filter(pk__in=pks).count()
             if count > 0:
                 name = current._meta.verbose_name_plural.lower().strip()
-                new_tree = Tree(name, count)
+                link = parent.link + '/' + name
+                new_tree = SupplierLocationTree(name, count, link)
                 parent.children.append(new_tree)
                 for sub in current.__subclasses__():
                     self.__looper(sub, new_tree)
@@ -338,7 +339,7 @@ class SupplierProductTree(models.Model):
     def refresh(self):
         name = self.location.nickname
         count = self.location.products.count()
-        tree = Tree(name, count)
+        tree = SupplierLocationTree(name, count, str(self.location.pk))
         for sub in Product.__subclasses__():
             self.__looper(sub, tree)
         self.tree = tree.serialize()
