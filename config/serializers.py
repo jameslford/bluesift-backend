@@ -136,7 +136,7 @@ class LinkSerializer:
     @property
     def serialized(self):
         return [link.serialized for link in self.library_links]
-            
+
 
                 # print(trees)
                 # for tree in trees:

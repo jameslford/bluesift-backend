@@ -19,11 +19,15 @@ from .models import (
 
 
 class FilterResponse:
-    def __init__(self, product_count: int, facets: List[BaseFacet], products: QuerySet, enabled_values):
+    def __init__(self, product_count: int, facets: List[BaseFacet], products: QuerySet, enabled_values, page, page_size):
         self.product_count = product_count
         self.facets = [facet.serialize_self() for facet in facets]
         self.products = products
         self.enabled_values = enabled_values
+        self.start = (page - 1) * page_size
+        self.end = page * page_size
+        # self.page = page
+        # self.page_size = page_size
 
     @property
     def serialized(self):
@@ -53,7 +57,7 @@ class FilterResponse:
                 'swatch_image',
                 'manufacturer__label',
                 'low_price'
-                )
+                )[self.start: self.end]
 
 
 
@@ -63,6 +67,8 @@ class Sorter:
     def __init__(self, product_type, request: Request, supplier_pk=None):
         self.product_type = product_type
         self.request = request
+        self.page = 1
+        self.page_size = 60
         self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
         avi_facet = [AvailabilityFacet(self.supplier_pk)]
@@ -135,7 +141,7 @@ class Sorter:
         enabled_values = list(itertools.chain.from_iterable(enabled_values))
         product_count = len(products)
         products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()
-        return FilterResponse(product_count, self.facets, products, enabled_values)
+        return FilterResponse(product_count, self.facets, products, enabled_values, self.page, self.page_size)
 
 
         # serialized_facets = [facet.serialize_self() for facet in self.facets]

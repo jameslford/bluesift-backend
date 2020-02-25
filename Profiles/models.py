@@ -108,6 +108,7 @@ class SupplierEmployeeProfile(BaseProfile):
     admin = models.BooleanField(default=False)
     publish = models.BooleanField(default=True)
     title = models.CharField(max_length=100, null=True)
+    contact_for = models.ManyToManyField('Suppliers.SupplierLocation')
     company = models.ForeignKey(
         SupplierCompany,
         on_delete=models.CASCADE,
@@ -121,6 +122,9 @@ class SupplierEmployeeProfile(BaseProfile):
         return [location.pk for location in self.managed_locations.all()]
 
     def save(self, *args, **kwargs):
+        for location in self.contact_for.all():
+            if location.company != self.company:
+                raise ValueError('invalid location in contact for')
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
         super(SupplierEmployeeProfile, self).save(*args, **kwargs)

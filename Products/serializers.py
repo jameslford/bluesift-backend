@@ -22,7 +22,9 @@ def serialize_detail(product: ProductSubClass):
     special = product.grouped_fields()
     special.update({'warranty': serialize_warranty(product)})
     priced = [price.serialize_mini() for price in product.get_in_store_priced()]
+    parents = [parent._meta.verbose_name_plural for parent in product._meta.get_parent_list()]
     stock.update({
+        'parents': parents[:: -1],
         'manufacturer_url': product.manufacturer_url,
         'room_scene': product.room_scene.url if product.room_scene else None,
         'priced': priced,

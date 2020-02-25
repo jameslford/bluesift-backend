@@ -60,31 +60,10 @@ def public_location_detail_view(request: HttpRequest, pk: int):
         'company'
         ).prefetch_related('products', 'products__product').get(pk=pk)
 
-    # categories = [tree.serialized for tree in model.product_tree.get_trees()]
-    tree = model.product_tree.get_trees().serialize()
+    info = serialize_location_public_detail(model)
+    info.update({'tree': model.product_tree.get_trees().serialize()})
 
-    ret = {
-        'tree': tree,
-        'info': serialize_location_public_detail(model)
-        }
-    return Response(ret, status=status.HTTP_200_OK)
-
-    # if category.lower() == BusinessType.RETAILER_LOCATION.value:
-    #     model: SupplierLocation = SupplierLocation.objects.select_related(
-    #         'address',
-    #         'address__postal_code',
-    #         'address__coordinates',
-    #         'company'
-    #         ).prefetch_related('products', 'products__product').get(pk=pk)
-    #     add_supplier_record.delay(request.get_full_path(), pk=pk)
-    # elif category.lower() == 'retailer-company':
-    #     model = SupplierCompany.objects.prefetch_related(
-    #         'employees',
-    #         'employees__user'
-    #         ).get(pk=pk)
-    # else:
-    #     return Response('invalid category', status=status.HTTP_400_BAD_REQUEST)
-    # return Response(BusinessSerializer(model).getData(), status=status.HTTP_200_OK)
+    return Response(info, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
@@ -126,8 +105,6 @@ def crud_location(request: Request, pk: int = None):
 def crud_supplier_products(request: HttpRequest, product_type=None, location_pk=None):
 
     imageurl = get_storage_class().base_path()
-        # return self.products.annotate(
-        #     swatch_url=Concat(Value(imageurl), 'swatch_image', output_field=CharField())
 
     if request.method == 'GET':
         if not (product_type and location_pk):
@@ -201,29 +178,3 @@ def crud_supplier_products(request: HttpRequest, product_type=None, location_pk=
         return Response(f'{updates} products updated', status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-
-
-# from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-# from .serializers import FullSupplierProductSerializer
-
-
-
-        # pks = model.objects.values_list('pk', flat=True)
-        # location = request.user.get_collections().get(pk=location_pk)
-        # products = location.products.select_related(
-        #     'product',
-        #     'product__manufacturer'
-        # ).filter(pk__in=pks)
-        # return Response(FullSupplierProductSerializer(products, many=True).data, status=status.HTTP_200_OK)
-
-
-        # if pk:
-        #     location = SupplierLocation.objects.get(pk=pk)
-        # elif user and user.is_authenticated:
-        #     location = user.get_collections().get(pk=pk)
-        # profile = user.get_profile()
-        # if profile.owner:
-# @permission_classes((IsAuthenticated, RetailerPermission))
-# @permission_classes((IsAuthenticatedOrReadOnly,))

@@ -1,9 +1,12 @@
-from .models import ConsumerProfile, SupplierEmployeeProfile
+from .models import ConsumerProfile, SupplierEmployeeProfile, BaseProfile
 
 
-def serialize_profile(profile):
+def serialize_profile(profile: BaseProfile):
+    user = profile.user
     ret_dict = {
         'avatar' : profile.avatar.url if profile.avatar else None,
+        'name': user.get_full_name(),
+        'email': user.email
         }
     if isinstance(profile, ConsumerProfile):
         ret_dict.update(serialize_consumer(profile))
@@ -31,6 +34,7 @@ def serialize_employee(profile: SupplierEmployeeProfile):
     return {
         'owner' : profile.owner,
         'admin' : profile.admin,
+        'title': profile.title
         }
 
 

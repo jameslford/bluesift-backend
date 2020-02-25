@@ -1,7 +1,7 @@
 from django.db import models
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
-from Plans.models import SupplierPlan, ConsumerPlan
+from Plans.models import SupplierPlan
 
 
 class SupplierGroupManager(models.Manager):
