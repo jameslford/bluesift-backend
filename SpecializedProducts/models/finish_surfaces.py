@@ -127,6 +127,51 @@ class FinishSurface(ProductSubClass):
             }
         }
 
+    def __static_tags(self):
+        return [
+            'finishes',
+            'surfaces'
+        ]
+
+    def __dynamic_tags(self):
+        return [
+            self.look,
+            self.finish,
+            self.edge,
+            self.end,
+            self.get_color(),
+            'walls' if self.walls else None,
+            'countertops' if self.countertops else None,
+            'floors' if self.floors else None,
+            'cabinet_fronts' if self.cabinet_fronts else None,
+            'shower_floors' if self.shower_floors else None,
+            'shower_walls' if self.shower_walls else None,
+            'exterior_walls' if self.exterior_walls else None,
+            'exterior_floors' if self.exterior_floors else None,
+            'covered_walls' if self.covered_walls else None,
+            'covered_floors' if self.covered_floors else None,
+            'pool_linings' if self.pool_linings else None,
+            'bullnose' if self.bullnose else None,
+            'covebase' if self.covebase else None,
+            'corner_covebase' if self.corner_covebase else None,
+            ]
+
+    def tags(self):
+        parent_tags = super().tags()
+        tags = self.__static_tags() + self.__dynamic_tags() + parent_tags
+        tags = [tag for tag in tags if tag]
+        return tags
+
+
+    def assign_name(self):
+        self.name = f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'
+        self.save()
+        return self.name
+
+    def get_color(self):
+        return webcolors.hex_to_name(self.actual_color)
+
+
     def assign_size(self):
         """returns float measurements and labels on product details"""
         if not (self.length and self.width):
@@ -244,6 +289,24 @@ class TileAndStone(FinishSurface):
     shape = models.CharField(max_length=40, null=True, blank=True)
     material_type = models.CharField(max_length=40, null=True, blank=True)
 
+    def __static_tags(self):
+        return [
+            'tile',
+            'stone'
+            ]
+
+    def __dynamic_tags(self):
+        return [
+            self.shape,
+            self.material_type,
+            ]
+
+    def tags(self):
+        parent_tags = super().tags()
+        tags = self.__static_tags() + self.__dynamic_tags() + parent_tags
+        tags = [tag for tag in tags if tag]
+        return tags
+
     def assign_shape(self):
         if not self.shape:
             if not self.actual_size:
@@ -264,6 +327,24 @@ class Hardwood(FinishSurface):
 
     class Meta:
         verbose_name_plural = 'hardwood'
+    
+    def __static_tags(self):
+        return [
+            'hardwood',
+            'wood'
+            ]
+
+    def __dynamic_tags(self):
+        return [
+            self.composition,
+            self.species,
+            ]
+
+    def tags(self):
+        parent_tags = super().tags()
+        tags = self.__static_tags() + self.__dynamic_tags() + parent_tags
+        tags = [tag for tag in tags if tag]
+        return tags
 
 class LaminateFlooring(FinishSurface):
     surface_coating = models.CharField(max_length=80, null=True, blank=True)
@@ -271,6 +352,23 @@ class LaminateFlooring(FinishSurface):
 
     class Meta:
         verbose_name_plural = 'laminate flooring'
+
+    def __static_tags(self):
+        return [
+            'laminate',
+            ]
+
+    def __dynamic_tags(self):
+        return [
+            self.surface_coating,
+            self.species,
+            ]
+
+    def tags(self):
+        parent_tags = super().tags()
+        tags = self.__static_tags() + self.__dynamic_tags() + parent_tags
+        tags = [tag for tag in tags if tag]
+        return tags
 
 class Resilient(FinishSurface):
     surface_coating = models.CharField(max_length=80, null=True, blank=True)
@@ -288,6 +386,24 @@ class Resilient(FinishSurface):
                 self.shape = 'rectangle'
                 return
             self.shape = 'square'
+
+    def __static_tags(self):
+        return [
+            'vinyl',
+            'resilient',
+            ]
+
+    def __dynamic_tags(self):
+        return [
+            self.shape,
+            self.material_type,
+            ]
+
+    def tags(self):
+        parent_tags = super().tags()
+        tags = self.__static_tags() + self.__dynamic_tags() + parent_tags
+        tags = [tag for tag in tags if tag]
+        return tags
 
 
 class CabinetLaminate(FinishSurface):

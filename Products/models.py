@@ -191,7 +191,6 @@ class Product(models.Model):
     bb_sku = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4, editable=False)
     hash_value = models.CharField(max_length=1200, blank=True, null=True, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF, blank=True)
-    category = models.CharField(max_length=60, editable=False, null=True)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
     manufacturer_sku = models.CharField(max_length=200)
@@ -271,10 +270,28 @@ class Product(models.Model):
     def __str__(self):
         return f'{self.manufacturer_collection}, {self.manufacturer_style}'
 
-    # def save(self, *args, **kwargs):
-    #     if not self.hash_value:
-    #         self.set_hash()
-    #     super(Product, self).save(*args, **kwargs)
+    def __static_tags(self):
+        return []
+
+    def __dynamic_tags(self):
+        return [
+            self.manufacturer_collection,
+            self.manufacturer_style,
+            self.manufacturer_sku
+            ]
+
+    def tags(self):
+        return self.__static_tags() + self.__dynamic_tags()
+
+    def assign_name(self):
+        raise Exception('must be set on subclass')
+
+
+    def get_name(self):
+        if self.name:
+            return self.name
+        return self.assign_name()
+
 
     def get_in_store(self):
         return self.priced.select_related(

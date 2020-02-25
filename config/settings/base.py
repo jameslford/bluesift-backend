@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'Projects',
     'Ratings',
     'Scraper',
+    'Search',
     'Suppliers',
     'SpecializedProducts',
 ]
