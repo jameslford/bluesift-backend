@@ -6,7 +6,7 @@ from django.core.files.storage import get_storage_class
 from django.db.models.functions import Concat
 from django.http import QueryDict
 from django.db.models.query import QuerySet, Value
-from django.db.models import CharField
+from django.db.models import CharField, Q
 from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
 from Suppliers.models import SupplierProduct
@@ -76,6 +76,9 @@ class Sorter:
         parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
         self.facets: List[BaseFacet] = avi_facet + list(BaseFacet.objects.filter(content_type__in=parents))
         self.content = self.__process_request()
+        self.initial_products = self.get_products()
+        self.initial_product_count = len(self.initial_products)
+        print(self.initial_product_count)
 
 
     @property
@@ -107,7 +110,7 @@ class Sorter:
             retailer_location=self.supplier_pk
             )
         self.query_index = query_index
-        print(query_index.dirty, created)
+        # print(query_index.dirty, created)
         if query_index.dirty or created:
             static_queryset = self.build_query_index()
             return self.calculate_response(static_queryset)
@@ -115,27 +118,44 @@ class Sorter:
 
 
     def build_query_index(self):
-        print('no static')
+        # all_prods = self.get_products()
         pk_sets = [facet.filter_self() for facet in self.facets if facet and not facet.dynamic]
-        all_pks = list(itertools.chain.from_iterable(pk_sets))
-        all_pks = list(set(all_pks))
+        pk_sets = [pks for pks in pk_sets if len(pks) < self.initial_product_count]
+        # all_pks = self.initial_products.intersection(*pk_sets).values_list('pk', flat=True)
+        q_object = Q()
+        for pks in pk_sets:
+            ars = {'pk__in': pks}
+            q_object &= Q(**ars)
+        # all_pks = list(itertools.chain.from_iterable(pk_sets))
+        # all_pks = list(set(all_pks))
         # print('static pks' + str(len(all_pks)))
-        self.query_index.add_products(all_pks)
-        return self.get_products().filter(pk__in=all_pks)
+        prods = self.initial_products.filter(q_object)
+        pks = list(prods.values_list('pk', flat=True))
+        print(len(pks))
+        self.query_index.add_products(pks)
+        return prods
+        # return self.get_products().filter()
 
 
 
     def calculate_response(self, static_queryset: QuerySet = None):
         if not static_queryset:
-            print('before')
             pks = self.query_index.get_product_pks()
-            static_queryset = self.get_products().filter(pk__in=pks)
+            static_queryset = self.initial_products.filter(pk__in=pks)
         print('filtering dynamic -----------------------------------------')
         pk_sets = [facet.filter_self() for facet in self.facets if facet and facet.dynamic]
-        all_pks = list(itertools.chain.from_iterable(pk_sets))
-        all_pks = list(set(all_pks))
-        print(len(all_pks))
-        products = static_queryset.filter(pk__in=all_pks)
+        pk_sets = [pks for pks in pk_sets if len(pks) < self.initial_product_count]
+        q_object = Q()
+        for pks in pk_sets:
+            ars = {'pk__in': pks}
+            q_object &= Q(**ars)
+        
+        # all_pks = static_queryset.intersection(*pk_sets).values_list('pk', flat=True)
+        # all_pks = list(itertools.chain.from_iterable(pk_sets))
+        # all_pks = list(set(all_pks))
+        # print(len(all_pks))
+        # products = static_queryset.filter(pk__in=all_pks)
+        products = static_queryset.filter(q_object)
         enabled_values = [facet.count_self(self.query_index.pk, self.get_products(), self.facets) for facet in self.facets]
         enabled_values = [facet for facet in enabled_values if facet]
         enabled_values = list(itertools.chain.from_iterable(enabled_values))

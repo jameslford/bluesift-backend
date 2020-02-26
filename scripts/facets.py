@@ -106,8 +106,16 @@ def create_facets():
     BaseFacet.objects.get_or_create(
         content_type=cproduct,
         attribute='locations',
+        widget='location',
         field_type='MultiPointField',
         name='Location'
+    )
+    BaseFacet.objects.get_or_create(
+        content_type=cproduct,
+        attribute='manufacturer',
+        field_type='ForeignKey',
+        widget='checkbox',
+        name='manufacturers'
     )
     # TODO create url field for facet
     # BaseFacet.objects.get_or_create(

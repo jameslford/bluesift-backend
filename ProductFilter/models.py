@@ -107,6 +107,11 @@ class BaseFacet(models.Model):
     dynamic = models.BooleanField(default=False)
     editable = models.BooleanField(default=False)
     field_type = models.CharField(max_length=70, default='CharField')
+    static_charfield_values = pg_fields.ArrayField(
+        models.CharField(max_length=80, null=True, blank=True),
+        null=True,
+        blank=True
+    )
     abs_min = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     abs_max = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     allow_multiple = models.BooleanField(default=True)
@@ -165,7 +170,7 @@ class BaseFacet(models.Model):
     def model(self) -> models.Model:
         return self.content_type.model_class()
 
-    
+
     def get_search_values(self):
         '''use by SearchIndex model to get values '''
         if self.field_type != 'Charfield':
@@ -202,7 +207,7 @@ class BaseFacet(models.Model):
                 absolutes = self.model.objects.aggregate(**kwargs)
                 # absolutes = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
 
-        print(absolutes)
+        # print(absolutes)
         abs_min = absolutes.get(f'{self.attribute}__min')
         abs_max = absolutes.get(f'{self.attribute}__max')
         if not self.dynamic:
@@ -240,6 +245,20 @@ class BaseFacet(models.Model):
             q_object |= models.Q(**{self.attribute: term})
             self.selected = True
         self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
+        return self.queryset
+
+    def __filter_foreignkey(self):
+        print(self.qterms)
+        if not self.qterms:
+            return self.__return_stock()
+        q_object = models.Q()
+        for term in self.qterms:
+            ars = {f'{self.attribute}__pk': int(term)}
+            q_object |= models.Q(**ars)
+            self.selected = True
+        print(q_object.__str__)
+        self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
+        print(len(self.queryset))
         return self.queryset
 
 
@@ -283,22 +302,27 @@ class BaseFacet(models.Model):
 
         if self.field_type in ['DecimalField', 'FloatField', 'RangeField', 'DecimalRangeField', 'FloatRangeField']:
             qs = self.__filter_numeric()
-            print(qs.first())
+            # print(qs.first())
             return qs
 
         if self.field_type == 'CharField':
             qs = self.__filter_charfield()
-            print(qs.first())
+            # print(qs.first())
+            return qs
+
+        if self.field_type == 'ForeignKey':
+            qs = self.__filter_foreignkey()
+            # print(qs.first())
             return qs
 
         if self.field_type == 'BooleanField':
             qs = self.__filter_boolean()
-            print(qs.first())
+            # print(qs.first())
             return qs
 
         if self.field_type == 'MultiPointField':
             qs = self.__filter_radius()
-            print(qs.first())
+            # print(qs.first())
             return qs
 
         raise Exception(f'invalid field type -- {self.field_type}')
@@ -333,7 +357,7 @@ class BaseFacet(models.Model):
         self.return_values = []
         self.enabled_values = []
         self.qterms = []
-        print(self.field_type, self.name)
+        # print(self.field_type, self.name)
         if self.field_type in ['DecimalField', 'FloatField', 'RangeField', 'DecimalRangeField', 'FloatRangeField']:
             return self.__parse_numeric(params)
 
@@ -343,11 +367,27 @@ class BaseFacet(models.Model):
         qterms = params.getlist(self.name, None)
         qterms = qterms[0].split(',') if qterms else []
         if self.attribute:
-            values = list(self.model.objects.values_list(self.attribute, flat=True).distinct())
+            values = self.get_charfield_values()
+            # values = list(self.model.objects.values_list(self.attribute, flat=True).distinct())
         else:
             values = self.attribute_list
-        self.qterms = [term for term in qterms if term in values]
+        self.qterms = [term for term in qterms if str(term) in values]
+        # print(self.attribute)
+        # print(self.qterms)
         return params
+
+
+    def get_charfield_values(self):
+        if self.static_charfield_values:
+            # print(self.attribute, ' has static cvals as ', self.static_charfield_values)
+            return self.static_charfield_values
+        values = list(self.model.objects.values_list(self.attribute, flat=True).distinct())
+        if self.dynamic:
+            return values
+        self.static_charfield_values = values
+        self.save()
+        return values
+
 
 
     def __calc_intersections(self, products, others):
@@ -396,6 +436,24 @@ class BaseFacet(models.Model):
             self.return_values.append(return_value)
             if selected:
                 yield return_value.asdict()
+
+
+    def __count_foreignkey(self, query_index_pk, products, facets):
+        _facets = [facet.queryset for facet in facets if facet is not self]
+        others = self.get_intersection(query_index_pk, products, _facets)
+        name_arg = f'{self.attribute}__label'
+        pk_arg = f'{self.attribute}__pk'
+        values = others.values(*[name_arg, pk_arg]).annotate(val_count=models.Count(self.attribute))
+        for val in values:
+            name = val[name_arg]
+            pk_value = val[pk_arg]
+            count = val['val_count']
+            selected = bool(str(pk_value) in self.qterms)
+            expression = f'{self.name}={pk_value}'
+            return_value = BaseReturnValue(expression, name, count, selected)
+            self.return_values.append(return_value)
+            if selected:
+                yield return_value.asdict()
                 # self.enabled_values.append(return_value.asdict())
 
     def count_self(self, query_index_pk, products, facets):
@@ -409,6 +467,8 @@ class BaseFacet(models.Model):
             return None
         if self.field_type == 'BooleanField':
             return self.__count_bools(query_index_pk, products, facets)
+        if self.field_type == 'ForeignKey':
+            return self.__count_foreignkey(query_index_pk, products, facets)
         return self.__count_inclusive(query_index_pk, products, facets)
 
 
@@ -1061,7 +1121,7 @@ class FacetOthersCollection(models.Model):
     #     return model.objects.filter(pk__in=pks)
     # facet_name = models.CharField(max_length=100)
 
-    
+
 #         if not self.attribute:
 #             raise Exception(f'must provide attribute for {self.name} facet')
 #         if self.attribute == 'low_price':
