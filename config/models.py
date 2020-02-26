@@ -24,9 +24,27 @@ class ConfigTree(models.Model):
     def delete(self, *args, **kwargs):
         pass
 
+    def init_trees(self, **kwargs):
+        name = kwargs.get('name')
+        count = kwargs.get('count')
+        children = kwargs.get('children')
+        tree = Tree(name, count)
+        if children:
+            for child in children:
+                tree.children.append(self.init_trees(**child))
+        return tree
+
+
+    @classmethod
+    def create_category_searches(cls):
+        cf_tree: ConfigTree = cls.load()
+        tree = cf_tree.init_trees(cf_tree.product_tree)
+        
+
+
     @classmethod
     def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
+        obj = cls.objects.get_or_create(pk=1)[0]
         return obj
 
     @classmethod

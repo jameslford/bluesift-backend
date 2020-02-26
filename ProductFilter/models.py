@@ -165,6 +165,15 @@ class BaseFacet(models.Model):
     def model(self) -> models.Model:
         return self.content_type.model_class()
 
+    
+    def get_search_values(self):
+        '''use by SearchIndex model to get values '''
+        if self.field_type != 'Charfield':
+            return None
+        if self.attribute:
+            values = self.model.values(self.attribute)
+            return [{'tag': value, 'express': f'{self.attribute}={value}'} for value in values]
+
 
     def __get_absolutes(self):
         if self.field_type not in ['DecimalField', 'FloatField', 'RangeField', 'DecimalRangeField', 'FloatRangeField']:

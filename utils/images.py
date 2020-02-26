@@ -1,5 +1,16 @@
 from PIL import Image
 
+colors = {'red': (255,0,0),
+          'green': (0,255,0),
+          'blue': (0,0,255),
+          'yellow': (255,255,0),
+          'orange': (255,127,0),
+          'white': (255,255,255),
+          'black': (0,0,0),
+          'gray': (127,127,127),
+          'pink': (255,127,127),
+          'purple': (127,0,255),}
+
 
 def resize_image(image: Image.Image, desired_size) -> Image.Image:
     width, height = image.size

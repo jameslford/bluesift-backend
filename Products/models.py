@@ -275,6 +275,7 @@ class Product(models.Model):
 
     def __dynamic_tags(self):
         return [
+            self.manufacturer.label,
             self.manufacturer_collection,
             self.manufacturer_style,
             self.manufacturer_sku

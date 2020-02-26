@@ -21,6 +21,7 @@ urlpatterns = [
     path('products/', include('Products.urls')),
     path('profiles/', include('Profiles.urls')),
     path('projects/', include('Projects.urls')),
+    path('search/', include('Search.urls')),
     path('suppliers/', include('Suppliers.urls')),
 
     path('add/', generic_add),
