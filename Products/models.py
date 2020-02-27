@@ -13,6 +13,7 @@ from django.db.models import (
     QuerySet
 )
 from django.db.models.functions import Least
+from django.db import transaction
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos import MultiPoint
 from model_utils.managers import InheritanceManager
@@ -44,14 +45,9 @@ class InitialProductValues(models.Model):
 
 class ValueCleanerManager(models.Manager):
 
-    def create_and_apply(self, model_type, field, old_value, new_value):
+    def create_and_apply_async(self, product_class: str, field, new_value, old_value):
         from .tasks import add_value_cleaner
-        lookup_arg = {field: old_value}
-        products: QuerySet = model_type.objects.filter(**lookup_arg)
-        new_arg = {field: new_value}
-        products.update(**new_arg)
-        product_pks = products.values_list('pk', flat=True)
-        add_value_cleaner.delay(product_pks, field, new_value)
+        add_value_cleaner.delay(product_class, field, new_value, old_value)
 
 
 class ValueCleaner(models.Model):
@@ -60,9 +56,37 @@ class ValueCleaner(models.Model):
         on_delete=models.CASCADE
         )
     field = models.CharField(max_length=60)
+    initial_value = models.CharField(max_length=200, default='')
     new_value = models.CharField(max_length=200)
-
     objects = ValueCleanerManager()
+
+    class Meta:
+        unique_together = ['product', 'field']
+
+    @classmethod
+    @transaction.atomic
+    def create_or_update(cls, product_class, field, new_value, old_value):
+        if isinstance(product_class, str):
+            from config.globals import check_department_string
+            product_class = check_department_string(product_class)
+        lookup_arg = {field: old_value}
+        products = product_class.objects.filter(**lookup_arg)
+        for product in products:
+            vac, created = cls.objects.get_or_create(product=product, field=field)
+            if created:
+                vac.initial_value = old_value
+                vac.new_value = new_value
+                vac.save()
+                setattr(product, field, new_value)
+                product.save()
+                return
+            if not vac.initial_value:
+                vac.initial_value = getattr(product, field)
+            vac.new_value = new_value
+            vac.save()
+            setattr(product, field, new_value)
+            product.save()
+            return
 
 
 class ProductAvailabilityQuerySet(models.QuerySet):

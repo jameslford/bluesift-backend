@@ -4,12 +4,13 @@ from SpecializedProducts.models import FinishSurface
 # from utils.images import remove_background
 # from scripts.finish_surfaces import assign_tiling_image
 # from SpecializedProducts.models import FinishSurface
-from scripts.search import create_indexes
+# from scripts.search import create_indexes
+from scripts.finish_surfaces import default_clean
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        pass
+        default_clean()
         # all_fs: List[FinishSurface] = FinishSurface.subclasses.select_related('manufacturer').all().select_subclasses()
         # for fin in all_fs:
         #     fin.assign_name()

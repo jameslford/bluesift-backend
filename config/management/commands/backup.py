@@ -1,11 +1,13 @@
 import os
 import datetime
 from django.conf import settings
+from django.db import transaction
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
 
+    @transaction.atomic
     def handle(self, *args, **options):
         now = datetime.datetime.now()
         environment = settings.ENVIRONMENT

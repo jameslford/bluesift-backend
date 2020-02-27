@@ -1,6 +1,5 @@
 import itertools
 from typing import List
-# from dataclasses import field as dfield
 from rest_framework.request import Request
 from django.core.files.storage import get_storage_class
 from django.db.models.functions import Concat
@@ -26,8 +25,7 @@ class FilterResponse:
         self.enabled_values = enabled_values
         self.start = (page - 1) * page_size
         self.end = page * page_size
-        # self.page = page
-        # self.page_size = page_size
+
 
     @property
     def serialized(self):
@@ -60,8 +58,6 @@ class FilterResponse:
                 )[self.start: self.end]
 
 
-
-
 class Sorter:
 
     def __init__(self, product_type, request: Request, supplier_pk=None):
@@ -75,10 +71,9 @@ class Sorter:
         model_types = self.product_type._meta.get_parent_list() + [self.product_type]
         parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
         self.facets: List[BaseFacet] = avi_facet + list(BaseFacet.objects.filter(content_type__in=parents))
-        self.content = self.__process_request()
         self.initial_products = self.get_products()
-        self.initial_product_count = len(self.initial_products)
-        print(self.initial_product_count)
+        self.initial_product_count = int(self.initial_products.count())
+        self.content = self.__process_request()
 
 
     @property
@@ -118,23 +113,16 @@ class Sorter:
 
 
     def build_query_index(self):
-        # all_prods = self.get_products()
         pk_sets = [facet.filter_self() for facet in self.facets if facet and not facet.dynamic]
         pk_sets = [pks for pks in pk_sets if len(pks) < self.initial_product_count]
-        # all_pks = self.initial_products.intersection(*pk_sets).values_list('pk', flat=True)
         q_object = Q()
         for pks in pk_sets:
             ars = {'pk__in': pks}
             q_object &= Q(**ars)
-        # all_pks = list(itertools.chain.from_iterable(pk_sets))
-        # all_pks = list(set(all_pks))
-        # print('static pks' + str(len(all_pks)))
         prods = self.initial_products.filter(q_object)
         pks = list(prods.values_list('pk', flat=True))
-        print(len(pks))
         self.query_index.add_products(pks)
         return prods
-        # return self.get_products().filter()
 
 
 
@@ -149,12 +137,7 @@ class Sorter:
         for pks in pk_sets:
             ars = {'pk__in': pks}
             q_object &= Q(**ars)
-        
-        # all_pks = static_queryset.intersection(*pk_sets).values_list('pk', flat=True)
-        # all_pks = list(itertools.chain.from_iterable(pk_sets))
-        # all_pks = list(set(all_pks))
-        # print(len(all_pks))
-        # products = static_queryset.filter(pk__in=all_pks)
+
         products = static_queryset.filter(q_object)
         enabled_values = [facet.count_self(self.query_index.pk, self.get_products(), self.facets) for facet in self.facets]
         enabled_values = [facet for facet in enabled_values if facet]
@@ -164,6 +147,24 @@ class Sorter:
         return FilterResponse(product_count, self.facets, products, enabled_values, self.page, self.page_size)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # all_pks = static_queryset.intersection(*pk_sets).values_list('pk', flat=True)
+        # all_pks = list(itertools.chain.from_iterable(pk_sets))
+        # all_pks = list(set(all_pks))
+        # print(len(all_pks))
+        # products = static_queryset.filter(pk__in=all_pks)
         # serialized_facets = [facet.serialize_self() for facet in self.facets]
         # return {
         #     'product_count': product_count,
@@ -726,3 +727,11 @@ class Sorter:
         #     return self._products
         # self._products = self.product_type.objects.select_related(select_related).all().product_prices()
         # return self._products
+
+
+        # all_prods = self.get_products()
+        # all_pks = self.initial_products.intersection(*pk_sets).values_list('pk', flat=True)
+        # all_pks = list(itertools.chain.from_iterable(pk_sets))
+        # all_pks = list(set(all_pks))
+        # print('static pks' + str(len(all_pks)))
+        # return self.get_products().filter()

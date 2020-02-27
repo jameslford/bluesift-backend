@@ -17,14 +17,18 @@ from .serializers import serialize_detail, serialize_detail_quick
 @api_view(['POST'])
 @permission_classes((IsAdminUser,))
 def create_value_cleaner(request: Request, model_type):
-    product_type = check_department_string(model_type)
     data = request.data
     field = data.get('field')
     new_value = data.get('new_value')
     old_value = data.get('old_value')
     if not (field and new_value and old_value):
         return Response('need field, new value and old value', status=status.HTTP_400_BAD_REQUEST)
-    ValueCleaner.objects.create_and_apply(product_type, field, old_value, new_value)
+    ValueCleaner.objects.create_and_apply_async(
+        product_class=model_type,
+        field=field,
+        new_value=new_value,
+        old_value=old_value
+        )
     return Response(status=status.HTTP_201_CREATED)
 
 

@@ -1,6 +1,6 @@
 from config.celery import app
 from Analytics.models import ViewRecord
-from .models import ValueCleaner, Product
+from .models import ValueCleaner
 
 
 
@@ -13,12 +13,6 @@ def add_detail_record(path, pk):
 
 
 @app.task
-def add_value_cleaner(pks, field, new_value):
-    for pk in pks:
-        product = Product.objects.get(pk=pk)
-        vc, created = ValueCleaner.objects.get_or_create(
-            product=product,
-            field=field,
-            new_value=new_value
-            )
-        return f'{vc.field}, {vc.new_value}, {created}'
+def add_value_cleaner(product_class: str, field, new_value, old_value):
+    ValueCleaner.create_or_update(product_class, field, new_value, old_value)
+    return f'{field}, {new_value}'

@@ -62,24 +62,8 @@ class FinishSurface(ProductSubClass):
         'scale_width',
         'scale_thickness',
         'scale_length',
-        # 'walls',
-        # 'countertops',
-        # 'floors',
-        # 'cabinet_fronts',
-        # 'shower_floors',
-        # 'shower_walls',
-        # 'exterior_walls',
-        # 'exterior_floors',
-        # 'covered_walls',
-        # 'covered_floors',
-        # 'pool_linings',
-        # 'bullnose',
-        # 'covebase',
-        # 'corner_covebase',
         'finish',
-        # 'surface_coating',
         'look',
-        # 'shade_variation'
         ]
 
     name_fields = [
@@ -160,6 +144,21 @@ class FinishSurface(ProductSubClass):
         tags = self.static_tags() + self.__dynamic_tags() + parent_tags
         tags = [tag for tag in tags if tag]
         return tags
+
+
+    def basic_clean(self):
+        vals = [
+            'look',
+            'finish',
+            'shade_variation'
+            ]
+        for val in vals:
+            attr = getattr(self, val)
+            if attr:
+                # pylint: disable=no-member
+                new = attr.strip().lower()
+                setattr(self, val, new)
+        self.save()
 
 
     def assign_name(self):
@@ -302,6 +301,16 @@ class TileAndStone(FinishSurface):
         tags = [tag for tag in tags if tag]
         return tags
 
+    def basic_clean(self):
+        super().basic_clean()
+        vals = [
+            self.shape,
+            self.material_type,
+            ]
+        for val in vals:
+            val = val.strip().lower() if val else None
+
+
     @staticmethod
     def static_tags():
         return []
@@ -343,6 +352,15 @@ class Hardwood(FinishSurface):
         tags = [tag for tag in tags if tag]
         return tags
 
+    def basic_clean(self):
+        vals = [
+            self.composition,
+            self.species,
+            ]
+        for val in vals:
+            val = val.strip().lower() if val else None
+        super().basic_clean()
+
 class LaminateFlooring(FinishSurface):
     surface_coating = models.CharField(max_length=80, null=True, blank=True)
     species = models.CharField(max_length=20, null=True, blank=True)
@@ -366,6 +384,15 @@ class LaminateFlooring(FinishSurface):
         tags = [tag for tag in tags if tag]
         return tags
 
+    def basic_clean(self):
+        vals = [
+            self.surface_coating,
+            self.species,
+            ]
+        for val in vals:
+            val = val.strip().lower() if val else None
+        super().basic_clean()
+
 class Resilient(FinishSurface):
     surface_coating = models.CharField(max_length=80, null=True, blank=True)
     shape = models.CharField(max_length=20, null=True, blank=True)
@@ -388,6 +415,16 @@ class Resilient(FinishSurface):
         tags = self.static_tags() + self.__dynamic_tags() + parent_tags
         tags = [tag for tag in tags if tag]
         return tags
+
+    def basic_clean(self):
+        vals = [
+            self.shape,
+            self.material_type,
+            self.surface_coating
+            ]
+        for val in vals:
+            val = val.strip().lower() if val else None
+        super().basic_clean()
 
     def assign_shape(self):
         """returns float measurements and labels on product details"""

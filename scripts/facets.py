@@ -91,6 +91,16 @@ def create_facets():
         name='depth'
         )
     BaseFacet.objects.get_or_create(
+        content_type=ctas,
+        attribute='shape',
+        name='shape'
+        )
+    BaseFacet.objects.get_or_create(
+        content_type=cresilient,
+        attribute='shape',
+        name='shape'
+        )
+    BaseFacet.objects.get_or_create(
         content_type=capp,
         attribute='height',
         field_type='DecimalRangeField',

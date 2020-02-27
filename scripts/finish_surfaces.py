@@ -9,7 +9,8 @@ from django.db import transaction
 from django.conf import settings
 from django.db.models import QuerySet, FloatField
 from django.db.models.functions import Cast
-from SpecializedProducts.models import FinishSurface
+from Products.models import ValueCleaner
+from SpecializedProducts.models import FinishSurface, Hardwood, Resilient, TileAndStone, LaminateFlooring
 
 @transaction.atomic
 def assign_label_color():
@@ -92,6 +93,7 @@ def __get_rgbs(products: FinishSurface):
     rgb_colors = [__hex_to_rgb(str(q)) for q in hex_colors]
     ar = np.array(rgb_colors)
     shape = ar.shape
+    # pylint: disable=unsubscriptable-object
     ar = ar.reshape(scipy.product(shape[0]), shape[1]).astype(float)
     codes, dist = scipy.cluster.vq.kmeans(ar, 19, check_finite=False)
     rgbs = []
@@ -137,3 +139,32 @@ def __cluster_sizes(products: QuerySet):
     small_prods.update(size='small')
     medium_prods.update(size='medium')
     large_prods.update(size='large')
+
+
+
+def __default_clean():
+    fs_all = FinishSurface.objects.all()
+    for fs in fs_all:
+        fs.basic_clean()
+
+
+def __specific_clean():
+    tiles = TileAndStone.objects.all()
+    for tile in tiles:
+        fin = tile.finish
+        if fin:
+            split = fin.split(' - ')
+            if len(split) > 1:
+                new_fin = split[1].strip()
+                ValueCleaner.create_or_update(TileAndStone._meta.verbose_name_plural, 'finish', new_fin, fin)
+        look = tile.look
+        if look:
+            if 'mosaic' in look:
+                tile.shape = 'mosaic'
+                new_look = look.replace('mosaic', '').strip()
+                ValueCleaner.create_or_update(TileAndStone._meta.verbose_name_plural, 'look', new_look, look)
+
+
+def clean_products():
+    __default_clean()
+    __specific_clean()
