@@ -21,13 +21,10 @@ def get_departments():
 
 def check_department_string(department_string: str):
     department_string = unquote(department_string).lower().strip()
-    print(department_string.lower())
     departments = get_departments()
     for dep in departments:
         name = dep._meta.verbose_name_plural.lower().strip()
-        print(name)
         if name == department_string:
-            print(dep)
             return dep
     return None
 

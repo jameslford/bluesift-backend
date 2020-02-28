@@ -7,11 +7,10 @@ from django.http import QueryDict
 from django.db.models.query import QuerySet, Value
 from django.db.models import CharField, Q
 from django.db import transaction
-from django.contrib.contenttypes.models import ContentType
 from Suppliers.models import SupplierProduct
 from Products.models import Product
 from .models import (
-    AvailabilityFacet,
+    load_facets,
     BaseFacet,
     QueryIndex,
     )
@@ -67,10 +66,7 @@ class Sorter:
         self.page_size = 60
         self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
-        avi_facet = [AvailabilityFacet(self.supplier_pk)]
-        model_types = self.product_type._meta.get_parent_list() + [self.product_type]
-        parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
-        self.facets: List[BaseFacet] = avi_facet + list(BaseFacet.objects.filter(content_type__in=parents))
+        self.facets = load_facets(product_type, supplier_pk)
         self.initial_products = self.get_products()
         self.initial_product_count = int(self.initial_products.count())
         self.content = self.__process_request()
