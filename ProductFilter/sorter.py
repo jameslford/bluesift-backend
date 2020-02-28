@@ -101,7 +101,6 @@ class Sorter:
             retailer_location=self.supplier_pk
             )
         self.query_index = query_index
-        # print(query_index.dirty, created)
         if query_index.dirty or created:
             static_queryset = self.build_query_index()
             return self.calculate_response(static_queryset)
@@ -110,16 +109,13 @@ class Sorter:
 
     def build_query_index(self):
         pk_sets = [facet.filter_self() for facet in self.facets if facet and not facet.dynamic]
-        pk_sets = [pks for pks in pk_sets if len(pks) < self.initial_product_count]
-        q_object = Q()
+        pk_sets = [pks for pks in pk_sets if pks and len(pks) < self.initial_product_count]
+        prods = self.initial_products
         for pks in pk_sets:
-            ars = {'pk__in': pks}
-            q_object &= Q(**ars)
-        prods = self.initial_products.filter(q_object)
+            prods = prods.filter(pk__in=pks)
         pks = list(prods.values_list('pk', flat=True))
         self.query_index.add_products(pks)
         return prods
-
 
 
     def calculate_response(self, static_queryset: QuerySet = None):
@@ -128,7 +124,7 @@ class Sorter:
             static_queryset = self.initial_products.filter(pk__in=pks)
         print('filtering dynamic -----------------------------------------')
         pk_sets = [facet.filter_self() for facet in self.facets if facet and facet.dynamic]
-        pk_sets = [pks for pks in pk_sets if len(pks) < self.initial_product_count]
+        pk_sets = [pks for pks in pk_sets if pks and len(pks) < self.initial_product_count]
         q_object = Q()
         for pks in pk_sets:
             ars = {'pk__in': pks}
