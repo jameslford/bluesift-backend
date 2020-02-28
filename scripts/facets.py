@@ -38,6 +38,7 @@ def create_facets():
 
     BaseFacet.objects.get_or_create(
         content_type=cproduct,
+        name='price',
         attribute='low_price',
         field_type='DecimalField'
         )

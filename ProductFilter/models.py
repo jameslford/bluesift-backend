@@ -1,4 +1,5 @@
 import uuid
+import decimal
 from typing import List
 from model_utils.managers import InheritanceManager
 from django.db import models
@@ -18,16 +19,18 @@ from .tasks import add_facet_others_delay, add_query_index
 
 
 class BaseReturnValue:
-    def __init__(self, expression: str, name: str, count: int = None, value=None):
+    def __init__(self, expression: str, name: str, count: int = None, value=None, color=False):
         self.expression = expression
         self.name = name
         self.count = count
         self.value = value
+        self.color = color
 
     def asdict(self):
         return {
             'name': self.name,
             'count': self.count,
+            'color': self.color,
             'expression': self.expression,
             'selected': self.value
             }
@@ -115,8 +118,6 @@ class BaseFacet(models.Model):
     abs_min = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     abs_max = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     allow_multiple = models.BooleanField(default=True)
-    # group_object = models.BooleanField(default=False)
-    # values = pg_fields.JSONField(null=True, blank=True)
 
     qterms = None
     queryset = None
@@ -198,18 +199,18 @@ class BaseFacet(models.Model):
             else:
                 kwargs = {'min': Min(self.attribute), 'max': Max(self.attribute)}
 
-                # args = [Min(self.attribute), Max(self.attribute)]
 
             if self.others_intersection:
                 absolutes = self.others_intersection.aggregate(**kwargs)
-                # absolutes = self.others_intersection.aggregate(Min(self.attribute), Max(self.attribute))
+                print('others intersection exist', absolutes)
             else:
                 absolutes = self.model.objects.aggregate(**kwargs)
-                # absolutes = self.model.objects.aggregate(Min(self.attribute), Max(self.attribute))
+                print('no others intersection', absolutes)
 
-        # print(absolutes)
-        abs_min = absolutes.get(f'{self.attribute}__min')
-        abs_max = absolutes.get(f'{self.attribute}__max')
+        abs_min = absolutes.get('min')
+        # abs_min = absolutes.get(f'{self.attribute}__min')
+        abs_max = absolutes.get('max')
+        # abs_max = absolutes.get(f'{self.attribute}__max')
         if not self.dynamic:
             self.abs_min = abs_min
             self.abs_max = abs_max
@@ -293,8 +294,8 @@ class BaseFacet(models.Model):
         if self.attribute == 'low_price':
             qset = Product.objects.all().product_prices()
             self.queryset = qset.filter(**args).values_list('pk', flat=True)
-        else:
-            self.queryset = self.model.objects.filter(**args).values_list('pk', flat=True)
+            return self.queryset
+        self.queryset = self.model.objects.filter(**args).values_list('pk', flat=True)
         return self.queryset
 
 
@@ -428,12 +429,16 @@ class BaseFacet(models.Model):
         others = self.get_intersection(query_index_pk, products, _facets)
         values = others.values(self.attribute).annotate(val_count=models.Count(self.attribute))
         for val in values:
-            name = val[self.attribute]
             count = val['val_count']
+            if not count:
+                continue
+            name = val[self.attribute]
             selected = bool(name in self.qterms)
             expression = f'{self.name}={name}'
             return_value = BaseReturnValue(expression, name, count, selected)
             self.return_values.append(return_value)
+            if self.name == 'color':
+                return_value.color = True
             if selected:
                 yield return_value.asdict()
 
