@@ -1,5 +1,4 @@
 from django.db.models import Q, Count
-from django.http import QueryDict
 from .base import BaseFacet, BaseReturnValue
 
 
@@ -11,7 +10,9 @@ class ForeignFacet(BaseFacet):
         proxy = True
 
 
-    def count_self(self, query_index_pk, products, facets):
+    def count_self(self, query_index_pk, facets, products=None):
+        if not self.dynamic:
+            products = self.model.objects.all()
         _facets = [facet.queryset for facet in facets if facet is not self]
         others = self.get_intersection(query_index_pk, products, _facets)
         name_arg = f'{self.attribute}__label'
@@ -26,17 +27,18 @@ class ForeignFacet(BaseFacet):
             return_value = BaseReturnValue(expression, name, count, selected)
             self.return_values.append(return_value)
             if selected:
+                self.selected = True
                 yield return_value.asdict()
 
 
     def filter_self(self):
         print(self.qterms)
         if not self.qterms:
-            return self.return_stock()
+            return None
+            # return self.return_stock()
         q_object = Q()
         for term in self.qterms:
             ars = {f'{self.attribute}__pk': int(term)}
             q_object |= Q(**ars)
-            self.selected = True
         self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
         return self.queryset

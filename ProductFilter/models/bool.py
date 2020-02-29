@@ -7,10 +7,15 @@ class BoolFacet(BaseFacet):
     class Meta:
         proxy = True
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.exclusive = True
+
 
     def filter_self(self):
         if not self.qterms:
-            return self.return_stock()
+            return None
+            # return self.return_stock()
         if self.allow_multiple:
             term = {self.qterms[-1] : True}
             self.queryset = self.model.objects.filter(**term).values_list('pk', flat=True)
@@ -18,12 +23,15 @@ class BoolFacet(BaseFacet):
         terms = {}
         for term in self.qterms:
             terms[term] = True
-            self.selected = True
-        self.queryset = self.model.objects.filter(**terms).values_list('pk', flat=True)
-        return self.queryset
+        if term:
+            self.queryset = self.model.objects.filter(**terms).values_list('pk', flat=True)
+            return self.queryset
+        return None
 
 
-    def count_self(self, query_index_pk, products, facets):
+    def count_self(self, query_index_pk, facets, products=None):
+        if not self.dynamic:
+            products = self.model.objects.all()
         _facets = [facet.queryset for facet in facets]
         others = self.get_intersection(query_index_pk, products, _facets)
         args = {value: models.Count(value, filter=models.Q(**{value: True})) for value in self.attribute_list}
@@ -34,6 +42,7 @@ class BoolFacet(BaseFacet):
             return_value = BaseReturnValue(expression, name, count, selected)
             self.return_values.append(return_value)
             if selected:
+                self.selected = True
                 yield return_value.asdict()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):

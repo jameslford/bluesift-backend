@@ -8,7 +8,9 @@ class CharFacet(BaseFacet):
     class Meta:
         proxy = True
 
-    def count_self(self, query_index_pk, products, facets):
+    def count_self(self, query_index_pk, facets, products=None):
+        if not self.dynamic:
+            products = self.model.objects.all()
         _facets = [facet.queryset for facet in facets if facet is not self]
         others = self.get_intersection(query_index_pk, products, _facets)
         values = others.values(self.attribute).annotate(val_count=Count(self.attribute))
@@ -24,16 +26,19 @@ class CharFacet(BaseFacet):
             if self.name == 'color':
                 return_value.color = True
             if selected:
+                self.selected = True
                 yield return_value.asdict()
 
     def filter_self(self):
         if not self.qterms:
-            return self.return_stock()
+            return None
+            # return self.return_stock()
         q_object = Q()
         if not isinstance(self.qterms, list):
             return None
         for term in self.qterms:
             q_object |= Q(**{self.attribute: term})
-            self.selected = True
-        self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
-        return self.queryset
+        if q_object:
+            self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
+            return self.queryset
+        return None

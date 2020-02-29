@@ -81,6 +81,7 @@ class BaseFacet(models.Model):
         self.queryset: QuerySet = None
         self.others_intersection: QuerySet = None
         self.model = self.content_type.model_class()
+        self.exclusive = False
 
 
 
@@ -143,9 +144,10 @@ class BaseFacet(models.Model):
 
 
     def __calc_intersections(self, products, others):
+        new_prods = products
         for qset in others:
             if qset:
-                products = products.filter(pk__in=qset)
+                new_prods = new_prods.filter(pk__in=qset)
         return products
 
 
@@ -155,14 +157,15 @@ class BaseFacet(models.Model):
         cached_others: FacetOthersCollection = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet=self).first()
         if cached_others:
             return cached_others.products
-        others = self.__calc_intersections(products, others)
-        add_facet_others_delay.delay(query_index_pk, self.pk, list(others.values_list('pk', flat=True)))
-        return others
+        others = [oth for oth in others if oth]
+        result = products.intersection(*others)
+        values = list(result.values_list('pk', flat=True))
+        add_facet_others_delay.delay(query_index_pk, self.pk, values)
+        return self.model.objects.filter(pk__in=values)
 
-
-    def count_self(self, query_index_pk, products, facets):
+    # pylint: disable=unused-argument
+    def count_self(self, query_index_pk, facets, products=None):
         return None
-        # raise Exception(f'{self.field_type} must be subclassed')
 
 
     def serialize_self(self):
@@ -171,6 +174,7 @@ class BaseFacet(models.Model):
             'selected': self.selected,
             'widget': self.widget,
             'editable': True,
+            'exclusive': self.exclusive,
             'all_values': [value.asdict() for value in self.return_values],
             }
         return return_dict

@@ -36,16 +36,18 @@ def create_facets():
 
 
 
-    BaseFacet.objects.get_or_create(
-        content_type=cproduct,
-        name='price',
-        attribute='low_price',
-        field_type='DecimalField'
-        )
+    # BaseFacet.objects.get_or_create(
+    #     content_type=cproduct,
+    #     name='price',
+    #     attribute='low_price',
+    #     field_type='DecimalField',
+    #     widget='slider'
+    #     )
     BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='thickness',
-        field_type='DecimalField'
+        field_type='DecimalField',
+        widget='slider'
         )
     BaseFacet.objects.get_or_create(
         content_type=cfs,
@@ -83,12 +85,14 @@ def create_facets():
         content_type=capp,
         attribute='width',
         field_type='DecimalRangeField',
+        widget='slider',
         name='width'
         )
     BaseFacet.objects.get_or_create(
         content_type=capp,
         attribute='depth',
         field_type='DecimalRangeField',
+        widget='slider',
         name='depth'
         )
     BaseFacet.objects.get_or_create(
@@ -105,7 +109,8 @@ def create_facets():
         content_type=capp,
         attribute='height',
         field_type='DecimalRangeField',
-        name='height'
+        name='height',
+        widget='slider'
         )
     BaseFacet.objects.get_or_create(
         content_type=cfs,

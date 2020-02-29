@@ -131,7 +131,9 @@ class Sorter:
             q_object &= Q(**ars)
 
         products = static_queryset.filter(q_object)
-        enabled_values = [facet.count_self(self.query_index.pk, self.get_products(), self.facets) for facet in self.facets]
+        static_enabled_values = [facet.count_self(self.query_index.pk, self.facets) for facet in self.facets if not facet.dynamic]
+        dynamic_enabled_values = [facet.count_self(self.query_index.pk, self.facets, static_queryset) for facet in self.facets if facet.dynamic]
+        enabled_values = static_enabled_values + dynamic_enabled_values
         enabled_values = [facet for facet in enabled_values if facet]
         enabled_values = list(itertools.chain.from_iterable(enabled_values))
         product_count = len(products)

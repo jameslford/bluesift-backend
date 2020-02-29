@@ -14,7 +14,7 @@ class LocationFacet(BaseFacet):
         proxy = True
 
 
-    def parse_request(self, params):
+    def parse_request(self, params: QueryDict):
         try:
             arg = params.pop('radius')
             self.radius, self.zipcode = arg.split('*')
@@ -30,10 +30,12 @@ class LocationFacet(BaseFacet):
             radius = D(mi=int(self.radius))
         except ValueError:
             self.radius = None
-            return self.return_stock()
+            return None
+            # return self.return_stock()
         coords = Zipcode.objects.filter(code=self.zipcode).first().centroid.point
         if not coords:
-            return self.return_stock()
+            return None
+            # return self.return_stock()
         self.selected = True
         expression = f'radius={self.radius}*{self.zipcode}'
         name = f'Within {self.radius} mi.'
