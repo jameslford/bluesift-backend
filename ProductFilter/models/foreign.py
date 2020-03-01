@@ -11,8 +11,6 @@ class ForeignFacet(BaseFacet):
 
 
     def count_self(self, query_index_pk, facets, products=None):
-        if not self.dynamic:
-            products = self.model.objects.all()
         _facets = [facet.queryset for facet in facets if facet is not self]
         others = self.get_intersection(query_index_pk, products, _facets)
         name_arg = f'{self.attribute}__label'
@@ -32,13 +30,11 @@ class ForeignFacet(BaseFacet):
 
 
     def filter_self(self):
-        print(self.qterms)
         if not self.qterms:
             return None
-            # return self.return_stock()
         q_object = Q()
         for term in self.qterms:
             ars = {f'{self.attribute}__pk': int(term)}
             q_object |= Q(**ars)
-        self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
+        self.queryset = self.model.objects.only('pk').filter(q_object).values_list('pk', flat=True)
         return self.queryset

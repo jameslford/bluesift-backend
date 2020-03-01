@@ -22,7 +22,7 @@ class BoolFacet(BaseFacet):
         terms = {term: True for term in self.qterms}
 
         if terms:
-            self.queryset = self.model.objects.filter(**terms).values_list('pk', flat=True)
+            self.queryset = self.model.objects.only('pk').filter(**terms).values_list('pk', flat=True)
             return self.queryset
         return None
 

@@ -36,7 +36,7 @@ class CharFacet(BaseFacet):
         for term in self.qterms:
             q_object |= Q(**{self.attribute: term})
         if q_object:
-            self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
+            self.queryset = self.model.objects.only('pk').filter(q_object).values_list('pk', flat=True)
             return self.queryset
         return None
 

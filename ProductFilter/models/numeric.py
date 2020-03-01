@@ -26,27 +26,22 @@ class NumericFacet(BaseFacet):
 
 
     def __get_absolutes(self):
-        print('in get absolutes')
         if self.field_type not in ['DecimalField', 'FloatField', 'RangeField', 'DecimalRangeField', 'FloatRangeField']:
             return None
 
         if self.abs_min and self.abs_max:
             return [self.abs_max, self.abs_min]
 
+        if self.field_type in ['RangeField', 'DecimalRangeField', 'FloatRangeField']:
+            kwargs = {'min': Min(Lower(self.attribute)), 'max': Max(Upper(self.attribute))}
         else:
-
-            if self.field_type in ['RangeField', 'DecimalRangeField', 'FloatRangeField']:
-                kwargs = {'min': Min(Lower(self.attribute)), 'max': Max(Upper(self.attribute))}
-            else:
-                kwargs = {'min': Min(self.attribute), 'max': Max(self.attribute)}
+            kwargs = {'min': Min(self.attribute), 'max': Max(self.attribute)}
 
 
-            if self.others_intersection:
-                absolutes = self.others_intersection.aggregate(**kwargs)
-                print('others intersection exist', absolutes)
-            else:
-                absolutes = self.model.objects.aggregate(**kwargs)
-                print('no others intersection', absolutes)
+        if self.others_intersection:
+            absolutes = self.others_intersection.aggregate(**kwargs)
+        else:
+            absolutes = self.model.objects.aggregate(**kwargs)
 
         abs_min = absolutes.get('min')
         abs_max = absolutes.get('max')
@@ -95,7 +90,7 @@ class NumericFacet(BaseFacet):
                 )
             args.update({f'{self.attribute}__gte': self.selected_min})
         if args:
-            self.queryset = self.model.objects.filter(**args).values_list('pk', flat=True)
+            self.queryset = self.model.objects.only('pk').filter(**args).values_list('pk', flat=True)
             return self.queryset
         return None
 

@@ -6,16 +6,42 @@ import scipy.cluster
 import numpy as np
 from PIL import Image, ImageChops
 from django.db import transaction
-from django.conf import settings
 from django.db.models import QuerySet, FloatField
 from django.db.models.functions import Cast
 from Products.models import ValueCleaner
 from SpecializedProducts.models import FinishSurface, Hardwood, Resilient, TileAndStone, LaminateFlooring
 
+
+# colors = {
+#     'red': (255,0,0),
+#     'green': (0,255,0),
+#     'blue': (0,0,255),
+#     'yellow': (255,255,0),
+#     'orange': (255,127,0),
+#     'white': (255,255,255),
+#     'black': (0,0,0),
+#     'gray': (127,127,127),
+#     'pink': (255,127,127),
+#     'purple': (127,0,255),
+#           }
+
+colors = [
+    (255,0,0),
+    (0,255,0),
+    (0,0,255),
+    (255,255,0),
+    (255,127,0),
+    (255,255,255),
+    (0,0,0),
+    (127,127,127),
+    (255,127,127),
+    (127,0,255)
+]
+
 @transaction.atomic
 def assign_label_color():
     products = FinishSurface.objects.all()
-    rgbs = __get_rgbs(products)
+    rgbs = __get_rgbs(products) + colors
     for product in products:
         if not product.actual_color:
             print('not actual')

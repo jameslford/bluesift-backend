@@ -52,6 +52,17 @@ def create_facets():
         widget='checkbox',
         name='manufacturers'
         )
+    BaseFacet.objects.get_or_create(
+        content_type=cproduct,
+        name='file_types',
+        attribute_list=[
+            'dxf_file',
+            'rfa_file',
+            'ipt_file',
+            'dwg_3d_file',
+            'dwg_2d_file'
+            ]
+        )
 
 
     # FinishSurface -----------
@@ -167,7 +178,8 @@ def create_facets():
     # LaminateFlooring --------------
     BaseFacet.objects.get_or_create(
         content_type=clams,
-        attribute='species'
+        attribute='species',
+        name='species'
         )
 
     # TODO create url field for facet
