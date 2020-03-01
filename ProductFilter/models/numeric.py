@@ -1,8 +1,22 @@
 from django.db.models import Min, Max
 from django.db.models.functions import Upper, Lower
-from Products.models import Product
 from django.http import QueryDict
+# from Products.models import Product
 from .base import BaseFacet, BaseReturnValue
+
+def pop_term(qdict, term):
+    const = qdict.pop(term)
+    if const:
+        const = const.split(',')[-1]
+    return [qdict, const]
+
+
+def get_term(qdict, term):
+    const = qdict.get(term)
+    if const:
+        const = const.split(',')[-1]
+    return [qdict, const]
+
 
 
 class NumericFacet(BaseFacet):
@@ -18,14 +32,6 @@ class NumericFacet(BaseFacet):
 
         if self.abs_min and self.abs_max:
             return [self.abs_max, self.abs_min]
-
-
-        # if self.attribute == 'low_price':
-        #     print('in get absolutes -- low price')
-        #     absolutes = Product.objects.product_prices().aggregate(Min(self.attribute), Max(self.attribute))
-        #     abs_min = absolutes.get('low_price__min')
-        #     abs_max = absolutes.get('low_price__max')
-        #     return [abs_max, abs_min]
 
         else:
 
@@ -63,14 +69,14 @@ class NumericFacet(BaseFacet):
     def parse_request(self, params: QueryDict):
         if self.dynamic:
             try:
-                self.selected_min = params.pop(f'{self.name}_min')
-                self.selected_max = params.pop(f'{self.name}_max')
+                params, self.selected_min = pop_term(params, f'{self.name}_min')
+                params, self.selected_max = pop_term(params, f'{self.name}_max')
                 return params
             except KeyError:
                 return params
         try:
-            self.selected_min = params.get(f'{self.name}_min')
-            self.selected_max = params.get(f'{self.name}_max')
+            params, self.selected_min = get_term(params, f'{self.name}_min')
+            params, self.selected_max = get_term(params, f'{self.name}_max')
             return params
         except KeyError:
             return params
@@ -88,10 +94,6 @@ class NumericFacet(BaseFacet):
                 BaseReturnValue(f'{self.name}_min={self.selected_min}', f'Min {self.name}', None, True)
                 )
             args.update({f'{self.attribute}__gte': self.selected_min})
-        # if self.attribute == 'low_price':
-        #     qset = Product.objects.all().product_prices()
-        #     self.queryset = qset.filter(**args).values_list('pk', flat=True)
-        #     return self.queryset
         if args:
             self.queryset = self.model.objects.filter(**args).values_list('pk', flat=True)
             return self.queryset

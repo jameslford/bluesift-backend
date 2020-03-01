@@ -1,6 +1,6 @@
 """ blah blah """
 from django.contrib import admin
-from .models import BaseFacet, QueryIndex, FacetOthersCollection
+from .models import BaseFacet, QueryIndex
 # from django.contrib.postgres import fields as pg_fields
 # from django_json_widget.widgets import JSONEditorWidget
 # from ProductFilter.models import ProductFilter, QueryIndex, FacetOthersCollection
@@ -8,7 +8,7 @@ from .models import BaseFacet, QueryIndex, FacetOthersCollection
 
 admin.site.register(BaseFacet)
 admin.site.register(QueryIndex)
-admin.site.register(FacetOthersCollection)
+# admin.site.register(FacetOthersCollection)
 # Register your models here.
 
 # @admin.register(ProductFilter)

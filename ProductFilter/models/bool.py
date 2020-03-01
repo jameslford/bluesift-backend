@@ -15,23 +15,19 @@ class BoolFacet(BaseFacet):
     def filter_self(self):
         if not self.qterms:
             return None
-            # return self.return_stock()
-        if self.allow_multiple:
+        if not self.allow_multiple:
             term = {self.qterms[-1] : True}
-            self.queryset = self.model.objects.filter(**term).values_list('pk', flat=True)
+            self.queryset = self.model.objects.only('pk').filter(**term).values_list('pk', flat=True)
             return self.queryset
-        terms = {}
-        for term in self.qterms:
-            terms[term] = True
-        if term:
+        terms = {term: True for term in self.qterms}
+
+        if terms:
             self.queryset = self.model.objects.filter(**terms).values_list('pk', flat=True)
             return self.queryset
         return None
 
 
-    def count_self(self, query_index_pk, facets, products=None):
-        if not self.dynamic:
-            products = self.model.objects.all()
+    def count_self(self, query_index_pk, facets, products):
         _facets = [facet.queryset for facet in facets]
         others = self.get_intersection(query_index_pk, products, _facets)
         args = {value: models.Count(value, filter=models.Q(**{value: True})) for value in self.attribute_list}

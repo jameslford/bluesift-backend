@@ -1,6 +1,6 @@
 from typing import List
 from django.contrib.contenttypes.models import ContentType
-from .base import BaseFacet, QueryIndex, FacetOthersCollection
+from .base import BaseFacet, QueryIndex
 from .bool import BoolFacet
 from .char import CharFacet
 from .foreign import ForeignFacet

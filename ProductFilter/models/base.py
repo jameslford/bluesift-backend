@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 from django.http import QueryDict
 from django.contrib.postgres import fields as pg_fields
 from Suppliers.models import SupplierLocation
-from ..tasks import add_facet_others_delay, add_query_index
+from ..tasks import add_query_index
 
 
 
@@ -148,24 +148,16 @@ class BaseFacet(models.Model):
         for qset in others:
             if qset:
                 new_prods = new_prods.filter(pk__in=qset)
-        return products
+        return new_prods
 
 
     def get_intersection(self, query_index_pk, products, others: List[QuerySet]):
-        if self.dynamic:
-            return self.__calc_intersections(products, others)
-        cached_others: FacetOthersCollection = FacetOthersCollection.objects.filter(query_index__pk=query_index_pk, facet=self).first()
-        if cached_others:
-            return cached_others.products
-        others = [oth for oth in others if oth]
-        result = products.intersection(*others)
-        values = list(result.values_list('pk', flat=True))
-        add_facet_others_delay.delay(query_index_pk, self.pk, values)
-        return self.model.objects.filter(pk__in=values)
+        return self.__calc_intersections(products, others)
+
 
     # pylint: disable=unused-argument
-    def count_self(self, query_index_pk, facets, products=None):
-        return None
+    def count_self(self, query_index_pk, facets, products):
+        yield None
 
 
     def serialize_self(self):
@@ -178,9 +170,6 @@ class BaseFacet(models.Model):
             'all_values': [value.asdict() for value in self.return_values],
             }
         return return_dict
-
-
-
 
 
 class QueryIndexManager(models.Manager):
@@ -240,36 +229,36 @@ class QueryIndex(models.Model):
         return self.products.values_list('pk', flat=True)
 
 
-class FacetOthersCollection(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
-    query_index = models.ForeignKey(
-        QueryIndex,
-        on_delete=models.CASCADE,
-        related_name='others'
-        )
-    facet = models.ForeignKey(
-        BaseFacet,
-        on_delete=models.CASCADE,
-        null=True
-    )
-    products = models.ManyToManyField(
-        'Products.Product',
-        related_name='facet_collections'
-    )
+# class FacetOthersCollection(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
+#     query_index = models.ForeignKey(
+#         QueryIndex,
+#         on_delete=models.CASCADE,
+#         related_name='others'
+#         )
+#     facet = models.ForeignKey(
+#         BaseFacet,
+#         on_delete=models.CASCADE,
+#         null=True
+#     )
+#     products = models.ManyToManyField(
+#         'Products.Product',
+#         related_name='facet_collections'
+#     )
 
-    class Meta:
-        unique_together = ('query_index', 'facet')
+#     class Meta:
+#         unique_together = ('query_index', 'facet')
 
-    def __str__(self):
-        return f'{self.facet.name} {str(self.query_index)}'
+#     def __str__(self):
+#         return f'{self.facet.name} {str(self.query_index)}'
 
-    def assign_new_products(self, products):
-        self.products.clear()
-        self.products.add(*products)
-        self.save()
+#     def assign_new_products(self, products):
+#         self.products.clear()
+#         self.products.add(*products)
+#         self.save()
 
-    def get_product_pks(self):
-        return self.products.values_list('pk', flat=True)
+#     def get_product_pks(self):
+#         return self.products.values_list('pk', flat=True)
 
 
 

@@ -1,5 +1,5 @@
 
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count, Q
 from django.http.request import QueryDict
 # from Products.models import Product
 from Suppliers.models import SupplierProduct
@@ -30,12 +30,12 @@ class AvailabilityFacet:
 
 
     def __priced_in_store(self):
-        sps = SupplierProduct.objects.filter(offer_installation=True).values_list('product__pk', flat=True).distinct()
+        sps = SupplierProduct.objects.filter(publish_in_store_price=True).values_list('product__pk', flat=True).distinct()
         self._supplier_sets.append(sps)
 
 
     def __installation_offered(self):
-        sps = SupplierProduct.objects.filter(publish_in_store_price=True).values_list('product__pk', flat=True).distinct()
+        sps = SupplierProduct.objects.filter(offer_installation=True).values_list('product__pk', flat=True).distinct()
         self._supplier_sets.append(sps)
 
 
@@ -50,10 +50,9 @@ class AvailabilityFacet:
 
 
     def filter_self(self):
-        products = self.model_type.objects.all()
         if not self.qterms:
-            self.queryset = products.values_list('pk', flat=True)
-            return self.queryset
+            return None
+        products = self.model_type.objects.only('pk')
         for term in self.qterms:
             self.values[term]()
         if self._supplier_sets:
@@ -68,17 +67,19 @@ class AvailabilityFacet:
     def count_self(self, query_index_pk, facets, products):
         _facets = [facet.queryset for facet in facets if facet.queryset]
         others = products.intersection(*_facets).values_list('pk', flat=True)
-        enabled_values = []
-        for value in self.values:
-            count = products.filter(pk__in=others).filter_availability(value, self.location_pk).count()
-            selected = bool(value in self.qterms)
-            expression = f'{self.name}={value}'
-            return_value = BaseReturnValue(expression, value, count, selected)
+        products = self.model_type.objects.filter(pk__in=others).aggregate(
+            available_in_store=Count('pk', distinct=True, filter=Q(priced__publish_in_store_availability=True)),
+            installation_offered=Count('pk', distinct=True, filter=Q(priced__offer_installation=True)),
+            priced_in_store=Count('pk', distinct=True, filter=Q(priced__publish_in_store_price=True))
+        )
+        for val, count in products.items():
+            selected = bool(val in self.qterms)
+            expression = f'{self.name}={val}'
+            return_value = BaseReturnValue(expression, val, count, selected)
             self.return_values.append(return_value)
             if selected:
-                self.selected = True
-                enabled_values.append(return_value.asdict())
-        return enabled_values
+                yield return_value.asdict()
+
 
     def serialize_self(self):
         return {

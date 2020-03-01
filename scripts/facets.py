@@ -33,16 +33,28 @@ def create_facets():
     chardwood = ContentType.objects.get_for_model(Hardwood)
     cresilient = ContentType.objects.get_for_model(Resilient)
     ctas = ContentType.objects.get_for_model(TileAndStone)
+    clams = ContentType.objects.get_for_model(LaminateFlooring)
 
 
+    # Product ---------------------
+    BaseFacet.objects.get_or_create(
+        content_type=cproduct,
+        attribute='locations',
+        widget='location',
+        dynamic=True,
+        field_type='MultiPointField',
+        name='location'
+        )
+    BaseFacet.objects.get_or_create(
+        content_type=cproduct,
+        attribute='manufacturer',
+        field_type='ForeignKey',
+        widget='checkbox',
+        name='manufacturers'
+        )
 
-    # BaseFacet.objects.get_or_create(
-    #     content_type=cproduct,
-    #     name='price',
-    #     attribute='low_price',
-    #     field_type='DecimalField',
-    #     widget='slider'
-    #     )
+
+    # FinishSurface -----------
     BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='thickness',
@@ -62,89 +74,12 @@ def create_facets():
         attribute='shade_variation'
         )
     BaseFacet.objects.get_or_create(
-        content_type=chardwood,
-        attribute='composition'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=chardwood,
-        attribute='species'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=cresilient,
-        attribute='material_type'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=cresilient,
-        attribute='surface_coating'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=ctas,
-        attribute='material_type'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=capp,
-        attribute='width',
-        field_type='DecimalRangeField',
-        widget='slider',
-        name='width'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=capp,
-        attribute='depth',
-        field_type='DecimalRangeField',
-        widget='slider',
-        name='depth'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=ctas,
-        attribute='shape',
-        name='shape'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=cresilient,
-        attribute='shape',
-        name='shape'
-        )
-    BaseFacet.objects.get_or_create(
-        content_type=capp,
-        attribute='height',
-        field_type='DecimalRangeField',
-        name='height',
-        widget='slider'
-        )
-    BaseFacet.objects.get_or_create(
         content_type=cfs,
         attribute='label_color',
         name='color',
         widget='color',
         editable=False
         )
-    BaseFacet.objects.get_or_create(
-        content_type=cproduct,
-        attribute='locations',
-        widget='location',
-        field_type='MultiPointField',
-        name='Location'
-    )
-    BaseFacet.objects.get_or_create(
-        content_type=cproduct,
-        attribute='manufacturer',
-        field_type='ForeignKey',
-        widget='checkbox',
-        name='manufacturers'
-    )
-    # TODO create url field for facet
-    # BaseFacet.objects.get_or_create(
-    #     content_type=cproduct,
-    #     name='file_types',
-    #     attribute_list=[
-    #         'dxf_file',
-    #         'rfa_file',
-    #         'ipt_file',
-    #         'dwg_3d_file',
-    #         'dwg_2d_file'
-    #         ]
-    #     )
     BaseFacet.objects.get_or_create(
         content_type=cfs,
         field_type='BooleanField',
@@ -166,3 +101,85 @@ def create_facets():
             'corner_covebase'
             ]
         )
+
+
+    # Hardwood ---------------------
+    BaseFacet.objects.get_or_create(
+        content_type=chardwood,
+        attribute='composition'
+        )
+    BaseFacet.objects.get_or_create(
+        content_type=chardwood,
+        attribute='species'
+        )
+
+    # Resilient ------------------
+    BaseFacet.objects.get_or_create(
+        content_type=cresilient,
+        attribute='material_type'
+        )
+    BaseFacet.objects.get_or_create(
+        content_type=cresilient,
+        attribute='surface_coating'
+        )
+
+    # TileAndStone ---------------------
+    BaseFacet.objects.get_or_create(
+        content_type=ctas,
+        attribute='material_type'
+        )
+    BaseFacet.objects.get_or_create(
+        content_type=ctas,
+        attribute='shape',
+        name='shape'
+        )
+
+    # Appliance ---------------------
+    BaseFacet.objects.get_or_create(
+        content_type=capp,
+        attribute='width',
+        field_type='DecimalRangeField',
+        widget='slider',
+        name='width'
+        )
+    BaseFacet.objects.get_or_create(
+        content_type=capp,
+        attribute='depth',
+        field_type='DecimalRangeField',
+        widget='slider',
+        name='depth'
+        )
+    BaseFacet.objects.get_or_create(
+        content_type=capp,
+        attribute='height',
+        field_type='DecimalRangeField',
+        name='height',
+        widget='slider'
+        )
+
+    # Resilient ---------------------
+    BaseFacet.objects.get_or_create(
+        content_type=cresilient,
+        attribute='shape',
+        name='shape'
+        )
+
+    # LaminateFlooring --------------
+    BaseFacet.objects.get_or_create(
+        content_type=clams,
+        attribute='species'
+        )
+
+    # TODO create url field for facet
+    # BaseFacet.objects.get_or_create(
+    #     content_type=cproduct,
+    #     name='file_types',
+    #     attribute_list=[
+    #         'dxf_file',
+    #         'rfa_file',
+    #         'ipt_file',
+    #         'dwg_3d_file',
+    #         'dwg_2d_file'
+    #         ]
+    #     )
+

@@ -8,9 +8,7 @@ class CharFacet(BaseFacet):
     class Meta:
         proxy = True
 
-    def count_self(self, query_index_pk, facets, products=None):
-        if not self.dynamic:
-            products = self.model.objects.all()
+    def count_self(self, query_index_pk, facets, products):
         _facets = [facet.queryset for facet in facets if facet is not self]
         others = self.get_intersection(query_index_pk, products, _facets)
         values = others.values(self.attribute).annotate(val_count=Count(self.attribute))
@@ -32,7 +30,6 @@ class CharFacet(BaseFacet):
     def filter_self(self):
         if not self.qterms:
             return None
-            # return self.return_stock()
         q_object = Q()
         if not isinstance(self.qterms, list):
             return None
@@ -42,3 +39,9 @@ class CharFacet(BaseFacet):
             self.queryset = self.model.objects.filter(q_object).values_list('pk', flat=True)
             return self.queryset
         return None
+
+
+    def serialize_self(self):
+        if not self.return_values:
+            return None
+        return super().serialize_self()

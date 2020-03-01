@@ -19,7 +19,7 @@ class Coordinate(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.lat and self.lng:
-            self.point = Point(self.lat, self.lng)
+            self.point = Point(self.lng, self.lat)
         return super().save(
             force_insert=force_insert,
             force_update=force_update,
@@ -29,6 +29,9 @@ class Coordinate(models.Model):
 
     class Meta:
         unique_together = ('lat', 'lng')
+
+    def __str__(self):
+        return str(self.lat) + ' ' + str(self.lng)
 
 
 class CentroidManager(models.Manager):

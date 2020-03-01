@@ -1,4 +1,5 @@
 ''' Products.views.py '''
+import time
 from django.http import HttpRequest
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
@@ -35,6 +36,8 @@ def create_value_cleaner(request: Request, model_type):
 @api_view(['GET'])
 def products_list(request: HttpRequest, product_type: str = None, sub_product: str = None):
     location_pk = None
+    start_time = time.time()
+    print('-------------------------start time ')
     if 'supplier_pk' in request.GET:
         location_pk = request.GET.get('supplier_pk')
     if sub_product:
@@ -47,8 +50,11 @@ def products_list(request: HttpRequest, product_type: str = None, sub_product: s
         return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
     if location_pk:
         add_supplier_record.delay(request.get_full_path(), pk=location_pk)
+    print('-------------------------pre sorter ', time.time() - start_time)
     content = Sorter(product_type, request=request, supplier_pk=location_pk)
-    return Response(content.serialized, status=status.HTTP_200_OK)
+    seri = content.serialized
+    print('-------------------------post sorter ', time.time() - start_time)
+    return Response(seri, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST'])
