@@ -1,8 +1,9 @@
 import itertools
-import time
+import pickle
 from typing import List
 from rest_framework.request import Request
 from django.core.files.storage import get_storage_class
+from django.core.cache import cache
 from django.db.models.functions import Concat
 from django.http import QueryDict
 from django.db.models.query import QuerySet, Value
@@ -17,32 +18,60 @@ from .models import (
     )
 
 
+
+
+
 class FilterResponse:
-    def __init__(self, product_count: int, facets: List[BaseFacet], products: QuerySet, enabled_values, page, page_size):
+    def __init__(self, product_count: int, facets: List[BaseFacet], products: QuerySet, enabled_values):
         self.product_count = product_count
-        facets = [facet.serialize_self() for facet in facets]
         self.facets = [facet for facet in facets if facet]
         self.products = products
         self.enabled_values = enabled_values
-        self.start = (page - 1) * page_size
-        self.end = page * page_size
 
 
-    @property
-    def serialized(self):
-        return {
+    def set_cache(self, path_key):
+        facets = [facet.serialize_self() for facet in self.facets]
+        pickle_dict = {
             'product_count': self.product_count,
-            'facets': self.facets,
+            'facets': [facet for facet in facets if facet],
             'enabled_values': self.enabled_values,
-            'products': self.serialize_products(),
+            'products': list(self.serialize_products(self.products))
+            }
+        cache.set(path_key, pickle_dict, 60 * 10)
+
+
+    @classmethod
+    def get_cache(cls, path, start, end):
+        res_dict = cache.get(path)
+        if not res_dict:
+            return None
+        prods = res_dict.get('products')
+        res_dict['products'] = prods[start: end]
+        return res_dict
+
+    def serialize_cached(self, product_count, facets, enabled_values, products, start, end):
+        return {
+            'product_count': product_count,
+            'facets': facets,
+            'enabled_values': enabled_values,
+            'products': self.serialize_products(products)[start: end]
             }
 
 
-    def serialize_products(self):
-        if not self.products:
+    def serialized(self, start, end):
+        return {
+            'product_count': self.product_count,
+            'facets': [facet.serialize_self() for facet in self.facets],
+            'enabled_values': self.enabled_values,
+            'products': self.serialize_products(self.products)[start: end]
+            }
+
+
+    def serialize_products(self, products):
+        if not products:
             return []
         imageurl = get_storage_class().base_path()
-        return self.products.annotate(
+        return products.annotate(
             swatch_url=Concat(Value(imageurl), 'swatch_image', output_field=CharField())
             ).values(
                 'pk',
@@ -56,7 +85,8 @@ class FilterResponse:
                 'swatch_image',
                 'manufacturer__label',
                 'low_price'
-                )[self.start: self.end]
+                )
+                # )[self.start: self.end]
 
 
 class Sorter:
@@ -64,14 +94,23 @@ class Sorter:
     def __init__(self, product_type, request: Request, supplier_pk=None):
         self.product_type = product_type
         self.request = request
-        self.page = 1
-        self.page_size = 20
+        # self.page = 1
+        # self.page_size = 20
         self.query_index: QueryIndex = None
         self.supplier_pk = supplier_pk
         self.facets = load_facets(product_type, supplier_pk)
         self.initial_products = self.get_products()
         self.initial_product_count = int(self.initial_products.count())
+        # self.path_key = None
         self.content = self.__process_request()
+
+    # @property
+    # def page_start(self):
+    #     return (self.page - 1) * self.page_size
+
+    # @property
+    # def page_end(self):
+    #     return self.page * self.page_size
 
 
     @property
@@ -95,6 +134,14 @@ class Sorter:
     @transaction.atomic
     def __process_request(self):
         query_dict: QueryDict = QueryDict(self.request.GET.urlencode(), mutable=True)
+        # if 'page' in query_dict:
+        #     self.page = query_dict.pop('page')
+        # if 'search' in query_dict:
+        #     search_string = query_dict.pop('search')
+        # self.path_key = self.request.path + query_dict.urlencode()
+        # res = cache.get(self.path_key)
+        # if res:
+        #     return res.serialize_self(self.page_start, self.page_end)
         for facet in self.facets:
             query_dict = facet.parse_request(query_dict)
         query_index, created = QueryIndex.objects.get_or_create_qi(
@@ -138,5 +185,5 @@ class Sorter:
         innis = list(itertools.chain.from_iterable(enabled_values))
         product_count = len(products)
         products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()
-        return FilterResponse(product_count, self.facets, products, innis, self.page, self.page_size)
+        return FilterResponse(product_count, self.facets, products, innis)
 
