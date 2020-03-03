@@ -95,12 +95,12 @@ def main():
         prof.save()
         proj_num = random.randint(3,6)
         for num in range(0, proj_num):
-            address = Address.objects.filter(demo=True, supplier_location__isnull=True, supplier_company__isnull=True).first()
+            address = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).first()
             __create_project(user, address)
         print('user name = ', user.full_name)
     for ret_num in range(0, retailer_count):
         ret_user = __create_user(is_supplier=True)
-        comp_address = Address.objects.filter(demo=True, supplier_location__isnull=True, supplier_company__isnull=True).first()
+        comp_address = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).first()
         ret_company = __create_supplier_company(ret_user, comp_address)
         profile = SupplierEmployeeProfile.objects.create_profile(
             user=ret_user,
@@ -110,7 +110,7 @@ def main():
             profile.owner = True
             profile.save()
         for x in range(0, 3):
-            loc_add = Address.objects.filter(demo=True, supplier_location__isnull=True, supplier_company__isnull=True).first()
+            loc_add = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).first()
             __create_locations(ret_company, loc_add)
         print('ret name = ', ret_user.full_name)
 
