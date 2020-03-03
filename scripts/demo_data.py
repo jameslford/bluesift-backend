@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.utils import IntegrityError
 from Accounts.models import User
 from Addresses.models import Address
 from Products.models import Product
@@ -28,7 +29,11 @@ PROJECT_MIDDLES = [
     'office',
     'business',
     'lobby',
-    'municipal'
+    'municipal',
+    'restaurant',
+    'store',
+    'park',
+    'annex'
 ]
 
 PROJECT_SUFFIXES = [
@@ -327,15 +332,18 @@ def __create_project(user: User, address: Address):
     middle = random.choice(PROJECT_MIDDLES)
     suffix = random.choice(PROJECT_SUFFIXES)
     nickname = f'{address.get_short_name()} {middle} {suffix}' if address else f'{middle} {suffix}'
-    project = Project.objects.create_project(
-        user=user,
-        nickname=nickname,
-        deadline=deadline
-        )
-    if address:
-        project.address = address
-        project.save()
-    return project
+    try:
+        project = Project.objects.create_project(
+            user=user,
+            nickname=nickname,
+            deadline=deadline
+            )
+        if address:
+            project.address = address
+            project.save()
+        return project
+    except IntegrityError:
+        return None
 
 def __create_locations(company: SupplierCompany, address: Address):
     fake = Faker()
