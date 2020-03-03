@@ -5,7 +5,7 @@ from .base import *
 
 
 
-DEBUG = False
+DEBUG = True
 ENVIRONMENT = 'staging'
 # BROKER_URL = 'PASS'
 CELERY_BROKER_URL = os.environ['REDIS_URL']
