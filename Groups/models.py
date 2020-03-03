@@ -33,7 +33,7 @@ class SupplierGroupManager(models.Manager):
 class SupplierCompany(models.Model):
     name = models.CharField(max_length=40, unique=True)
     phone_number = models.CharField(max_length=30, null=True, blank=True)
-    business_address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
+    business_address = models.OneToOneField(Address, null=True, on_delete=models.SET_NULL)
     email_verified = models.BooleanField(default=False)
     info = models.TextField(null=True, blank=True)
     slug = models.SlugField(null=True, blank=True)

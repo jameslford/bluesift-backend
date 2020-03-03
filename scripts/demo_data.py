@@ -79,13 +79,13 @@ SUB_TASKS = [
 
 @transaction.atomic
 def create_demo_users():
+    create_addresses()
+    main()
+
+def main():
     fake = Faker()
     user_count = 12
     retailer_count = 30
-    addresses_response = requests.get(ADDRESS_URL).json()
-    addresses = addresses_response.get('addresses', [])
-    addresses = list(addresses)
-    random.shuffle(addresses)
     for usernum in range(0, user_count):
         print(usernum)
         user = __create_user()
@@ -95,15 +95,13 @@ def create_demo_users():
         prof.save()
         proj_num = random.randint(3,6)
         for num in range(0, proj_num):
-            proj_add = addresses.pop()
-            proj_add = __create_address(**proj_add)
-            project = __create_project(user, proj_add)
+            address = Address.objects.filter(demo=True, supplier_location__isnull=True, supplier_company__isnull=True).first()
+            __create_project(user, address)
         print('user name = ', user.full_name)
     for ret_num in range(0, retailer_count):
         ret_user = __create_user(is_supplier=True)
-        ret_address = addresses.pop()
-        ret_address = __create_address(**ret_address)
-        ret_company = __create_supplier_company(ret_user, ret_address)
+        comp_address = Address.objects.filter(demo=True, supplier_location__isnull=True, supplier_company__isnull=True).first()
+        ret_company = __create_supplier_company(ret_user, comp_address)
         profile = SupplierEmployeeProfile.objects.create_profile(
             user=ret_user,
             company=ret_company
@@ -112,10 +110,37 @@ def create_demo_users():
             profile.owner = True
             profile.save()
         for x in range(0, 3):
-            loc_add = addresses.pop()
-            loc_add = __create_address(**loc_add)
-            location = __create_locations(ret_company, loc_add)
+            loc_add = Address.objects.filter(demo=True, supplier_location__isnull=True, supplier_company__isnull=True).first()
+            __create_locations(ret_company, loc_add)
         print('ret name = ', ret_user.full_name)
+
+
+def __create_address(**kwargs):
+    address_1 = kwargs.get('address1')
+    address_2 = kwargs.get('address2')
+    city = kwargs.get('city')
+    state = kwargs.get('state')
+    postal_code = kwargs.get('postalCode')
+    try:
+        return Address.objects.get_or_create_address(
+            address_line_1=address_1,
+            address_line_2=address_2,
+            city=city,
+            state=state,
+            postal_code=postal_code,
+            demo=True
+            )
+    except (ValidationError, IndexError):
+        print('bad addres')
+        return None
+
+
+def create_addresses():
+    addresses_response = requests.get(ADDRESS_URL).json()
+    addresses = addresses_response.get('addresses', [])
+    addresses = list(addresses)
+    for address in addresses:
+        __create_address(**address)
 
 @transaction.atomic
 def add_additonal():
@@ -265,25 +290,6 @@ def __create_user(**kwargs):
         **kwargs
         )
     return user
-
-
-def __create_address(**kwargs):
-    address_1 = kwargs.get('address1')
-    address_2 = kwargs.get('address2')
-    city = kwargs.get('city')
-    state = kwargs.get('state')
-    postal_code = kwargs.get('postalCode')
-    try:
-        return Address.objects.get_or_create_address(
-            address_line_1=address_1,
-            address_line_2=address_2,
-            city=city,
-            state=state,
-            postal_code=postal_code
-            )
-    except (ValidationError, IndexError):
-        print('bad addres')
-        return None
 
 
 def __create_supplier_company(user, address):

@@ -138,6 +138,8 @@ class Address(models.Model):
         blank=True
         )
 
+    demo = models.BooleanField(default=False)
+
     objects = AddressManager()
 
     def __str__(self):

@@ -79,12 +79,11 @@ class SupplierLocation(models.Model):
         on_delete=models.SET_NULL,
         related_name='managed_locations'
         )
-    address = models.ForeignKey(
+    address = models.OneToOneField(
         Address,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='retailer_locations'
         )
     approved_in_store_seller = models.BooleanField(default=False)
     approved_online_seller = models.BooleanField(default=False)

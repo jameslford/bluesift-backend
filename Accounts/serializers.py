@@ -1,4 +1,3 @@
-from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from .models import User
 
@@ -14,6 +13,9 @@ def user_serializer(user: User):
         'get_full_name': user.get_full_name(),
         'get_initials': user.get_initials(),
         'is_supplier': user.is_supplier,
+        'current_zipcode': user.current_zipcode.code,
+        'lat': user.current_zipcode.centroid.lat,
+        'lng': user.current_zipcode.centroid.lng,
         'demo': user.demo,
         'staff': user.staff,
         'admin': user.admin,

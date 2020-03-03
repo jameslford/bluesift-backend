@@ -3,13 +3,14 @@ celery tasks - these are all asynchronous that exist for this project
 """
 from __future__ import absolute_import, unicode_literals
 import json
-from django.utils import timezone
 from typing import Dict
+from django.utils import timezone
+from django.contrib.gis.db.models.functions import Distance
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from rest_framework.authtoken.models import Token
 from ProductFilter.models import QueryIndex
-from Addresses.models import Coordinate
+from Addresses.models import Coordinate, Zipcode
 from Analytics.models import ViewRecord
 from Suppliers.models import SupplierLocation
 from Groups.models import SupplierCompany
@@ -45,6 +46,12 @@ def harvest_request(headers: Dict, path, ip_address=None):
                 lat = float(lat)
                 lon = float(lon)
                 coord = Coordinate.objects.get_or_create(lat=lat, lng=lon)
+                zipcode = Zipcode.objects.select_related('zipcode').annotate(
+                    distance=Distance('centroid__point', coord)
+                    ).order_by('distance').first()
+                if zipcode and user:
+                    user.current_zipcode = zipcode
+                    user.save()
                 record.best_location = True
                 record.location = coord
             except (ValueError, AttributeError):
