@@ -274,15 +274,14 @@ def __create_address(**kwargs):
     state = kwargs.get('state')
     postal_code = kwargs.get('postalCode')
     try:
-        address = Address.objects.get_or_create_address(
+        return Address.objects.get_or_create_address(
             address_line_1=address_1,
             address_line_2=address_2,
             city=city,
             state=state,
             postal_code=postal_code
             )
-        return address
-    except ValidationError:
+    except (ValidationError, IndexError):
         print('bad addres')
         return None
 

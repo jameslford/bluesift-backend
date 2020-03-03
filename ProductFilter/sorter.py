@@ -64,8 +64,8 @@ class FilterResponse:
         if res_dict:
             prods = res_dict.get('products')
             if len(prods) <= (page + 1) * page_size:
-                next_page = None
                 index = slice(page * page_size, len(prods))
+            print('cache res index = ', index)
             res_dict['products'] = prods[index]
             # res_dict['previous_page'] = previous_page
             # res_dict['next_page'] = next_page
@@ -106,6 +106,7 @@ class FilterResponse:
 
 
     def serialized(self, index):
+        print('serialized index = ', index)
         facets = [facet.serialize_self() for facet in self.facets]
         return {
             'product_count': self.product_count,
