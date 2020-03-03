@@ -326,14 +326,7 @@ def __create_project(user: User, address: Address):
     deadline = __random_date()
     middle = random.choice(PROJECT_MIDDLES)
     suffix = random.choice(PROJECT_SUFFIXES)
-    # user_name = user.get_full_name().split(' ')
-    # initials = []
-    # for name in user_name:
-    #     initials.append(name[0].upper())
-    # initials.append("'s")
-    # initials = ''.join(initials)
-    street_name = address.address_line_1.split(' ')[1]
-    nickname = f'{street_name} {middle} {suffix}' if address else f'{middle} {suffix}'
+    nickname = f'{address.get_short_name()} {middle} {suffix}' if address else f'{middle} {suffix}'
     project = Project.objects.create_project(
         user=user,
         nickname=nickname,

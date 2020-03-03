@@ -121,6 +121,8 @@ class SubproductGeometryPresentationSerializer:
 
         self.rfa_file = product.rfa_file
         self.ipt_file = product.ipt_file
+        self.dwg_2d_file = product.dwg_2d_file
+        self.dwg_3d_file = product.dwg_3d_file
         self.obj_file = product.obj_file
         self.geometry_model = product.derived_gbl.url if product.derived_gbl else None
         self.geometry_clean = product.geometry_clean

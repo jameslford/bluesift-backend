@@ -147,6 +147,15 @@ class Address(models.Model):
             return self.address_string
         return self.get_address_string()
 
+    def get_short_name(self):
+        if self.address_line_1:
+            split = self.address_line_1.split(' ')
+            if len(split) > 1:
+                street_name = split[1]
+        if self.city:
+            return self.city
+
+
     def get_address_string(self):
         al1 = self.address_line_1
         al2 = self.address_line_2

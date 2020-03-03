@@ -1,12 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
-from django.core.files.base import ContentFile
 from Scraper.models import ScraperGroup
 from SpecializedProducts.models import Range
 
 
 
-def run(group:ScraperGroup):
+def run(group: ScraperGroup):
     url = group.base_url
     data = requests.get(url).text
     base = 'https://www.vikingrange.com'
@@ -48,37 +47,28 @@ def run(group:ScraperGroup):
             product.scraper_group = group
             product.manufacturer = group.manufacturer
             product.manufacturer_sku = sku
-            # product: Appliance = Appliance.objects.get_or_create(
-            #     manufacturer=manufacturer,
-            #     manufacturer_sku=sku,
-            #     appliance_type=appliance_type)[0]
             if img_src:
                 print(img_src)
-                # img_name = img_src.split('/')[-1]
                 product.swatch_image_original = img_src
-                # img_content = requests.get(img_src).content
-                # img_file = ContentFile(img_content)
-                # product.swatch_image.save(img_name, img_file)
+            product.room_scene_original = variation_img
             product.manufacturer_url = path
             if product.obj_file:
                 product.scraper_save()
                 continue
             for link in links:
                 if search in link:
-                    print(link)
                     rec_downloads.append(base + link)
             save = False
             for download in rec_downloads:
                 if download.endswith('obj.zip'):
-                    # download_obj_zip(download, product)
                     save = True
                     product.obj_file = download
                 elif download.endswith('_.DWG'):
                     product.dwg_3d_file = download
                 elif download.endswith('.dwg'):
                     product.dwg_2d_file = download
-                elif download.endswith('_.DWG'):
-                    product.dwg_3d_file = download
+                elif download.endswith('_.DXF'):
+                    product.dxf_file = download
                 elif download.endswith('_.rfa'):
                     product.rfa_file = download
             if save:
@@ -91,17 +81,3 @@ def run(group:ScraperGroup):
                     continue
 
 
-# def download_obj_zip(download, product):
-#     res = requests.get(download, stream=True)
-#     try:
-#         zipped = zipfile.ZipFile(io.BytesIO(res.content))
-#     except zipfile.BadZipfile:
-#         return
-#     product.obj_file = download
-#     for name in zipped.namelist():
-#         if name.endswith('.obj'):
-#             file = ContentFile(zipped.read(name))
-#             product._obj_file.save(name, file, save=True)
-#         if name.endswith('.mtl'):
-#             file = ContentFile(zipped.read(name))
-#             product._mtl_file.save(name, file, save=True)

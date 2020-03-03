@@ -1,17 +1,20 @@
 from typing import List
 from django.core.management.base import BaseCommand
 from SpecializedProducts.models import FinishSurface
+from Products.models import Manufacturer
 # from utils.images import remove_background
 # from scripts.finish_surfaces import assign_tiling_image
 # from SpecializedProducts.models import FinishSurface
 # from scripts.search import create_indexes
 # from scripts.finish_surfaces import default_clean
 from scripts.facets import create_facets
+from Scraper.models import ScraperGroup
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        pass
+        range = ScraperGroup.objects.get(manufacturer__label__iexact='viking')
+        range.scrape()
         # cache.clear()
 
         # create_facets()
