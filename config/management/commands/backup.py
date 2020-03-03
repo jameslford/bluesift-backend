@@ -25,7 +25,6 @@ class Command(BaseCommand):
                 'django_celery_results',
                 'django_celery_beat',
                 'ProductFilter.queryindex',
-                'ProductFilter.FacetOthersCollection',
                 'sessions',
                 'Accounts',
                 'Suppliers',
@@ -33,6 +32,8 @@ class Command(BaseCommand):
                 'Analytics',
                 'Profiles',
                 'Cards',
+                'Groups',
                 'Orders',
                 'Addresses'
                 ], stdout=f)
+                # 'ProductFilter.FacetOthersCollection',
