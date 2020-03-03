@@ -156,9 +156,9 @@ class SupplierLocation(models.Model):
             self.nickname = self.company.name + ' ' + str(self.number)
         if self.local_admin and self.local_admin.company != self.company:
             raise ValidationError('Employee not a company employee')
+        super(SupplierLocation, self).save(*args, **kwargs)
         tree = SupplierProductTree.objects.get_or_create(location=self)[0]
         tree.refresh()
-        return super(SupplierLocation, self).save(*args, **kwargs)
 
 
 class SupplierProductManager(models.Manager):
