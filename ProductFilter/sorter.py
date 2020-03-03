@@ -19,6 +19,8 @@ from .models import (
     QueryIndex,
     )
 
+page_size = 20
+
 
 class FilterResponse:
     def __init__(self, product_count: int, facets: List[BaseFacet], products: QuerySet, enabled_values):
@@ -42,8 +44,7 @@ class FilterResponse:
     @classmethod
     def get_cache(cls, request: Request, product_type: str = None, sub_product: str = None):
         query_dict: QueryDict = QueryDict(request.GET.urlencode(), mutable=True)
-        page = 1
-        page_size = 20
+        page = 0
         search = None
         location_pk = None
         if 'supplier_pk' in query_dict:
@@ -55,18 +56,19 @@ class FilterResponse:
             search_string = query_dict.pop('search')
         path_key = request.path + query_dict.urlencode()
         res_dict = cache.get(path_key)
-        previous_page = page - 1
-        next_page = page + 1
-        page_start = previous_page * page_size
-        page_end = page * page_size
+        index = slice(page * page_size, (page + 1) * page_size)
+        # previous_page = page - 1
+        # next_page = page + 1
+        # page_start = previous_page * page_size
+        # page_end = page * page_size
         if res_dict:
             prods = res_dict.get('products')
-            if len(prods) <= page_end:
+            if len(prods) <= (page + 1) * page_size:
                 next_page = None
-                page_end = -1
-            res_dict['products'] = prods[page_start: page_end]
-            res_dict['previous_page'] = previous_page
-            res_dict['next_page'] = next_page
+                index = slice(page * page_size, len(prods))
+            res_dict['products'] = prods[index]
+            # res_dict['previous_page'] = previous_page
+            # res_dict['next_page'] = next_page
             return res_dict
         if sub_product:
             product_type = check_department_string(sub_product)
@@ -78,10 +80,9 @@ class FilterResponse:
             return None
         content = Sorter(product_type, path=request.path, query_dict=query_dict, supplier_pk=location_pk).content
         content.set_cache(path_key)
-        if content.product_count <= page_end:
-            next_page = None
-            page_end = -1
-        return content.serialized(page_start, page_end, previous_page, next_page)
+        if content.product_count <= (page + 1) * page_size:
+            index = slice(page * page_size, content.product_count)
+        return content.serialized(index)
 
 
 
@@ -95,23 +96,22 @@ class FilterResponse:
     #     res_dict['products'] = prods[start: end]
     #     return res_dict
 
-    def serialize_cached(self, product_count, facets, enabled_values, products, start, end):
-        return {
-            'product_count': product_count,
-            'facets': facets,
-            'enabled_values': enabled_values,
-            'products': self.serialize_products(products)[start: end]
-            }
+    # def serialize_cached(self, product_count, facets, enabled_values, products, start, end):
+    #     return {
+    #         'product_count': product_count,
+    #         'facets': facets,
+    #         'enabled_values': enabled_values,
+    #         'products': self.serialize_products(products)[start: end]
+    #         }
 
 
-    def serialized(self, start, end, previous_page, next_page):
+    def serialized(self, index):
+        facets = [facet.serialize_self() for facet in self.facets]
         return {
             'product_count': self.product_count,
-            'facets': [facet.serialize_self() for facet in self.facets],
+            'facets': [facet for facet in facets if facet],
             'enabled_values': self.enabled_values,
-            'products': self.serialize_products(self.products)[start: end],
-            'previous_page': previous_page,
-            'next_page': next_page
+            'products': self.serialize_products(self.products)[index]
             }
 
 

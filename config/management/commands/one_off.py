@@ -11,7 +11,10 @@ from scripts.facets import create_facets
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        create_facets()
+        pass
+        # cache.clear()
+
+        # create_facets()
         # default_clean()
         # all_fs: List[FinishSurface] = FinishSurface.subclasses.select_related('manufacturer').all().select_subclasses()
         # for fin in all_fs:

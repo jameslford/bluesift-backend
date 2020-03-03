@@ -2,13 +2,16 @@ from django.core.management.base import BaseCommand
 from scripts.facets import create_facets
 from ProductFilter.models import BaseFacet, QueryIndex
 from scripts.finish_surfaces import clean_products
+from django.core.cache import cache
+
 # from scripts.search import create_indexes
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        clean_products()
+        # clean_products()
+        cache.clear()
         facets = BaseFacet.objects.all()
         qis = QueryIndex.objects.all()
         facets.delete()
