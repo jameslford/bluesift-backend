@@ -122,10 +122,10 @@ class SupplierEmployeeProfile(BaseProfile):
         return [location.pk for location in self.managed_locations.all()]
 
     def save(self, *args, **kwargs):
-        if self.contact_for:
-            for location in self.contact_for.all():
-                if location.company != self.company:
-                    raise ValueError('invalid location in contact for')
+        # if self.baseprofile_ptr and self.contact_for:
+        #     for location in self.contact_for.all():
+        #         if location.company != self.company:
+        #             raise ValueError('invalid location in contact for')
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
         super(SupplierEmployeeProfile, self).save(*args, **kwargs)
