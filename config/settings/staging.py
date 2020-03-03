@@ -51,14 +51,6 @@ DATABASES['default'] = dj_database_url.config(conn_max_age=500)
 DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 DATABASES['default']['OPTIONS'] = {'options': '-c search_path=default,public'}
 
-# DATABASES['scraper_default'] = dj_database_url.config(conn_max_age=500)
-# DATABASES['scraper_default']['ENGINE'] = 'django.db.backends.postgresql'
-# DATABASES['scraper_default']['OPTIONS'] = {'options': '-c search_path=scraper_default'}
-
-# DATABASES['scraper_revised'] = dj_database_url.config(conn_max_age=500)
-# DATABASES['scraper_revised']['ENGINE'] = 'django.db.backends.postgresql'
-# DATABASES['scraper_revised']['OPTIONS'] = {'options': '-c search_path=scraper_revised'}
-
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -66,6 +58,19 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     )
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ['REDIS_URL'],
+        'TIMEOUT': 0,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "example"
+    }
+}
+
 
 
 EMAIL_HOST = 'smtp.sendgrid.net'
@@ -104,7 +109,7 @@ MIDDLEWARE = [
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'config.custom_middleware.StagingMiddleware',
+    # 'config.custom_middleware.StagingMiddleware',
     # 'config.custom_middleware.LastSeenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 ]

@@ -1,20 +1,20 @@
 ''' Products.views.py '''
-import time
 from django.http import HttpRequest
-from django.http import QueryDict
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
-from config.globals import check_department_string
-from config.tasks import add_supplier_record
 from config.custom_permissions import IsAdminorReadOnly
-from ProductFilter.sorter import Sorter, FilterResponse
+from ProductFilter.sorter import FilterResponse
 from SpecializedProducts.models import ProductSubClass
 from .models import Product, ValueCleaner
 from .tasks import add_detail_record
 from .serializers import serialize_detail, serialize_detail_quick
+# import time
+# from django.http import QueryDict
+# from config.globals import check_department_string
+# from config.tasks import add_supplier_record
 
 @api_view(['POST'])
 @permission_classes((IsAdminUser,))
@@ -36,37 +36,39 @@ def create_value_cleaner(request: Request, model_type):
 
 @api_view(['GET'])
 def products_list(request: HttpRequest, product_type: str = None, sub_product: str = None):
-    location_pk = None
-    if 'supplier_pk' in request.GET:
-        location_pk = request.GET.get('supplier_pk')
-    if sub_product:
-        product_type = check_department_string(sub_product)
-    elif product_type:
-        product_type = check_department_string(product_type)
-    else:
-        product_type = Product
-    if not product_type:
-        return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
-    if location_pk:
-        add_supplier_record.delay(request.get_full_path(), pk=location_pk)
-    query_dict: QueryDict = QueryDict(request.GET.urlencode(), mutable=True)
-    page = 1
-    page_size = 20
-    page_start = (page - 1) * page_size
-    page_end = page * page_size
-    search = None
-    if 'page' in query_dict:
-        page = query_dict.pop('page')
-    if 'search' in query_dict:
-        search_string = query_dict.pop('search')
-    path_key = request.path + query_dict.urlencode()
-    res = FilterResponse.get_cache(path_key, page_start, page_end)
-    if res:
-        print('got res')
-        return Response(res, status=status.HTTP_200_OK)
-    content = Sorter(product_type, request=request, supplier_pk=location_pk).content
-    content.set_cache(path_key)
-    return Response(content.serialized(page_start, page_end), status=status.HTTP_200_OK)
+    res = FilterResponse.get_cache(request, product_type, sub_product)
+    return Response(res, status=status.HTTP_200_OK)
+    # location_pk = None
+    # if 'supplier_pk' in request.GET:
+    #     location_pk = request.GET.get('supplier_pk')
+    # if sub_product:
+    #     product_type = check_department_string(sub_product)
+    # elif product_type:
+    #     product_type = check_department_string(product_type)
+    # else:
+    #     product_type = Product
+    # if not product_type:
+    #     return Response('invalid model type', status=status.HTTP_400_BAD_REQUEST)
+    # if location_pk:
+    #     add_supplier_record.delay(request.get_full_path(), pk=location_pk)
+    # query_dict: QueryDict = QueryDict(request.GET.urlencode(), mutable=True)
+    # page = 1
+    # page_size = 20
+    # page_start = (page - 1) * page_size
+    # page_end = page * page_size
+    # search = None
+    # if 'page' in query_dict:
+    #     page = query_dict.pop('page')
+    # if 'search' in query_dict:
+    #     search_string = query_dict.pop('search')
+    # path_key = request.path + query_dict.urlencode()
+    # res = FilterResponse.get_cache(path_key, page_start, page_end)
+    # if res:
+    #     print('got res')
+    #     return Response(res, status=status.HTTP_200_OK)
+    # content = Sorter(product_type, request=request, supplier_pk=location_pk).content
+    # content.set_cache(path_key)
+
 
 
 @api_view(['GET', 'POST'])

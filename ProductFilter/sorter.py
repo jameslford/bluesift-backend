@@ -10,15 +10,14 @@ from django.db.models.query import QuerySet, Value
 from django.db.models import CharField
 from django.db import transaction
 from Suppliers.models import SupplierProduct
+from config.tasks import add_supplier_record
+from config.globals import check_department_string
 from Products.models import Product
 from .models import (
     load_facets,
     BaseFacet,
     QueryIndex,
     )
-
-
-
 
 
 class FilterResponse:
@@ -41,13 +40,60 @@ class FilterResponse:
 
 
     @classmethod
-    def get_cache(cls, path, start, end):
-        res_dict = cache.get(path)
-        if not res_dict:
+    def get_cache(cls, request: Request, product_type: str = None, sub_product: str = None):
+        query_dict: QueryDict = QueryDict(request.GET.urlencode(), mutable=True)
+        page = 1
+        page_size = 20
+        search = None
+        location_pk = None
+        if 'supplier_pk' in query_dict:
+            location_pk = query_dict.get('supplier_pk', None)
+            add_supplier_record.delay(request.get_full_path(), pk=location_pk)
+        if 'page' in query_dict:
+            page = query_dict.pop('page')[0].split(',')[-1]
+        if 'search' in query_dict:
+            search_string = query_dict.pop('search')
+        path_key = request.path + query_dict.urlencode()
+        res_dict = cache.get(path_key)
+        previous_page = page - 1
+        next_page = page + 1
+        page_start = previous_page * page_size
+        page_end = page * page_size
+        if res_dict:
+            prods = res_dict.get('products')
+            if len(prods) <= page_end:
+                next_page = None
+                page_end = -1
+            res_dict['products'] = prods[page_start: page_end]
+            res_dict['previous_page'] = previous_page
+            res_dict['next_page'] = next_page
+            return res_dict
+        if sub_product:
+            product_type = check_department_string(sub_product)
+        elif product_type:
+            product_type = check_department_string(product_type)
+        else:
+            product_type = Product
+        if not product_type:
             return None
-        prods = res_dict.get('products')
-        res_dict['products'] = prods[start: end]
-        return res_dict
+        content = Sorter(product_type, path=request.path, query_dict=query_dict, supplier_pk=location_pk).content
+        content.set_cache(path_key)
+        if content.product_count <= page_end:
+            next_page = None
+            page_end = -1
+        return content.serialized(page_start, page_end, previous_page, next_page)
+
+
+
+
+    # @classmethod
+    # def get_cache(cls, path, start, end):
+    #     res_dict = cache.get(path)
+    #     if not res_dict:
+    #         return None
+    #     prods = res_dict.get('products')
+    #     res_dict['products'] = prods[start: end]
+    #     return res_dict
 
     def serialize_cached(self, product_count, facets, enabled_values, products, start, end):
         return {
@@ -58,12 +104,14 @@ class FilterResponse:
             }
 
 
-    def serialized(self, start, end):
+    def serialized(self, start, end, previous_page, next_page):
         return {
             'product_count': self.product_count,
             'facets': [facet.serialize_self() for facet in self.facets],
             'enabled_values': self.enabled_values,
-            'products': self.serialize_products(self.products)[start: end]
+            'products': self.serialize_products(self.products)[start: end],
+            'previous_page': previous_page,
+            'next_page': next_page
             }
 
 
@@ -91,9 +139,10 @@ class FilterResponse:
 
 class Sorter:
 
-    def __init__(self, product_type, request: Request, supplier_pk=None):
+    def __init__(self, product_type, path, query_dict, supplier_pk=None):
         self.product_type = product_type
-        self.request = request
+
+        # self.request = request
         # self.page = 1
         # self.page_size = 20
         self.query_index: QueryIndex = None
@@ -102,7 +151,7 @@ class Sorter:
         self.initial_products = self.get_products()
         self.initial_product_count = int(self.initial_products.count())
         # self.path_key = None
-        self.content = self.__process_request()
+        self.content: FilterResponse = self.__process_request(query_dict, path)
 
     # @property
     # def page_start(self):
@@ -132,8 +181,8 @@ class Sorter:
 
 
     @transaction.atomic
-    def __process_request(self):
-        query_dict: QueryDict = QueryDict(self.request.GET.urlencode(), mutable=True)
+    def __process_request(self, query_dict, path):
+        # query_dict: QueryDict = QueryDict(self.request.GET.urlencode(), mutable=True)
         # if 'page' in query_dict:
         #     self.page = query_dict.pop('page')
         # if 'search' in query_dict:
@@ -145,7 +194,7 @@ class Sorter:
         for facet in self.facets:
             query_dict = facet.parse_request(query_dict)
         query_index, created = QueryIndex.objects.get_or_create_qi(
-            query_path=self.request.path,
+            query_path=path,
             query_dict=query_dict.urlencode(),
             retailer_location=self.supplier_pk
             )
