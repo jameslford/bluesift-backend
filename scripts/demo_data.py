@@ -91,8 +91,9 @@ def main():
     fake = Faker()
     user_count = 12
     retailer_count = 30
+    address_pks = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).values_list('pk', flat=True)
+    random.shuffle(address_pks)
     for usernum in range(0, user_count):
-        print(usernum)
         user = __create_user()
         u_phone = fake.phone_number()
         prof = ConsumerProfile.objects.get_or_create(user=user)[0]
@@ -100,12 +101,14 @@ def main():
         prof.save()
         proj_num = random.randint(3,6)
         for num in range(0, proj_num):
-            address = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).first()
+            address_pk = address_pk.pop()
+            address = Address.objects.get(pk=address_pk)
             __create_project(user, address)
         print('user name = ', user.full_name)
     for ret_num in range(0, retailer_count):
         ret_user = __create_user(is_supplier=True)
-        comp_address = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).first()
+        comp_address_pk = address_pk.pop()
+        comp_address = Address.objects.get(pk=comp_address_pk)
         ret_company = __create_supplier_company(ret_user, comp_address)
         profile = SupplierEmployeeProfile.objects.create_profile(
             user=ret_user,
@@ -115,7 +118,8 @@ def main():
             profile.owner = True
             profile.save()
         for x in range(0, 3):
-            loc_add = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).first()
+            loc_add_pk = address_pks.pop()
+            loc_add = Address.objects.get(pk=loc_add_pk)
             __create_locations(ret_company, loc_add)
         print('ret name = ', ret_user.full_name)
 
