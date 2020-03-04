@@ -101,13 +101,13 @@ def main():
         prof.save()
         proj_num = random.randint(3,6)
         for num in range(0, proj_num):
-            address_pk = address_pk.pop()
+            address_pk = address_pks.pop()
             address = Address.objects.get(pk=address_pk)
             __create_project(user, address)
         print('user name = ', user.full_name)
     for ret_num in range(0, retailer_count):
         ret_user = __create_user(is_supplier=True)
-        comp_address_pk = address_pk.pop()
+        comp_address_pk = address_pks.pop()
         comp_address = Address.objects.get(pk=comp_address_pk)
         ret_company = __create_supplier_company(ret_user, comp_address)
         profile = SupplierEmployeeProfile.objects.create_profile(
