@@ -64,7 +64,9 @@ class BaseFacet(models.Model):
 
 
     def __str__(self):
-        return f'{self.model.__name__}, {self.name}'
+        if hasattr(self, 'model'):
+            return f'{self.model.__name__}, {self.name}'
+        return self.name
 
 
     def __init__(self, *args, **kwargs):
@@ -79,7 +81,9 @@ class BaseFacet(models.Model):
         self.enabled_values: List[BaseReturnValue] = []
         self.queryset: QuerySet = None
         self.others_intersection: QuerySet = None
-        self.model = self.content_type.model_class()
+        self.model = None
+        if hasattr(self, 'content_type'):
+            self.model = self.content_type.model_class()
         self.exclusive = False
 
 

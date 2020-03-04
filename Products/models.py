@@ -6,29 +6,13 @@ import uuid
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
 from django.forms.models import model_to_dict
-from django.db.models import (
-    Subquery,
-    OuterRef,
-    CharField,
-    QuerySet,
-    Min,
-    F
-)
+from django.db.models import Min, Case, When
 from django.db.models.functions import Least
 from django.db import transaction
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos import MultiPoint
 from model_utils.managers import InheritanceManager
 from Addresses.models import Coordinate
-
-
-
-# def availability_getter(query_term, location_pk=None):
-#     from Suppliers.models import SupplierProduct
-#     term = {query_term: True}
-#     if location_pk:
-#         term['location__pk'] = location_pk
-#     return SupplierProduct.objects.filter(**term).values_list('product__pk', flat=True).distinct()
 
 
 class Manufacturer(models.Model):
@@ -92,68 +76,19 @@ class ValueCleaner(models.Model):
 
 
 class ProductAvailabilityQuerySet(models.QuerySet):
-    # def priced_in_store(self, location_pk=None, pk_only=False):
-    #     pks = availability_getter('publish_in_store_price', location_pk)
-    #     if pk_only:
-    #         return pks
-    #     return self.filter(pk__in=Subquery(pks))
 
-    # def available_in_store(self, location_pk=None, pk_only=False):
-    #     pks = availability_getter('publish_in_store_availability', location_pk)
-    #     if pk_only:
-    #         return pks
-    #     return self.filter(pk__in=Subquery(pks))
-
-    # def priced_online(self, location_pk=None, pk_only=False):
-    #     pks = availability_getter('publish_online_price', location_pk)
-    #     if pk_only:
-    #         return pks
-    #     return self.filter(pk__in=Subquery(pks))
-
-    # def installation_offered(self, location_pk=None, pk_only=False):
-    #     pks = availability_getter('offer_installation', location_pk)
-    #     if pk_only:
-    #         return pks
-    #     return self.filter(pk__in=Subquery(pks))
-
-    # def supplier_products(self, location_pk=None):
-    #     from Suppliers.models import SupplierProduct
-    #     if location_pk:
-    #         sup_prods = SupplierProduct.objects.filter(
-    #             retailer__id=location_pk).filter(product__in=Subquery(self.values('pk')))
-    #     else:
-    #         sup_prods = SupplierProduct.objects.filter(product__in=Subquery(self.values('pk')))
-    #     return sup_prods
-
-    # def filter_availability(self, commands, location_pk=None, pk_only=False):
-    #     pk_sets = []
-    #     clist = commands if isinstance(commands, list) else [commands]
-    #     for command in clist:
-    #         if command not in self.safe_availability_commands():
-    #             pk_sets = []
-    #             raise Exception(f'Unsafe method - {command}')
-    #         func = getattr(self, command, None)
-    #         if not func:
-    #             pk_sets = []
-    #             raise Exception(f'Unsafe method - {command}')
-    #         if not pk_only:
-    #             return func(location_pk)
-    #         pk_sets.append(func(location_pk, pk_only))
-    #     q_object = models.Q()
-    #     for pks in pk_sets:
-    #         term = {'pk__in': pks}
-    #         q_object |= models.Q(**term)
-    #     return self.filter(q_object)
-
-    # def safe_availability_commands(self):
-    #     return ('available_in_store', 'priced_in_store', 'installation_offered')
 
     def product_prices(self, location_pk=None):
-        prods = self.filter(priced__publish_in_store_price=True).annotate(
-            low_price=Least(
-                Min('priced__in_store_ppu'),
-                Min('priced__online_ppu')
-                ))
+        prods = self.annotate(
+            low_price=Case(
+                When(priced__publish_in_store_price=True,
+                     then=Least(
+                         Min('priced__in_store_ppu'),
+                         Min('priced__online_ppu')
+                         )
+                    )
+                )
+            )
         if location_pk:
             return prods.filter(supplier_pk=location_pk)
         return prods
@@ -164,26 +99,6 @@ class ProductPricingManager(models.Manager):
     def get_queryset(self):
         """ just points to qset """
         return ProductAvailabilityQuerySet(self.model, using=self._db)
-
-    # def filter_availability(self, command, location_pk=None, pk_only=False):
-    #     """ just points to qset """
-    #     return self.get_queryset().filter_availability(command, location_pk, pk_only)
-
-    # def priced_in_store(self, location_pk=None):
-    #     """ just points to qset """
-    #     return self.get_queryset().priced_in_store(location_pk)
-
-    # def available_in_store(self, location_pk=None):
-    #     """ just points to qset """
-    #     return self.get_queryset().available_in_store(location_pk)
-
-    # def supplier_products(self, location_pk=None):
-    #     """ just points to qset """
-    #     return self.get_queryset().supplier_products(location_pk)
-
-    # def safe_availability_commands(self):
-    #     """ just points to qset """
-    #     return self.get_queryset().safe_availability_commands()
 
     def product_prices(self, location_pk=None):
         """ just points to qset """
@@ -384,24 +299,3 @@ class Product(models.Model):
                 setattr(alt_prod, field, new_val)
         alt_prod.save()
         return
-
-
-        # from Suppliers.models import SupplierProduct
-        # term = {'product__pk': OuterRef('pk'), 'publish_in_store_price': True}
-        # if location_pk:
-        #     term['retailer__pk'] = location_pk
-        # sup_prods = (
-        #     SupplierProduct
-        #     .objects
-        #     .filter(**term).only('in_store_ppu', 'online_ppu')
-        #     .annotate(min_price=Least('in_store_ppu', 'online_ppu'))
-        #     .order_by('min_price')
-        #     .values('min_price')[:1]
-        # )
-
-        # return self.annotate(
-        #     low_price=Subquery(
-        #         sup_prods,
-        #         output_field=CharField()
-        #     )
-        # )

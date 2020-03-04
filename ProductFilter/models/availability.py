@@ -45,7 +45,6 @@ class AvailabilityFacet:
         self.qterms = [term for term in terms if term in self.values]
         if self.qterms:
             del params[self.name]
-        print(self.qterms)
         return params
 
 
@@ -59,7 +58,6 @@ class AvailabilityFacet:
             for pks in self._supplier_sets:
                 products = products.filter(pk__in=pks)
             self.queryset = products.values_list('pk', flat=True)
-            print(len(self.queryset))
             return self.queryset
         return None
 

@@ -8,6 +8,7 @@ from .location import LocationFacet
 from .numeric import NumericFacet
 from .availability import AvailabilityFacet
 from .price import PriceFacet
+from .file_type import FileTypeFacet
 
 def class_map(facet: BaseFacet):
     classmap = {
@@ -19,7 +20,8 @@ def class_map(facet: BaseFacet):
         'CharField': CharFacet,
         'BooleanField': BoolFacet,
         'MultiPointField': LocationFacet,
-        'ForeignKey': ForeignFacet
+        'ForeignKey': ForeignFacet,
+        'FileField': FileTypeFacet
         }
     facet.__class__ = classmap.get(facet.field_type)
     return facet

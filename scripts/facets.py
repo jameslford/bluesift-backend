@@ -55,12 +55,13 @@ def create_facets():
     BaseFacet.objects.get_or_create(
         content_type=cproduct,
         name='file_types',
+        field_type='FileField',
         attribute_list=[
-            'dxf_file',
-            'rfa_file',
-            'ipt_file',
-            'dwg_3d_file',
-            'dwg_2d_file'
+            '_dxf_file',
+            '_rfa_file',
+            '_ipt_file',
+            '_dwg_3d_file',
+            '_dwg_2d_file'
             ]
         )
 

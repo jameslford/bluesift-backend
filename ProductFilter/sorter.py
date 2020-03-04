@@ -38,7 +38,7 @@ class FilterResponse:
             'enabled_values': self.enabled_values,
             'products': list(self.serialize_products(self.products))
             }
-        cache.set(path_key, pickle_dict, 60 * 10)
+        cache.set(path_key, pickle_dict, 3)
 
 
     @classmethod
@@ -69,8 +69,7 @@ class FilterResponse:
                 return res_dict
             prods = res_dict.get('products')
             if len(prods) <= (page + 1) * page_size:
-                index = slice(page * page_size, len(prods))
-            print('cache res index = ', index)
+                index = slice(None, None)
             res_dict['products'] = prods[index]
             res_dict['current_page'] = page
             return res_dict
@@ -85,12 +84,11 @@ class FilterResponse:
         content = Sorter(product_type, path=request.path, query_dict=query_dict, supplier_pk=location_pk).content
         content.set_cache(path_key)
         if content.product_count <= (page + 1) * page_size:
-            index = slice(page * page_size, content.product_count)
+            index = slice(None, None)
         return content.serialized(index, page)
 
 
     def serialized(self, index, current_page):
-        print('serialized index = ', index)
         facets = [facet.serialize_self() for facet in self.facets]
         return {
             'product_count': self.product_count,
@@ -175,7 +173,7 @@ class Sorter:
         for pks in pk_sets:
             prods = prods.filter(pk__in=pks)
         pks = list(prods.values_list('pk', flat=True))
-        self.query_index.add_products(pks)
+        # self.query_index.add_products(pks)
         return prods
 
 
@@ -193,7 +191,6 @@ class Sorter:
         enabled_values = static_enabled_values + dynamic_enabled_values
         enabled_values = [facet for facet in enabled_values if facet]
         products = dynamic_queryset.intersection(static_queryset).values_list('pk', flat=True)
-        products = self.initial_products.filter(pk__in=products)
         innis = list(itertools.chain.from_iterable(enabled_values))
         product_count = len(products)
         products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()

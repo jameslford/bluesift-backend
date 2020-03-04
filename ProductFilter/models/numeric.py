@@ -95,8 +95,10 @@ class NumericFacet(BaseFacet):
         return None
 
     def serialize_self(self):
-        return_dict = super().serialize_self()
         abs_list = self.__get_absolutes()
+        if not abs_list:
+            return None
+        return_dict = super().serialize_self()
         return_dict.update({'abs_min': abs_list[1]})
         return_dict.update({'abs_max': abs_list[0]})
         return_dict.update({'selected_min': self.selected_min})
