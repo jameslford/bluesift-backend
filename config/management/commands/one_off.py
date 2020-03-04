@@ -9,12 +9,14 @@ from Products.models import Manufacturer
 # from scripts.finish_surfaces import default_clean
 from scripts.facets import create_facets
 from Scraper.models import ScraperGroup
+from config.models import ConfigTree
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        range = ScraperGroup.objects.get(manufacturer__label__iexact='viking')
-        range.scrape()
+        ConfigTree.refresh()
+        # range = ScraperGroup.objects.get(manufacturer__label__iexact='viking')
+        # range.scrape()
         # cache.clear()
 
         # create_facets()

@@ -144,6 +144,7 @@ def get_demo_user(request, user_type='user', auth_type=None):
     pks = eligible_users.values_list('pk', flat=True)
     choice_pk = random.choice(pks)
     user = get_user_model().objects.get(pk=choice_pk)
+    print(user)
     return Response(user_serializer(user), status=status.HTTP_200_OK)
 
 

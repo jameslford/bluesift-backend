@@ -38,3 +38,4 @@ def user_serializer(user: User):
         'company_admin' : profile.company_admin,
         'title': profile.title,
         })
+    return ret_dict

@@ -73,10 +73,10 @@ class ConfigTree(models.Model):
             new_tree = Tree(name, count)
             parent.children.append(new_tree)
             for sub in current.__subclasses__():
-                self.__loop_product(sub, new_tree)
+                self.__loop_supplier(sub, new_tree)
         else:
             for child in current.__subclasses__():
-                self.__loop_product(child, parent)
+                self.__loop_supplier(child, parent)
 
     def __refresh_product_tree(self):
         name = Product._meta.verbose_name_plural.lower().strip()
