@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'Accounts',
     'Addresses',
     'Analytics',
+    'BSadmin',
     'Cards',
     'Carts',
     'config',

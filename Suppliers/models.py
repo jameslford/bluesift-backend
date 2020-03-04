@@ -93,6 +93,7 @@ class SupplierLocation(models.Model):
     website = models.URLField(max_length=300, blank=True, null=True)
     image = models.ImageField(null=True, blank=True, upload_to='storefronts/')
     slug = models.SlugField(null=True, blank=True)
+    hash_value = models.CharField(max_length=1000, null=True, blank=True)
 
     objects = SupplierLocationManager()
 
@@ -124,6 +125,18 @@ class SupplierLocation(models.Model):
             return sys_admin
         owner = self.company.employees.filter(company_account_owner=True).first()
         return owner
+
+
+    def assign_hash(self):
+        if not self.hash_value:
+            hash_list = [
+                self.nickname,
+                self.company.name,
+                self.address.address_string
+                ]
+            self.hash_value = '$*'.join(hash_list)
+            self.save()
+
 
 
     def address_string(self):

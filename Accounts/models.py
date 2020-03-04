@@ -91,6 +91,10 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.email
 
+    def serialize(self):
+        from .serializers import user_serializer
+        return user_serializer(self)
+
     def get_first_name(self):
         if self.full_name:
             first_name = self.full_name.split(' ')[0]

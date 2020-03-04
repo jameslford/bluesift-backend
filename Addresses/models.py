@@ -71,6 +71,7 @@ class AddressManager(models.Manager):
         street_2 = kwargs.get('address_line_2')
         city = kwargs.get('city')
         state = kwargs.get('state')
+        demo = kwargs.get('demo')
         postal_code = kwargs.get('postal_code')
         response = None
         add_obj = self.model.objects.filter(gmaps_id=gmap_id).first() if gmap_id else None
@@ -94,6 +95,7 @@ class AddressManager(models.Manager):
             raise ValidationError('Invalid address')
         add_obj: Address = self.model()
         add_obj.gmaps_id = gmap_id
+        add_obj.demo = demo
         add_obj.postal_code = postal_code
         lat = response['geometry']['location']['lat']
         lng = response['geometry']['location']['lng']

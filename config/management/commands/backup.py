@@ -34,6 +34,6 @@ class Command(BaseCommand):
                 'Cards',
                 'Groups',
                 'Orders',
-                'Addresses'
                 ], stdout=f)
+                # 'Addresses'
                 # 'ProductFilter.FacetOthersCollection',

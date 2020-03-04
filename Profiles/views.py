@@ -9,7 +9,7 @@ from rest_framework import status
 # from config.serializers import serialize_profile
 from Products.serializers import serialize_product
 from .models import BaseProfile, LibraryProduct
-from .serializers import serialize_profile
+from .serializers import employee_mini_serializer, base_mini_serializer
 
 
 
@@ -18,12 +18,12 @@ from .serializers import serialize_profile
 def profile_crud(request: Request):
 
     if request.method == 'GET':
-        return Response(serialize_profile(request.user.get_profile()), status=status.HTTP_200_OK)
+        return Response(request.user.serialed(), status=status.HTTP_200_OK)
 
     if request.method == 'PUT':
         data = request.data
         BaseProfile.objects.update_profile(request.user, **data)
-        return Response(serialize_profile(request.user.get_profile()))
+        return Response(request.user.serialed())
 
     if request.method == 'POST':
         pass
@@ -34,13 +34,13 @@ def profile_crud(request: Request):
     return Response('unsupported method')
 
 
-@api_view(['GET', 'PUT' 'POST', 'DELETE'])
+@api_view(['GET', 'PUT', 'POST', 'DELETE'])
 @permission_classes((IsAuthenticated,))
 def collaborators(request: Request, pk=None):
 
     if request.method == 'GET':
         profile = BaseProfile.subclasses.select_related('consumerprofile', 'supplieremployeeprofile').get_subclass(user=request.user)
-        res = [serialize_profile(col) for col in profile.collaborators.all()]
+        res = [base_mini_serializer(col) for col in profile.collaborators.all()]
         return Response(res, status=status.HTTP_200_OK)
 
     if request.method == 'PUT':
@@ -58,7 +58,7 @@ def collaborators(request: Request, pk=None):
 @api_view(['GET'])
 def show_employees(request: Request, service_pk: int):
     published_employees = BaseProfile.subclasses.filter(company__pk=service_pk, publish=True).select_subclasses()
-    published_employees = [serialize_profile(emp) for emp in published_employees]
+    published_employees = [employee_mini_serializer(emp) for emp in published_employees]
     if request.user.is_authenticated:
         profile: BaseProfile = request.user.get_profile()
         my_collabs = [prof.pk for prof in profile.collaborators]

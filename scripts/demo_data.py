@@ -82,16 +82,17 @@ SUB_TASKS = [
     ]
 
 
-@transaction.atomic
 def create_demo_users():
-    create_addresses()
+    # create_addresses()
     main()
 
+@transaction.atomic
 def main():
     fake = Faker()
     user_count = 12
     retailer_count = 30
-    address_pks = Address.objects.filter(demo=True, supplierlocation__isnull=True, suppliercompany__isnull=True).values_list('pk', flat=True)
+    address_pks = list(Address.objects.filter(demo=True).values_list('pk', flat=True))
+    print(address_pks)
     random.shuffle(address_pks)
     for usernum in range(0, user_count):
         user = __create_user()
@@ -115,7 +116,7 @@ def main():
             company=ret_company
             )
         if ret_num == 0:
-            profile.owner = True
+            profile.company_owner = True
             profile.save()
         for x in range(0, 3):
             loc_add_pk = address_pks.pop()
@@ -326,7 +327,7 @@ def __create_employees(company):
     employee = BaseProfile.objects.create_profile(
         user=user,
         company=company,
-        admin=admin
+        company_admin=admin
         )
     return employee
 

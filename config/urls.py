@@ -13,10 +13,11 @@ from .views import (
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('grenada/', admin.site.urls),
     path('accounts/', include('Accounts.urls')),
     path('addresses/', include('Addresses.urls')),
     path('analytics/', include('Analytics.urls')),
+    path('bs_admin/', include('BSadmin.urls')),
     path('groups/', include('Groups.urls')),
     path('products/', include('Products.urls')),
     path('profiles/', include('Profiles.urls')),

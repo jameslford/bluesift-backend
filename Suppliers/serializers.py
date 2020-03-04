@@ -1,6 +1,6 @@
 from Addresses.serializers import AddressSerializer
 from .models import SupplierLocation
-from Profiles.serializers import serialize_profile
+from Profiles.serializers import employee_mini_serializer
 
 def serialize_location_public_detail(business: SupplierLocation):
     employees = business.company.employees.all()
@@ -11,7 +11,7 @@ def serialize_location_public_detail(business: SupplierLocation):
         'name': business.nickname,
         'image': business.image.url if business.image else None,
         'address': AddressSerializer(business.address).data,
-        'employees': [serialize_profile(emp) for emp in employees],
+        'employees': [employee_mini_serializer(emp) for emp in employees],
         'info': business.company.info
         }
 

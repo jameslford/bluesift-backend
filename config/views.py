@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from Profiles.models import LibraryProduct
-from Profiles.serializers import serialize_profile
+# from Profiles.serializers import serialize_profile
 from Suppliers.models import SupplierProduct
 from .models import UserTypeStatic, ConfigTree
 from .serializers import LinkSerializer, ShortLib, ProductStatus
@@ -27,7 +27,7 @@ def user_config(request: HttpRequest):
     user = request.user if request.user and request.user.is_authenticated else None
     conf_tree: ConfigTree = ConfigTree.load()
     res_dict = {
-        'profile': serialize_profile(user.get_profile()) if user else None,
+        'profile': user.serialize() if user else None,
         'links': LinkSerializer(user).serialized,
         'departments': conf_tree.product_tree,
         'suppliers': conf_tree.supplier_tree

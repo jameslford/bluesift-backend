@@ -15,7 +15,7 @@ class ProfileManager(models.Manager):
         owner = kwargs.get('owner', False)
         admin = kwargs.get('admin', False)
         title = kwargs.get('title', None)
-        plan = kwargs.get('plan', None)
+        # plan = kwargs.get('plan', None)
         phone = kwargs.get('phone_number', None)
         if user.is_supplier:
             if not company:
@@ -23,9 +23,9 @@ class ProfileManager(models.Manager):
             return SupplierEmployeeProfile.objects.get_or_create(
                 user=user,
                 company=company,
-                owner=owner,
+                company_owner=owner,
                 title=title,
-                admin=admin)[0]
+                company_admin=admin)[0]
         return ConsumerProfile.objects.create(
             user=user,
             group=group,
@@ -59,8 +59,8 @@ class ProfileManager(models.Manager):
         profile.save()
         return profile
 
-    def employee_update_by_owner(self, user, **kwargs):
-        return None
+    # def employee_update_by_owner(self, user, **kwargs):
+    #     return None
 
 
 
@@ -73,6 +73,7 @@ class BaseProfile(models.Model):
         )
     collaborators = models.ManyToManyField('BaseProfile', blank=True)
     date_create = models.DateTimeField(auto_now_add=True)
+    location_asked = models.BooleanField(default=False)
     avatar = models.ImageField(null=True, blank=True, upload_to='profiles/')
 
     objects = ProfileManager()
@@ -104,8 +105,8 @@ class ConsumerProfile(BaseProfile):
 
 
 class SupplierEmployeeProfile(BaseProfile):
-    owner = models.BooleanField(default=False)
-    admin = models.BooleanField(default=False)
+    company_owner = models.BooleanField(default=False)
+    company_admin = models.BooleanField(default=False)
     publish = models.BooleanField(default=True)
     title = models.CharField(max_length=100, null=True)
     contact_for = models.ManyToManyField('Suppliers.SupplierLocation')
