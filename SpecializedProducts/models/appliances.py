@@ -1,7 +1,10 @@
 import io
 import zipfile
 import decimal
+import tempfile
+import requests
 from django.db import models
+from django.db import transaction
 from django.contrib.postgres.fields import DecimalRangeField
 import trimesh
 from trimesh.visual.resolvers import WebResolver
@@ -31,6 +34,10 @@ class Appliance(ProductSubClass):
 
     def get_depth(self):
         return float(self.depth.lower) if self.depth else None
+
+    def add_proprietary_files(self):
+        converter = ApplianceConverter(self)
+        converter.add_proprietary_files()
 
     def convert_geometries(self):
         converter = ApplianceConverter(self)
@@ -85,6 +92,55 @@ class ApplianceConverter(Converter):
         print(self.product.name, 'no mtl file')
         res = self.download_bytes(self.product._obj_file.url)
         return res
+
+    def add_proprietary_files(self):
+        product = self.product
+        prop_array = [
+            ['.rfa', product.rfa_file, product._rfa_file],
+            ['_2d.dwg', product.dwg_2d_file, product._dwg_2d_file],
+            ['_3d.dwg', product.dwg_3d_file, product._dwg_3d_file],
+            ['.dxf', product.dxf_file, product._dxf_file]
+            ]
+        for ext, origin, destination in prop_array:
+            print(ext, origin, destination)
+            if not origin or origin == 'None':
+                continue
+            if destination:
+                continue
+            request = requests.get(origin, stream=True)
+            # Was the request OK?
+            # pylint: disable=no-member
+            if request.status_code != requests.codes.ok:
+                # Nope, error handling, skip file etc etc etc
+                continue
+
+            # Get the filename from the url, used for saving later
+            # file_name = image_url.split('/')[-1]
+            filename = str(product.bb_sku) + ext
+
+            # Create a temporary file
+            lf = tempfile.NamedTemporaryFile()
+
+            # Read the streamed image in sections
+            for block in request.iter_content(1024 * 8):
+
+                # If no more file then stop
+                if not block:
+                    break
+
+                # Write image block to temporary file
+                lf.write(block)
+            destination.save(filename, lf, save=True)
+            # print(ext, origin, destination)
+            # if not origin:
+            #     continue
+            # if destination:
+            #     continue
+            # buffer = self.download_string(origin)
+            # filename = str(product.bb_sku) + ext
+            # destination.save(filename, buffer, save=True)
+
+
 
     def convert(self):
         if not self.product.obj_file:

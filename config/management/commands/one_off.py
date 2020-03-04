@@ -11,10 +11,16 @@ from scripts.facets import create_facets
 from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 
+from SpecializedProducts.models import Appliance
+
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        ConfigTree.refresh()
+        alla = Appliance.objects.all()
+        for a in alla:
+            a.add_proprietary_files()
+        # ConfigTree.refresh()
         # range = ScraperGroup.objects.get(manufacturer__label__iexact='viking')
         # range.scrape()
         # cache.clear()
