@@ -82,7 +82,6 @@ class ApplianceConverter(Converter):
             return buffer
 
 
-
     def get_initial(self) -> io.BytesIO:
         if not self.product._obj_file:
             return None
@@ -92,6 +91,7 @@ class ApplianceConverter(Converter):
         print(self.product.name, 'no mtl file')
         res = self.download_bytes(self.product._obj_file.url)
         return res
+
 
     def add_proprietary_files(self):
         product = self.product
@@ -108,38 +108,16 @@ class ApplianceConverter(Converter):
             if destination:
                 continue
             request = requests.get(origin, stream=True)
-            # Was the request OK?
             # pylint: disable=no-member
             if request.status_code != requests.codes.ok:
-                # Nope, error handling, skip file etc etc etc
                 continue
-
-            # Get the filename from the url, used for saving later
-            # file_name = image_url.split('/')[-1]
-            filename = str(product.bb_sku) + ext
-
-            # Create a temporary file
+            filename = str(product.pk) + ext
             lf = tempfile.NamedTemporaryFile()
-
-            # Read the streamed image in sections
             for block in request.iter_content(1024 * 8):
-
-                # If no more file then stop
                 if not block:
                     break
-
-                # Write image block to temporary file
                 lf.write(block)
             destination.save(filename, lf, save=True)
-            # print(ext, origin, destination)
-            # if not origin:
-            #     continue
-            # if destination:
-            #     continue
-            # buffer = self.download_string(origin)
-            # filename = str(product.bb_sku) + ext
-            # destination.save(filename, buffer, save=True)
-
 
 
     def convert(self):
@@ -158,6 +136,7 @@ class ApplianceConverter(Converter):
         self.assign_sizes(mes)
         self.product.save_derived_glb(mes)
 
+
     def assign_sizes(self, mes: trimesh.Trimesh):
         length, height, depth = mes.extents
         center = mes.centroid
@@ -171,41 +150,9 @@ class ApplianceConverter(Converter):
         self.product.derived_width = length
 
 
-
 class Range(Appliance):
     pass
 
 
 class ColdStorage(Appliance):
     pass
-
-
-
-
-        # self.product.derived_depth
-
-        # file = download_bytes(field.url)
-        # print(file, field.url)
-        # file.seek(0)
-        # mes: trimesh.Trimesh = trimesh.load(file, 'obj', resolver=self.resolver)
-        # blob = mes.export(None, 'glb')
-        # name = str(self.product.bb_sku) + '.glb'
-        # self.product.derived_gbl.save(name, ContentFile(blob), save=True)
-
-            # print(line.decode('utf-8'))
-        # fout = download_string(self.product.object.url)
-        # with self.product.obj_file.open('r') as fin:
-        #     data = fin.readlines()
-        #     for num, line in enumerate(data):
-        #         print(line)
-        # for 
-        # field: FieldFile = self.product.obj_file.open('rb')
-        # with self.product.obj_file.open('r') as field:
-        # self.product.derived_obj.save(filename, buffer, save=True)
-        # print('line 100')
-        # self.product.refresh_from_db()
-        # return self.product.derived_obj
-        # if self.product.derived_obj:
-        #     file = download_bytes(self.product.derived_obj.url)
-        #     return file
-        # return self.product.obj_file

@@ -119,10 +119,11 @@ class SubproductGeometryPresentationSerializer:
         texture_map = product.get_texture_map()
         self.texture_map = texture_map.url.replace('https://', 'http://') if texture_map else None
 
-        self.rfa_file = product.rfa_file
-        self.ipt_file = product.ipt_file
-        self.dwg_2d_file = product.dwg_2d_file
-        self.dwg_3d_file = product.dwg_3d_file
+        self.rfa_file = product._rfa_file.url if product._rfa_file else None
+        self.ipt_file = product._ipt_file.url if product._ipt_file else None
+        self.dwg_2d_file = product._dwg_2d_file.url if product._dwg_2d_file else None
+        self.dwg_3d_file = product._dwg_3d_file.url if product._dwg_3d_file else None
+        self.dxf_file = product._dxf_file.url if product._dxf_file else None
         self.obj_file = product.obj_file
         self.geometry_model = product.derived_gbl.url if product.derived_gbl else None
         self.geometry_clean = product.geometry_clean
