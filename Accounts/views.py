@@ -130,8 +130,8 @@ def get_demo_user(request, user_type='user', auth_type=None):
     if auth_type in ('owner', 'admin'):
         auth_term[auth_type] = True
     else:
-        auth_term['owner'] = False
-        auth_term['admin'] = False
+        auth_term['company_owner'] = False
+        auth_term['company_admin'] = False
 
     user_type = user_type.lower()
     if user_type in ('suppliers', 'supplier'):
@@ -144,7 +144,7 @@ def get_demo_user(request, user_type='user', auth_type=None):
     pks = eligible_users.values_list('pk', flat=True)
     choice_pk = random.choice(pks)
     user = get_user_model().objects.get(pk=choice_pk)
-    print(user)
+    # print(user)
     return Response(user_serializer(user), status=status.HTTP_200_OK)
 
 
