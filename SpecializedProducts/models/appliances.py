@@ -25,6 +25,13 @@ class Appliance(ProductSubClass):
     height = DecimalRangeField(null=True, blank=True)
     depth = DecimalRangeField(null=True, blank=True)
 
+    def assign_name(self):
+        if self.name:
+            return self.name
+        self.name = f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'.lower()
+        self.save()
+        return self.name
+
 
     def get_height(self):
         return float(self.height.lower) if self.height else None

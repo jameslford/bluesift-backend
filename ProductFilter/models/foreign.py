@@ -1,13 +1,18 @@
 from django.db.models import Q, Count
+from django.http import QueryDict
 from .base import BaseFacet, BaseReturnValue
-
-
 
 
 class ForeignFacet(BaseFacet):
 
     class Meta:
         proxy = True
+
+
+    def parse_request(self, params: QueryDict):
+        qterms = params.getlist(self.attribute, None)
+        self.qterms = qterms[0].split(',') if qterms else []
+        return params
 
 
     def count_self(self, query_index_pk, facets, products=None):

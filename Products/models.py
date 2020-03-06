@@ -219,8 +219,8 @@ class Product(models.Model):
 
 
     def get_name(self):
-        if self.name:
-            return self.name
+        # if self.name:
+        #     return self.name
         return self.assign_name()
 
 
@@ -265,7 +265,7 @@ class Product(models.Model):
         self.locations = points
         self.save()
 
-    def set_hash(self):
+    def get_hash_value(self):
         fields = [
             'manufacturer',
             'manufacturer_style',
@@ -274,7 +274,17 @@ class Product(models.Model):
             ] + self.name_fields
         vals = list(model_to_dict(self, fields=fields).values())
         vals = [str(val) for val in vals]
-        self.hash_value = '*$'.join(vals)
+        return ' '.join(vals)
+
+    def get_category(self, cls=None):
+        if not cls:
+            cls = self.__class__
+        print(cls)
+        subs = cls.__subclasses__()
+        if not subs:
+            return cls.__name__
+        for sub in subs:
+            self.get_category(sub)
 
     def scraper_save(self):
         if not self.manufacturer_sku:

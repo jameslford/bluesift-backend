@@ -38,7 +38,7 @@ class FilterResponse:
             'enabled_values': self.enabled_values,
             'products': list(self.serialize_products(self.products))
             }
-        cache.set(path_key, pickle_dict, 3)
+        cache.set(path_key, pickle_dict, 60 * 15)
 
 
     @classmethod

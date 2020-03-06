@@ -5,11 +5,12 @@ from Products.models import Manufacturer
 # from utils.images import remove_background
 # from scripts.finish_surfaces import assign_tiling_image
 # from SpecializedProducts.models import FinishSurface
-# from scripts.search import create_indexes
+from scripts.search import create_indexes
 # from scripts.finish_surfaces import default_clean
 from scripts.facets import create_facets
 from Scraper.models import ScraperGroup
 from config.models import ConfigTree
+from Search.models import SearchIndex
 
 from SpecializedProducts.models import Appliance
 
@@ -17,9 +18,13 @@ from SpecializedProducts.models import Appliance
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        alla = Appliance.objects.all()
-        for a in alla:
-            a.add_proprietary_files()
+        # qs = SearchIndex.objects.filter(name='Hoffman, Morales and Peters demo 2')
+        # for q in qs:
+        #     print(q)
+        create_indexes()
+        # alla = Appliance.objects.all()
+        # for a in alla:
+        #     a.add_proprietary_files()
         # ConfigTree.refresh()
         # range = ScraperGroup.objects.get(manufacturer__label__iexact='viking')
         # range.scrape()

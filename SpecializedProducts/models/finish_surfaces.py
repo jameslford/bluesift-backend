@@ -164,7 +164,7 @@ class FinishSurface(ProductSubClass):
     def assign_name(self):
         width = self.get_depth()
         length = self.get_width()
-        self.name = f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}, {width} x {length}'.lower()
+        self.name = f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}, {self.look}, {self.finish}, {width} x {length}, {self.manufacturer_sku}'.lower()
         self.save()
         return self.name
 

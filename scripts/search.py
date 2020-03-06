@@ -21,10 +21,12 @@ for manufacturer in manufacturers:s
 
 '''
 
-
+# @transaction.atomic
 def create_indexes():
     all_si = SearchIndex.objects.all()
     all_si.delete()
+    SearchIndex.create_refresh_suppliers()
+    SearchIndex.create_refresh_products()
     __create_static_indexes()
     # __create_fs_indexes()
 

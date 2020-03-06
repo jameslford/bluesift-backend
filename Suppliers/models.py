@@ -127,15 +127,16 @@ class SupplierLocation(models.Model):
         return owner
 
 
-    def assign_hash(self):
-        if not self.hash_value:
-            hash_list = [
-                self.nickname,
-                self.company.name,
-                self.address.address_string
-                ]
-            self.hash_value = '$*'.join(hash_list)
-            self.save()
+    def get_hash_value(self):
+        # if not self.hash_value:
+        hash_list = [
+            self.nickname,
+            self.company.name,
+            self.address.address_string
+            ]
+        return ' '.join(hash_list)
+        # self.hash_value = 
+        # self.save()
 
 
 
