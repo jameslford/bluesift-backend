@@ -13,7 +13,7 @@ from .views import (
 
 
 urlpatterns = [
-    path('grenada/', admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
     path('accounts/', include('Accounts.urls')),
     path('addresses/', include('Addresses.urls')),
     path('analytics/', include('Analytics.urls')),

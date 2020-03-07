@@ -10,7 +10,7 @@ from django.db.models.query import QuerySet, Value
 from django.db.models import CharField
 from django.db import transaction
 from Suppliers.models import SupplierProduct
-from config.tasks import add_supplier_record
+# from config.tasks import add_supplier_record
 from config.globals import check_department_string
 from Products.models import Product
 from .models import (
@@ -49,7 +49,7 @@ class FilterResponse:
         location_pk = None
         if 'supplier_pk' in query_dict:
             location_pk = query_dict.get('supplier_pk', None)
-            add_supplier_record.delay(request.get_full_path(), pk=location_pk)
+            # add_supplier_record.delay(request.get_full_path(), pk=location_pk)
         if 'page' in query_dict:
             page = query_dict.pop('page')[0].split(',')[-1]
         if 'search' in query_dict:

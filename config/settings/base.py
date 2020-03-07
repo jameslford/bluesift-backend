@@ -7,6 +7,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MARKUP = '1.10'
 DESIRED_IMAGE_SIZE = 350
 
+ADMIN_URL = 'grenada/'
+
 AWS_STATIC_BUCKET_NAME = 'pixidesk-development-media'
 AWS_MEDIA_BUCKET_NAME = "pixidesk-development-media"
 AWS_S3_REGION_NAME = 'us-east-1'

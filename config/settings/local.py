@@ -83,7 +83,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    # 'config.custom_middleware.LastSeenMiddleware',
+    'config.custom_middleware.LastSeenMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'debug_panel.middleware.DebugPanelMiddleware',
 ]

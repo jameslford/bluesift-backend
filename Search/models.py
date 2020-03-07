@@ -9,7 +9,7 @@ def debug_print(*args):
 
 
 class SearchIndex(models.Model):
-    name = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=200)
     return_url = models.CharField(max_length=200)
     in_department = models.CharField(max_length=150, blank=True, null=True)
     hash_value = models.CharField(max_length=2000, unique=True)
@@ -25,6 +25,9 @@ class SearchIndex(models.Model):
         null=True,
         blank=True
         )
+
+    class Meta:
+        unique_together = ['name', 'in_department']
 
 
     @classmethod

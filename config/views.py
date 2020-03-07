@@ -64,6 +64,13 @@ def landing(request):
     return Response([ut.serialize() for ut in uts])
 
 
+
+
+
+
+
+
+
 # @api_view(['GET'])
 # def task_progress(request):
 #     job_id = request.GET.get('job_id')

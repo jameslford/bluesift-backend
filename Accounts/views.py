@@ -23,7 +23,7 @@ from .tasks import send_verification_email
 from Profiles.models import BaseProfile, SupplierEmployeeProfile
 from .serializers import user_serializer
 
-USER_TIMEOUT_MINUTES = .2
+USER_TIMEOUT_MINUTES = 6
 
 
 @api_view(['POST'])

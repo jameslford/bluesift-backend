@@ -1,5 +1,6 @@
 from rest_framework.authtoken.models import Token
 from Profiles.models import BaseProfile, ConsumerProfile, SupplierEmployeeProfile
+from Addresses.serializers import serialize_zipcode
 from .models import User
 
 
@@ -15,27 +16,25 @@ def user_serializer(user: User):
         'get_full_name': user.get_full_name(),
         'get_initials': user.get_initials(),
         'is_supplier': user.is_supplier,
-        'current_zipcode': user.current_zipcode.code if user.current_zipcode else None,
-        'lat': user.current_zipcode.centroid.lat if user.current_zipcode else None,
-        'lng': user.current_zipcode.centroid.lng if user.current_zipcode else None,
-        'demo': user.demo,
         'staff': user.staff,
+        'demo': user.demo,
         'admin': user.admin,
-        'avatar' : profile.avatar.url if profile.avatar else None,
-        'email': user.email,
         'is_active': user.is_active,
+        'auth_token': str(auth_token),
         'email_verified': user.email_verified,
-        'auth_token': str(auth_token)
+        'current_zipcode': profile.current_zipcode if profile.current_zipcode else None,
+        'location_asked': profile.location_asked,
+        'avatar' : profile.avatar.url if profile.avatar else None,
         }
     if isinstance(profile, ConsumerProfile):
         ret_dict.update({
-        'plan' : profile.plan,
-        'phone_number' : profile.phone_number
+            'plan' : profile.plan,
+            'phone_number' : profile.phone_number
         })
     elif isinstance(profile, SupplierEmployeeProfile):
         ret_dict.update({
-        'company_owner' : profile.company_owner,
-        'company_admin' : profile.company_admin,
-        'title': profile.title,
+            'company_owner' : profile.company_owner,
+            'company_admin' : profile.company_admin,
+            'title': profile.title,
         })
     return ret_dict

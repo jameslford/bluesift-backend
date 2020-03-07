@@ -9,8 +9,9 @@ from config.custom_permissions import IsAdminorReadOnly
 from ProductFilter.sorter import FilterResponse
 from SpecializedProducts.models import ProductSubClass
 from .models import Product, ValueCleaner
-from .tasks import add_detail_record
+# from .tasks import add_detail_record
 from .serializers import serialize_detail, serialize_detail_quick
+from Analytics.models import ProductDetailRecord
 # import time
 # from django.http import QueryDict
 # from config.globals import check_department_string
@@ -83,7 +84,9 @@ def product_detail(request, pk):
             response.update({
                 'admin_fields' : product.get_admin_fields()
             })
-        add_detail_record.delay(request.get_full_path(), pk)
+        pdr = ProductDetailRecord()
+        pdr.parse_request(request, product=pk)
+        # add_detail_record.delay(request.get_full_path(), pk)
         return Response(response, status=status.HTTP_200_OK)
 
     if request.method == 'POST':
@@ -105,5 +108,7 @@ def product_detail(request, pk):
 def product_detail_quick(request, pk):
     product = Product.subclasses.get_subclass(pk=pk)
     response = serialize_detail_quick(product)
-    add_detail_record.delay(request.get_full_path(), pk)
+    pdr = ProductDetailRecord()
+    pdr.parse_request(request, product=pk)
+    # add_detail_record.delay(request.get_full_path(), pk)
     return Response(response, status=status.HTTP_200_OK)

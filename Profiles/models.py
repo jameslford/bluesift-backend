@@ -1,9 +1,13 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.gis.db.models import PointField
 from model_utils.managers import InheritanceManager
 from Groups.models import SupplierCompany
 from Plans.models import ConsumerPlan
 from Products.models import Product
+from Addresses.models import Zipcode, Coordinate
+
+
 
 
 class ProfileManager(models.Manager):
@@ -37,7 +41,7 @@ class ProfileManager(models.Manager):
         profile: BaseProfile = user.get_profile()
         profile_pk = kwargs.get('pk')
         if profile_pk and profile_pk != profile.pk:
-            return self.employee_update_by_owner(user, **kwargs)
+            return self.employee_update_by_owner(profile, **kwargs)
 
         avatar = kwargs.get('avatar')
         if avatar:
@@ -59,8 +63,13 @@ class ProfileManager(models.Manager):
         profile.save()
         return profile
 
-    # def employee_update_by_owner(self, user, **kwargs):
-    #     return None
+
+    def employee_update_by_owner(self, boss_profile, **kwargs):
+        employee_profile_pk = kwargs.get('pk')
+        employee_profile: SupplierEmployeeProfile = SupplierEmployeeProfile.get(pk=employee_profile_pk)
+        if employee_profile.company != boss_profile:
+            raise Exception('forbidden attempt to change employee profile')
+        return None
 
 
 
@@ -75,7 +84,18 @@ class BaseProfile(models.Model):
     date_create = models.DateTimeField(auto_now_add=True)
     location_asked = models.BooleanField(default=False)
     avatar = models.ImageField(null=True, blank=True, upload_to='profiles/')
-
+    current_zipcode = models.ForeignKey(
+        Zipcode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+        )
+    latest_location = models.ForeignKey(
+        Coordinate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+        )
     objects = ProfileManager()
     subclasses = InheritanceManager()
 

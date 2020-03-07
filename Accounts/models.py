@@ -7,7 +7,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from rest_framework.authtoken.models import Token
 from Profiles.models import BaseProfile
-from Addresses.models import Zipcode
 from config.models import LibraryLink
 
 
@@ -74,14 +73,8 @@ class User(AbstractBaseUser):
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     demo = models.BooleanField(default=False)
-    current_zipcode = models.ForeignKey(
-        Zipcode,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-    last_seen = models.DateTimeField(default=timezone.now)
     email_verified = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(default=timezone.now)
 
     objects = UserManager()
 

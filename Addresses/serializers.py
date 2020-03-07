@@ -30,6 +30,19 @@ class ZipcodeSerializer(serializers.ModelSerializer):
             # 'centroid'
             )
 
+def coordinate_serializer(coordinate: Coordinate):
+    return {
+        'lat': coordinate.lat,
+        'lng': coordinate.lng,
+        'point': coordinate.point
+    }
+
+def serialize_zipcode(zipcode: Zipcode):
+    return {
+        'code': zipcode.code,
+        'centroid': coordinate_serializer(zipcode.centroid)
+        }
+
 
 class AddressUpdateSerializer(serializers.ModelSerializer):
     postal_code = ZipcodeForUpdate()
