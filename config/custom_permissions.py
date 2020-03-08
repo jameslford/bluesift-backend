@@ -38,12 +38,12 @@ class OwnerDeleteAdminEdit(permissions.BasePermission):
             return False
         profile = user.get_profile()
         if request.method == 'DELETE':
-            if profile.owner:
-                return True
+            if not profile.owner:
+                return False
         if request.method == 'PUT':
-            if profile.owner or profile.admin:
-                return True
-        return False
+            if not (profile.owner or profile.admin):
+                return False
+        return True
 
 class PrivateSupplierCrud(permissions.BasePermission):
 

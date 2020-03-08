@@ -12,6 +12,7 @@ from rest_framework import status
 from config.custom_permissions import OwnerDeleteAdminEdit
 from Profiles.models import BaseProfile
 from .models import SupplierCompany
+from .serializers import supplier_company_serializer
 
 
 # @api_view(['POST'])
@@ -30,6 +31,11 @@ def public_company_view(request: Request, pk):
 @permission_classes((IsAuthenticated, OwnerDeleteAdminEdit))
 @transaction.atomic()
 def company_crud(request: Request):
+
+    if request.method == 'GET':
+        group = request.user.get_group()
+        res = supplier_company_serializer(group)
+        return Response(res)
 
     if request.method == 'DELETE':
         SupplierCompany.objects.delete_company(request.user)

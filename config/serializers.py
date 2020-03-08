@@ -2,11 +2,7 @@ from django.db.models import Exists, OuterRef
 from Addresses.serializers import AddressSerializer
 from Addresses.models import Address
 from Accounts.models import User
-from Accounts.serializers import user_serializer
 from Suppliers.models import SupplierLocation, SupplierProduct
-from Profiles.models import SupplierEmployeeProfile, ConsumerProfile
-# from Profiles.models import LibraryProduct
-# from Projects.models import Project
 from Plans.serializers import PlanSerializer
 from Groups.models import SupplierCompany
 from utils.tree import Tree
@@ -95,7 +91,6 @@ class LinkTree:
         # self.children = children if children else []
         self.children = []
         if children:
-            print(children)
             self.children = [LinkTree(**child) for child in children]
         if tree:
             self.name = tree.name
@@ -130,20 +125,11 @@ class LinkSerializer:
                 self.library_links.append(LinkTree(name='locations', count=None, children=trees))
             else:
                 plinks = [{'name': val['nickname'], 'link': val['pk']} for val in user.get_collections().values('pk', 'nickname')]
-                # plinks = [LinkTree(name=val['nickname']) for val in user.get_collections().values('pk', 'nickname')]
                 self.library_links.append(LinkTree(name='projects', children=plinks))
 
     @property
     def serialized(self):
         return [link.serialized for link in self.library_links]
-
-
-                # print(trees)
-                # for tree in trees:
-                #     print(tree)
-                # collections_links = [LinkTree(**ptree) for ptree in trees]
-                # collections_links = [ptree.product_tree.get_trees() for ptree in user.get_collections()]
-
 
 
 class CollectionNote:
