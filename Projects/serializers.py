@@ -1,7 +1,7 @@
 """
 serializers used for return project and retailer locations list to user library
 """
-
+import datetime
 from typing import Dict
 from Addresses.serializers import AddressSerializer
 # from Products.serializers import serialize_product_priced
@@ -16,13 +16,15 @@ def serialize_project_detail(project: Project):
         'children',
         'children__children'
         ).filter(project=project, level=0)]
+
     return {
         'pk' : project.pk,
         'image' : project.image.url if project.image else None,
         'nickname' : project.nickname,
         'deadline' : project.deadline,
+        'start_date': tasks.values('start_date')[0] if tasks else datetime.datetime.now(),
         'address' : AddressSerializer(project.address).data,
-        'tasks': tasks
+        'tasks': [serialize_task(task) for task in tasks]
         }
 
 
@@ -37,13 +39,6 @@ def serialize_task(task: ProjectTask) -> Dict[str, any]:
         'children': [serialize_task(child) for child in task.children.all()],
         'predecessor': serialize_task(task.predecessor) if task.predecessor else None
     }
-        # 'assigned_product': {
-        #     'name': task.product.name,
-        #     'pk': task.product.pk
-        #     } if task.product else None,
-        # 'selected_retailer': task.selected_retailer.pk if task.selected_retailer else None,
-        # 'supplier_product': task.supplier_product.pk if task.supplier_product else None,
-        # 'product': serialize_product_priced(task.product) if task.product else None,
 
 
 def reserialize_task(project, data, parent: ProjectTask = None):
@@ -86,4 +81,14 @@ def resource_serializer(product: ProjectProduct):
         'supplier_product': product.supplier_product.get_priced() if product.supplier_product else None,
         'product': serialize_product(product.product.product),
         'priced': [pro.get_priced() for pro in product.product.product.priced.all()]
-    }
+        }
+
+
+
+        # 'assigned_product': {
+        #     'name': task.product.name,
+        #     'pk': task.product.pk
+        #     } if task.product else None,
+        # 'selected_retailer': task.selected_retailer.pk if task.selected_retailer else None,
+        # 'supplier_product': task.supplier_product.pk if task.supplier_product else None,
+        # 'product': serialize_product_priced(task.product) if task.product else None,

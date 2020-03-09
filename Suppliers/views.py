@@ -66,6 +66,13 @@ def public_location_detail_view(request: HttpRequest, pk: int):
     return Response(info, status=status.HTTP_200_OK)
 
 
+@api_view(['GET'])
+@permission_classes((PrivateSupplierCrud,))
+def private_locations_list(request):
+    group = request.user.get_group()
+    res = [serialize_location_public_detail(loc) for loc in group.shipping_locations.all()]
+    return Response(res, status=status.HTTP_200_OK)
+
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
 @permission_classes((PrivateSupplierCrud,))
 def crud_location(request: Request, pk: int = None):
