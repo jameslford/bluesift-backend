@@ -22,7 +22,7 @@ def user_serializer(user: User):
         'is_active': user.is_active,
         'auth_token': str(auth_token),
         'email_verified': user.email_verified,
-        'current_zipcode': profile.current_zipcode if profile.current_zipcode else None,
+        'current_zipcode': serialize_zipcode(profile.current_zipcode) if profile.current_zipcode else None,
         'location_asked': profile.location_asked,
         'avatar' : profile.avatar.url if profile.avatar else None,
         }
