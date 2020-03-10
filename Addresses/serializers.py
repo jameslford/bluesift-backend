@@ -34,7 +34,7 @@ def coordinate_serializer(coordinate: Coordinate):
     return {
         'lat': coordinate.lat,
         'lng': coordinate.lng,
-        'point': coordinate.point
+        # 'point': coordinate.point
     }
 
 def serialize_zipcode(zipcode: Zipcode):
