@@ -1,4 +1,6 @@
 from typing import List
+import datetime
+import random
 from django.core.management.base import BaseCommand
 from SpecializedProducts.models import FinishSurface
 from Products.models import Manufacturer
@@ -11,6 +13,7 @@ from scripts.facets import create_facets
 from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from Search.models import SearchIndex
+from Projects.models import ProjectTask, Project
 
 from SpecializedProducts.models import Appliance
 
@@ -18,10 +21,18 @@ from SpecializedProducts.models import Appliance
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        projects = Project.objects.all()
+        for project in projects:
+            parent_task = project.tasks.all()[0]
+            date = parent_task.start_date + datetime.timedelta(days=random.randint(3, 9))
+            dur = datetime.timedelta(days=random.randint(1, 4))
+            prog = random.randint(1, 100)
+            pred = list(project.tasks.all())[-1]
+            ProjectTask.objects.create(project=project, parent=parent_task, predecessor=pred, start_date=date, duration=dur, progress=prog, name='caulk tile')
         # qs = SearchIndex.objects.filter(name='Hoffman, Morales and Peters demo 2')
         # for q in qs:
         #     print(q)
-        create_indexes()
+        # create_indexes()
         # alla = Appliance.objects.all()
         # for a in alla:
         #     a.add_proprietary_files()

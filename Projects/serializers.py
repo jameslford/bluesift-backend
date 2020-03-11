@@ -3,6 +3,7 @@ serializers used for return project and retailer locations list to user library
 """
 import datetime
 from typing import Dict
+from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
 from Addresses.serializers import AddressSerializer
 # from Products.serializers import serialize_product_priced
 from Products.serializers import serialize_product
@@ -29,15 +30,19 @@ def serialize_project_detail(project: Project):
 
 
 def serialize_task(task: ProjectTask) -> Dict[str, any]:
+    dates = task.get_dates()
     return {
         'pk': task.pk,
         'name': task.name,
-        'progress': task.progress,
+        'progress': task.progress if task.progress else 0,
         'saved': True,
-        'start_date': task.start_date,
-        'duration': task.duration / DAY if task.duration else None,
+        'start_date': dates.get('min_date'),
+        'estimated_finish': dates.get('max_date'),
+        # 'start_date': task.start_date,
+        # 'estimated_finish': task.estimated_finish(),
+        'duration': task.duration if task.duration else None,
         'children': [serialize_task(child) for child in task.children.all()],
-        'predecessor': serialize_task(task.predecessor) if task.predecessor else None
+        'predecessor': task.predecessor.pk if task.predecessor else None
     }
 
 

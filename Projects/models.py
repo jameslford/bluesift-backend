@@ -1,5 +1,7 @@
 from typing import Dict
+from datetime import timedelta, datetime
 from django.db import models, transaction
+from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
 from django.core.exceptions import ValidationError
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
@@ -130,7 +132,7 @@ class ProjectTask(models.Model):
     predecessor_type = models.CharField(choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    progress = models.IntegerField(null=True)
+    progress = models.IntegerField(default=0)
     level = models.IntegerField(default=0)
     predecessor = models.ForeignKey(
         'self',
@@ -150,9 +152,47 @@ class ProjectTask(models.Model):
         related_name='tasks'
         )
 
+    def __str__(self):
+        return f'{self.project.nickname}, {self.name}'
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.count_parents()
+        dates = self.get_dates()
+        self.start_date = dates['min_date']
+        self.duration = dates['max_date'] - dates['min_date']
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    def get_start_date(self):
+        if self.predecessor:
+            if self.predecessor_type == 'FTS':
+                return self.predecessor.estimated_finish()
+            if self.predecessor_type == 'STS':
+                return self.predecessor.get_start_date()
+        return self.start_date
+
+
+    def estimated_finish(self):
+        progress = self.progress if self.progress else 0
+        dur = self.duration.total_seconds() * (1 - (progress/100))
+        return self.get_start_date() + timedelta(seconds=dur)
+
+    def get_dates(self):
+        start_date = self.get_start_date()
+        estimated_finish = self.estimated_finish()
+        children = self.children.all()
+        if children:
+            for child in children:
+                dates = child.get_dates()
+                if dates['min_date'] < start_date:
+                    self.start_date = dates['min_date']
+                if dates['max_date'] > estimated_finish:
+                    estimated_finish = dates['max_date']
+        return {
+            'min_date': start_date,
+            'max_date': estimated_finish
+            }
+
+
 
     def count_parents(self):
         level = 0
