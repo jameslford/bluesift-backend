@@ -71,14 +71,14 @@ APPLICATIONS = [
 
 
 SUB_TASKS = [
-    'clean',
-    'electrical',
+    'demo',
     'plumbing',
-    'painting',
+    'electrical',
     'framing',
     'finish work',
+    'painting',
     'millwork',
-    'demo'
+    'clean',
     ]
 
 
@@ -156,8 +156,8 @@ def create_addresses():
 def add_additonal():
     __create_supplier_products()
     __create_group_products()
-    __create_parent_tasks()
-    __create_child_tasks()
+    # __create_parent_tasks()
+    # __create_child_tasks()
 
 
 def __add_group_products(profile: ConsumerProfile):
@@ -182,30 +182,30 @@ def __create_group_products():
         __add_group_products(prof)
 
 
-def __create_parent_tasks():
+def create_parent_tasks():
     projects: List[Project] = Project.objects.all()
     for project in projects:
         print('creating parent tasks for ', project.nickname)
         rooms = ROOMS.copy()
         total_rooms = len(rooms)
         products = [prod.product for prod in project.owner.products.all()]
-        task_max = random.randint(3, total_rooms)
+        task_max = random.randint(5, total_rooms)
         task_count = range(task_max)
         deadline = project.deadline
         for num in task_count:
             add_assignment = random.choice([True, False])
             task_name = random.choice(rooms)
             index = rooms.index(task_name)
-            duration = random.uniform(3, 18)
+            duration = random.uniform(3, 20)
             task_name = rooms.pop(index)
-            start_date = __random_date(deadline)
-            duration = datetime.timedelta(duration)
+            # start_date = __random_date(deadline)
+            duration = datetime.timedelta(days=duration)
             progress = random.randint(0, 100)
             task = ProjectTask(project=project)
             task.name = task_name
-            task.start_date = start_date
+            # task.start_date = start_date
             task.duration = duration
-            task.progress = progress
+            # task.progress = progress
             if add_assignment:
                 prod = random.choice(products)
                 index = products.index(prod)
@@ -213,26 +213,54 @@ def __create_parent_tasks():
                 task.quantity_needed = random.randint(30, 300)
                 task.procured = random.choice([True, False])
             task.save()
+        project_tasks = list(project.tasks.all())
+        while len(project_tasks) > 2:
+            # pred = random.randint(0, 10)
+            # print('pred likelihood = ', pred, 'len tasks = ', len(project_tasks))
+            # if pred > 3:
+            rec_task = project_tasks.pop(0)
+            pred_task = project_tasks.pop(1)
+            rec_task.predecessor = pred_task
+            rec_task.save()
 
 
-def __create_child_tasks():
-    tasks: List[ProjectTask] = ProjectTask.objects.all()
+
+
+
+
+def create_child_tasks():
+    tasks: List[ProjectTask] = ProjectTask.objects.filter(level=0)
     for task in tasks:
         print('creating children for ', task.name)
-        children_count = random.randint(2, 6)
+        # children_count = random.randint(2, 6)
         sub_tasks = SUB_TASKS.copy()
-        for child in range(children_count):
-            sub_name = random.choice(sub_tasks)
-            index = sub_tasks.index(sub_name)
-            sub = sub_tasks.pop(index)
-            duration = random.uniform(3, 5)
-            tdelt = random.randint(0, 6)
+        current_child = None
+        for child in sub_tasks:
+            # sub_name = random.choice(sub_tasks)
+            # index = sub_tasks.index(sub_name)
+            # sub = sub_tasks.pop(index)
+            cont = random.randint(0, 10)
+            if cont < 2:
+                continue
+            # duration = random.uniform(3, 5)
+            duration = random.randint(3, 5)
+            # tdelt = random.randint(0, 6)
             child_task = ProjectTask()
-            child_task.name = sub
             child_task.parent = task
-            child_task.duration = datetime.timedelta(duration)
-            child_task.progress = random.randint(0, 100)
-            child_task.start_date = task.start_date + datetime.timedelta(tdelt)
+            child_task.name = child
+            child_task.project = task.project
+            child_task.duration = datetime.timedelta(days=duration)
+            if current_child:
+                child_task.predecessor = current_child
+            # child_task.progress = random.randint(0, 1) * random.randint(0, 100)
+            # child_task.start_date = task.start_date + datetime.timedelta(tdelt)
+
+            try:
+                child_task.save()
+                current_child = child_task
+            except ValidationError:
+                continue
+
 
 
 def __create_supplier_products():

@@ -30,19 +30,31 @@ def serialize_project_detail(project: Project):
 
 
 def serialize_task(task: ProjectTask) -> Dict[str, any]:
-    dates = task.get_dates()
+    # dates = task.get_dates()
+    # print('serializing ', task.name)
+    # start_date = task.get_start_date()
+    # print(start_date)
+    # estimated_finish = task.estimated_finish()
+    # print(estimated_finish)
     return {
         'pk': task.pk,
         'name': task.name,
         'progress': task.progress if task.progress else 0,
         'saved': True,
-        'start_date': dates.get('min_date'),
-        'estimated_finish': dates.get('max_date'),
+        '_start_date': task.start_date,
+        # 'estimated_finish': dates.get('max_date'),
         # 'start_date': task.start_date,
-        # 'estimated_finish': task.estimated_finish(),
-        'duration': task.duration if task.duration else None,
+        '_estimated_finish': task.estimated_finish,
+        # 'demo_duration': task.get_duration(),
+        # 'actual_duration': task.duration,
         'children': [serialize_task(child) for child in task.children.all()],
-        'predecessor': task.predecessor.pk if task.predecessor else None
+        # 'dependants': [serialize_task(task) for task in task.dependants.all()]
+        # 'predecessor': serialize_task(self.predecessor)
+        'predecessor': {
+            'pk': task.predecessor.pk,
+            'name': task.predecessor.name,
+            'type': task.predecessor_type
+            } if task.predecessor else None
     }
 
 

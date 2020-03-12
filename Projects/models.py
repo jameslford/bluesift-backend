@@ -1,3 +1,4 @@
+import pytz
 from typing import Dict
 from datetime import timedelta, datetime
 from django.db import models, transaction
@@ -83,8 +84,10 @@ class ProjectManager(models.Manager):
 
 class Project(models.Model):
     deadline = models.DateTimeField(null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True, upload_to='project-images/' )
     template = models.BooleanField(default=False)
+    # buffer = models.IntegerField(default=10)
     address = models.ForeignKey(
         Address,
         null=True,
@@ -122,6 +125,10 @@ class Project(models.Model):
             self.nickname = 'Project ' + str(count)
         return super().save(*args, **kwargs)
 
+    def calculate_progress(self):
+        tasks = self.tasks.all()
+
+
 
 class ProjectTask(models.Model):
     DEPENDENCIES = Choices(('FTS', 'Finish to Start'), ('STS', 'Start to Start'), ('FTF', 'Finish to Finish'))
@@ -129,6 +136,7 @@ class ProjectTask(models.Model):
     notes = models.TextField(null=True, blank=True)
     start_date = models.DateTimeField(null=True)
     duration = models.DurationField(null=True)
+    estimated_finish = models.DateTimeField(null=True)
     predecessor_type = models.CharField(choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -157,41 +165,79 @@ class ProjectTask(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.count_parents()
-        dates = self.get_dates()
-        self.start_date = dates['min_date']
-        self.duration = dates['max_date'] - dates['min_date']
+        self.start_date = self.get_start_date()
+        self.estimated_finish = self.get_estimated_finish()
+        # self.duration = timedelta(seconds=self.get_duration())
+        if self.predecessor is not None and self.predecessor == self.parent:
+            raise ValidationError('parent cannot be predecessor')
+        # dates = self.get_dates()
+        # self.start_date = dates['min_date']
+        # self.duration = dates['max_date'] - dates['min_date']
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
-    def get_start_date(self):
-        if self.predecessor:
-            if self.predecessor_type == 'FTS':
-                return self.predecessor.estimated_finish()
-            if self.predecessor_type == 'STS':
-                return self.predecessor.get_start_date()
-        return self.start_date
-
-
-    def estimated_finish(self):
-        progress = self.progress if self.progress else 0
-        dur = self.duration.total_seconds() * (1 - (progress/100))
-        return self.get_start_date() + timedelta(seconds=dur)
-
-    def get_dates(self):
-        start_date = self.get_start_date()
-        estimated_finish = self.estimated_finish()
+    def get_duration(self):
+        # start_date = self.get_start_date()
+        # estimated_finish = self.estimated_finish()
         children = self.children.all()
         if children:
+            # print('getting children duration', self.name)
+            earliest = None
+            latest = None
             for child in children:
-                dates = child.get_dates()
-                if dates['min_date'] < start_date:
-                    self.start_date = dates['min_date']
-                if dates['max_date'] > estimated_finish:
-                    estimated_finish = dates['max_date']
-        return {
-            'min_date': start_date,
-            'max_date': estimated_finish
-            }
+                # print(child.name)
+                start = child.get_start_date()
+                finish = child.get_estimated_finish()
+                if not earliest or start < earliest:
+                    earliest = start
+                if not latest or finish > latest:
+                    latest = finish
+            td = latest - earliest
+            return td.total_seconds()
+        return self.duration.total_seconds()
 
+
+    def get_start_date(self):
+        # print('getting start date ', self.name)
+        start_date = datetime.now(pytz.utc)
+        if self.predecessor:
+            if self.predecessor_type == 'FTS':
+                # print(self.predecessor_type)
+                start_date = self.predecessor.get_estimated_finish()
+            if self.predecessor_type == 'STS':
+                start_date = self.predecessor.get_start_date()
+        elif self.parent:
+            start_date = self.parent.get_start_date()
+        # if self.progress == 0:
+        #     if not self.start_date or self.start_date < datetime.now(pytz.utc):
+        #         return datetime.now(pytz.utc)
+            # return self.start_date
+            # if self.start_date:
+            #     if self.start_date < datetime.now(pytz.utc):
+            #     return self.start_date
+        else:
+            if self.progress > 0:
+                if not self.start_date or self.start_date > datetime.now(pytz.utc):
+                    start_date = datetime.now(pytz.utc)
+                else:
+                    start_date = self.start_date
+            else:
+                if not self.start_date or self.start_date < datetime.now(pytz.utc):
+                    return datetime.now(pytz.utc)
+                else:
+                    start_date = self.start_date
+        return start_date
+
+
+    def get_estimated_finish(self):
+        # print('getting estimated finish ', self.name)
+        # dur = self.time_remaining()
+        progress = self.progress if self.progress else 0
+        duration = self.get_duration()
+        dur = (1 - (progress/100)) * duration
+        return self.get_start_date() + timedelta(seconds=dur)
+        # if self.progress == 100:
+            # return self.get_start_date() + timedelta(seconds=dur)
+        # return datetime.now(pytz.utc) + timedelta(seconds=dur)
 
 
     def count_parents(self):
@@ -203,6 +249,50 @@ class ProjectTask(models.Model):
                 if self.parent.parent.parent:
                     raise ValueError('Only 2 nested levels allowed')
         self.level = level
+
+
+
+
+
+
+    # def get_finish_date(self):
+
+    # def get_start_date(self):
+    #     if self.predecessor:
+    #         if self.predecessor_type == 'FTS':
+    #             return self.predecessor.estimated_finish()
+    #         if self.predecessor_type == 'STS':
+    #             return self.predecessor.get_start_date()
+    #     if self.progress:
+    #         if not self.start_date:
+    #             return datetime.now(pytz.utc)
+    #         if self.start_date > datetime.now(pytz.utc):
+    #             return datetime.now(pytz.utc)
+    #     return self.start_date
+
+    # def temp_get_start(self):
+    #     if self.progress:
+    #         if not self.start_date:
+    #             return datetime.now(pytz.utc)
+    #         if self.start_date > datetime.now(pytz.utc):
+    #             return datetime.now(pytz.utc)
+        
+
+    # def estimated_finish(self):
+    #     progress = self.progress if self.progress else 0
+    #     dur = self.duration.total_seconds() * (1 - (progress/100))
+    #     return self.get_start_date() + timedelta(seconds=dur)
+
+                # dates = child.get_dates()
+                # if dates['min_date'] < start_date:
+                #     self.start_date = dates['min_date']
+                # if dates['max_date'] > estimated_finish:
+                #     estimated_finish = dates['max_date']
+        # return {
+        #     'min_date': start_date,
+        #     'max_date': estimated_finish
+        #     }
+
 
 
     def mini_serialize(self) -> Dict[str, any]:
