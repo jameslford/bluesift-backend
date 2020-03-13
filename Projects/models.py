@@ -142,6 +142,7 @@ class ProjectTask(models.Model):
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(default=0)
     level = models.IntegerField(default=0)
+    dependency_level = models.PositiveIntegerField(default=0)
     predecessor = models.ForeignKey(
         'self',
         null=True,
@@ -167,6 +168,7 @@ class ProjectTask(models.Model):
         self.count_parents()
         self.start_date = self.get_start_date()
         self.estimated_finish = self.get_estimated_finish()
+        self.dependency_level = self.get_dependency_level()
         # self.duration = timedelta(seconds=self.get_duration())
         if self.predecessor is not None and self.predecessor == self.parent:
             raise ValidationError('parent cannot be predecessor')
@@ -174,6 +176,14 @@ class ProjectTask(models.Model):
         # self.start_date = dates['min_date']
         # self.duration = dates['max_date'] - dates['min_date']
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    def get_dependency_level(self, level=0):
+        nlevel = level
+        if self.predecessor:
+            nlevel += 1
+            return self.predecessor.get_dependency_level(nlevel)
+        return nlevel
+
 
     def get_duration(self):
         # start_date = self.get_start_date()
