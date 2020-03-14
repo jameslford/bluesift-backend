@@ -22,12 +22,11 @@ class ForeignFacet(BaseFacet):
         pk_arg = f'{self.attribute}__pk'
         values = others.values(*[name_arg, pk_arg]).annotate(val_count=Count(self.attribute))
         for val in values:
-            name = val[name_arg]
             pk_value = val[pk_arg]
             count = val['val_count']
             selected = bool(str(pk_value) in self.qterms)
-            expression = f'{self.name}={pk_value}'
-            return_value = BaseReturnValue(expression, name, count, selected)
+            expression = f'{self.attribute}={pk_value}'
+            return_value = BaseReturnValue(expression, val[name_arg], count, selected)
             self.return_values.append(return_value)
             if selected:
                 self.selected = True
