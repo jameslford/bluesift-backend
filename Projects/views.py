@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
+from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -9,7 +9,7 @@ from config.custom_permissions import OwnerOrAdmin
 from Profiles.models import LibraryProduct
 from Suppliers.models import SupplierProduct
 from .models import Project, ProjectProduct, ProjectTask
-from .serializers import serialize_project_detail, reserialize_task, resource_serializer, serialize_task
+from .serializers import reserialize_task, resource_serializer, serialize_task
 
 
 @api_view(['GET'])
@@ -23,10 +23,6 @@ def all_projects(request):
             F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
             output_field=DecimalField(decimal_places=2)),
         additional_costs_sum=Sum('additional_costs__amount'),
-        # duration=ExpressionWrapper(
-        #     (Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day'))) -
-        #     (Min('tasks__start_date')), output_field=DurationField()
-        #     ),
         address_string=F('address__address_string'),
         lat=F('address__coordinates__lat'),
         lng=F('address__coordinates__lng'),
@@ -39,7 +35,6 @@ def all_projects(request):
             'deadline',
             'min_date',
             'max_date',
-            # 'duration',
             'additional_costs_sum',
             'material_cost'
             )
@@ -53,34 +48,38 @@ def dashboard(request: Request, project_pk=None):
     sole endpoint to add a project - model manager will differentiate between user and pro_user
     """
     if request.method == 'GET':
+        # project = Project.objects.filter(pk=project_pk).annotate(
         project = request.user.get_collections().filter(pk=project_pk).annotate(
-        min_date=Min('tasks__start_date'),
-        address_string=F('address__address_string'),
-        max_date=Max(F('tasks__start_date') + F('tasks__duration'), output_field=DateTimeField('day')),
-        material_cost=Sum(
-            F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
-            output_field=DecimalField(decimal_places=2)),
-        additional_costs_sum=Sum('additional_costs__amount'),
+            address_string=F('address__address_string'),
+            material_cost=Sum(
+                F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
+                output_field=DecimalField(decimal_places=2)),
+            additional_costs_sum=Sum('additional_costs__amount'),
         ).values(
             'pk',
             'nickname',
             'address_string',
-            # 'lat',
-            # 'lng',
             'deadline',
-            'min_date',
-            'max_date',
-            # 'duration',
             'additional_costs_sum',
             'material_cost'
             )[0]
-
-        tasks = [serialize_task(task) for task in ProjectTask.objects.filter(project__pk=project['pk'], level='0')]
-        project.update({'tasks': tasks})
+        tasks = ProjectTask.objects.select_related('predecessor').annotate(
+            max_lead_time=(Max(F('products__product__product__priced__lead_time_ts'))),
+            specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
+            ).filter(
+                project__pk=project['pk'],
+                level='0'
+                )
+        tasks2 = ProjectTask.objects.select_related('predecessor').annotate(
+            max_lead_time=(Max(F('products__product__product__priced__lead_time_ts'))),
+            specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
+            ).filter(
+                project__pk=project['pk'],
+                level='1'
+                )
+        tasks_res = serialize_task(tasks, tasks2)
+        project.update({'tasks': tasks_res})
         return Response(project)
-
-
-
 
 
     if request.method == 'POST':
@@ -101,7 +100,7 @@ def dashboard(request: Request, project_pk=None):
         user = request.user
         data = request.data
         project = Project.objects.update_project(user, **data)
-        return Response(serialize_project_detail(project), status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
 
     return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -124,8 +123,6 @@ def get_tasks(request: Request, project_pk, task_pk=None):
         task.delete()
         return Response(status=status.HTTP_200_OK)
 
-            # 'product__product__product',
-            # 'product__product__product__priced'
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes((IsAuthenticated, OwnerOrAdmin))
@@ -172,9 +169,5 @@ def resources(request, project_pk, product_pk=None):
         prod = ProjectProduct.objects.get(project=project, pk=product_pk)
         prod.delete()
         return Response(status=status.HTTP_200_OK)
-
-
-
-
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -1,8 +1,8 @@
-import pytz
 from typing import Dict
 from datetime import timedelta, datetime
+import pytz
 from django.db import models, transaction
-from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
+# from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
 from django.core.exceptions import ValidationError
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
@@ -169,12 +169,8 @@ class ProjectTask(models.Model):
         self.start_date = self.get_start_date()
         self.estimated_finish = self.get_estimated_finish()
         self.dependency_level = self.get_dependency_level()
-        # self.duration = timedelta(seconds=self.get_duration())
         if self.predecessor is not None and self.predecessor == self.parent:
             raise ValidationError('parent cannot be predecessor')
-        # dates = self.get_dates()
-        # self.start_date = dates['min_date']
-        # self.duration = dates['max_date'] - dates['min_date']
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def get_dependency_level(self, level=0):
@@ -186,15 +182,11 @@ class ProjectTask(models.Model):
 
 
     def get_duration(self):
-        # start_date = self.get_start_date()
-        # estimated_finish = self.estimated_finish()
         children = self.children.all()
         if children:
-            # print('getting children duration', self.name)
             earliest = None
             latest = None
             for child in children:
-                # print(child.name)
                 start = child.get_start_date()
                 finish = child.get_estimated_finish()
                 if not earliest or start < earliest:
@@ -207,23 +199,14 @@ class ProjectTask(models.Model):
 
 
     def get_start_date(self):
-        # print('getting start date ', self.name)
         start_date = datetime.now(pytz.utc)
         if self.predecessor:
             if self.predecessor_type == 'FTS':
-                # print(self.predecessor_type)
                 start_date = self.predecessor.get_estimated_finish()
             if self.predecessor_type == 'STS':
                 start_date = self.predecessor.get_start_date()
         elif self.parent:
             start_date = self.parent.get_start_date()
-        # if self.progress == 0:
-        #     if not self.start_date or self.start_date < datetime.now(pytz.utc):
-        #         return datetime.now(pytz.utc)
-            # return self.start_date
-            # if self.start_date:
-            #     if self.start_date < datetime.now(pytz.utc):
-            #     return self.start_date
         else:
             if self.progress > 0:
                 if not self.start_date or self.start_date > datetime.now(pytz.utc):
@@ -239,15 +222,10 @@ class ProjectTask(models.Model):
 
 
     def get_estimated_finish(self):
-        # print('getting estimated finish ', self.name)
-        # dur = self.time_remaining()
         progress = self.progress if self.progress else 0
         duration = self.get_duration()
         dur = (1 - (progress/100)) * duration
         return self.get_start_date() + timedelta(seconds=dur)
-        # if self.progress == 100:
-            # return self.get_start_date() + timedelta(seconds=dur)
-        # return datetime.now(pytz.utc) + timedelta(seconds=dur)
 
 
     def count_parents(self):
@@ -261,50 +239,6 @@ class ProjectTask(models.Model):
         self.level = level
 
 
-
-
-
-
-    # def get_finish_date(self):
-
-    # def get_start_date(self):
-    #     if self.predecessor:
-    #         if self.predecessor_type == 'FTS':
-    #             return self.predecessor.estimated_finish()
-    #         if self.predecessor_type == 'STS':
-    #             return self.predecessor.get_start_date()
-    #     if self.progress:
-    #         if not self.start_date:
-    #             return datetime.now(pytz.utc)
-    #         if self.start_date > datetime.now(pytz.utc):
-    #             return datetime.now(pytz.utc)
-    #     return self.start_date
-
-    # def temp_get_start(self):
-    #     if self.progress:
-    #         if not self.start_date:
-    #             return datetime.now(pytz.utc)
-    #         if self.start_date > datetime.now(pytz.utc):
-    #             return datetime.now(pytz.utc)
-        
-
-    # def estimated_finish(self):
-    #     progress = self.progress if self.progress else 0
-    #     dur = self.duration.total_seconds() * (1 - (progress/100))
-    #     return self.get_start_date() + timedelta(seconds=dur)
-
-                # dates = child.get_dates()
-                # if dates['min_date'] < start_date:
-                #     self.start_date = dates['min_date']
-                # if dates['max_date'] > estimated_finish:
-                #     estimated_finish = dates['max_date']
-        # return {
-        #     'min_date': start_date,
-        #     'max_date': estimated_finish
-        #     }
-
-
-
     def mini_serialize(self) -> Dict[str, any]:
         return {
             'pk': self.pk,
@@ -315,6 +249,7 @@ class ProjectTask(models.Model):
             'duration': self.duration / DAY if self.duration else None,
             'children': [child.mini_serialize() for child in self.children.all()],
             }
+
 
 class ProjectProduct(models.Model):
     quantity_needed = models.IntegerField(null=True, blank=True)
@@ -343,7 +278,7 @@ class ProjectProduct(models.Model):
         null=True,
         blank=True,
         related_name='products'
-    )
+        )
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.supplier_product:
@@ -352,6 +287,7 @@ class ProjectProduct(models.Model):
         if self.product.owner != self.project.owner:
             raise ValidationError('product not in user library')
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
 
 class AddtionalProjectCosts(models.Model):
     project = models.ForeignKey(

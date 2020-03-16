@@ -1,61 +1,38 @@
 """
 serializers used for return project and retailer locations list to user library
 """
-import datetime
 from typing import Dict
-from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
-from Addresses.serializers import AddressSerializer
-# from Products.serializers import serialize_product_priced
+from django.db.models import QuerySet
 from Products.serializers import serialize_product
-from .models import ProjectTask, Project, ProjectProduct
+from .models import ProjectTask, ProjectProduct
+# import datetime
+# from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField, QuerySet
+# from Products.serializers import serialize_product_priced
 DAY = 60*60*24*1000
 
 
 
-def serialize_project_detail(project: Project):
-    tasks = [serialize_task(task) for task in ProjectTask.objects.prefetch_related(
-        'children',
-        'children__children'
-        ).filter(project=project, level=0)]
-
-    return {
-        'pk' : project.pk,
-        'image' : project.image.url if project.image else None,
-        'nickname' : project.nickname,
-        'deadline' : project.deadline,
-        'start_date': tasks.values('start_date')[0] if tasks else datetime.datetime.now(),
-        'address' : AddressSerializer(project.address).data,
-        'tasks': [serialize_task(task) for task in tasks]
-        }
-
-
-def serialize_task(task: ProjectTask) -> Dict[str, any]:
-    # dates = task.get_dates()
-    # print('serializing ', task.name)
-    # start_date = task.get_start_date()
-    # print(start_date)
-    # estimated_finish = task.estimated_finish()
-    # print(estimated_finish)
-    return {
+# def serialize_task(task: ProjectTask) -> Dict[str, any]:
+def serialize_task(tasks: QuerySet, children: QuerySet = None) -> Dict[str, any]:
+    children = [] if not children else children
+    return [{
         'pk': task.pk,
+        'parent': task.parent.pk if task.parent else None,
         'name': task.name,
         'progress': task.progress if task.progress else 0,
         'saved': True,
+        'level': task.level,
+        'max_lead_time': task.max_lead_time,
+        'specified_lead_time': task.specified_lead_time,
         '_start_date': task.start_date,
-        # 'estimated_finish': dates.get('max_date'),
-        # 'start_date': task.start_date,
         '_estimated_finish': task.estimated_finish,
-        # 'demo_duration': task.get_duration(),
-        # 'actual_duration': task.duration,
-        'children': [serialize_task(child) for child in task.children.all()],
-        # 'dependants': [serialize_task(task) for task in task.dependants.all()]
-        # 'predecessor': serialize_task(self.predecessor)
+        'children': serialize_task([child for child in children if child.parent.pk == task.pk]),
         'predecessor': {
             'pk': task.predecessor.pk,
             'name': task.predecessor.name,
             'type': task.predecessor_type
             } if task.predecessor else None
-    }
+    } for task in tasks]
 
 
 def reserialize_task(project, data, parent: ProjectTask = None):
@@ -92,7 +69,10 @@ def reserialize_task(project, data, parent: ProjectTask = None):
 def resource_serializer(product: ProjectProduct):
     return {
         'pk': product.pk,
-        'linked_tasks': {'pk': product.linked_tasks.pk, 'name': product.linked_tasks.name} if product.linked_tasks else None,
+        'linked_tasks': {
+            'pk': product.linked_tasks.pk,
+            'name': product.linked_tasks.name
+            } if product.linked_tasks else None,
         'quantity': product.quantity_needed,
         'procured': product.procured,
         'supplier_product': product.supplier_product.get_priced() if product.supplier_product else None,
