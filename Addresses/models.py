@@ -7,6 +7,7 @@ Addresses.models
 """
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 import googlemaps
@@ -149,6 +150,7 @@ class Address(models.Model):
             return self.address_string
         return self.get_address_string()
 
+
     def get_short_name(self):
         if self.address_line_1:
             split = self.address_line_1.split(' ')
@@ -156,6 +158,12 @@ class Address(models.Model):
                 street_name = split[1]
         if self.city:
             return self.city
+
+
+    def find_closest_others(self):
+        return Address.objects.filter(demo=True).annotate(
+            distance=Distance('coordinates__point', self.coordinates.point)
+            ).order_by('-distance')
 
 
     def get_address_string(self):

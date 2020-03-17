@@ -22,7 +22,7 @@ def serialize_task(tasks: QuerySet, children: QuerySet = None) -> Dict[str, any]
         'progress': task.progress if task.progress else 0,
         'saved': True,
         'level': task.level,
-        'max_lead_time': task.max_lead_time,
+        'avg_lead_time': task.max_lead_time,
         'specified_lead_time': task.specified_lead_time,
         '_start_date': task.start_date,
         '_estimated_finish': task.estimated_finish,

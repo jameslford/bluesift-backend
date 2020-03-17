@@ -1,5 +1,6 @@
 import decimal
 from typing import List
+import itertools
 import random
 import datetime
 import requests
@@ -15,8 +16,7 @@ from Products.models import Product
 from Profiles.models import ConsumerProfile, SupplierEmployeeProfile, BaseProfile, LibraryProduct
 from Groups.models import SupplierCompany
 from Suppliers.models import SupplierLocation, SupplierProduct
-from Projects.models import Project, ProjectTask
-
+from Projects.models import Project, ProjectTask, ProjectProduct
 
 ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-all.min.json'
 PASSWORD = '0gat_surfer'
@@ -86,43 +86,88 @@ def create_demo_users():
     # create_addresses()
     main()
 
-@transaction.atomic
-def main():
-    fake = Faker()
-    user_count = 12
-    retailer_count = 30
-    address_pks = list(Address.objects.filter(demo=True).values_list('pk', flat=True))
-    print(address_pks)
-    random.shuffle(address_pks)
-    for usernum in range(0, user_count):
-        user = __create_user()
-        u_phone = fake.phone_number()
-        prof = ConsumerProfile.objects.get_or_create(user=user)[0]
-        prof.phone_number = u_phone
-        prof.save()
-        proj_num = random.randint(3,6)
-        for num in range(0, proj_num):
-            address_pk = address_pks.pop()
-            address = Address.objects.get(pk=address_pk)
-            __create_project(user, address)
-        print('user name = ', user.full_name)
-    for ret_num in range(0, retailer_count):
-        ret_user = __create_user(is_supplier=True)
-        comp_address_pk = address_pks.pop()
-        comp_address = Address.objects.get(pk=comp_address_pk)
-        ret_company = __create_supplier_company(ret_user, comp_address)
+
+
+
+
+def generate_address_groups():
+    addresses = Address.objects.filter(demo=True)
+    exclude_pks = []
+    return_groups = []
+    for address in addresses:
+        if address.pk in exclude_pks:
+            continue
+        number = random.randint(2, 4)
+        closest = address.find_closest_others()
+        adds = []
+        # for num, close in zip(range(0, number), closest):
+            # for close in closest:
+        for num in range(0, number):
+            for close in closest:
+                if close.pk in exclude_pks:
+                    continue
+                adds.append(close)
+                exclude_pks.append(close.pk)
+                break
+        adds.append(address)
+        exclude_pks.append(address.pk)
+        return_groups.append(adds)
+    print(return_groups)
+    return return_groups
+
+
+    # address_pks = list(Address.objects.filter(demo=True).values_list('pk', flat=True))
+    # print(address_pks)
+    # random.shuffle(address_pks)
+
+def _generate_users(address_group):
+    user = __create_user()
+    # pylint: disable=undefined-variable
+
+    u_phone = Faker().phone_number()
+    prof = ConsumerProfile.objects.get_or_create(user=user)[0]
+    prof.phone_number = u_phone
+    prof.save()
+    for address in address_group:
+        # address = Address.objects.get(pk=apk)
+        __create_project(user, address)
+
+
+def _generate_retailers(address_group):
+    # comp_address_pk = address_pks.pop()
+    # comp_address = Address.objects.get(pk=comp_address_pk)
+    # ret_user = __create_user(is_supplier=True)
+    number = random.randint(2, 8)
+    # comp_address = Address.objects.get(pk=address_group[0])
+    employees = [__create_user(is_supplier=True) for num in range(0, number)]
+    ret_company = __create_supplier_company(employees[0], address_group[0])
+    print('ret_company = ', ret_company)
+    for ind, emp in enumerate(employees):
         profile = SupplierEmployeeProfile.objects.create_profile(
-            user=ret_user,
+            user=emp,
             company=ret_company
             )
-        if ret_num == 0:
+        if ind == 0:
             profile.company_owner = True
             profile.save()
-        for x in range(0, 3):
-            loc_add_pk = address_pks.pop()
-            loc_add = Address.objects.get(pk=loc_add_pk)
-            __create_locations(ret_company, loc_add)
-        print('ret name = ', ret_user.full_name)
+    for loc_add in address_group:
+        # loc_add = Address.objects.get(pk=apk)
+        __create_locations(ret_company, loc_add)
+
+
+
+# @transaction.atomic
+def main():
+    address_groups = generate_address_groups()
+    for group in address_groups:
+        choice = random.randint(4, 6)
+        if choice > 4:
+            _generate_retailers(group)
+        else:
+            _generate_users(group)
+
+
+
 
 
 def __create_address(**kwargs):
@@ -156,24 +201,33 @@ def create_addresses():
 def add_additonal():
     __create_supplier_products()
     __create_group_products()
-    # __create_parent_tasks()
-    # __create_child_tasks()
 
 
 def __add_group_products(profile: ConsumerProfile):
-    print('adding products to ', profile.name)
+    print('adding products to ', profile.name())
     products = list(Product.objects.values_list('pk', flat=True))
     min_prod = 20
     max_products = random.randint(min_prod, 40)
     if profile.products.all().count() >= min_prod:
         print('products already assigned')
         return
+    project_products = []
     for num in range(max_products):
         index = random.choice(products)
         index = products.index(index)
         product = products.pop(index)
         product = Product.objects.get(pk=product)
-        LibraryProduct.objects.create(product=product, owner=profile)
+        pprod = LibraryProduct.objects.create(product=product, owner=profile)
+        project_products.append(pprod)
+    tasks = ProjectTask.objects.filter(project__owner=profile)
+    for pps, pts in zip(project_products, tasks):
+        prod = ProjectProduct.objects.create(linked_tasks=pts, product=pps)
+        prod.quantity_needed = random.randint(10, 100)
+        if random.randint(0, 10) > 6:
+            prod.supplier_product = prod.product.priced.first()
+            prod.procured = random.choice([True, False])
+        prod.save()
+
 
 
 def __create_group_products():
@@ -191,20 +245,20 @@ def create_parent_tasks():
         products = [prod.product for prod in project.owner.products.all()]
         task_max = random.randint(5, total_rooms)
         task_count = range(task_max)
-        deadline = project.deadline
+        # deadline = project.deadline
         for num in task_count:
             add_assignment = random.choice([True, False])
             task_name = random.choice(rooms)
             index = rooms.index(task_name)
-            duration = random.uniform(3, 20)
             task_name = rooms.pop(index)
-            # start_date = __random_date(deadline)
-            duration = datetime.timedelta(days=duration)
-            progress = random.randint(0, 100)
             task = ProjectTask(project=project)
             task.name = task_name
+            # duration = random.uniform(3, 20)
+            # start_date = __random_date(deadline)
+            # duration = datetime.timedelta(days=duration)
+            # progress = random.randint(0, 100)
             # task.start_date = start_date
-            task.duration = duration
+            # task.duration = duration
             # task.progress = progress
             if add_assignment:
                 prod = random.choice(products)
@@ -250,17 +304,15 @@ def create_child_tasks():
             child_task.name = child
             child_task.project = task.project
             child_task.duration = datetime.timedelta(days=duration)
-            if current_child:
+            if current_child and random.randint(0, 10) > 4:
                 child_task.predecessor = current_child
-            # child_task.progress = random.randint(0, 1) * random.randint(0, 100)
-            # child_task.start_date = task.start_date + datetime.timedelta(tdelt)
-
+            else:
+                child_task.progress = random.randint(0, 50)
             try:
                 child_task.save()
                 current_child = child_task
             except ValidationError:
                 continue
-
 
 
 def __create_supplier_products():
@@ -303,7 +355,7 @@ def __create_supplier_products():
 def __random_date(deadline=None):
     if deadline:
         return deadline - datetime.timedelta(days=random.randint(1, 90))
-    return timezone.now() + datetime.timedelta(days=random.randint(60, 130))
+    return timezone.now() + datetime.timedelta(days=random.randint(20, 40))
 
 def __get_name_and_email():
     fake = Faker()
@@ -316,8 +368,12 @@ def __get_name_and_email():
 def __create_user(**kwargs):
     user_model: User = get_user_model()
     name, email = __get_name_and_email()
+    is_supplier = kwargs.get('is_supplier', False)
     print('name = ', name)
     print('email = ', email)
+    user = user_model.objects.filter(email=email).first()
+    if user:
+        return __create_user(**kwargs)
     user = user_model.objects.create_user(
         email=email,
         password=PASSWORD,
@@ -325,9 +381,11 @@ def __create_user(**kwargs):
         is_active=True,
         demo=True,
         full_name=name,
-        **kwargs
+        is_supplier=is_supplier
+        # **kwargs
         )
     return user
+
 
 
 def __create_supplier_company(user, address):
@@ -337,16 +395,20 @@ def __create_supplier_company(user, address):
     ret_com_text = fake.paragraph(nb_sentences=4, variable_nb_sentences=True)
     print(ret_com_text)
     ret_com_name = fake.company() + ' demo'
-    company = SupplierCompany.objects.create_group(
-        user=user,
-        business_address=address,
-        phone_number=u_phone,
-        name=ret_com_name,
-        info=ret_com_text
-        )
-    for x in range(random.randint(0, 3)):
-        __create_employees(company)
-    return company
+    try:
+        company = SupplierCompany.objects.create_group(
+            user=user,
+            business_address=address,
+            phone_number=u_phone,
+            name=ret_com_name,
+            info=ret_com_text
+            )
+        for x in range(random.randint(0, 3)):
+            __create_employees(company)
+        return company
+    except IntegrityError:
+        __create_supplier_company(user, address)
+
 
 
 def __create_employees(company):

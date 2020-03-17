@@ -166,9 +166,9 @@ class ProjectTask(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.count_parents()
-        self.start_date = self.get_start_date()
-        self.estimated_finish = self.get_estimated_finish()
-        self.dependency_level = self.get_dependency_level()
+        # self.start_date = self.get_start_date()
+        # self.estimated_finish = self.get_estimated_finish()
+        # self.dependency_level = self.get_dependency_level()
         if self.predecessor is not None and self.predecessor == self.parent:
             raise ValidationError('parent cannot be predecessor')
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
@@ -179,6 +179,9 @@ class ProjectTask(models.Model):
             nlevel += 1
             return self.predecessor.get_dependency_level(nlevel)
         return nlevel
+
+    # def get_remaining_duration(self):
+    #     return (1 - (self.progress / 100)) * self.duration
 
 
     def get_duration(self):
@@ -197,28 +200,25 @@ class ProjectTask(models.Model):
             return td.total_seconds()
         return self.duration.total_seconds()
 
+    def predecessor_type_map(self):
+        pred_map = {
+            'FTS': self.predecessor.get_estimated_finish(),
+            'STS': self.predecessor.get_start_date()
+            }
+        return pred_map.get(self.predecessor_type)
+
 
     def get_start_date(self):
         start_date = datetime.now(pytz.utc)
         if self.predecessor:
-            if self.predecessor_type == 'FTS':
-                start_date = self.predecessor.get_estimated_finish()
-            if self.predecessor_type == 'STS':
-                start_date = self.predecessor.get_start_date()
+            return self.predecessor_type_map()
         elif self.parent:
-            start_date = self.parent.get_start_date()
-        else:
-            if self.progress > 0:
-                if not self.start_date or self.start_date > datetime.now(pytz.utc):
-                    start_date = datetime.now(pytz.utc)
-                else:
-                    start_date = self.start_date
-            else:
-                if not self.start_date or self.start_date < datetime.now(pytz.utc):
-                    return datetime.now(pytz.utc)
-                else:
-                    start_date = self.start_date
-        return start_date
+            return self.parent.get_start_date()
+        elif self.progress > 0:
+            if not self.start_date or self.start_date > datetime.now(pytz.utc):
+                return datetime.now(pytz.utc)
+            return self.start_date
+        return self.start_date
 
 
     def get_estimated_finish(self):
@@ -284,6 +284,8 @@ class ProjectProduct(models.Model):
         if self.supplier_product:
             if self.supplier_product.product != self.product.product:
                 raise ValidationError(f'retailer product does not match product')
+        if not self.project:
+            self.project = self.linked_tasks.project
         if self.product.owner != self.project.owner:
             raise ValidationError('product not in user library')
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)

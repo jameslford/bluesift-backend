@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField
+from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, Avg
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -64,14 +64,14 @@ def dashboard(request: Request, project_pk=None):
             'material_cost'
             )[0]
         tasks = ProjectTask.objects.select_related('predecessor').annotate(
-            max_lead_time=(Max(F('products__product__product__priced__lead_time_ts'))),
+            max_lead_time=(Avg(F('products__product__product__priced__lead_time_ts'))),
             specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
             ).filter(
                 project__pk=project['pk'],
                 level='0'
                 )
         tasks2 = ProjectTask.objects.select_related('predecessor').annotate(
-            max_lead_time=(Max(F('products__product__product__priced__lead_time_ts'))),
+            max_lead_time=(Avg(F('products__product__product__priced__lead_time_ts'))),
             specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
             ).filter(
                 project__pk=project['pk'],
