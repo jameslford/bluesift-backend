@@ -2,7 +2,7 @@
 serializers used for return project and retailer locations list to user library
 """
 from typing import Dict
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Avg
 from Products.serializers import serialize_product
 from .models import ProjectTask, ProjectProduct
 # import datetime
@@ -17,22 +17,41 @@ def serialize_task(tasks: QuerySet, children: QuerySet = None) -> Dict[str, any]
     children = [] if not children else children
     return [{
         'pk': task.pk,
-        'parent': task.parent.pk if task.parent else None,
         'name': task.name,
         'progress': task.progress if task.progress else 0,
-        'saved': True,
         'level': task.level,
-        'avg_lead_time': task.max_lead_time,
-        'specified_lead_time': task.specified_lead_time,
         '_start_date': task.start_date,
-        '_estimated_finish': task.estimated_finish,
-        'children': serialize_task([child for child in children if child.parent.pk == task.pk]),
+        '_duration': task.duration,
+        'resources' : mini_resource_serializer(task),
         'predecessor': {
             'pk': task.predecessor.pk,
             'name': task.predecessor.name,
             'type': task.predecessor_type
-            } if task.predecessor else None
+            } if task.predecessor else None,
+        'children': serialize_task([child for child in children if child.parent.pk == task.pk])
     } for task in tasks]
+        # 'predecessor': serialize_task(task.predecessor) if task.predecessor else None,
+        # 'parent': task.parent.pk if task.parent else None,
+        # 'saved': True,
+        # 'avg_lead_time': task.max_lead_time,
+        # 'specified_lead_time': task.specified_lead_time,
+        # '_estimated_finish': task.estimated_finish,
+
+def mini_resource_serializer(task: ProjectTask):
+    products: ProjectProduct = ProjectProduct.objects.select_related(
+        'supplier_product',
+        'product__product',
+        # 'product__product'
+    ).filter(linked_tasks=task).annotate(
+        avg_lead_time=(Avg('product__product__priced'))
+        )
+    return [{
+        'specified_lead_time': prod.supplier_product.lead_time_ts if prod.supplier_product else None,
+        'avg_lead_time': prod.avg_lead_time,
+        'procured': prod.procured,
+        'name': prod.product.name
+        } for prod in products]
+
 
 
 def reserialize_task(project, data, parent: ProjectTask = None):

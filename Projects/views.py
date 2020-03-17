@@ -63,17 +63,11 @@ def dashboard(request: Request, project_pk=None):
             'additional_costs_sum',
             'material_cost'
             )[0]
-        tasks = ProjectTask.objects.select_related('predecessor').annotate(
-            max_lead_time=(Avg(F('products__product__product__priced__lead_time_ts'))),
-            specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
-            ).filter(
+        tasks = ProjectTask.objects.select_related('predecessor').filter(
                 project__pk=project['pk'],
                 level='0'
                 )
-        tasks2 = ProjectTask.objects.select_related('predecessor').annotate(
-            max_lead_time=(Avg(F('products__product__product__priced__lead_time_ts'))),
-            specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
-            ).filter(
+        tasks2 = ProjectTask.objects.select_related('predecessor').filter(
                 project__pk=project['pk'],
                 level='1'
                 )
@@ -81,6 +75,10 @@ def dashboard(request: Request, project_pk=None):
         project.update({'tasks': tasks_res})
         return Response(project)
 
+        # .annotate(
+        #     max_lead_time=(Avg(F('products__product__product__priced__lead_time_ts'))),
+        #     specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
+        #     )
 
     if request.method == 'POST':
         try:

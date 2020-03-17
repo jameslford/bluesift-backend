@@ -241,9 +241,9 @@ def create_parent_tasks():
     for project in projects:
         print('creating parent tasks for ', project.nickname)
         rooms = ROOMS.copy()
-        total_rooms = len(rooms)
+        total_rooms = len(rooms) - 3
         products = [prod.product for prod in project.owner.products.all()]
-        task_max = random.randint(5, total_rooms)
+        task_max = random.randint(3, total_rooms)
         task_count = range(task_max)
         # deadline = project.deadline
         for num in task_count:
@@ -294,7 +294,7 @@ def create_child_tasks():
             # index = sub_tasks.index(sub_name)
             # sub = sub_tasks.pop(index)
             cont = random.randint(0, 10)
-            if cont < 2:
+            if cont < 4:
                 continue
             # duration = random.uniform(3, 5)
             duration = random.randint(3, 5)

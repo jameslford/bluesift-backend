@@ -2,6 +2,7 @@ from typing import Dict
 from datetime import timedelta, datetime
 import pytz
 from django.db import models, transaction
+from django.utils import timezone
 # from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
 from django.core.exceptions import ValidationError
 from model_utils import Choices
@@ -169,6 +170,9 @@ class ProjectTask(models.Model):
         # self.start_date = self.get_start_date()
         # self.estimated_finish = self.get_estimated_finish()
         # self.dependency_level = self.get_dependency_level()
+        if self.progress > 0:
+            if not self.start_date or self.start_date > timezone.now():
+                self.start_date = timezone.now()
         if self.predecessor is not None and self.predecessor == self.parent:
             raise ValidationError('parent cannot be predecessor')
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
