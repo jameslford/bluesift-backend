@@ -306,8 +306,6 @@ def create_child_tasks():
             child_task.duration = datetime.timedelta(days=duration)
             if current_child and random.randint(0, 10) > 4:
                 child_task.predecessor = current_child
-            else:
-                child_task.progress = random.randint(0, 50)
             try:
                 child_task.save()
                 current_child = child_task

@@ -64,13 +64,13 @@ def dashboard(request: Request, project_pk=None):
             'material_cost'
             )[0]
         tasks = ProjectTask.objects.select_related('predecessor').filter(
-                project__pk=project['pk'],
-                level='0'
-                )
+            project__pk=project['pk'],
+            level='0'
+            )
         tasks2 = ProjectTask.objects.select_related('predecessor').filter(
-                project__pk=project['pk'],
-                level='1'
-                )
+            project__pk=project['pk'],
+            level='1'
+            )
         tasks_res = serialize_task(tasks, tasks2)
         project.update({'tasks': tasks_res})
         return Response(project)

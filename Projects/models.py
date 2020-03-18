@@ -167,9 +167,6 @@ class ProjectTask(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.count_parents()
-        # self.start_date = self.get_start_date()
-        # self.estimated_finish = self.get_estimated_finish()
-        # self.dependency_level = self.get_dependency_level()
         if self.progress > 0:
             if not self.start_date or self.start_date > timezone.now():
                 self.start_date = timezone.now()
@@ -183,9 +180,6 @@ class ProjectTask(models.Model):
             nlevel += 1
             return self.predecessor.get_dependency_level(nlevel)
         return nlevel
-
-    # def get_remaining_duration(self):
-    #     return (1 - (self.progress / 100)) * self.duration
 
 
     def get_duration(self):
@@ -213,7 +207,6 @@ class ProjectTask(models.Model):
 
 
     def get_start_date(self):
-        start_date = datetime.now(pytz.utc)
         if self.predecessor:
             return self.predecessor_type_map()
         elif self.parent:
@@ -261,7 +254,7 @@ class ProjectProduct(models.Model):
     project = models.ForeignKey(
         Project,
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='products'
         )
     product = models.ForeignKey(
@@ -273,12 +266,12 @@ class ProjectProduct(models.Model):
     supplier_product = models.ForeignKey(
         SupplierProduct,
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='projects'
         )
     linked_tasks = models.ForeignKey(
         ProjectTask,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name='products'
