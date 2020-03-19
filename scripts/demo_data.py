@@ -278,7 +278,23 @@ def create_parent_tasks():
             rec_task.save()
 
 
-
+def add_task_products():
+    pprods = ProjectProduct.objects.all()
+    for p in pprods:
+        p.delete()
+    projects = Project.objects.all()
+    for project in projects:
+        project.deadline = timezone.now() + datetime.timedelta(days=random.randint(20, 40))
+        project.save()
+        tasks = project.tasks.all()
+        products = project.owner.products.all()
+        for task, product in zip(tasks, products):
+            prod = ProjectProduct.objects.create(linked_tasks=task, product=product)
+            prod.quantity_needed = random.randint(10, 100)
+            if random.randint(0, 10) > 6:
+                prod.supplier_product = prod.product.product.priced.first()
+                prod.procured = random.choice([True, False])
+            prod.save()
 
 
 

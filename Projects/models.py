@@ -126,8 +126,8 @@ class Project(models.Model):
             self.nickname = 'Project ' + str(count)
         return super().save(*args, **kwargs)
 
-    def calculate_progress(self):
-        tasks = self.tasks.all()
+    # def calculate_progress(self):
+    #     tasks = self.tasks.all()
 
 
 
@@ -137,13 +137,16 @@ class ProjectTask(models.Model):
     notes = models.TextField(null=True, blank=True)
     start_date = models.DateTimeField(null=True)
     duration = models.DurationField(null=True)
-    estimated_finish = models.DateTimeField(null=True)
     predecessor_type = models.CharField(choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(default=0)
     level = models.IntegerField(default=0)
     dependency_level = models.PositiveIntegerField(default=0)
+
+    estimated_start = models.DateTimeField(null=True)
+    estimated_finish = models.DateTimeField(null=True)
+
     predecessor = models.ForeignKey(
         'self',
         null=True,
@@ -172,7 +175,10 @@ class ProjectTask(models.Model):
                 self.start_date = timezone.now()
         if self.predecessor is not None and self.predecessor == self.parent:
             raise ValidationError('parent cannot be predecessor')
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        self.estimated_start = self.get_estimated_start()
+        self.estimated_finish = self.get_estimated_finish()
+        return super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def get_dependency_level(self, level=0):
         nlevel = level
@@ -181,6 +187,31 @@ class ProjectTask(models.Model):
             return self.predecessor.get_dependency_level(nlevel)
         return nlevel
 
+    def get_lead_time(self):
+        prods = self.products.select_related(
+            'supplier_product',
+            'product__product'
+        ).all()
+        if not prods or len(prods) < 1:
+            return 0
+        times = []
+        for prod in prods:
+            if prod.procured:
+                continue
+            if prod.supplier_product:
+                times.append(prod.supplier_product.lead_time_ts.total_seconds())
+                continue
+            priced = prod.product.product.priced.all()
+            if not priced:
+                return 0
+            avg = [price.lead_time_ts.total_seconds() for price in priced]
+            avg = sum(avg) / len(avg)
+            times.append(avg)
+        print(times)
+        if len(times) < 1:
+            return 0
+        return max(times)
+
 
     def get_duration(self):
         children = self.children.all()
@@ -188,7 +219,7 @@ class ProjectTask(models.Model):
             earliest = None
             latest = None
             for child in children:
-                start = child.get_start_date()
+                start = child.get_estimated_start()
                 finish = child.get_estimated_finish()
                 if not earliest or start < earliest:
                     earliest = start
@@ -201,20 +232,25 @@ class ProjectTask(models.Model):
     def predecessor_type_map(self):
         pred_map = {
             'FTS': self.predecessor.get_estimated_finish(),
-            'STS': self.predecessor.get_start_date()
+            'STS': self.predecessor.get_estimated_start()
             }
         return pred_map.get(self.predecessor_type)
 
 
-    def get_start_date(self):
+    def get_estimated_start(self):
         if self.predecessor:
             return self.predecessor_type_map()
-        elif self.parent:
-            return self.parent.get_start_date()
-        elif self.progress > 0:
+        if self.parent:
+            return self.parent.get_estimated_start()
+        if self.progress > 0:
             if not self.start_date or self.start_date > datetime.now(pytz.utc):
-                return datetime.now(pytz.utc)
+                lead_time = self.get_lead_time()
+                return datetime.now(pytz.utc) + timedelta(seconds=lead_time)
             return self.start_date
+        if not self.start_date:
+            lead_time = self.get_lead_time()
+            print(lead_time)
+            return datetime.now(pytz.utc) + timedelta(seconds=lead_time)
         return self.start_date
 
 
@@ -222,7 +258,7 @@ class ProjectTask(models.Model):
         progress = self.progress if self.progress else 0
         duration = self.get_duration()
         dur = (1 - (progress/100)) * duration
-        return self.get_start_date() + timedelta(seconds=dur)
+        return self.get_estimated_start() + timedelta(seconds=dur)
 
 
     def count_parents(self):

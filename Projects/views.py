@@ -17,8 +17,9 @@ from .serializers import reserialize_task, resource_serializer, serialize_task
 def all_projects(request):
     projects = request.user.get_collections()
     return_dict = projects.annotate(
-        min_date=Min('tasks__start_date'),
-        max_date=Max(F('tasks__start_date') + (F('tasks__duration') * (1 - (F('tasks__progress')/100) ) ), output_field=DateTimeField('day')),
+        min_date=Min('tasks__estimated_start'),
+        # max_date=Max(F('tasks__start_date') + (F('tasks__duration') * (1 - (F('tasks__progress')/100) )), output_field=DateTimeField('day')),
+        max_date=Max('tasks__estimated_finish'),
         material_cost=Sum(
             F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
             output_field=DecimalField(decimal_places=2)),
