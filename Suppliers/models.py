@@ -1,5 +1,6 @@
 import datetime
 from django.db import models
+from django.db.models.functions import TruncDate
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import JSONField
 from model_utils.managers import InheritanceManager
@@ -114,8 +115,22 @@ class SupplierLocation(models.Model):
     def coordinates(self):
         return [self.address.lat, self.address.lng]
 
-    def company_info(self):
-        return self.company.info
+    def view_records(self):
+        from Analytics.models import SupplierProductListRecord
+        views = SupplierProductListRecord.objects.filter(
+            recorded__lte=datetime.datetime.today(),
+            recorded__gt=datetime.datetime.today()-datetime.timedelta(days=30),
+            supplier=self.pk
+            ).annotate(date=TruncDate('recorded')).values(
+                'date'
+            ).annotate(count=models.Count('id')).values(
+                'count', 'date'
+            )
+        return views
+
+
+    # def company_info(self):
+    #     return self.company.info
 
     def location_manager(self):
         if self.local_admin:
@@ -140,13 +155,13 @@ class SupplierLocation(models.Model):
 
 
 
-    def address_string(self):
-        if self.address:
-            return self.address.address_string
-        return 'No Address'
+    # def address_string(self):
+    #     if self.address:
+    #         return self.address.address_string
+    #     return 'No Address'
 
-    def company_name(self):
-        return self.company.name
+    # def company_name(self):
+    #     return self.company.name
 
     # def clean(self):
     #     # TODO makes sure employee assigned to local_admin is a company employee

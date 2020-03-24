@@ -12,10 +12,11 @@ from rest_framework import status
 from config.globals import check_department_string
 from config.custom_permissions import PrivateSupplierCrud
 from config.serializers import BusinessSerializer
+from Analytics.models import SupplierProductListRecord
 from Profiles.models import SupplierEmployeeProfile
 from ProductFilter.sorter import Sorter
 from .models import SupplierLocation, SupplierProduct
-from .serializers import serialize_location_public_detail
+from .serializers import serialize_location_public_detail, serialize_location_private_detail
 
 
 @api_view(['GET'])
@@ -60,6 +61,8 @@ def public_location_detail_view(request: HttpRequest, pk: int):
         'company'
         ).prefetch_related('products', 'products__product').get(pk=pk)
 
+    sdr = SupplierProductListRecord()
+    sdr.parse_request(request, supplier=pk)
     info = serialize_location_public_detail(model)
     info.update({'tree': model.product_tree.get_trees().serialize()})
 
@@ -70,8 +73,25 @@ def public_location_detail_view(request: HttpRequest, pk: int):
 @permission_classes((PrivateSupplierCrud,))
 def private_locations_list(request):
     group = request.user.get_group()
-    res = [serialize_location_public_detail(loc) for loc in group.shipping_locations.all()]
-    return Response(res, status=status.HTTP_200_OK)
+    locations = SupplierLocation.objects.select_related('address').filter(company=group)
+    res = [serialize_location_private_detail(loc) for loc in locations]
+    return Response({'locations': res}, status=status.HTTP_200_OK)
+    # locations = group.shipping_locations.all()
+    # pks = [location.pk for location in locations]
+    # views = SupplierProductListRecord.objects.filter(
+    #     recorded__lte=datetime.datetime.today(),
+    #     recorded__gt=datetime.datetime.today()-datetime.timedelta(days=30),
+    #     supplier__in=pks
+    #     )
+    
+    # res = [serialize_location_public_detail(loc).update({'records': loc.view_records()}) for loc in locations]
+    # res = []
+    # for loc in locations:
+    #     val = serialize_location_public_detail(loc)
+    #     views = loc.view_records()
+    #     res.append(val)
+    #     res.append(views)
+
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
 @permission_classes((PrivateSupplierCrud,))

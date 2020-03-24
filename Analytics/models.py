@@ -7,7 +7,7 @@ from .tasks import create_record
 
 
 class Record(models.Model):
-    recorded = models.DateTimeField(auto_now_add=True)
+    recorded = models.DateTimeField(null=True)
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -17,11 +17,66 @@ from Search.models import SearchIndex
 from scripts.demo_data import create_parent_tasks, create_child_tasks, add_task_products
 from Projects.models import ProjectTask, Project, ProjectProduct
 from SpecializedProducts.models import Appliance
+from Suppliers.models import SupplierLocation
+from Analytics.models import SupplierProductListRecord
+
+def get_dates(start_date, end_date):
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + datetime.timedelta(days=n)
+
+def partition(nlist, n):
+    last = 0
+    groups = []
+    for i in range(n):
+        count = random.randint(last, last + 20)
+        try:
+            print(last, count)
+            groups.append(nlist[last: count])
+            last = count + 1
+            # print(groups)
+        except IndexError:
+            continue
+    return groups
+
+
+
+
+
+    # return [nlist[i::n] for i in range(n)]
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        for supplier in SupplierLocation.objects.all():
+            startdate = timezone.now() - datetime.timedelta(days=30)
+            enddate = timezone.now()
+            records = SupplierProductListRecord.objects.filter(
+                supplier=supplier
+                ).values_list('pk', flat=True)
+            print(len(records))
+            rgroups = partition(list(records), 30)
+            print(rgroups)
+            # last = 0
+            for date, group in zip(get_dates(startdate, enddate), rgroups):
+                # print(date, group)
+                cords = SupplierProductListRecord.objects.filter(
+                    supplier=supplier,
+                    pk__in=group
+                    )
+                cords.update(recorded=date)
+                # views = random.randint(5, 40)
+                # if records[last: views]:
+                #     for record in records[last:views]:
+                #         record.recorded = date
+                #         record.save()
+                #         last += views
+                    # records[last: views].update(
+                    #     recorded=dat
+                    # )
+                # for count in range(0, views):
+
+            # dates = timezone.now() + datetime.timedelta
         # projects = Project.objects.all()
         # for project in projects:
         #     project.deadline = datetime.date(2020, 4, 10)
@@ -42,9 +97,9 @@ class Command(BaseCommand):
         #             prod.supplier_product = prod.product.product.priced.first()
         #             prod.procured = random.choice([True, False])
         #         prod.save()
-        tasks = ProjectTask.objects.all()
-        for task in tasks:
-            task.save()
+        # tasks = ProjectTask.objects.all()
+        # for task in tasks:
+        #     task.save()
         # tasks.delete()
         # create_parent_tasks()
         # create_child_tasks()
