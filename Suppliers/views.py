@@ -1,8 +1,7 @@
 import datetime
 from django.http.request import HttpRequest
 from django.core.files.storage import get_storage_class
-from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
-from django.db.models import Count, F, CharField
+from django.db.models import Count, CharField, F
 from django.db.models.query import Value
 from django.db.models.functions import Concat
 from rest_framework.request import Request
@@ -64,7 +63,7 @@ def public_location_detail_view(request: HttpRequest, pk: int):
     sdr = SupplierProductListRecord()
     sdr.parse_request(request, supplier=pk)
     info = serialize_location_public_detail(model)
-    info.update({'tree': model.product_tree.get_trees().serialize()})
+    # info.update({'tree': model.product_tree.get_trees().serialize()})
 
     return Response(info, status=status.HTTP_200_OK)
 
@@ -76,21 +75,7 @@ def private_locations_list(request):
     locations = SupplierLocation.objects.select_related('address').filter(company=group)
     res = [serialize_location_private_detail(loc) for loc in locations]
     return Response({'locations': res}, status=status.HTTP_200_OK)
-    # locations = group.shipping_locations.all()
-    # pks = [location.pk for location in locations]
-    # views = SupplierProductListRecord.objects.filter(
-    #     recorded__lte=datetime.datetime.today(),
-    #     recorded__gt=datetime.datetime.today()-datetime.timedelta(days=30),
-    #     supplier__in=pks
-    #     )
-    
-    # res = [serialize_location_public_detail(loc).update({'records': loc.view_records()}) for loc in locations]
-    # res = []
-    # for loc in locations:
-    #     val = serialize_location_public_detail(loc)
-    #     views = loc.view_records()
-    #     res.append(val)
-    #     res.append(views)
+
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PUT'])
@@ -106,7 +91,9 @@ def crud_location(request: Request, pk: int = None):
         if not pk:
             return Response('no pk provided', status=status.HTTP_400_BAD_REQUEST)
         location = user.get_collections().get(pk=pk)
-        return Response(BusinessSerializer(location, True).getData(), status=status.HTTP_200_OK)
+        info = BusinessSerializer(location, True).getData()
+        info.update({'tree': location.product_tree.get_trees().serialize()})
+        return Response(info, status=status.HTTP_200_OK)
 
     if request.method == 'POST':
         data = request.data

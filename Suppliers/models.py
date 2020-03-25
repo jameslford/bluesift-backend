@@ -9,7 +9,7 @@ from Addresses.models import Address
 from Products.models import Product
 from Groups.models import SupplierCompany
 from Profiles.models import SupplierEmployeeProfile
-from utils.tree import Tree, SupplierLocationTree
+from utils.tree import SupplierLocationTree
 
 
 
@@ -128,10 +128,6 @@ class SupplierLocation(models.Model):
             )
         return views
 
-
-    # def company_info(self):
-    #     return self.company.info
-
     def location_manager(self):
         if self.local_admin:
             return self.local_admin
@@ -150,18 +146,7 @@ class SupplierLocation(models.Model):
             self.address.address_string
             ]
         return ' '.join(hash_list)
-        # self.hash_value = 
-        # self.save()
 
-
-
-    # def address_string(self):
-    #     if self.address:
-    #         return self.address.address_string
-    #     return 'No Address'
-
-    # def company_name(self):
-    #     return self.company.name
 
     # def clean(self):
     #     # TODO makes sure employee assigned to local_admin is a company employee
@@ -257,6 +242,7 @@ class SupplierProduct(models.Model):
     def __str__(self):
         return str(self.location) + ' ' + str(self.product.name)
 
+    # pylint: disable = arguments-differ
     def save(self, *args, **kwargs):
         self.check_approvals()
         self.check_availability()
@@ -330,7 +316,6 @@ class SupplierProduct(models.Model):
             self.publish_in_store_availability = False
 
 
-
 class SupplierProductTree(models.Model):
     tree = JSONField(null=True)
     location = models.OneToOneField(
@@ -372,46 +357,3 @@ class SupplierProductTree(models.Model):
             self.__looper(sub, tree)
         self.tree = tree.serialize()
         self.save()
-
-
-
-        # self_pks = self.products.values('product__pk')
-        # ret_dict = [{
-        #     'name': dep._meta.verbose_name_plural.title(),
-        #     'count': dep.objects.filter(pk__in=self_pks).count()
-        # } for dep in get_departments()]
-
-
-    # def __refresh_product_tree(self):
-    #     name = Product._meta.verbose_name_plural.lower().strip()
-    #     count = Product.objects.count()
-    #     tree_product = Tree(name, count)
-    #     for sub in Product.__subclasses__():
-    #         Tree.loop_product(sub, tree_product)
-    #     serialized = tree_product.serialize()
-    #     self.product_tree = serialized
-    #     self.save()
-
-
-    # def __refresh_supplier_tree(self):
-    #     name = 'suppliers'
-    #     sups = SupplierLocation.objects.all()
-    #     count = sups.count()
-    #     sup_tree = Tree(name, count)
-    #     for sub in Product.__subclasses__():
-    #         Tree.loop_supplier(sub, sup_tree)
-    #     serialized = sup_tree.serialize()
-    #     self.supplier_tree = serialized
-    #     self.save()
-
-    # def product_count(self):
-    #     return self.products.count()
-
-    # def product_types(self):
-    #     from config.globals import get_departments
-    #     self_pks = self.products.values('product__pk')
-    #     ret_dict = [{
-    #         'name': dep._meta.verbose_name_plural.title(),
-    #         'count': dep.objects.filter(pk__in=self_pks).count()
-    #     } for dep in get_departments()]
-    #     return ret_dict

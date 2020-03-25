@@ -12,7 +12,8 @@ def serialize_location_public_detail(business: SupplierLocation):
         'image': business.image.url if business.image else None,
         'address': AddressSerializer(business.address).data,
         'employees': [employee_mini_serializer(emp) for emp in employees],
-        'info': business.company.info
+        'info': business.company.info,
+        'tree': business.product_tree.get_trees().serialize()
         }
 
 def serialize_location_private_detail(business: SupplierLocation):
@@ -26,5 +27,6 @@ def serialize_location_private_detail(business: SupplierLocation):
         'address': AddressSerializer(business.address).data,
         'employees': [employee_mini_serializer(emp) for emp in employees],
         'info': business.company.info,
+        'tree': business.product_tree.get_trees().serialize(),
         'views': business.view_records()
         }
