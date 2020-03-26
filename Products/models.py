@@ -77,8 +77,7 @@ class ValueCleaner(models.Model):
 
 class ProductAvailabilityQuerySet(models.QuerySet):
 
-
-    def product_prices(self, location_pk=None):
+    def product_prices(self):
         prods = self.annotate(
             low_price=Case(
                 When(priced__publish_in_store_price=True,
@@ -89,8 +88,6 @@ class ProductAvailabilityQuerySet(models.QuerySet):
                     )
                 )
             )
-        if location_pk:
-            return prods.filter(supplier_pk=location_pk)
         return prods
 
 
@@ -100,9 +97,9 @@ class ProductPricingManager(models.Manager):
         """ just points to qset """
         return ProductAvailabilityQuerySet(self.model, using=self._db)
 
-    def product_prices(self, location_pk=None):
+    def product_prices(self):
         """ just points to qset """
-        return self.get_queryset().product_prices(location_pk)
+        return self.get_queryset().product_prices()
 
 
 def get_3d_return_path(instance, filename=None):

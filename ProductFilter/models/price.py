@@ -24,7 +24,7 @@ class PriceFacet:
 
     # pylint: disable=unused-argument
     def count_self(self, query_index_pk, facets, products=None):
-        absolutes = products.product_prices(self.location_pk).aggregate(Min(self.attribute), Max(self.attribute))
+        absolutes = products.product_prices().aggregate(Min(self.attribute), Max(self.attribute))
         self.abs_min = absolutes.get('low_price__min')
         self.abs_max = absolutes.get('low_price__max')
         for value in self.enabled_values:

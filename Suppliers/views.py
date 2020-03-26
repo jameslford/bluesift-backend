@@ -13,7 +13,7 @@ from config.custom_permissions import PrivateSupplierCrud
 from config.serializers import BusinessSerializer
 from Analytics.models import SupplierProductListRecord
 from Profiles.models import SupplierEmployeeProfile
-from ProductFilter.sorter import Sorter
+from ProductFilter.sorter import Sorter, FilterResponse
 from .models import SupplierLocation, SupplierProduct
 from .serializers import serialize_location_public_detail, serialize_location_private_detail
 
@@ -115,27 +115,26 @@ def crud_location(request: Request, pk: int = None):
 
 
 @api_view(['DELETE', 'GET', 'PUT'])
-@permission_classes((PrivateSupplierCrud,))
-def crud_supplier_products(request: HttpRequest, product_type=None, location_pk=None):
+# @permission_classes((PrivateSupplierCrud,))
+def crud_supplier_products(request: HttpRequest, product_type=None):
 
     imageurl = get_storage_class().base_path()
 
     if request.method == 'GET':
-        if not (product_type and location_pk):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        location = request.user.get_collections().get(pk=location_pk)
-        model = check_department_string(product_type)
-        content = Sorter(model, request, location_pk).data
-        product_pks = list(content.products.values_list('pk', flat=True))
-        sup_prods = location.products.select_related(
+            # lead_time_to_store=ExpressionWrapper(F('lead_time_ts'), output_field=DateTimeField('day'))
+        # model = check_department_string(product_type)
+        res = FilterResponse.get_cache(request, product_type)
+        pks = [prod['pk'] for prod in res['products']]
+        supplier = request.GET.get('supplier_pk')
+        location = SupplierLocation.objects.get(pk=supplier)
+        products = location.products.select_related(
             'product',
             'product__manufacturer'
-        ).filter(product__pk__in=product_pks).annotate(
-            swatch_url=Concat(Value(imageurl), 'product__swatch_image', output_field=CharField()),
-            # lead_time_to_store=ExpressionWrapper(F('lead_time_ts'), output_field=DateTimeField('day'))
-        )
+            ).filter(product__pk__in=pks).annotate(
+                swatch_url=Concat(Value(imageurl), 'product__swatch_image', output_field=CharField()),
+                )
 
-        serialized_prods = sup_prods.values(
+        res['products'] = products.values(
             'pk',
             'in_store_ppu',
             'online_ppu',
@@ -154,13 +153,45 @@ def crud_supplier_products(request: HttpRequest, product_type=None, location_pk=
             'product__manufacturer_sku',
             'product__manufacturer__label',
             )
-        return Response(
-            {
-                'product_count': content.product_count,
-                'enabled_values': content.enabled_values,
-                'facets': content.facets,
-                'products': serialized_prods
-            }, status=status.HTTP_200_OK)
+        return Response(res, status=status.HTTP_200_OK)
+        # location = request.user.get_collections().get(pk=location_pk)
+        # model = check_department_string(product_type)
+        # content = Sorter(model, request, location_pk).data
+        # product_pks = list(content.products.values_list('pk', flat=True))
+        # sup_prods = location.products.select_related(
+        #     'product',
+        #     'product__manufacturer'
+        # ).filter(product__pk__in=product_pks).annotate(
+        #     swatch_url=Concat(Value(imageurl), 'product__swatch_image', output_field=CharField()),
+        #     # lead_time_to_store=ExpressionWrapper(F('lead_time_ts'), output_field=DateTimeField('day'))
+        # )
+
+        # serialized_prods = sup_prods.values(
+        #     'pk',
+        #     'in_store_ppu',
+        #     'online_ppu',
+        #     'units_available_in_store',
+        #     'units_per_order',
+        #     'lead_time_ts',
+        #     'offer_installation',
+        #     'publish_in_store_availability',
+        #     'publish_in_store_price',
+        #     'publish_online_price',
+        #     'swatch_url',
+        #     'product__pk',
+        #     'product__unit',
+        #     'product__manufacturer_style',
+        #     'product__manufacturer_collection',
+        #     'product__manufacturer_sku',
+        #     'product__manufacturer__label',
+        #     )
+        # return Response(
+        #     {
+        #         'product_count': content.product_count,
+        #         'enabled_values': content.enabled_values,
+        #         'facets': content.facets,
+        #         'products': serialized_prods
+        #     }, status=status.HTTP_200_OK)
 
 
     if request.method == 'PUT':

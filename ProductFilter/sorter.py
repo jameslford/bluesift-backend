@@ -49,7 +49,6 @@ class FilterResponse:
         location_pk = None
         if 'supplier_pk' in query_dict:
             location_pk = query_dict.get('supplier_pk', None)
-            # add_supplier_record.delay(request.get_full_path(), pk=location_pk)
         if 'page' in query_dict:
             page = query_dict.pop('page')[0].split(',')[-1]
         if 'search' in query_dict:
@@ -186,8 +185,14 @@ class Sorter:
         dynamic_queryset = self.initial_products
         for pks in pk_sets:
             dynamic_queryset = dynamic_queryset.filter(pk__in=pks)
-        static_enabled_values = [facet.count_self(self.query_index.pk, self.facets, dynamic_queryset) for facet in self.facets if not facet.dynamic]
-        dynamic_enabled_values = [facet.count_self(self.query_index.pk, self.facets, static_queryset) for facet in self.facets if facet.dynamic]
+        static_enabled_values = [
+            facet.count_self(self.query_index.pk, self.facets, dynamic_queryset)
+            for facet in self.facets if not facet.dynamic
+            ]
+        dynamic_enabled_values = [
+            facet.count_self(self.query_index.pk, self.facets, static_queryset)
+            for facet in self.facets if facet.dynamic
+            ]
         enabled_values = static_enabled_values + dynamic_enabled_values
         enabled_values = [facet for facet in enabled_values if facet]
         products = dynamic_queryset.intersection(static_queryset).values_list('pk', flat=True)
@@ -195,54 +200,3 @@ class Sorter:
         product_count = len(products)
         products = Product.objects.select_related('manufacturer').filter(pk__in=products).product_prices()
         return FilterResponse(product_count, self.facets, products, innis)
-
-
-
-
-        # self.request = request
-        # self.page = 1
-        # self.page_size = 20
-
-    # @property
-    # def page_start(self):
-    #     return (self.page - 1) * self.page_size
-
-    # @property
-    # def page_end(self):
-    #     return self.page * self.page_size
-
-
-        # previous_page = page - 1
-        # next_page = page + 1
-        # page_start = previous_page * page_size
-        # page_end = page * page_size
-            # res_dict['previous_page'] = previous_page
-            # res_dict['next_page'] = next_page
-
-    # @classmethod
-    # def get_cache(cls, path, start, end):
-    #     res_dict = cache.get(path)
-    #     if not res_dict:
-    #         return None
-    #     prods = res_dict.get('products')
-    #     res_dict['products'] = prods[start: end]
-    #     return res_dict
-
-
-        # query_dict: QueryDict = QueryDict(self.request.GET.urlencode(), mutable=True)
-        # if 'page' in query_dict:
-        #     self.page = query_dict.pop('page')
-        # if 'search' in query_dict:
-        #     search_string = query_dict.pop('search')
-        # self.path_key = self.request.path + query_dict.urlencode()
-        # res = cache.get(self.path_key)
-        # if res:
-        #     return res.serialize_self(self.page_start, self.page_end)
-
-    # def serialize_cached(self, product_count, facets, enabled_values, products, start, end):
-    #     return {
-    #         'product_count': product_count,
-    #         'facets': facets,
-    #         'enabled_values': enabled_values,
-    #         'products': self.serialize_products(products)[start: end]
-    #         }

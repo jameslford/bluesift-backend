@@ -9,6 +9,6 @@ urlpatterns = [
     path('locations', private_locations_list),
     path('location', crud_location),
     path('location/<int:pk>', crud_location),
-    path('products/<str:product_type>/<int:location_pk>', crud_supplier_products),
+    path('products/<str:product_type>', crud_supplier_products),
     path('products', crud_supplier_products)
 ]
