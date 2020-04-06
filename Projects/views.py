@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, Avg
+from django.db.models import Min, Max, F, Sum, DecimalField
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -18,7 +18,6 @@ def all_projects(request):
     projects = request.user.get_collections()
     return_dict = projects.annotate(
         min_date=Min('tasks__estimated_start'),
-        # max_date=Max(F('tasks__start_date') + (F('tasks__duration') * (1 - (F('tasks__progress')/100) )), output_field=DateTimeField('day')),
         max_date=Max('tasks__estimated_finish'),
         material_cost=Sum(
             F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
@@ -49,7 +48,6 @@ def dashboard(request: Request, project_pk=None):
     sole endpoint to add a project - model manager will differentiate between user and pro_user
     """
     if request.method == 'GET':
-        # project = Project.objects.filter(pk=project_pk).annotate(
         project = request.user.get_collections().filter(pk=project_pk).annotate(
             address_string=F('address__address_string'),
             material_cost=Sum(
@@ -76,10 +74,6 @@ def dashboard(request: Request, project_pk=None):
         project.update({'tasks': tasks_res})
         return Response(project)
 
-        # .annotate(
-        #     max_lead_time=(Avg(F('products__product__product__priced__lead_time_ts'))),
-        #     specified_lead_time=(Max(F('products__supplier_product__lead_time_ts')))
-        #     )
 
     if request.method == 'POST':
         try:
@@ -121,6 +115,8 @@ def get_tasks(request: Request, project_pk, task_pk=None):
         task = project.tasks.get(pk=task_pk)
         task.delete()
         return Response(status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])

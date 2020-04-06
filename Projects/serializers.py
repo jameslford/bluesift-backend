@@ -9,6 +9,8 @@ from .models import ProjectTask, ProjectProduct
 DAY = 60*60*24*1000
 
 
+
+
 def serialize_task(tasks: QuerySet, children: QuerySet = None) -> Dict[str, any]:
     children = [] if not children else children
     return [{

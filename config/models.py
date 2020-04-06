@@ -237,10 +237,10 @@ class UserTypeStatic(models.Model):
     def serialize(self):
         return {
             'label': self.label,
-            'short_description': self.short_description,
             'image': self.display_image.url if self.display_image else None,
-            'tagline': self.tagline,
             'full_text': self.full_text,
-            'features': [feat.serialize() for feat in self.feature.all()],
-            'options': ['owner', 'admin', 'employee'] if self.include_options else None
+            # 'short_description': self.short_description,
+            # 'tagline': self.tagline,
+            # 'features': [feat.serialize() for feat in self.feature.all()],
+            # 'options': ['owner', 'admin', 'employee'] if self.include_options else None
             }
