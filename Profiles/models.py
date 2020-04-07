@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from django.contrib.gis.db.models import PointField
 from model_utils.managers import InheritanceManager
 from Groups.models import SupplierCompany
 from Plans.models import ConsumerPlan
@@ -142,11 +141,8 @@ class SupplierEmployeeProfile(BaseProfile):
     def locations_managed(self):
         return [location.pk for location in self.managed_locations.all()]
 
+    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
-        # if self.baseprofile_ptr and self.contact_for:
-        #     for location in self.contact_for.all():
-        #         if location.company != self.company:
-        #             raise ValueError('invalid location in contact for')
         if not self.user.is_supplier:
             raise ValueError('user is not retailer')
         super(SupplierEmployeeProfile, self).save(*args, **kwargs)

@@ -4,6 +4,7 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from Projects.models import ProjectTask
 from config.celery import app
 
 
@@ -30,3 +31,12 @@ def send_verification_email(site_domain, user_pk):
         return f'{user.email} email sent'
     except user_model.DoesNotExist:
         return f'{user.email} email failed'
+
+@app.task
+def refresh_projects(user_pk):
+    user = get_user_model().objects.get(pk=user_pk)
+    if user.is_supplier or user.admin:
+        return
+    tasks = ProjectTask.objects.filter(project__owner__user=user)
+    for task in tasks:
+        task.save()

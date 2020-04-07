@@ -18,7 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from .tasks import send_verification_email
+from .tasks import send_verification_email, refresh_projects
 
 from Profiles.models import BaseProfile, SupplierEmployeeProfile
 from .serializers import user_serializer
@@ -106,6 +106,7 @@ def custom_login(request):
         return Response("We're sorry this is for staff only", status=status.HTTP_403_FORBIDDEN)
 
     login(request, user)
+    refresh_projects.delay(user.pk)
     return Response(user_serializer(user), status=status.HTTP_200_OK)
 
 
@@ -143,8 +144,8 @@ def get_demo_user(request, user_type='user', auth_type=None):
 
     pks = eligible_users.values_list('pk', flat=True)
     choice_pk = random.choice(pks)
+    refresh_projects.delay(choice_pk)
     user = get_user_model().objects.get(pk=choice_pk)
-    # print(user)
     return Response(user_serializer(user), status=status.HTTP_200_OK)
 
 

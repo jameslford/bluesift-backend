@@ -4,15 +4,18 @@ from SpecializedProducts.models import Resilient, Hardwood, TileAndStone, Lamina
 
 # armstrong = Manufacturer.objects.get_or_create(label='armstrong')[0]
 # crossville = Manufacturer.objects.get_or_create(label='crossville')[0]
+# floridatile = 'florida_tile'
+subzero = 'subzero'
 armstrong = 'armstrong'
 crossville = 'crossville'
-# floridatile = 'florida_tile'
 shaw = 'shaw'
 viking = 'viking'
-# subzero = 'subzero'
 
 
 groups = [
+    # [
+    #     subzero,
+    # ],
     [
         viking,
         VIKING_RANGE,
@@ -37,12 +40,6 @@ groups = [
         Resilient,
         'commercial_homovinyl'
     ],
-    # [
-    #     armstrong,
-    #     ARMSTRONG_COMMERCIAL_LAMINATE,
-    #     LaminateFlooring,
-    #     'commercial_laminate'
-    # ],
     [
         armstrong,
         ARMSTRONG_COMMERCIAL_RIGIDCORE,
@@ -55,29 +52,12 @@ groups = [
         Resilient,
         'commercial_luxuryflooring'
     ],
-    # [
-    #     armstrong,
-    #     ARMSTRONG_COMMERCIAL_LINOLEUM,
-    #     'commercial_linoleum'
-    # ],
     [
         armstrong,
         ARMSTRONG_RESIDENTIAL_ENGINEERED_TILE,
         TileAndStone,
         'residential_engineeredtile'
     ],
-    # [
-    #     armstrong,
-    #     ARMSTRONG_RESIDENTIAL_HARDWOOD,
-    #     Hardwood,
-    #     'residential_hardwood'
-    # ],
-    # [
-    #     armstrong,
-    #     ARMSTRONG_RESIDENTIAL_LAMINATE,
-    #     LaminateFlooring,
-    #     'residential_laminate'
-    # ],
     [
         armstrong,
         ARMSTRONG_RESIDENTIAL_LVT,

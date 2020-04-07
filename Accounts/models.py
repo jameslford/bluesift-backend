@@ -162,8 +162,10 @@ class User(AbstractBaseUser):
     def is_admin(self):
         return self.admin
 
+    #pylint: disable=unused-argument
     def has_perm(self, perm, obj=None):
         return True
 
+    #pylint: disable=unused-argument
     def has_module_perms(self, app_label):
         return True

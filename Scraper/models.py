@@ -28,6 +28,17 @@ class ScraperGroup(models.Model):
     def get_model(self):
         return self.category.model_class()
 
+    def response(self):
+        return {
+            'pk': self.pk,
+            'manufacturer_pk': self.manufacturer.pk,
+            'manufacturer_name': self.manufacturer.label,
+            'model': self.category.model,
+            'module_name': self.module_name,
+            'scraped': self.scraped,
+            'base_url': self.base_url
+            }
+
     @transaction.atomic
     def scrape(self):
         path = self.path()

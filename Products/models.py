@@ -5,12 +5,13 @@ Main product class, very other type of product(specialized, project & retailer) 
 import uuid
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
+from django.contrib.postgres.fields import JSONField
+from django.contrib.gis.geos import MultiPoint
+# from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 from django.db.models import Min, Case, When
 from django.db.models.functions import Least
 from django.db import transaction
-from django.contrib.postgres.fields import JSONField
-from django.contrib.gis.geos import MultiPoint
 from model_utils.managers import InheritanceManager
 from Addresses.models import Coordinate
 
@@ -214,12 +215,8 @@ class Product(models.Model):
     def assign_name(self):
         raise Exception('must be set on subclass')
 
-
     def get_name(self):
-        # if self.name:
-        #     return self.name
         return self.assign_name()
-
 
     def get_in_store(self):
         return self.priced.select_related(

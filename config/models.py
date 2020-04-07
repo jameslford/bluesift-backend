@@ -39,13 +39,13 @@ class ConfigTree(models.Model):
     def create_category_searches(cls):
         cf_tree: ConfigTree = cls.load()
         tree = cf_tree.init_trees(cf_tree.product_tree)
-        
 
 
     @classmethod
     def load(cls):
         obj = cls.objects.get_or_create(pk=1)[0]
         return obj
+
 
     @classmethod
     def refresh(cls):

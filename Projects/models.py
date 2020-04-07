@@ -120,6 +120,7 @@ class Project(models.Model):
             return super().clean()
         raise ValidationError("Already at plan's project quota")
 
+    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         if not self.nickname:
             count = self.owner.projects.count() + 1
