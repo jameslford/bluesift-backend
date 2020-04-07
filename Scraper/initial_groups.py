@@ -1,6 +1,6 @@
 
 from Scraper.initial_urls import *
-from SpecializedProducts.models import Resilient, Hardwood, TileAndStone, LaminateFlooring, Range
+from SpecializedProducts.models import Resilient, Hardwood, TileAndStone, LaminateFlooring
 
 # armstrong = Manufacturer.objects.get_or_create(label='armstrong')[0]
 # crossville = Manufacturer.objects.get_or_create(label='crossville')[0]
@@ -16,12 +16,12 @@ groups = [
     # [
     #     subzero,
     # ],
-    [
-        viking,
-        VIKING_RANGE,
-        Range,
-        'range'
-    ],
+    # [
+    #     viking,
+    #     VIKING_RANGE,
+    #     Range,
+    #     'range'
+    # ],
     [
         armstrong,
         ARMSTRONG_COMMERCIAL_VCT,

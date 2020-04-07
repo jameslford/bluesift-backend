@@ -157,9 +157,22 @@ class ApplianceConverter(Converter):
         self.product.derived_width = length
 
 
-class Range(Appliance):
+class Cooking(Appliance):
+    pass
+
+class Range(Cooking):
+    pass
+
+class Oven(Cooking):
+    pass
+
+class Microwave(Cooking):
+    pass
+
+class Refrigeration(Appliance):
     pass
 
 
-class ColdStorage(Appliance):
-    pass
+
+
+

@@ -15,12 +15,15 @@ class ConfigTree(models.Model):
     ''' singleton used for navigations and counts on user GUI. to be refreshed daily '''
     product_tree = JSONField(null=True)
     supplier_tree = JSONField(null=True)
+    last_refreshed = models.DateTimeField(auto_now=True)
 
 
+    #pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         self.pk = 1
         super(ConfigTree, self).save(*args, **kwargs)
 
+    #pylint: disable=arguments-differ
     def delete(self, *args, **kwargs):
         pass
 

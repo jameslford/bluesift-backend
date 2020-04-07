@@ -40,13 +40,39 @@ def scrape(request: Request):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes((IsAdminUser,))
 def refresh_tree(request):
-    ConfigTree.refresh()
+
+    if request.method == 'GET':
+        tree = ConfigTree.load()
+        res = {
+            'product_tree': tree.product_tree,
+            'supplier_tree': tree.supplier_tree,
+            'last_refreshed': tree.last_refreshed
+            }
+        return Response(res, status=status.HTTP_200_OK)
+
+    if request.method == 'POST':
+        ConfigTree.refresh()
+        tree = ConfigTree.load()
+        res = {
+            'product_tree': tree.product_tree,
+            'supplier_tree': tree.supplier_tree,
+            'last_refreshed': tree.last_refreshed
+            }
+        return Response(res, status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes((IsAdminUser,))
 def product_groups(request):
+    pass
+
+
+@api_view(['POST'])
+@permission_classes((IsAdminUser,))
+def facets(request):
     pass

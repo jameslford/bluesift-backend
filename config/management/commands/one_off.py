@@ -3,6 +3,7 @@ import datetime
 import random
 from django.utils import timezone
 from django.core.management.base import BaseCommand
+from django.core.cache import cache
 from SpecializedProducts.models import FinishSurface
 from Products.models import Manufacturer
 # from utils.images import remove_background
@@ -16,7 +17,7 @@ from config.models import ConfigTree
 from Search.models import SearchIndex
 from scripts.demo_data import create_parent_tasks, create_child_tasks, add_task_products
 from Projects.models import ProjectTask, Project, ProjectProduct
-from SpecializedProducts.models import Appliance
+from SpecializedProducts.models import Appliance, Cooking, Range
 from Suppliers.models import SupplierLocation
 from Analytics.models import SupplierProductListRecord
 
@@ -48,23 +49,34 @@ def partition(nlist, n):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        for supplier in SupplierLocation.objects.all():
-            startdate = timezone.now() - datetime.timedelta(days=30)
-            enddate = timezone.now()
-            records = SupplierProductListRecord.objects.filter(
-                supplier=supplier
-                ).values_list('pk', flat=True)
-            print(len(records))
-            rgroups = partition(list(records), 30)
-            print(rgroups)
-            # last = 0
-            for date, group in zip(get_dates(startdate, enddate), rgroups):
-                # print(date, group)
-                cords = SupplierProductListRecord.objects.filter(
-                    supplier=supplier,
-                    pk__in=group
-                    )
-                cords.update(recorded=date)
+        pass
+        # cache.clear()
+        # cooking = Cooking.objects.all()
+        # for cook in cooking:
+        #     if not cook.manufacturer_sku:
+        #         cook.delete()
+        # orgs = Cooking.objects.all()
+        # for org in orgs:
+        #     nrange = Range(cooking_ptr_id=org.pk)
+        #     nrange.__dict__.update(nrange.__dict__)
+        #     nrange.save()
+        # for supplier in SupplierLocation.objects.all():
+        #     startdate = timezone.now() - datetime.timedelta(days=30)
+        #     enddate = timezone.now()
+        #     records = SupplierProductListRecord.objects.filter(
+        #         supplier=supplier
+        #         ).values_list('pk', flat=True)
+        #     print(len(records))
+        #     rgroups = partition(list(records), 30)
+        #     print(rgroups)
+        #     # last = 0
+        #     for date, group in zip(get_dates(startdate, enddate), rgroups):
+        #         # print(date, group)
+        #         cords = SupplierProductListRecord.objects.filter(
+        #             supplier=supplier,
+        #             pk__in=group
+        #             )
+        #         cords.update(recorded=date)
                 # views = random.randint(5, 40)
                 # if records[last: views]:
                 #     for record in records[last:views]:
