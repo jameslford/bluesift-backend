@@ -38,11 +38,30 @@ class FilterResponse:
             'enabled_values': self.enabled_values,
             'products': list(self.serialize_products(self.products))
             }
-        cache.set(path_key, pickle_dict, 60 * 15)
+        cache.set(path_key, pickle_dict, 0)
+
+    @classmethod
+    def __retrieve_cache(cls, res_dict, page, search_string):
+        if search_string:
+            product_pks = map(lambda x: x['pk'], res_dict['products'])
+            products = Product.objects.annotate(
+                similarity=TrigramSimilarity('hash_value', search_string)
+                ).filter(similarity__gte=0.1, pk__in=product_pks).order_by('-similarity')[0:20]
+            products = cls.serialize_products(products)
+            res_dict['products'] = products
+            res_dict['product_count'] = len(products)
+            return res_dict
+        prods = res_dict.get('products')
+        if len(prods) <= (page + 1) * page_size:
+            index = slice(None, None)
+        res_dict['products'] = prods[index]
+        res_dict['current_page'] = page
+        return res_dict
+
 
 
     @classmethod
-    def get_cache(cls, request: Request, product_type: str = None, sub_product: str = None):
+    def get_cache(cls, request: Request, product_type: str = None):
         query_dict: QueryDict = QueryDict(request.GET.urlencode(), mutable=True)
         page = 0
         search_string = None
@@ -57,30 +76,12 @@ class FilterResponse:
         res_dict = cache.get(path_key)
         index = slice(page * page_size, (page + 1) * page_size)
         if res_dict:
-            if search_string:
-                product_pks = map(lambda x: x['pk'], res_dict['products'])
-                products = Product.objects.annotate(
-                    similarity=TrigramSimilarity('hash_value', search_string)
-                    ).filter(similarity__gte=0.1, pk__in=product_pks).order_by('-similarity')[0:20]
-                products = cls.serialize_products(products)
-                res_dict['products'] = products
-                res_dict['product_count'] = len(products)
-                return res_dict
-            prods = res_dict.get('products')
-            if len(prods) <= (page + 1) * page_size:
-                index = slice(None, None)
-            res_dict['products'] = prods[index]
-            res_dict['current_page'] = page
-            return res_dict
-        if sub_product:
-            product_type = check_department_string(sub_product)
-        elif product_type:
-            product_type = check_department_string(product_type)
-        else:
-            product_type = Product
-        if not product_type:
+            return cls.__retrieve_cache(res_dict, page, search_string)
+
+        checked_product = check_department_string(product_type) if product_type else Product
+        if not checked_product:
             return None
-        content = Sorter(product_type, path=request.path, query_dict=query_dict, supplier_pk=location_pk).content
+        content = Sorter(checked_product, path=request.path, query_dict=query_dict, supplier_pk=location_pk).content
         content.set_cache(path_key)
         if content.product_count <= (page + 1) * page_size:
             index = slice(None, None)

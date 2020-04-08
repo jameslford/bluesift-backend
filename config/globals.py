@@ -1,6 +1,7 @@
 from enum import Enum
 from urllib.parse import unquote
 from django.apps import apps
+from Products.models import Product
 from SpecializedProducts.models import FinishSurface
 
 class BusinessType(Enum):

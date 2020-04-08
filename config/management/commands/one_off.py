@@ -49,7 +49,9 @@ def partition(nlist, n):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        pass
+        for rangen in Range.objects.all():
+            print(rangen.name)
+        # pass
         # cache.clear()
         # cooking = Cooking.objects.all()
         # for cook in cooking:
@@ -58,7 +60,7 @@ class Command(BaseCommand):
         # orgs = Cooking.objects.all()
         # for org in orgs:
         #     nrange = Range(cooking_ptr_id=org.pk)
-        #     nrange.__dict__.update(nrange.__dict__)
+        #     nrange.__dict__.update(org.__dict__)
         #     nrange.save()
         # for supplier in SupplierLocation.objects.all():
         #     startdate = timezone.now() - datetime.timedelta(days=30)

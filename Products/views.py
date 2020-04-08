@@ -32,10 +32,12 @@ def create_value_cleaner(request: Request, model_type):
 
 
 @api_view(['GET'])
-def products_list(request: HttpRequest, product_type: str = None, sub_product: str = None):
-    res = FilterResponse.get_cache(request, product_type, sub_product)
+def products_list(request: HttpRequest, product_type: str = None):
+    product_type = product_type.split('/')[-1] if product_type and '/' in product_type else product_type
+    res = FilterResponse.get_cache(request, product_type)
+    if not res:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
     return Response(res, status=status.HTTP_200_OK)
-
 
 
 @api_view(['GET', 'POST'])
