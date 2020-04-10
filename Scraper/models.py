@@ -90,3 +90,4 @@ class ScraperGroup(models.Model):
         mod.run(self)
         self.scraped = True
         self.save()
+        self.get_final_images()
