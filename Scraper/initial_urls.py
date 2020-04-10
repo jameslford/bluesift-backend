@@ -1,4 +1,5 @@
 VIKING_RANGE = 'https://www.vikingrange.com/consumer/products/tabs/subcategory_find_products_tab.jsp?id=cat12360038'
+VIKING_OVEN = 'https://www.vikingrange.com/consumer/products/tabs/subcategory_find_products_tab.jsp?id=cat12360032'
 ARMSTRONG_RESIDENTIAL_ENGINEERED_TILE = 'https://www.armstrongflooring.com/residential/en-us/engineered-tile/_jcr_content.browseresults.json?pageSize=139&currPageIndex=1'
 ARMSTRONG_RESIDENTIAL_HARDWOOD = 'https://www.armstrongflooring.com/residential/en-us/hardwood-flooring/_jcr_content.browseresults.json?pageSize=386&currPageIndex=1'
 ARMSTRONG_RESIDENTIAL_LAMINATE = 'https://www.armstrongflooring.com/residential/en-us/laminate-flooring/_jcr_content.browseresults.json?pageSize=93&currPageIndex=1'

@@ -15,13 +15,13 @@ def dashboard(request: Request):
     pass
 
 
-@api_view(['GET', 'POST', 'PUT'])
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes((IsAdminUser,))
-def scrape(request: Request):
+def scrape(request: Request, pk=None):
 
     if request.method == 'POST':
         data = request.data
-        scraper_pk = data.get('pk')
+        scraper_pk = data.get('scraper_pk')
         scraper: ScraperGroup = ScraperGroup.objects.get(pk=scraper_pk)
         scraper.scrape()
         return Response(scraper.response(), status=status.HTTP_200_OK)
@@ -33,6 +33,13 @@ def scrape(request: Request):
 
     if request.method == 'PUT':
         create_scrapers()
+        scrapers = ScraperGroup.objects.select_related('manufacturer').all()
+        scrapers = [scrap.response() for scrap in scrapers]
+        return Response(scrapers, status=status.HTTP_200_OK)
+
+    if request.method == 'DELETE':
+        scraper = ScraperGroup.objects.get(pk=pk)
+        scraper.delete()
         scrapers = ScraperGroup.objects.select_related('manufacturer').all()
         scrapers = [scrap.response() for scrap in scrapers]
         return Response(scrapers, status=status.HTTP_200_OK)
@@ -66,10 +73,23 @@ def refresh_tree(request):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['POST'])
+
+@api_view(['GET', 'POST'])
 @permission_classes((IsAdminUser,))
-def product_groups(request):
-    pass
+def get_final_images(request, pk):
+
+    group: ScraperGroup = ScraperGroup.objects.get(pk=pk)
+    group.get_final_images()
+    return Response(group.response(), status=status.HTTP_200_OK)
+
+
+
+
+
+# @api_view(['POST'])
+# @permission_classes((IsAdminUser,))
+# def product_groups(request):
+#     pass
 
 
 @api_view(['POST'])

@@ -4,13 +4,26 @@ import decimal
 import tempfile
 import requests
 from django.db import models
-from django.db import transaction
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import DecimalRangeField
 import trimesh
 from trimesh.visual.resolvers import WebResolver
-from config.custom_storage import MediaStorage
+from Products.models import Manufacturer
 from .base import Converter, ProductSubClass
+
+# from django.db import transaction
+# from config.custom_storage import MediaStorage
 # import base
+
+class ApplianceColor(models.Model):
+    hex_value = models.CharField(max_length=10)
+    name = models.CharField(max_length=100)
+    manufacturer = models.ForeignKey(
+        Manufacturer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+        )
 
 class Appliance(ProductSubClass):
     inches = 'inches'
@@ -21,6 +34,12 @@ class Appliance(ProductSubClass):
     appliance_type = models.CharField(max_length=100, blank=True, null=True)
     # obj_unit = models.CharField(choices=choices, default=inches, max_length=60)
     room_type = models.CharField(max_length=100, null=True, blank=True)
+    finishes = ArrayField(
+        models.CharField(max_length=70, null=True),
+        null=True,
+        blank=True
+        )
+    colors = models.ManyToManyField(ApplianceColor)
     width = DecimalRangeField(null=True, blank=True)
     height = DecimalRangeField(null=True, blank=True)
     depth = DecimalRangeField(null=True, blank=True)
@@ -31,7 +50,6 @@ class Appliance(ProductSubClass):
         self.name = f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'.lower()
         self.save()
         return self.name
-
 
     def get_height(self):
         return float(self.height.lower) if self.height else None
@@ -56,9 +74,6 @@ class Appliance(ProductSubClass):
                 'height': self.derived_height,
                 'width': self.derived_width,
                 'depth': self.derived_depth
-                # 'size': self.size,
-                # 'square_inches': self.actual_size,
-                # 'shape': self.shape
                 },
         }
 
@@ -158,10 +173,14 @@ class ApplianceConverter(Converter):
 
 
 class Cooking(Appliance):
-    pass
+    fuel_type = models.CharField(max_length=20, null=True, blank=True)
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('room_type', 'kitchen')
+        super(Cooking, self).__init__(*args, **kwargs)
 
 class Range(Cooking):
-    pass
+    burner_count = models.IntegerField(null=True, blank=True)
 
 class Oven(Cooking):
     pass

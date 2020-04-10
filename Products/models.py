@@ -179,12 +179,12 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         )
 
-    scraper_group = models.ForeignKey(
-        'Scraper.ScraperGroup',
-        null=True,
-        related_name='products',
-        on_delete=models.SET_NULL,
-        )
+    # scraper_group = models.ForeignKey(
+    #     'Scraper.ScraperGroup',
+    #     null=True,
+    #     related_name='products',
+    #     on_delete=models.SET_NULL,
+    #     )
 
     objects = ProductPricingManager()
     subclasses = InheritanceManager()
@@ -270,15 +270,15 @@ class Product(models.Model):
         vals = [str(val) for val in vals]
         return ' '.join(vals)
 
-    def get_category(self, cls=None):
-        if not cls:
-            cls = self.__class__
-        print(cls)
-        subs = cls.__subclasses__()
-        if not subs:
-            return cls.__name__
-        for sub in subs:
-            self.get_category(sub)
+    # def get_category(self, cls=None):
+    #     if not cls:
+    #         cls = self.__class__
+    #     print(cls)
+    #     subs = cls.__subclasses__()
+    #     if not subs:
+    #         return cls.__name__
+    #     for sub in subs:
+    #         self.get_category(sub)
 
     def scraper_save(self):
         if not self.manufacturer_sku:

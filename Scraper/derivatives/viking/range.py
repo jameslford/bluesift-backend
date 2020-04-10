@@ -58,10 +58,8 @@ def run(group: ScraperGroup):
             for link in links:
                 if search in link:
                     rec_downloads.append(base + link)
-            save = False
             for download in rec_downloads:
                 if download.endswith('obj.zip'):
-                    save = True
                     product.obj_file = download
                 elif download.endswith('_.DWG'):
                     product.dwg_3d_file = download
@@ -71,7 +69,7 @@ def run(group: ScraperGroup):
                     product.dxf_file = download
                 elif download.endswith('_.rfa'):
                     product.rfa_file = download
-            if save:
+            if product.obj_file:
                 product.name = name
                 product.scraper_save()
             else:
@@ -79,5 +77,3 @@ def run(group: ScraperGroup):
                     product.delete()
                 except AssertionError:
                     continue
-
-
