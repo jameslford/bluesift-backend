@@ -61,10 +61,9 @@ def run(group: ScraperGroup):
         product.manufacturer = group.manufacturer
         product.finishes = ['stainless steel']
         product.fuel_type = 'electric'
-        new_sku = sku[:-3]
         for download in links:
-            # if new_sku in download:
-            download = base + download
+            if not download.startswith(base):
+                download = base + download
             if not product.obj_file and download.endswith('obj.zip'):
                 product.obj_file = download
             elif not product.dwg_3d_file and download.endswith('_.DWG'):

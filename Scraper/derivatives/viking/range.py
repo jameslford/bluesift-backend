@@ -52,11 +52,10 @@ def run(group: ScraperGroup):
                 product.swatch_image_original = img_src
             product.room_scene_original = variation_img
             product.manufacturer_url = path
-            if product.obj_file:
-                product.scraper_save()
-                continue
             for link in links:
                 if search in link:
+                    if not link.startswith(base):
+                        link = base + link
                     rec_downloads.append(base + link)
             for download in rec_downloads:
                 if download.endswith('obj.zip'):

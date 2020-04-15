@@ -140,15 +140,7 @@ class ApplianceConverter(Converter):
 
     def convert(self):
         if not self.product.obj_file:
-            # self.product.delete()
             return
-        # obfile: str = self.product.obj_file
-        # if not obfile.startswith('https://www.vikingrange.com'):
-        #     print('no ob file', self.product.obj_file)
-        #     self.product.obj_file = 'https://www.vikingrange.com' + obfile
-        #     self.product.save()
-        print(self.product.manufacturer_sku)
-        print(self.product.obj_file)
         try:
             mes: trimesh.Trimesh = trimesh.load_remote(self.product.obj_file)
         except zipfile.BadZipFile:
