@@ -179,13 +179,6 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         )
 
-    # scraper_group = models.ForeignKey(
-    #     'Scraper.ScraperGroup',
-    #     null=True,
-    #     related_name='products',
-    #     on_delete=models.SET_NULL,
-    #     )
-
     objects = ProductPricingManager()
     subclasses = InheritanceManager()
 
@@ -270,36 +263,29 @@ class Product(models.Model):
         vals = [str(val) for val in vals]
         return ' '.join(vals)
 
-    # def get_category(self, cls=None):
-    #     if not cls:
-    #         cls = self.__class__
-    #     print(cls)
-    #     subs = cls.__subclasses__()
-    #     if not subs:
-    #         return cls.__name__
-    #     for sub in subs:
-    #         self.get_category(sub)
-
     def scraper_save(self):
         if not self.manufacturer_sku:
-            return
+            return None
         alt_prod = Product.subclasses.filter(
             manufacturer=self.manufacturer,
             manufacturer_sku=self.manufacturer_sku
             ).select_subclasses()
         if not alt_prod:
             self.save()
-            return
+            return self
         if alt_prod.count() > 1:
-            return
+            return alt_prod.first()
         alt_prod = alt_prod.first()
         original_values = alt_prod.__dict__
         new_values = self.__dict__
         for field, value in original_values.items():
-            if value:
+            if field in ['bb_sku', '_state']:
                 continue
             new_val = new_values.get(field)
+            if value:
+                if not new_val:
+                    continue
             if new_val:
                 setattr(alt_prod, field, new_val)
         alt_prod.save()
-        return
+        return alt_prod

@@ -11,9 +11,6 @@ from trimesh.visual.resolvers import WebResolver
 from Products.models import Manufacturer
 from .base import Converter, ProductSubClass
 
-# from django.db import transaction
-# from config.custom_storage import MediaStorage
-# import base
 
 class ApplianceColor(models.Model):
     hex_value = models.CharField(max_length=10)
@@ -32,7 +29,6 @@ class Appliance(ProductSubClass):
     ft = 'feet'
     unit_choices = [inches, cm, mm, ft]
     appliance_type = models.CharField(max_length=100, blank=True, null=True)
-    # obj_unit = models.CharField(choices=choices, default=inches, max_length=60)
     room_type = models.CharField(max_length=100, null=True, blank=True)
     finishes = ArrayField(
         models.CharField(max_length=70, null=True),
@@ -144,8 +140,15 @@ class ApplianceConverter(Converter):
 
     def convert(self):
         if not self.product.obj_file:
-            self.product.delete()
+            # self.product.delete()
             return
+        # obfile: str = self.product.obj_file
+        # if not obfile.startswith('https://www.vikingrange.com'):
+        #     print('no ob file', self.product.obj_file)
+        #     self.product.obj_file = 'https://www.vikingrange.com' + obfile
+        #     self.product.save()
+        print(self.product.manufacturer_sku)
+        print(self.product.obj_file)
         try:
             mes: trimesh.Trimesh = trimesh.load_remote(self.product.obj_file)
         except zipfile.BadZipFile:
@@ -157,6 +160,7 @@ class ApplianceConverter(Converter):
             mes = mes.convert_units('inches', True)
         self.assign_sizes(mes)
         self.product.save_derived_glb(mes)
+        self.add_proprietary_files()
 
 
     def assign_sizes(self, mes: trimesh.Trimesh):

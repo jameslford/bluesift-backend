@@ -61,17 +61,22 @@ def run(group: ScraperGroup):
         product.manufacturer = group.manufacturer
         product.finishes = ['stainless steel']
         product.fuel_type = 'electric'
+        new_sku = sku[:-3]
         for download in links:
-            if sku in download:
-                if download.endswith('obj.zip'):
-                    product.obj_file = download
-                elif download.endswith('_.DWG'):
-                    product.dwg_3d_file = download
-                elif download.endswith('.dwg'):
-                    product.dwg_2d_file = download
-                elif download.endswith('_.DXF'):
-                    product.dxf_file = download
-                elif download.endswith('_.rfa'):
-                    product.rfa_file = download
-        product.scraper_save()
+            # if new_sku in download:
+            download = base + download
+            if not product.obj_file and download.endswith('obj.zip'):
+                product.obj_file = download
+            elif not product.dwg_3d_file and download.endswith('_.DWG'):
+                product.dwg_3d_file = download
+            elif not product.dwg_2d_file and download.endswith('.dwg'):
+                product.dwg_2d_file = download
+            elif not product.dxf_file and download.endswith('_.DXF'):
+                product.dxf_file = download
+            elif not product.rfa_file and download.endswith('_.rfa'):
+                product.rfa_file = download
+        print(sku)
+        print('______________________')
+        product = product.scraper_save()
+        # product.refresh_from_db()
         product.colors.add(*colors)

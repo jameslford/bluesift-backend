@@ -46,6 +46,11 @@ class ScraperGroup(models.Model):
             'base_url': self.base_url
             }
 
+    def convert_geometries(self):
+        products = self.category.model_class().objects.all()
+        for product in products:
+            product.convert_geometries()
+
     def get_final_images(self, update=False):
         desired_size = settings.DESIRED_IMAGE_SIZE
         products = self.category.model_class().objects.all()

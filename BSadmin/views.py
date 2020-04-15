@@ -1,4 +1,3 @@
-from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
@@ -7,6 +6,7 @@ from rest_framework.request import Request
 from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
+# from django.contrib.contenttypes.models import ContentType
 
 
 @api_view(['GET'])
@@ -81,6 +81,15 @@ def get_final_images(request, pk):
     group: ScraperGroup = ScraperGroup.objects.get(pk=pk)
     group.get_final_images()
     return Response(group.response(), status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes((IsAdminUser,))
+def convert_geometries(request, pk):
+    group: ScraperGroup = ScraperGroup.objects.get(pk=pk)
+    group.convert_geometries()
+    return Response(group.response(), status=status.HTTP_200_OK)
+
 
 
 

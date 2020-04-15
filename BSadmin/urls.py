@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import scrape, refresh_tree, get_final_images
+from .views import scrape, refresh_tree, get_final_images, convert_geometries
 
 urlpatterns = [
     path('scrapers', scrape),
     path('scrapers/<int:pk>', scrape),
     path('trees', refresh_tree),
-    path('images/<int:pk>', get_final_images)
+    path('images/<int:pk>', get_final_images),
+    path('geometry/<int:pk>', convert_geometries)
 ]
