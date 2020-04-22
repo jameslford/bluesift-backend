@@ -67,10 +67,11 @@ class Appliance(ProductSubClass):
     def grouped_fields(self):
         return {
             'size_and_shaped': {
-                'height': self.derived_height,
-                'width': self.derived_width,
-                'depth': self.derived_depth
+                'height': self.derived_height if self.derived_height else self.height,
+                'width': self.derived_width if self.derived_width else self.width,
+                'depth': self.derived_depth if self.derived_depth else self.depth
                 },
+            
         }
 
 
