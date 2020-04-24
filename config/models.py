@@ -1,9 +1,10 @@
 '''
 These models hold/relay static materials served for front end
 '''
-
+import io
 from xml.dom import minidom
 from model_utils import Choices
+from PIL import Image
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from utils.tree import Tree
@@ -233,15 +234,31 @@ class UserTypeStatic(models.Model):
     full_text = models.TextField(blank=True, null=True)
     feature = models.ManyToManyField(UserFeature, related_name='ut_static', blank=True)
     include_options = models.BooleanField(default=False)
+    image = models.ImageField(max_length=1000, upload_to='misc/', blank=True, null=True)
 
     def __str__(self):
         return self.label
 
+    def create_img(self):
+        image = Image.open(self.display_image)
+        width, height = image.size
+        arat = height / width
+        new_height = 350
+        new_width = int(round(350 / arat))
+        print(new_height, new_width, arat)
+        resized = image.resize((new_width, new_height), Image.LANCZOS)
+        buffer = io.BytesIO()
+        resized.save(buffer, 'JPEG', quality=90)
+        self.image.save(self.label, buffer, save=True)
+
+
     def serialize(self):
         return {
             'label': self.label,
-            'image': self.display_image.url if self.display_image else None,
+            # 'image': self.display_image.url if self.display_image else None,
+            'image': self.image.url if self.image else None,
             'full_text': self.full_text,
+
             # 'short_description': self.short_description,
             # 'tagline': self.tagline,
             # 'features': [feat.serialize() for feat in self.feature.all()],

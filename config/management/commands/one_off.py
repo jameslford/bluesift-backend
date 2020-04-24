@@ -13,7 +13,7 @@ from scripts.search import create_indexes
 # from scripts.finish_surfaces import default_clean
 from scripts.facets import create_facets
 from Scraper.models import ScraperGroup
-from config.models import ConfigTree
+from config.models import ConfigTree, UserTypeStatic
 from Search.models import SearchIndex
 from scripts.demo_data import create_parent_tasks, create_child_tasks, add_task_products
 from Projects.models import ProjectTask, Project, ProjectProduct
@@ -49,8 +49,12 @@ def partition(nlist, n):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        for rangen in Range.objects.all():
-            print(rangen.name)
+        uts = UserTypeStatic.objects.all()
+
+        for ut in uts:
+            ut.create_img()
+        # for rangen in Range.objects.all():
+        #     print(rangen.name)
         # pass
         # cache.clear()
         # cooking = Cooking.objects.all()
