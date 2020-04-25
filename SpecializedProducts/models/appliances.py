@@ -176,6 +176,9 @@ class Cooking(Appliance):
         kwargs.setdefault('room_type', 'kitchen')
         super(Cooking, self).__init__(*args, **kwargs)
 
+    class Meta:
+        verbose_name_plural = 'cooking'
+
 class Range(Cooking):
     burner_count = models.IntegerField(null=True, blank=True)
 
@@ -186,7 +189,9 @@ class Microwave(Cooking):
     pass
 
 class Refrigeration(Appliance):
-    pass
+
+    class Meta:
+        verbose_name_plural = 'refrigeration'
 
 
 
