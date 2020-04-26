@@ -110,6 +110,6 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     # 'config.custom_middleware.StagingMiddleware',
-    # 'config.custom_middleware.LastSeenMiddleware',
+    'config.custom_middleware.LastSeenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 ]
