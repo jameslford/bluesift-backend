@@ -4,6 +4,7 @@ serializers used for return project and retailer locations list to user library
 from typing import Dict
 from django.db.models import QuerySet, Avg
 from Products.serializers import serialize_product
+from Suppliers.models import SupplierProduct
 from .models import ProjectTask, ProjectProduct
 
 DAY = 60*60*24*1000
@@ -78,6 +79,7 @@ def reserialize_task(project, data, parent: ProjectTask = None):
 
 
 def resource_serializer(product: ProjectProduct):
+    # gen_pks = [prod.pk for prod in product.pro]
     return {
         'pk': product.pk,
         'linked_tasks': {
@@ -88,15 +90,7 @@ def resource_serializer(product: ProjectProduct):
         'procured': product.procured,
         'supplier_product': product.supplier_product.get_priced() if product.supplier_product else None,
         'product': serialize_product(product.product.product),
-        'priced': [pro.get_priced() for pro in product.product.product.priced.all()]
+        'priced': []
+        # 'priced': [pro.get_priced() for pro in SupplierProduct.objects.filter(product=product.product.product)]
+        # 'priced': [pro.get_priced() for pro in product.product.product.priced.all()]
         }
-
-
-
-        # 'assigned_product': {
-        #     'name': task.product.name,
-        #     'pk': task.product.pk
-        #     } if task.product else None,
-        # 'selected_retailer': task.selected_retailer.pk if task.selected_retailer else None,
-        # 'supplier_product': task.supplier_product.pk if task.supplier_product else None,
-        # 'product': serialize_product_priced(task.product) if task.product else None,

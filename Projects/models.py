@@ -3,6 +3,7 @@ from datetime import timedelta, datetime
 import pytz
 from django.db import models, transaction
 from django.utils import timezone
+
 # from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
 from django.core.exceptions import ValidationError
 from model_utils import Choices
@@ -11,24 +12,28 @@ from Addresses.models import Address
 from Suppliers.models import SupplierProduct
 from Profiles.models import ConsumerProfile, LibraryProduct
 
-DAY = 60*60*24*1000
+DAY = 60 * 60 * 24 * 1000
+
 
 class ProjectManager(models.Manager):
     """
     manager for projects, cosumer and pro. only adds 1 custom method: create_project
     """
+
     @transaction.atomic()
     def create_project(self, user, **kwargs):
         """
         can pass any verified user to this method and will create the correct project_type, or return none
         if user.is_supplier
         """
-        nickname = kwargs.get('nickname')
-        deadline = kwargs.get('deadline')
-        address = kwargs.get('address_pk')
+        nickname = kwargs.get("nickname")
+        deadline = kwargs.get("deadline")
+        address = kwargs.get("address_pk")
         project = None
         group = user.get_group()
-        project = Project.objects.create(owner=group, nickname=nickname, deadline=deadline)
+        project = Project.objects.create(
+            owner=group, nickname=nickname, deadline=deadline
+        )
         if not address:
             return project
         address = Address.objects.filter(pk=address).first()
@@ -40,7 +45,7 @@ class ProjectManager(models.Manager):
 
     def update_project(self, user, **kwargs):
         """ update method """
-        project_pk = kwargs.get('pk')
+        project_pk = kwargs.get("pk")
         if isinstance(project_pk, list):
             project_pk = project_pk[0]
         if isinstance(project_pk, str):
@@ -48,10 +53,10 @@ class ProjectManager(models.Manager):
         project_pk = int(project_pk)
         collections = user.get_collections()
         collection = collections.get(pk=project_pk)
-        nickname = kwargs.get('nickname')
-        deadline = kwargs.get('deadline')
-        address = kwargs.get('address')
-        image = kwargs.get('image')
+        nickname = kwargs.get("nickname")
+        deadline = kwargs.get("deadline")
+        address = kwargs.get("address")
+        image = kwargs.get("image")
         if deadline:
             collection.deadline = deadline
         if address:
@@ -63,7 +68,7 @@ class ProjectManager(models.Manager):
             try:
                 image = image[0]
                 collection.image.save(image.name, image)
-                print('image saved')
+                print("image saved")
             except IndexError:
                 pass
         collection.save()
@@ -75,7 +80,7 @@ class ProjectManager(models.Manager):
         if project_pk is provided, returns a project instance, else returns a queryset
         """
         if user.is_admin or user.is_supplier:
-            raise ValueError('Unsupported user type')
+            raise ValueError("Unsupported user type")
         group = user.get_group()
         projects = Project.objects.filter(owner=group)
         if project_pk:
@@ -86,7 +91,7 @@ class ProjectManager(models.Manager):
 class Project(models.Model):
     deadline = models.DateTimeField(null=True, blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
-    image = models.ImageField(null=True, blank=True, upload_to='project-images/' )
+    image = models.ImageField(null=True, blank=True, upload_to="project-images/")
     template = models.BooleanField(default=False)
     # buffer = models.IntegerField(default=10)
     address = models.ForeignKey(
@@ -94,20 +99,18 @@ class Project(models.Model):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='projects'
-        )
+        related_name="projects",
+    )
     nickname = models.CharField(max_length=60)
     owner = models.ForeignKey(
-        ConsumerProfile,
-        on_delete=models.CASCADE,
-        related_name='projects'
-        )
+        ConsumerProfile, on_delete=models.CASCADE, related_name="projects"
+    )
 
     objects = ProjectManager()
     subclasses = InheritanceManager()
 
     class Meta:
-        unique_together = ('nickname', 'owner')
+        unique_together = ("nickname", "owner")
 
     def __str__(self):
         return self.nickname
@@ -124,21 +127,26 @@ class Project(models.Model):
     def save(self, *args, **kwargs):
         if not self.nickname:
             count = self.owner.projects.count() + 1
-            self.nickname = 'Project ' + str(count)
+            self.nickname = "Project " + str(count)
         return super().save(*args, **kwargs)
 
     # def calculate_progress(self):
     #     tasks = self.tasks.all()
 
 
-
 class ProjectTask(models.Model):
-    DEPENDENCIES = Choices(('FTS', 'Finish to Start'), ('STS', 'Start to Start'), ('FTF', 'Finish to Finish'))
+    DEPENDENCIES = Choices(
+        ("FTS", "Finish to Start"),
+        ("STS", "Start to Start"),
+        ("FTF", "Finish to Finish"),
+    )
     name = models.CharField(max_length=80)
     notes = models.TextField(null=True, blank=True)
     start_date = models.DateTimeField(null=True)
     duration = models.DurationField(null=True)
-    predecessor_type = models.CharField(choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20)
+    predecessor_type = models.CharField(
+        choices=DEPENDENCIES, default=DEPENDENCIES.FTS, max_length=20
+    )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     progress = models.IntegerField(default=0)
@@ -149,37 +157,33 @@ class ProjectTask(models.Model):
     estimated_finish = models.DateTimeField(null=True)
 
     predecessor = models.ForeignKey(
-        'self',
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='dependants'
-        )
+        "self", null=True, on_delete=models.SET_NULL, related_name="dependants"
+    )
     parent = models.ForeignKey(
-        'self',
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='children'
-        )
-    project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name='tasks'
-        )
+        "self", null=True, on_delete=models.SET_NULL, related_name="children"
+    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
 
     def __str__(self):
-        return f'{self.project.nickname}, {self.name}'
+        return f"{self.project.nickname}, {self.name}"
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
         self.count_parents()
         if self.progress > 0:
             if not self.start_date or self.start_date > timezone.now():
                 self.start_date = timezone.now()
         if self.predecessor is not None and self.predecessor == self.parent:
-            raise ValidationError('parent cannot be predecessor')
+            raise ValidationError("parent cannot be predecessor")
         self.estimated_start = self.get_estimated_start()
         self.estimated_finish = self.get_estimated_finish()
         return super().save(
-            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     def get_dependency_level(self, level=0):
         nlevel = level
@@ -190,8 +194,7 @@ class ProjectTask(models.Model):
 
     def get_lead_time(self):
         prods = self.products.select_related(
-            'supplier_product',
-            'product__product'
+            "supplier_product", "product__product"
         ).all()
         if not prods or len(prods) < 1:
             return 0
@@ -213,7 +216,6 @@ class ProjectTask(models.Model):
             return 0
         return max(times)
 
-
     def get_duration(self):
         children = self.children.all()
         if children:
@@ -232,11 +234,10 @@ class ProjectTask(models.Model):
 
     def predecessor_type_map(self):
         pred_map = {
-            'FTS': self.predecessor.get_estimated_finish(),
-            'STS': self.predecessor.get_estimated_start()
-            }
+            "FTS": self.predecessor.get_estimated_finish(),
+            "STS": self.predecessor.get_estimated_start(),
+        }
         return pred_map.get(self.predecessor_type)
-
 
     def get_estimated_start(self):
         if self.predecessor:
@@ -254,13 +255,11 @@ class ProjectTask(models.Model):
             return datetime.now(pytz.utc) + timedelta(seconds=lead_time)
         return self.start_date
 
-
     def get_estimated_finish(self):
         progress = self.progress if self.progress else 0
         duration = self.get_duration()
-        dur = (1 - (progress/100)) * duration
+        dur = (1 - (progress / 100)) * duration
         return self.get_estimated_start() + timedelta(seconds=dur)
-
 
     def count_parents(self):
         level = 0
@@ -269,68 +268,63 @@ class ProjectTask(models.Model):
             if self.parent.parent:
                 level = 2
                 if self.parent.parent.parent:
-                    raise ValueError('Only 2 nested levels allowed')
+                    raise ValueError("Only 2 nested levels allowed")
         self.level = level
-
 
     def mini_serialize(self) -> Dict[str, any]:
         return {
-            'pk': self.pk,
-            'name': self.name,
-            'progress': self.progress,
-            'saved': True,
-            'start_date': self.start_date,
-            'duration': self.duration / DAY if self.duration else None,
-            'children': [child.mini_serialize() for child in self.children.all()],
-            }
+            "pk": self.pk,
+            "name": self.name,
+            "progress": self.progress,
+            "saved": True,
+            "start_date": self.start_date,
+            "duration": self.duration / DAY if self.duration else None,
+            "children": [child.mini_serialize() for child in self.children.all()],
+        }
 
 
 class ProjectProduct(models.Model):
     quantity_needed = models.IntegerField(null=True, blank=True)
     procured = models.BooleanField(default=False)
     project = models.ForeignKey(
-        Project,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name='products'
-        )
+        Project, null=True, on_delete=models.CASCADE, related_name="products"
+    )
     product = models.ForeignKey(
-        LibraryProduct,
-        null=True,
-        on_delete=models.PROTECT,
-        related_name='projects'
-        )
+        LibraryProduct, null=True, on_delete=models.PROTECT, related_name="projects"
+    )
     supplier_product = models.ForeignKey(
-        SupplierProduct,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name='projects'
-        )
+        SupplierProduct, null=True, on_delete=models.CASCADE, related_name="projects"
+    )
     linked_tasks = models.ForeignKey(
         ProjectTask,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='products'
-        )
+        related_name="products",
+    )
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
         if self.supplier_product:
             if self.supplier_product.product != self.product.product:
-                raise ValidationError(f'retailer product does not match product')
+                raise ValidationError(f"retailer product does not match product")
         if not self.project:
             self.project = self.linked_tasks.project
         if self.product.owner != self.project.owner:
-            raise ValidationError('product not in user library')
-        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+            raise ValidationError("product not in user library")
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
 
 class AddtionalProjectCosts(models.Model):
     project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name='additional_costs'
-        )
+        Project, on_delete=models.CASCADE, related_name="additional_costs"
+    )
     amount = models.DecimalField(max_digits=7, decimal_places=2)
     label = models.CharField(max_length=60)
     notes = models.TextField(null=True, blank=True)

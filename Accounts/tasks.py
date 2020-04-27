@@ -7,8 +7,6 @@ from django.utils.encoding import force_bytes
 from Projects.models import ProjectTask
 from config.celery import app
 
-
-
 @app.task
 def send_verification_email(site_domain, user_pk):
     user_model = get_user_model()
@@ -22,7 +20,7 @@ def send_verification_email(site_domain, user_pk):
         })
 
         email_obj = EmailMessage(
-            subject="Activate your Buildbook account",
+            subject="Activate your Bluesift account",
             body=message,
             from_email='jford@bluesift.com',
             to=[user.email]

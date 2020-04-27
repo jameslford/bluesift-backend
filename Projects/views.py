@@ -12,106 +12,111 @@ from .models import Project, ProjectProduct, ProjectTask
 from .serializers import reserialize_task, resource_serializer, serialize_task
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes((IsAuthenticated,))
 def all_projects(request):
     projects = request.user.get_collections()
     return_dict = projects.annotate(
-        min_date=Min('tasks__estimated_start'),
-        max_date=Max('tasks__estimated_finish'),
+        min_date=Min("tasks__estimated_start"),
+        max_date=Max("tasks__estimated_finish"),
         material_cost=Sum(
-            F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
-            output_field=DecimalField(decimal_places=2)),
-        additional_costs_sum=Sum('additional_costs__amount'),
-        address_string=F('address__address_string'),
-        lat=F('address__coordinates__lat'),
-        lng=F('address__coordinates__lng'),
-        ).values(
-            'pk',
-            'nickname',
-            'address_string',
-            'lat',
-            'lng',
-            'deadline',
-            'min_date',
-            'max_date',
-            'additional_costs_sum',
-            'material_cost'
-            )
+            F("products__supplier_product__in_store_ppu")
+            * F("products__quantity_needed"),
+            output_field=DecimalField(decimal_places=2),
+        ),
+        additional_costs_sum=Sum("additional_costs__amount"),
+        address_string=F("address__address_string"),
+        lat=F("address__coordinates__lat"),
+        lng=F("address__coordinates__lng"),
+    ).values(
+        "pk",
+        "nickname",
+        "address_string",
+        "lat",
+        "lng",
+        "deadline",
+        "min_date",
+        "max_date",
+        "additional_costs_sum",
+        "material_cost",
+    )
     return Response(return_dict, status=status.HTTP_200_OK)
 
 
-@api_view(['GET', 'POST', 'DELETE', 'PUT'])
+@api_view(["GET", "POST", "DELETE", "PUT"])
 @permission_classes((IsAuthenticated, OwnerOrAdmin))
 def dashboard(request: Request, project_pk=None):
     """
     sole endpoint to add a project - model manager will differentiate between user and pro_user
     """
-    if request.method == 'GET':
-        project = request.user.get_collections().filter(pk=project_pk).annotate(
-            address_string=F('address__address_string'),
-            material_cost=Sum(
-                F('products__supplier_product__in_store_ppu') * F('products__quantity_needed'),
-                output_field=DecimalField(decimal_places=2)),
-            additional_costs_sum=Sum('additional_costs__amount'),
-        ).values(
-            'pk',
-            'nickname',
-            'address_string',
-            'deadline',
-            'additional_costs_sum',
-            'material_cost'
+    if request.method == "GET":
+        project = (
+            request.user.get_collections()
+            .filter(pk=project_pk)
+            .annotate(
+                address_string=F("address__address_string"),
+                material_cost=Sum(
+                    F("products__supplier_product__in_store_ppu")
+                    * F("products__quantity_needed"),
+                    output_field=DecimalField(decimal_places=2),
+                ),
+                additional_costs_sum=Sum("additional_costs__amount"),
+            )
+            .values(
+                "pk",
+                "nickname",
+                "address_string",
+                "deadline",
+                "additional_costs_sum",
+                "material_cost",
             )[0]
-        tasks = ProjectTask.objects.select_related('predecessor').filter(
-            project__pk=project['pk'],
-            level='0'
-            )
-        tasks2 = ProjectTask.objects.select_related('predecessor').filter(
-            project__pk=project['pk'],
-            level='1'
-            )
+        )
+        tasks = ProjectTask.objects.select_related("predecessor").filter(
+            project__pk=project["pk"], level="0"
+        )
+        tasks2 = ProjectTask.objects.select_related("predecessor").filter(
+            project__pk=project["pk"], level="1"
+        )
         tasks_res = serialize_task(tasks, tasks2)
-        project.update({'tasks': tasks_res})
+        project.update({"tasks": tasks_res})
         return Response(project)
-
-
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             project = Project.objects.create_project(request.user, **request.data)
             return Response(status=status.HTTP_201_CREATED)
         except ValidationError as error:
             return Response(error.messages[1], status=status.HTTP_400_BAD_REQUEST)
 
-    if request.method == 'DELETE':
+    if request.method == "DELETE":
         project = request.user.get_collections().filter(pk=project_pk).first()
         if not project:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         project.delete()
         return Response(status=status.HTTP_200_OK)
 
-    if request.method == 'PUT':
+    if request.method == "PUT":
         user = request.user
         data = request.data
         project = Project.objects.update_project(user, **data)
         return Response(status=status.HTTP_200_OK)
 
-    return Response('Unsupported method', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    return Response("Unsupported method", status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['POST', 'DELETE'])
+@api_view(["POST", "DELETE"])
 @permission_classes((IsAuthenticated, OwnerOrAdmin))
 def get_tasks(request: Request, project_pk, task_pk=None):
     project = Project.objects.get_user_projects(request.user, project_pk)
-    if request.method == 'POST':
+    if request.method == "POST":
         data = request.data
-        children = data.get('children', None)
+        children = data.get("children", None)
         if children:
             for child in children:
                 reserialize_task(project, child)
-            return Response('children created', status=status.HTTP_200_OK)
+            return Response("children created", status=status.HTTP_200_OK)
         return Response(status=status.HTTP_200_OK)
 
-    if request.method == 'DELETE':
+    if request.method == "DELETE":
         task = project.tasks.get(pk=task_pk)
         task.delete()
         return Response(status=status.HTTP_200_OK)
@@ -119,39 +124,67 @@ def get_tasks(request: Request, project_pk, task_pk=None):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes((IsAuthenticated, OwnerOrAdmin))
+@api_view(["GET", "POST", "PUT", "DELETE"])
+# @permission_classes((IsAuthenticated, OwnerOrAdmin))
 def resources(request, project_pk, product_pk=None):
 
-    project = Project.objects.prefetch_related('tasks', 'products').get(owner__user=request.user, pk=project_pk)
-    if request.method == 'GET':
+    # project = Project.objects.prefetch_related('tasks', 'products').get(owner__user=request.user, pk=project_pk)
+    project = Project.objects.prefetch_related("tasks", "products").get(pk=project_pk)
+    if request.method == "GET":
+        products = (
+            ProjectProduct.objects.select_related(
+                "product",
+                "product__product",
+                "supplier_product",
+                "product__product__manufacturer",
+            )
+            .filter(project=project)
+            .annotate(gen_pk=F("product__product__pk"))
+        )
+        all_pks = [product.gen_pk for product in products]
+        suppliers = (
+            SupplierProduct.objects.select_related("product", "location")
+            .filter(product__pk__in=all_pks)
+            .values(
+                "pk",
+                "location__pk",
+                "location__nickname",
+                "units_available_in_store",
+                "lead_time_ts",
+                "in_store_ppu",
+                "product__pk",
+            )
+        )
+        products = [resource_serializer(prod) for prod in products]
+        for prod in products:
+            for sup in suppliers:
+                if sup["product__pk"] == prod["product"]["pk"]:
+                    prod["priced"].append(sup)
+
         response = {
-            'tasks': project.tasks.values('pk', 'name'),
-            'project_products': [resource_serializer(prod) for prod in project.products.all()]
+            "tasks": project.tasks.values("pk", "name"),
+            "project_products": products,
         }
         return Response(response, status=status.HTTP_200_OK)
 
-    if request.method == 'POST':
-        library_product = request.POST.get('library_product')
+    if request.method == "POST":
+        library_product = request.POST.get("library_product")
         library_product = LibraryProduct.objects.get(pk=library_product)
-        ProjectProduct.objects.get_or_create(
-            project=project,
-            product=library_product
-        )
+        ProjectProduct.objects.get_or_create(project=project, product=library_product)
         return Response(status=status.HTTP_200_OK)
 
-    if request.method == 'PUT':
+    if request.method == "PUT":
         data = request.data
         for group in data:
-            pk = group.get('pk')
+            pk = group.get("pk")
             prod: ProjectProduct = ProjectProduct.objects.get(project=project, pk=pk)
-            quant = group.get('quantity', prod.quantity_needed)
-            procured = group.get('procured', prod.procured)
-            sup = group.get('supplier')
+            quant = group.get("quantity", prod.quantity_needed)
+            procured = group.get("procured", prod.procured)
+            sup = group.get("supplier")
             if sup:
                 supplier_product = SupplierProduct.objects.get(pk=sup)
                 prod.supplier_product = supplier_product
-            task = group.get('task')
+            task = group.get("task")
             if task:
                 ptask = ProjectTask.objects.get(project=project, pk=task)
                 prod.linked_tasks = ptask
@@ -160,7 +193,7 @@ def resources(request, project_pk, product_pk=None):
             prod.save()
         return Response(status=status.HTTP_200_OK)
 
-    if request.method == 'DELETE':
+    if request.method == "DELETE":
         prod = ProjectProduct.objects.get(project=project, pk=product_pk)
         prod.delete()
         return Response(status=status.HTTP_200_OK)

@@ -1,5 +1,10 @@
 {% autoescape off %}
-Hi {{user.get_first_name}}
-Please click on the link to confirm your registration:
+<strong>Hi {{user.get_first_name}},</strong>
+
+<p>We're happy to have you and have set up your personalized demo account so that you can become familiar with the system</p>
+<br>
+<p>As soon as we go live we will automatically roll your account into a the live site.</p>
+
+<strong>Please click on the link to confirm your registration:</strong> 
 https://{{ domain }}{% url 'activate' uidb64=uid token=token %}
 {% endautoescape %}
