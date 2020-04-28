@@ -19,7 +19,7 @@ def clean_value(value):
     if not value:
         return None
     conversion = 1
-    print('initial ', value)
+    # print('initial ', value)
     value = str(value).strip().lower()
     if 'mixed' in value:
         return None

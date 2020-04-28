@@ -14,7 +14,7 @@ from django.utils.encoding import force_text
 from django.conf import settings
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -60,7 +60,6 @@ def create_user(request):
     if not user:
         return Response("No user created", status=status.HTTP_400_BAD_REQUEST)
 
-    Token.objects.create(user=user)
     site = get_current_site(request).domain
     send_verification_email.delay(site, user.pk)
     return Response(user_serializer(user), status=status.HTTP_201_CREATED)
@@ -165,8 +164,9 @@ def get_demo_user(request, user_type="user", auth_type=None):
 
 
 @api_view(["DELETE"])
-@permission_classes((IsAuthenticated,))
+@permission_classes((AllowAny,))
 def custom_logout(request):
-    request.user.auth_token.delete()
-    logout(request)
+    if request.user.is_authenticated:
+        request.user.auth_token.delete()
+        logout(request)
     return Response(status=status.HTTP_200_OK)

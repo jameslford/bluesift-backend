@@ -21,6 +21,7 @@ from .models import (
 )
 
 page_size = 50
+cache_minutes = 8
 
 
 class FilterResponse:
@@ -41,13 +42,14 @@ class FilterResponse:
         pickle_dict = {
             "product_count": self.product_count,
             "facets": [facet for facet in facets if facet],
+            "page_size": page_size,
             "enabled_values": self.enabled_values,
             "products": list(self.serialize_products(self.products)),
         }
-        cache.set(path_key, pickle_dict, 0)
+        cache.set(path_key, pickle_dict, 60 * cache_minutes)
 
     @classmethod
-    def __retrieve_cache(cls, res_dict, page, search_string):
+    def __retrieve_cache(cls, res_dict, page, search_string, index):
         if search_string:
             product_pks = map(lambda x: x["pk"], res_dict["products"])
             products = (
@@ -85,7 +87,7 @@ class FilterResponse:
         res_dict = cache.get(path_key)
         index = slice(page * page_size, (page + 1) * page_size)
         if res_dict:
-            return cls.__retrieve_cache(res_dict, page, search_string)
+            return cls.__retrieve_cache(res_dict, page, search_string, index)
 
         checked_product = (
             check_department_string(product_type) if product_type else Product
