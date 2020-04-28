@@ -7,6 +7,7 @@ from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos import MultiPoint
+from django.contrib.contenttypes.models import ContentType
 
 # from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
@@ -294,3 +295,36 @@ class Product(models.Model):
                 setattr(alt_prod, field, new_val)
         alt_prod.save()
         return alt_prod
+
+    @classmethod
+    def create_facets(cls):
+        from ProductFilter.models import BaseFacet
+
+        cproduct = ContentType.objects.get_for_model(cls)
+        BaseFacet.objects.get_or_create(
+            content_type=cproduct,
+            attribute="locations",
+            widget="location",
+            dynamic=True,
+            field_type="MultiPointField",
+            name="location",
+        )
+        BaseFacet.objects.get_or_create(
+            content_type=cproduct,
+            attribute="manufacturer",
+            field_type="ForeignKey",
+            widget="checkbox",
+            name="manufacturers",
+        )
+        BaseFacet.objects.get_or_create(
+            content_type=cproduct,
+            name="file_types",
+            field_type="FileField",
+            attribute_list=[
+                "_dxf_file",
+                "_rfa_file",
+                "_ipt_file",
+                "_dwg_3d_file",
+                "_dwg_2d_file",
+            ],
+        )

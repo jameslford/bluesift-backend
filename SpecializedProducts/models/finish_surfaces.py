@@ -2,22 +2,19 @@
 import operator
 import decimal
 import webcolors
-import trimesh
-from trimesh.creation import box as tri_box
-from trimesh.visual import TextureVisuals
 from PIL import Image as pimage
 from django.contrib.postgres.fields import DecimalRangeField
 from django.db import models
-from .base import ProductSubClass, Converter, Importer
+from django.contrib.contenttypes.models import ContentType
+from ProductFilter.models import BaseFacet
+from .base import ProductSubClass, Converter
+
 
 class FinishSurface(ProductSubClass):
     """returns float measurements and labels on product details"""
 
     label_color = models.CharField(max_length=50, null=True, blank=True)
     actual_color = models.CharField(max_length=50, null=True, blank=True)
-
-    # material = models.CharField(max_length=200)
-    # sub_material = models.CharField(max_length=200, null=True, blank=True)
     finish = models.CharField(max_length=200, null=True, blank=True)
     look = models.CharField(max_length=200, null=True, blank=True)
     shade_variation = models.CharField(max_length=200, null=True, blank=True)
@@ -54,68 +51,74 @@ class FinishSurface(ProductSubClass):
     sqft_per_carton = models.CharField(max_length=70, null=True)
     slip_resistant = models.BooleanField(default=False)
 
-    scale_width = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
-    scale_length = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
-    scale_thickness = models.DecimalField(decimal_places=3, null=True, blank=True, max_digits=7)
+    scale_width = models.DecimalField(
+        decimal_places=3, null=True, blank=True, max_digits=7
+    )
+    scale_length = models.DecimalField(
+        decimal_places=3, null=True, blank=True, max_digits=7
+    )
+    scale_thickness = models.DecimalField(
+        decimal_places=3, null=True, blank=True, max_digits=7
+    )
 
     admin_fields = [
-        'scale_width',
-        'scale_thickness',
-        'scale_length',
-        'finish',
-        'look',
-        ]
+        "scale_width",
+        "scale_thickness",
+        "scale_length",
+        "finish",
+        "look",
+    ]
 
     name_fields = [
-        'look',
-        'finish',
-        ]
+        "look",
+        "finish",
+    ]
 
     def grouped_fields(self):
         return {
-            'details': {
-                'label_color': self.label_color,
-                'finish': self.finish,
-                'look': self.look,
-                'shade_variation': self.shade_variation,
-                'lrv': self.lrv,
-                'cof': self.cof,
-                'edge': self.edge,
-                'end': self.end,
-                'install_type': self.install_type,
-                'sqft_per_carton': self.sqft_per_carton,
-                'slip_resistant':self.slip_resistant
-                },
-            'size_and_shaped': {
-                'thickness': self.thickness,
-                'width': self.width.lower if self.width else None,
-                'length': self.length.lower if self.length else None,
-                'size': self.size,
-                'square_inches': self.actual_size,
-                },
-            'applications': {
-                'walls': self.walls,
-                'countertops': self.countertops,
-                'floors': self.floors,
-                'cabinet_fronts': self.cabinet_fronts,
-                'shower_floors': self.shower_floors,
-                'shower_walls': self.shower_walls,
-                'exterior_walls': self.exterior_walls,
-                'exterior_floors': self.exterior_floors,
-                'covered_walls': self.covered_walls,
-                'covered_floors': self.covered_floors,
-                'pool_linings': self.pool_linings,
-                'bullnose': self.bullnose,
-                'covebase': self.covebase,
-                'corner_covebase': self.corner_covebase
-            }
+            "details": {
+                "label_color": self.label_color,
+                "finish": self.finish,
+                "look": self.look,
+                "shade_variation": self.shade_variation,
+                "lrv": self.lrv,
+                "cof": self.cof,
+                "edge": self.edge,
+                "end": self.end,
+                "install_type": self.install_type,
+                "sqft_per_carton": self.sqft_per_carton,
+                "slip_resistant": self.slip_resistant,
+            },
+            "size_and_shaped": {
+                "thickness": self.thickness,
+                "width": self.width.lower if self.width else None,
+                "length": self.length.lower if self.length else None,
+                "size": self.size,
+                "square_inches": self.actual_size,
+            },
+            "applications": {
+                "walls": self.walls,
+                "countertops": self.countertops,
+                "floors": self.floors,
+                "cabinet_fronts": self.cabinet_fronts,
+                "shower_floors": self.shower_floors,
+                "shower_walls": self.shower_walls,
+                "exterior_walls": self.exterior_walls,
+                "exterior_floors": self.exterior_floors,
+                "covered_walls": self.covered_walls,
+                "covered_floors": self.covered_floors,
+                "pool_linings": self.pool_linings,
+                "bullnose": self.bullnose,
+                "covebase": self.covebase,
+                "corner_covebase": self.corner_covebase,
+            },
         }
 
     @staticmethod
     def static_tags():
         return [
-            'flooring',
-            ]
+            "flooring",
+        ]
 
     def __dynamic_tags(self):
         return [
@@ -123,21 +126,21 @@ class FinishSurface(ProductSubClass):
             self.finish,
             self.edge,
             self.end,
-            'walls' if self.walls else None,
-            'countertops' if self.countertops else None,
-            'floors' if self.floors else None,
-            'cabinet_fronts' if self.cabinet_fronts else None,
-            'shower_floors' if self.shower_floors else None,
-            'shower_walls' if self.shower_walls else None,
-            'exterior_walls' if self.exterior_walls else None,
-            'exterior_floors' if self.exterior_floors else None,
-            'covered_walls' if self.covered_walls else None,
-            'covered_floors' if self.covered_floors else None,
-            'pool_linings' if self.pool_linings else None,
-            'bullnose' if self.bullnose else None,
-            'covebase' if self.covebase else None,
-            'corner_covebase' if self.corner_covebase else None,
-            ]
+            "walls" if self.walls else None,
+            "countertops" if self.countertops else None,
+            "floors" if self.floors else None,
+            "cabinet_fronts" if self.cabinet_fronts else None,
+            "shower_floors" if self.shower_floors else None,
+            "shower_walls" if self.shower_walls else None,
+            "exterior_walls" if self.exterior_walls else None,
+            "exterior_floors" if self.exterior_floors else None,
+            "covered_walls" if self.covered_walls else None,
+            "covered_floors" if self.covered_floors else None,
+            "pool_linings" if self.pool_linings else None,
+            "bullnose" if self.bullnose else None,
+            "covebase" if self.covebase else None,
+            "corner_covebase" if self.corner_covebase else None,
+        ]
 
     def tags(self):
         parent_tags = super().tags()
@@ -145,13 +148,8 @@ class FinishSurface(ProductSubClass):
         tags = [tag for tag in tags if tag]
         return tags
 
-
     def basic_clean(self):
-        vals = [
-            'look',
-            'finish',
-            'shade_variation'
-            ]
+        vals = ["look", "finish", "shade_variation"]
         for val in vals:
             attr = getattr(self, val)
             if attr:
@@ -160,17 +158,15 @@ class FinishSurface(ProductSubClass):
                 setattr(self, val, new)
         self.save()
 
-
     def assign_name(self):
         width = self.get_depth()
         length = self.get_width()
-        self.name = f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}, {self.look}, {self.finish}, {width} x {length}, {self.manufacturer_sku}'.lower()
+        self.name = f"{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}, {self.look}, {self.finish}, {width} x {length}, {self.manufacturer_sku}".lower()
         self.save()
         return self.name
 
     def get_color(self):
         return webcolors.hex_to_name(self.actual_color)
-
 
     def assign_size(self):
         """returns float measurements and labels on product details"""
@@ -178,8 +174,8 @@ class FinishSurface(ProductSubClass):
             self.actual_size = None
             return
         if self.actual_size:
-            print(self.bb_sku, 'has size')
-        print('assigning size to ', self.bb_sku)
+            print(self.bb_sku, "has size")
+        print("assigning size to ", self.bb_sku)
         for dim in [self.width, self.length]:
             lower = dim.lower
             upper = dim.upper
@@ -188,7 +184,7 @@ class FinishSurface(ProductSubClass):
                 return
             if upper is not None:
                 self.actual_size = None
-                self.size = 'continous'
+                self.size = "continous"
                 return
         length = self.length.lower
         width = self.width.lower
@@ -200,12 +196,15 @@ class FinishSurface(ProductSubClass):
             self.actual_size = None
         return
 
-
     def set_actual_color(self):
         """returns float measurements and labels on product details"""
         # pylint: disable=no-member
         image = self.swatch_image
-        print('getting actual color for ', self.manufacturer.label, self.manufacturer_collection)
+        print(
+            "getting actual color for ",
+            self.manufacturer.label,
+            self.manufacturer_collection,
+        )
         if not image:
             return
         try:
@@ -214,10 +213,10 @@ class FinishSurface(ProductSubClass):
             self.delete()
             return
         try:
-            image = image.convert('P', palette=pimage.ADAPTIVE, colors=1)
+            image = image.convert("P", palette=pimage.ADAPTIVE, colors=1)
         except ValueError:
             return
-        image = image.convert('RGB')
+        image = image.convert("RGB")
 
         colors = image.getcolors()
         first_color = max(colors, key=operator.itemgetter(0))[1]
@@ -259,41 +258,69 @@ class FinishSurface(ProductSubClass):
     def presentation_geometries(self):
         dim = 35
         ret_dict = super().presentation_geometries()
-        ret_dict.update({'camera': {'x': dim, 'y': dim, 'z': dim}})
+        ret_dict.update({"camera": {"x": dim, "y": dim, "z": dim}})
         return ret_dict
+
+    @classmethod
+    def create_facets(cls):
+        super().create_facets()
+        cfs = ContentType.objects.get_for_model(FinishSurface)
+        BaseFacet.objects.get_or_create(
+            content_type=cfs,
+            attribute="thickness",
+            field_type="DecimalField",
+            widget="slider",
+        )
+        BaseFacet.objects.get_or_create(content_type=cfs, attribute="look")
+        BaseFacet.objects.get_or_create(content_type=cfs, attribute="finish")
+        BaseFacet.objects.get_or_create(content_type=cfs, attribute="shade_variation")
+        BaseFacet.objects.get_or_create(
+            content_type=cfs,
+            attribute="label_color",
+            name="color",
+            widget="color",
+            editable=False,
+        )
+        BaseFacet.objects.get_or_create(
+            content_type=cfs,
+            field_type="BooleanField",
+            name="applications",
+            attribute_list=[
+                "walls",
+                "countertops",
+                "floors",
+                "cabinet_fronts",
+                "shower_floors",
+                "shower_walls",
+                "exterior_walls",
+                "exterior_floors",
+                "covered_walls",
+                "covered_floors",
+                "pool_linings",
+                "bullnose",
+                "covebase",
+                "corner_covebase",
+            ],
+        )
 
 
 class FinishSurfaceConverter(Converter):
-
     def convert(self):
         return
-        # if self.product.derived_gbl:
-        #     print('already got glb for ', self.product.bb_sku)
-        #     return
-        # width = self.product.get_width()
-        # depth = self.product.get_depth()
-        # height = self.product.get_height()
-        # image = self.product.get_texture_map()
-        # if not image:
-        #     print('np image for ', self.product.manufacturer.label, self.product.manufacturer_collection)
-        #     return
-        # image = self.product.get_texture_map().open('r')
-        # image = pimage.open(image)
-        # visual = TextureVisuals(image=image)
-        # box: trimesh.Trimesh = tri_box((width, depth, height), visual=visual)
-        # scene = box.scene()
-        # self.product.save_derived_glb(scene)
 
 
 class TileAndStone(FinishSurface):
     shape = models.CharField(max_length=40, null=True, blank=True)
     material_type = models.CharField(max_length=40, null=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = "tile and stone"
+
     def __dynamic_tags(self):
         return [
             self.shape,
             self.material_type,
-            ]
+        ]
 
     def tags(self):
         parent_tags = super().tags()
@@ -306,10 +333,9 @@ class TileAndStone(FinishSurface):
         vals = [
             self.shape,
             self.material_type,
-            ]
+        ]
         for val in vals:
             val = val.strip().lower() if val else None
-
 
     @staticmethod
     def static_tags():
@@ -320,13 +346,19 @@ class TileAndStone(FinishSurface):
             if not self.actual_size:
                 return
             ratio = self.width.lower / self.length.lower
-            if ratio < .9 or ratio > 1.2:
-                self.shape = 'rectangle'
+            if ratio < 0.9 or ratio > 1.2:
+                self.shape = "rectangle"
                 return
-            self.shape = 'square'
+            self.shape = "square"
 
-    class Meta:
-        verbose_name_plural = 'tile and stone'
+    @classmethod
+    def create_facets(cls):
+        super().create_facets()
+        ctas = ContentType.objects.get_for_model(TileAndStone)
+        BaseFacet.objects.get_or_create(content_type=ctas, attribute="material_type")
+        BaseFacet.objects.get_or_create(
+            content_type=ctas, attribute="shape", name="shape"
+        )
 
 
 class Hardwood(FinishSurface):
@@ -334,8 +366,8 @@ class Hardwood(FinishSurface):
     species = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
-        verbose_name_plural = 'hardwood'
-    
+        verbose_name_plural = "hardwood"
+
     @staticmethod
     def static_tags():
         return []
@@ -344,7 +376,7 @@ class Hardwood(FinishSurface):
         return [
             self.composition,
             self.species,
-            ]
+        ]
 
     def tags(self):
         parent_tags = super().tags()
@@ -356,17 +388,25 @@ class Hardwood(FinishSurface):
         vals = [
             self.composition,
             self.species,
-            ]
+        ]
         for val in vals:
             val = val.strip().lower() if val else None
         super().basic_clean()
+
+    @classmethod
+    def create_facets(cls):
+        super().create_facets()
+        chardwood = ContentType.objects.get_for_model(Hardwood)
+        BaseFacet.objects.get_or_create(content_type=chardwood, attribute="composition")
+        BaseFacet.objects.get_or_create(content_type=chardwood, attribute="species")
+
 
 class LaminateFlooring(FinishSurface):
     surface_coating = models.CharField(max_length=80, null=True, blank=True)
     species = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
-        verbose_name_plural = 'laminate flooring'
+        verbose_name_plural = "laminate flooring"
 
     @staticmethod
     def static_tags():
@@ -376,7 +416,7 @@ class LaminateFlooring(FinishSurface):
         return [
             self.surface_coating,
             self.species,
-            ]
+        ]
 
     def tags(self):
         parent_tags = super().tags()
@@ -388,10 +428,19 @@ class LaminateFlooring(FinishSurface):
         vals = [
             self.surface_coating,
             self.species,
-            ]
+        ]
         for val in vals:
             val = val.strip().lower() if val else None
         super().basic_clean()
+
+    @classmethod
+    def create_facets(cls):
+        super().create_facets()
+        clams = ContentType.objects.get_for_model(LaminateFlooring)
+        BaseFacet.objects.get_or_create(
+            content_type=clams, attribute="species", name="species"
+        )
+
 
 class Resilient(FinishSurface):
     surface_coating = models.CharField(max_length=80, null=True, blank=True)
@@ -401,14 +450,28 @@ class Resilient(FinishSurface):
     @staticmethod
     def static_tags():
         return [
-            'vinyl',
-            ]
+            "vinyl",
+        ]
 
     def __dynamic_tags(self):
         return [
             self.shape,
             self.material_type,
-            ]
+        ]
+
+    @classmethod
+    def create_facets(cls):
+        super().create_facets()
+        cresilient = ContentType.objects.get_for_model(Resilient)
+        BaseFacet.objects.get_or_create(
+            content_type=cresilient, attribute="shape", name="shape"
+        )
+        BaseFacet.objects.get_or_create(
+            content_type=cresilient, attribute="material_type"
+        )
+        BaseFacet.objects.get_or_create(
+            content_type=cresilient, attribute="surface_coating"
+        )
 
     def tags(self):
         parent_tags = super().tags()
@@ -417,11 +480,7 @@ class Resilient(FinishSurface):
         return tags
 
     def basic_clean(self):
-        vals = [
-            self.shape,
-            self.material_type,
-            self.surface_coating
-            ]
+        vals = [self.shape, self.material_type, self.surface_coating]
         for val in vals:
             val = val.strip().lower() if val else None
         super().basic_clean()
@@ -430,23 +489,15 @@ class Resilient(FinishSurface):
         """returns float measurements and labels on product details"""
         if not self.shape:
             if not self.actual_size:
-                self.shape = 'continuous'
+                self.shape = "continuous"
                 return
             ratio = self.width.lower / self.length.lower
-            if ratio < .9 or ratio > 1.2:
-                self.shape = 'rectangle'
+            if ratio < 0.9 or ratio > 1.2:
+                self.shape = "rectangle"
                 return
-            self.shape = 'square'
-
+            self.shape = "square"
 
 
 class CabinetLaminate(FinishSurface):
-
     class Meta:
-        verbose_name_plural = 'cabinet laminate'
-
-
-
-
-
-
+        verbose_name_plural = "cabinet laminate"

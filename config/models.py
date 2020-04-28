@@ -1,6 +1,6 @@
-'''
+"""
 These models hold/relay static materials served for front end
-'''
+"""
 import io
 from xml.dom import minidom
 from model_utils import Choices
@@ -13,43 +13,39 @@ from Suppliers.models import SupplierLocation
 
 
 class ConfigTree(models.Model):
-    ''' singleton used for navigations and counts on user GUI. to be refreshed daily '''
+    """ singleton used for navigations and counts on user GUI. to be refreshed daily """
+
     product_tree = JSONField(null=True)
     supplier_tree = JSONField(null=True)
     last_refreshed = models.DateTimeField(auto_now=True)
-
-
-    #pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ
     def save(self, *args, **kwargs):
         self.pk = 1
         super(ConfigTree, self).save(*args, **kwargs)
 
-    #pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ
     def delete(self, *args, **kwargs):
         pass
 
     def init_trees(self, **kwargs):
-        name = kwargs.get('name')
-        count = kwargs.get('count')
-        children = kwargs.get('children')
+        name = kwargs.get("name")
+        count = kwargs.get("count")
+        children = kwargs.get("children")
         tree = Tree(name, count)
         if children:
             for child in children:
                 tree.children.append(self.init_trees(**child))
         return tree
 
-
     @classmethod
     def create_category_searches(cls):
         cf_tree: ConfigTree = cls.load()
         tree = cf_tree.init_trees(cf_tree.product_tree)
 
-
     @classmethod
     def load(cls):
         obj = cls.objects.get_or_create(pk=1)[0]
         return obj
-
 
     @classmethod
     def refresh(cls):
@@ -58,7 +54,9 @@ class ConfigTree(models.Model):
         tree.__refresh_supplier_tree()
 
     def __loop_product(self, current: object, parent):
+
         if not current._meta.abstract:
+            current.create_facets()
             name = current._meta.verbose_name_plural.lower().strip()
             count = current.objects.count()
             new_tree = Tree(name, count)
@@ -72,7 +70,9 @@ class ConfigTree(models.Model):
     def __loop_supplier(self, current: object, parent):
         if not current._meta.abstract:
             name = current._meta.verbose_name_plural.lower().strip()
-            supplier_product_pks = current.objects.values('priced__location__pk').distinct()
+            supplier_product_pks = current.objects.values(
+                "priced__location__pk"
+            ).distinct()
             count = SupplierLocation.objects.filter(pk__in=supplier_product_pks).count()
             new_tree = Tree(name, count)
             parent.children.append(new_tree)
@@ -85,6 +85,7 @@ class ConfigTree(models.Model):
     def __refresh_product_tree(self):
         name = Product._meta.verbose_name_plural.lower().strip()
         count = Product.objects.count()
+        Product.create_facets()
         tree_product = Tree(name, count)
         for sub in Product.__subclasses__():
             self.__loop_product(sub, tree_product)
@@ -92,9 +93,8 @@ class ConfigTree(models.Model):
         self.product_tree = serialized
         self.save()
 
-
     def __refresh_supplier_tree(self):
-        name = 'suppliers'
+        name = "suppliers"
         sups = SupplierLocation.objects.all()
         count = sups.count()
         sup_tree = Tree(name, count)
@@ -105,26 +105,26 @@ class ConfigTree(models.Model):
         self.save()
 
 
-
 class LibraryLink(models.Model):
-    '''
+    """
     Holds svg paths (draw_path), descriptions and labels for user libraries.
     uses for_user/retailer/pro to serve the correct links per user accordingly
-    '''
+    """
+
     TYPES = Choices(
-        'admin',
-        'company_info',
-        'all_collaborators',
-        'all_materials',
-        'projects',
-        'locations',
-        'profile',
-        )
+        "admin",
+        "company_info",
+        "all_collaborators",
+        "all_materials",
+        "projects",
+        "locations",
+        "profile",
+    )
     label = models.CharField(max_length=18, unique=True)
-    link = models.CharField(max_length=18, default='')
+    link = models.CharField(max_length=18, default="")
     description = models.CharField(max_length=60, blank=True, null=True)
     draw_path = models.TextField(blank=True, null=True)
-    display = models.FileField(upload_to='misc/', blank=True, null=True)
+    display = models.FileField(upload_to="misc/", blank=True, null=True)
     include_collections = models.BooleanField(default=False)
     for_user = models.BooleanField(default=False)
     for_supplier = models.BooleanField(default=False)
@@ -141,61 +141,49 @@ class LibraryLink(models.Model):
             return
         o_file = self.display
         doc = minidom.parse(o_file)
-        paths = doc.getElementsByTagName('path')
+        paths = doc.getElementsByTagName("path")
         for path in paths:
-            path_id = path.getAttribute('id')
-            if path_id == 'drawPath':
-                self.draw_path = path.getAttribute('d')
+            path_id = path.getAttribute("id")
+            if path_id == "drawPath":
+                self.draw_path = path.getAttribute("d")
                 break
         super().save(*args, **kwargs)
 
     def custom_serialize(self):
         return {
-            'label': self.label,
-            'link': self.link,
-            'icon': self.draw_path,
-            'description': self.description,
-            'includeCollections': self.include_collections
-            }
+            "label": self.label,
+            "link": self.link,
+            "icon": self.draw_path,
+            "description": self.description,
+            "includeCollections": self.include_collections,
+        }
 
-
-# TODO convert this to script
     @classmethod
     def create_links(cls):
-        admin = cls.objects.get_or_create(label='admin')[0]
+        admin = cls.objects.get_or_create(label="admin")[0]
         admin.for_admin = True
         admin.save()
 
-        company_info = cls.objects.get_or_create(label='company_info')[0]
+        company_info = cls.objects.get_or_create(label="company_info")[0]
         company_info.for_supplier = True
         company_info.save()
 
-        profile = cls.objects.get_or_create(label='profile')[0]
+        profile = cls.objects.get_or_create(label="profile")[0]
         profile.for_admin = True
         profile.for_supplier = True
         profile.for_user = True
         profile.save()
 
-        palette = cls.objects.get_or_create(label='palette')[0]
+        palette = cls.objects.get_or_create(label="palette")[0]
         palette.for_user = True
         palette.save()
-
-        # locations = cls.objects.get_or_create(label='locations')[0]
-        # locations.for_supplier = True
-        # locations.include_collections = True
-        # locations.save()
-
-        # projects = cls.objects.get_or_create(label='projects')[0]
-        # projects.for_user = True
-        # projects.include_collections = True
-        # projects.save()
 
 
 class UserFeature(models.Model):
     label = models.CharField(max_length=40, unique=True)
     description = models.CharField(max_length=60, blank=True, null=True)
     draw_path = models.TextField(blank=True, null=True)
-    display = models.FileField(upload_to='misc/', blank=True, null=True)
+    display = models.FileField(upload_to="misc/", blank=True, null=True)
 
     def __str__(self):
         return self.label
@@ -206,35 +194,37 @@ class UserFeature(models.Model):
             return
         o_file = self.display
         doc = minidom.parse(o_file)
-        paths = doc.getElementsByTagName('path')
+        paths = doc.getElementsByTagName("path")
         for path in paths:
-            path_id = path.getAttribute('id')
-            if path_id == 'drawPath':
-                self.draw_path = path.getAttribute('d')
+            path_id = path.getAttribute("id")
+            if path_id == "drawPath":
+                self.draw_path = path.getAttribute("d")
                 break
         super().save(*args, **kwargs)
 
     def serialize(self):
         return {
-            'label': self.label,
-            'description': self.description,
-            'draw_path': self.draw_path
+            "label": self.label,
+            "description": self.description,
+            "draw_path": self.draw_path,
         }
 
 
 class UserTypeStatic(models.Model):
-    '''
+    """
     Serves pictures and descriptions etc. to inform user of usertypes on landing page
-    '''
+    """
 
     label = models.CharField(max_length=20, unique=True)
     short_description = models.CharField(max_length=150, blank=True, null=True)
-    display_image = models.ImageField(max_length=1000, upload_to='misc/', blank=True, null=True)
+    display_image = models.ImageField(
+        max_length=1000, upload_to="misc/", blank=True, null=True
+    )
     tagline = models.CharField(max_length=300, blank=True, null=True)
     full_text = models.TextField(blank=True, null=True)
-    feature = models.ManyToManyField(UserFeature, related_name='ut_static', blank=True)
+    feature = models.ManyToManyField(UserFeature, related_name="ut_static", blank=True)
     include_options = models.BooleanField(default=False)
-    image = models.ImageField(max_length=1000, upload_to='misc/', blank=True, null=True)
+    image = models.ImageField(max_length=1000, upload_to="misc/", blank=True, null=True)
 
     def __str__(self):
         return self.label
@@ -248,19 +238,17 @@ class UserTypeStatic(models.Model):
         print(new_height, new_width, arat)
         resized = image.resize((new_width, new_height), Image.LANCZOS)
         buffer = io.BytesIO()
-        resized.save(buffer, 'JPEG', quality=90)
+        resized.save(buffer, "JPEG", quality=90)
         self.image.save(self.label, buffer, save=True)
-
 
     def serialize(self):
         return {
-            'label': self.label,
+            "label": self.label,
             # 'image': self.display_image.url if self.display_image else None,
-            'image': self.image.url if self.image else None,
-            'full_text': self.full_text,
-
+            "image": self.image.url if self.image else None,
+            "full_text": self.full_text,
             # 'short_description': self.short_description,
             # 'tagline': self.tagline,
             # 'features': [feat.serialize() for feat in self.feature.all()],
             # 'options': ['owner', 'admin', 'employee'] if self.include_options else None
-            }
+        }

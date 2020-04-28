@@ -6,9 +6,11 @@ import requests
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.fields import DecimalRangeField
+from django.contrib.contenttypes.models import ContentType
 import trimesh
 from trimesh.visual.resolvers import WebResolver
 from Products.models import Manufacturer
+from ProductFilter.models import BaseFacet
 from .base import Converter, ProductSubClass
 
 
@@ -16,25 +18,21 @@ class ApplianceColor(models.Model):
     hex_value = models.CharField(max_length=10)
     name = models.CharField(max_length=100)
     manufacturer = models.ForeignKey(
-        Manufacturer,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-        )
+        Manufacturer, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
 
 class Appliance(ProductSubClass):
-    inches = 'inches'
-    cm = 'centimeter'
-    mm = 'millimeter'
-    ft = 'feet'
+    inches = "inches"
+    cm = "centimeter"
+    mm = "millimeter"
+    ft = "feet"
     unit_choices = [inches, cm, mm, ft]
     appliance_type = models.CharField(max_length=100, blank=True, null=True)
     room_type = models.CharField(max_length=100, null=True, blank=True)
     finishes = ArrayField(
-        models.CharField(max_length=70, null=True),
-        null=True,
-        blank=True
-        )
+        models.CharField(max_length=70, null=True), null=True, blank=True
+    )
     colors = models.ManyToManyField(ApplianceColor)
     width = DecimalRangeField(null=True, blank=True)
     height = DecimalRangeField(null=True, blank=True)
@@ -43,17 +41,20 @@ class Appliance(ProductSubClass):
     def assign_name(self):
         if self.name:
             return self.name
-        self.name = f'{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}'.lower()
+        self.name = f"{self.manufacturer.label}, {self.manufacturer_collection}, {self.manufacturer_style}".lower()
         self.save()
         return self.name
 
     def get_height(self):
+        # pylint:disable = no-member
         return float(self.height.lower) if self.height else None
 
     def get_width(self):
+        # pylint:disable = no-member
         return float(self.width.lower) if self.width else None
 
     def get_depth(self):
+        # pylint:disable = no-member
         return float(self.depth.lower) if self.depth else None
 
     def add_proprietary_files(self):
@@ -66,63 +67,100 @@ class Appliance(ProductSubClass):
 
     def grouped_fields(self):
         return {
-            'size_and_shaped': {
-                'height': self.derived_height if self.derived_height else self.height,
-                'width': self.derived_width if self.derived_width else self.width,
-                'depth': self.derived_depth if self.derived_depth else self.depth
-                },
-            
+            "size_and_shaped": {
+                "height": self.derived_height if self.derived_height else self.height,
+                "width": self.derived_width if self.derived_width else self.width,
+                "depth": self.derived_depth if self.derived_depth else self.depth,
+            },
         }
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        if not self.height:
+            self.height = self.derived_height
+        if not self.width:
+            self.width = self.derived_width
+        if not self.depth:
+            self.depth = self.derived_depth
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
+
+    @classmethod
+    def create_facets(cls):
+        capp = ContentType.objects.get_for_model(Appliance)
+        BaseFacet.objects.get_or_create(
+            content_type=capp,
+            attribute="derived_width",
+            field_type="DecimalField",
+            widget="slider",
+            name="width",
+        )
+        BaseFacet.objects.get_or_create(
+            content_type=capp,
+            attribute="derived_depth",
+            field_type="DecimalField",
+            widget="slider",
+            name="depth",
+        )
+        BaseFacet.objects.get_or_create(
+            content_type=capp,
+            attribute="derived_height",
+            field_type="DecimalField",
+            name="height",
+            widget="slider",
+        )
 
 
 class ApplianceConverter(Converter):
-
     def __init__(self, product):
         self.resolver = None
         super().__init__(product)
 
     def create_derived_obj(self):
-        with self.product._obj_file.open('r') as data:
+        with self.product._obj_file.open("r") as data:
             buffer = io.StringIO()
             for line in data.readlines():
                 line = line.decode()
-                if 'mtllib' in line:
+                if "mtllib" in line:
                     print(line)
-                    new_line = 'mtllib ' + self.product._mtl_file.url
+                    new_line = "mtllib " + self.product._mtl_file.url
                     buffer.write(new_line)
                 else:
                     buffer.write(line)
             buffer.seek(0)
             for line in buffer.readlines():
-                if 'mtllib' in line:
+                if "mtllib" in line:
                     print(line)
             buffer.seek(0)
             self.resolver = WebResolver
             return buffer
 
-
     def get_initial(self) -> io.BytesIO:
         if not self.product._obj_file:
             return None
         if self.product._mtl_file:
-            print(self.product.name, 'has mtlf')
+            print(self.product.name, "has mtlf")
             return self.create_derived_obj()
-        print(self.product.name, 'no mtl file')
+        print(self.product.name, "no mtl file")
         res = self.download_bytes(self.product._obj_file.url)
         return res
-
 
     def add_proprietary_files(self):
         product = self.product
         prop_array = [
-            ['.rfa', product.rfa_file, product._rfa_file],
-            ['_2d.dwg', product.dwg_2d_file, product._dwg_2d_file],
-            ['_3d.dwg', product.dwg_3d_file, product._dwg_3d_file],
-            ['.dxf', product.dxf_file, product._dxf_file]
-            ]
+            [".rfa", product.rfa_file, product._rfa_file],
+            ["_2d.dwg", product.dwg_2d_file, product._dwg_2d_file],
+            ["_3d.dwg", product.dwg_3d_file, product._dwg_3d_file],
+            [".dxf", product.dxf_file, product._dxf_file],
+        ]
         for ext, origin, destination in prop_array:
             print(ext, origin, destination)
-            if not origin or origin == 'None':
+            if not origin or origin == "None":
                 continue
             if destination:
                 continue
@@ -138,7 +176,6 @@ class ApplianceConverter(Converter):
                 lf.write(block)
             destination.save(filename, lf, save=True)
 
-
     def convert(self):
         if not self.product.obj_file:
             return
@@ -150,11 +187,10 @@ class ApplianceConverter(Converter):
         conversion_unit = self.product.cm
         if conversion_unit != self.product.inches:
             mes.units = conversion_unit
-            mes = mes.convert_units('inches', True)
+            mes = mes.convert_units("inches", True)
         self.assign_sizes(mes)
         self.product.save_derived_glb(mes)
         self.add_proprietary_files()
-
 
     def assign_sizes(self, mes: trimesh.Trimesh):
         length, height, depth = mes.extents
@@ -173,27 +209,25 @@ class Cooking(Appliance):
     fuel_type = models.CharField(max_length=20, null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('room_type', 'kitchen')
+        kwargs.setdefault("room_type", "kitchen")
         super(Cooking, self).__init__(*args, **kwargs)
 
     class Meta:
-        verbose_name_plural = 'cooking'
+        verbose_name_plural = "cooking"
+
 
 class Range(Cooking):
     burner_count = models.IntegerField(null=True, blank=True)
 
+
 class Oven(Cooking):
     pass
+
 
 class Microwave(Cooking):
     pass
 
+
 class Refrigeration(Appliance):
-
     class Meta:
-        verbose_name_plural = 'refrigeration'
-
-
-
-
-
+        verbose_name_plural = "refrigeration"

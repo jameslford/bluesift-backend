@@ -68,7 +68,6 @@ class FilterResponse:
         res_dict["current_page"] = page
         return res_dict
 
-
     @classmethod
     def get_cache(cls, request: Request, product_type: str = None):
         query_dict: QueryDict = QueryDict(request.GET.urlencode(), mutable=True)
