@@ -35,7 +35,10 @@ class FilterResponse:
         self.product_count = product_count
         self.facets = [facet for facet in facets if facet]
         self.products = products
-        self.enabled_values = enabled_values
+        self.enabled_values = list(
+            {v["expression"]: v for v in enabled_values}.values()
+        )
+        # self.enabled_values = enabled_values
 
     def set_cache(self, path_key):
         facets = [facet.serialize_self() for facet in self.facets]

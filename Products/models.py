@@ -300,7 +300,7 @@ class Product(models.Model):
     def create_facets(cls):
         from ProductFilter.models import BaseFacet
 
-        cproduct = ContentType.objects.get_for_model(cls)
+        cproduct = ContentType.objects.get_for_model(Product)
         BaseFacet.objects.get_or_create(
             content_type=cproduct,
             attribute="locations",

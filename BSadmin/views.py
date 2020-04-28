@@ -7,9 +7,9 @@ from django.core.cache import cache
 from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
-from Products.models import Product
 from ProductFilter.models import BaseFacet, QueryIndex
 from scripts.finish_surfaces import clean_products
+from .tasks import create_indexes
 
 # from django.contrib.contenttypes.models import ContentType
 
@@ -106,8 +106,11 @@ def refresh_facets(request):
         qis.delete()
         tree: ConfigTree = ConfigTree.load()
         tree = tree.refresh()
-        # prods = [Product] + Product.__subclasses__()
-        # print(prods)
-        # for prod in prods:
-        #     prod.create_facets()
         return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes((IsAdminUser,))
+def refresh_search(request):
+    create_indexes.delay()
+    return Response(status=status.HTTP_200_OK)
