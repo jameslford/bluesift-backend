@@ -8,7 +8,8 @@ from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
 from ProductFilter.models import BaseFacet, QueryIndex
-from scripts.finish_surfaces import clean_products
+
+# from scripts.finish_surfaces import clean_products
 from .tasks import create_indexes
 
 # from django.contrib.contenttypes.models import ContentType
@@ -107,6 +108,7 @@ def refresh_facets(request):
         tree: ConfigTree = ConfigTree.load()
         tree = tree.refresh()
         return Response(status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(["GET"])

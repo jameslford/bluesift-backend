@@ -1,10 +1,9 @@
-from config.celery import app
-from django.core.mail import EmailMessage
-
 from typing import List
 from django.db.transaction import TransactionManagementError
+from django.core.mail import EmailMessage
 from django.contrib.contenttypes.models import ContentType
 from django.db.utils import IntegrityError
+from config.celery import app
 from Search.models import SearchIndex
 from SpecializedProducts.models import FinishSurface, ProductSubClass
 from Products.models import Manufacturer
