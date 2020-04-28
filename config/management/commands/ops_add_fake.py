@@ -25,7 +25,7 @@ def delete_fake():
     demos.delete()
 
 
-@transaction.atomic
+# @transaction.atomic
 def replace():
     delete_fake()
     create_demo_users()
