@@ -13,81 +13,88 @@ from django.db.utils import IntegrityError
 from Accounts.models import User
 from Addresses.models import Address
 from Products.models import Product
-from Profiles.models import ConsumerProfile, SupplierEmployeeProfile, BaseProfile, LibraryProduct
+from Profiles.models import (
+    ConsumerProfile,
+    SupplierEmployeeProfile,
+    BaseProfile,
+    LibraryProduct,
+)
 from Groups.models import SupplierCompany
 from Suppliers.models import SupplierLocation, SupplierProduct
 from Projects.models import Project, ProjectTask, ProjectProduct
 
-ADDRESS_URL = 'https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-all.min.json'
-PASSWORD = '0gat_surfer'
-SERVICE_TYPES = ('Architect', 'Contractor', 'Interior Designer', 'Carpenter', 'Engineer')
-
+ADDRESS_URL = "https://raw.githubusercontent.com/EthanRBrown/rrad/master/addresses-us-all.min.json"
+PASSWORD = "0gat_surfer"
+SERVICE_TYPES = (
+    "Architect",
+    "Contractor",
+    "Interior Designer",
+    "Carpenter",
+    "Engineer",
+)
 
 
 PROJECT_MIDDLES = [
-    'house',
-    'office',
-    'business',
-    'lobby',
-    'municipal',
-    'restaurant',
-    'store',
-    'park',
-    'annex'
+    "house",
+    "office",
+    "business",
+    "lobby",
+    "municipal",
+    "restaurant",
+    "store",
+    "park",
+    "annex",
 ]
 
 PROJECT_SUFFIXES = [
-    'development',
-    'renovation',
-    'restoration',
-    'remodel',
-    'expansion',
-    'addition'
+    "development",
+    "renovation",
+    "restoration",
+    "remodel",
+    "expansion",
+    "addition",
 ]
 
 
 ROOMS = [
-    'bathroom',
-    'kitchen',
-    'office',
-    'den',
-    'library',
-    'deck',
-    'patio',
-    'living room',
-    'basement',
+    "bathroom",
+    "kitchen",
+    "office",
+    "den",
+    "library",
+    "deck",
+    "patio",
+    "living room",
+    "basement",
 ]
 
 APPLICATIONS = [
-    'walls',
-    'floor',
-    'counter',
-    'desk wrap',
-    'bookshelf covering',
-    'fireplace interior',
-    'mantle',
-    'stand'
+    "walls",
+    "floor",
+    "counter",
+    "desk wrap",
+    "bookshelf covering",
+    "fireplace interior",
+    "mantle",
+    "stand",
 ]
 
 
 SUB_TASKS = [
-    'demo',
-    'plumbing',
-    'electrical',
-    'framing',
-    'finish work',
-    'painting',
-    'millwork',
-    'clean',
-    ]
+    "demo",
+    "plumbing",
+    "electrical",
+    "framing",
+    "finish work",
+    "painting",
+    "millwork",
+    "clean",
+]
 
 
 def create_demo_users():
     # create_addresses()
     main()
-
-
-
 
 
 def generate_address_groups():
@@ -101,7 +108,7 @@ def generate_address_groups():
         closest = address.find_closest_others()
         adds = []
         # for num, close in zip(range(0, number), closest):
-            # for close in closest:
+        # for close in closest:
         for num in range(0, number):
             for close in closest:
                 if close.pk in exclude_pks:
@@ -115,10 +122,10 @@ def generate_address_groups():
     print(return_groups)
     return return_groups
 
-
     # address_pks = list(Address.objects.filter(demo=True).values_list('pk', flat=True))
     # print(address_pks)
     # random.shuffle(address_pks)
+
 
 def _generate_users(address_group):
     user = __create_user()
@@ -141,19 +148,20 @@ def _generate_retailers(address_group):
     # comp_address = Address.objects.get(pk=address_group[0])
     employees = [__create_user(is_supplier=True) for num in range(0, number)]
     ret_company = __create_supplier_company(employees[0], address_group[0])
-    print('ret_company = ', ret_company)
+    print("ret_company = ", ret_company)
+    if not ret_company:
+        print("no company")
+        return
     for ind, emp in enumerate(employees):
         profile = SupplierEmployeeProfile.objects.create_profile(
-            user=emp,
-            company=ret_company
-            )
+            user=emp, company=ret_company
+        )
         if ind == 0:
             profile.company_owner = True
             profile.save()
     for loc_add in address_group:
         # loc_add = Address.objects.get(pk=apk)
         __create_locations(ret_company, loc_add)
-
 
 
 # @transaction.atomic
@@ -167,15 +175,12 @@ def main():
             _generate_users(group)
 
 
-
-
-
 def __create_address(**kwargs):
-    address_1 = kwargs.get('address1')
-    address_2 = kwargs.get('address2')
-    city = kwargs.get('city')
-    state = kwargs.get('state')
-    postal_code = kwargs.get('postalCode')
+    address_1 = kwargs.get("address1")
+    address_2 = kwargs.get("address2")
+    city = kwargs.get("city")
+    state = kwargs.get("state")
+    postal_code = kwargs.get("postalCode")
     try:
         return Address.objects.get_or_create_address(
             address_line_1=address_1,
@@ -183,19 +188,20 @@ def __create_address(**kwargs):
             city=city,
             state=state,
             postal_code=postal_code,
-            demo=True
-            )
+            demo=True,
+        )
     except (ValidationError, IndexError):
-        print('bad addres')
+        print("bad addres")
         return None
 
 
 def create_addresses():
     addresses_response = requests.get(ADDRESS_URL).json()
-    addresses = addresses_response.get('addresses', [])
+    addresses = addresses_response.get("addresses", [])
     addresses = list(addresses)
     for address in addresses:
         __create_address(**address)
+
 
 @transaction.atomic
 def add_additonal():
@@ -204,12 +210,12 @@ def add_additonal():
 
 
 def __add_group_products(profile: ConsumerProfile):
-    print('adding products to ', profile.name())
-    products = list(Product.objects.values_list('pk', flat=True))
+    print("adding products to ", profile.name())
+    products = list(Product.objects.values_list("pk", flat=True))
     min_prod = 20
     max_products = random.randint(min_prod, 40)
     if profile.products.all().count() >= min_prod:
-        print('products already assigned')
+        print("products already assigned")
         return
     project_products = []
     for num in range(max_products):
@@ -229,7 +235,6 @@ def __add_group_products(profile: ConsumerProfile):
         prod.save()
 
 
-
 def __create_group_products():
     consumer_profiles = ConsumerProfile.objects.filter(user__demo=True)
     for prof in consumer_profiles:
@@ -239,7 +244,7 @@ def __create_group_products():
 def create_parent_tasks():
     projects: List[Project] = Project.objects.all()
     for project in projects:
-        print('creating parent tasks for ', project.nickname)
+        print("creating parent tasks for ", project.nickname)
         rooms = ROOMS.copy()
         total_rooms = len(rooms) - 3
         products = [prod.product for prod in project.owner.products.all()]
@@ -284,7 +289,9 @@ def add_task_products():
         p.delete()
     projects = Project.objects.all()
     for project in projects:
-        project.deadline = timezone.now() + datetime.timedelta(days=random.randint(20, 40))
+        project.deadline = timezone.now() + datetime.timedelta(
+            days=random.randint(20, 40)
+        )
         project.save()
         tasks = project.tasks.all()
         products = project.owner.products.all()
@@ -297,11 +304,10 @@ def add_task_products():
             prod.save()
 
 
-
 def create_child_tasks():
     tasks: List[ProjectTask] = ProjectTask.objects.filter(level=0)
     for task in tasks:
-        print('creating children for ', task.name)
+        print("creating children for ", task.name)
         # children_count = random.randint(2, 6)
         sub_tasks = SUB_TASKS.copy()
         current_child = None
@@ -334,7 +340,7 @@ def __create_supplier_products():
     min_count = 30
     for location in locations:
         if location.products.all().count() >= min_count:
-            print('products already assigned')
+            print("products already assigned")
             continue
         products: List[Product] = list(Product.objects.all())
         max_count = len(products)
@@ -353,16 +359,15 @@ def __create_supplier_products():
             lead_time = random.randint(1, 14)
             offer_install = random.choice([True, False])
             sup_prod: SupplierProduct = SupplierProduct.objects.get_or_create(
-                product=select_product,
-                location=location
-                )[0]
+                product=select_product, location=location
+            )[0]
             sup_prod.units_available_in_store = units_available
             sup_prod.units_per_order = units_per_order
             sup_prod.publish_in_store_price = True
             sup_prod.in_store_ppu = price
             sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
             sup_prod.offer_installation = offer_install
-            print(f'retailer product {sup_prod.offer_installation} created')
+            print(f"retailer product {sup_prod.offer_installation} created")
             sup_prod.save()
 
 
@@ -371,20 +376,21 @@ def __random_date(deadline=None):
         return deadline - datetime.timedelta(days=random.randint(1, 90))
     return timezone.now() + datetime.timedelta(days=random.randint(20, 40))
 
+
 def __get_name_and_email():
     fake = Faker()
     name = fake.name()
-    email = name.replace(' ', '')
-    email = f'{email}@hotgmail.com'
+    email = name.replace(" ", "")
+    email = f"{email}@hotgmail.com"
     return [name, email]
 
 
 def __create_user(**kwargs):
     user_model: User = get_user_model()
     name, email = __get_name_and_email()
-    is_supplier = kwargs.get('is_supplier', False)
-    print('name = ', name)
-    print('email = ', email)
+    is_supplier = kwargs.get("is_supplier", False)
+    print("name = ", name)
+    print("email = ", email)
     user = user_model.objects.filter(email=email).first()
     if user:
         return __create_user(**kwargs)
@@ -397,9 +403,8 @@ def __create_user(**kwargs):
         full_name=name,
         is_supplier=is_supplier
         # **kwargs
-        )
+    )
     return user
-
 
 
 def __create_supplier_company(user, address):
@@ -408,15 +413,15 @@ def __create_supplier_company(user, address):
     u_phone = u_phone[:25] if len(u_phone) > 25 else u_phone
     ret_com_text = fake.paragraph(nb_sentences=4, variable_nb_sentences=True)
     print(ret_com_text)
-    ret_com_name = fake.company() + ' demo'
+    ret_com_name = fake.company() + " demo"
     try:
         company = SupplierCompany.objects.create_group(
             user=user,
             business_address=address,
             phone_number=u_phone,
             name=ret_com_name,
-            info=ret_com_text
-            )
+            info=ret_com_text,
+        )
         for x in range(random.randint(0, 3)):
             __create_employees(company)
         return company
@@ -424,15 +429,12 @@ def __create_supplier_company(user, address):
         __create_supplier_company(user, address)
 
 
-
 def __create_employees(company):
     user = __create_user(is_supplier=True)
     admin = random.choice([True, False])
     employee = BaseProfile.objects.create_profile(
-        user=user,
-        company=company,
-        company_admin=admin
-        )
+        user=user, company=company, company_admin=admin
+    )
     return employee
 
 
@@ -440,19 +442,22 @@ def __create_project(user: User, address: Address):
     deadline = __random_date()
     middle = random.choice(PROJECT_MIDDLES)
     suffix = random.choice(PROJECT_SUFFIXES)
-    nickname = f'{address.get_short_name()} {middle} {suffix}' if address else f'{middle} {suffix}'
+    nickname = (
+        f"{address.get_short_name()} {middle} {suffix}"
+        if address
+        else f"{middle} {suffix}"
+    )
     try:
         project = Project.objects.create_project(
-            user=user,
-            nickname=nickname,
-            deadline=deadline
-            )
+            user=user, nickname=nickname, deadline=deadline
+        )
         if address:
             project.address = address
             project.save()
         return project
     except IntegrityError:
         return None
+
 
 def __create_locations(company: SupplierCompany, address: Address):
     fake = Faker()
@@ -461,7 +466,6 @@ def __create_locations(company: SupplierCompany, address: Address):
         company=company,
         address=address,
         approved_in_store_seller=True,
-        phone_number=u_phone[:16] if len(u_phone) > 16 else u_phone
-        )
+        phone_number=u_phone[:16] if len(u_phone) > 16 else u_phone,
+    )
     return location
-
