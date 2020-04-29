@@ -104,10 +104,9 @@ def generate_address_groups():
     addresses = random.sample(list(addresses), count)
     exclude_pks = []
     return_groups = []
-    for address_pk in addresses:
-        if address_pk in exclude_pks:
+    for address in addresses:
+        if address.pk in exclude_pks:
             continue
-        address = Address.objects.get(pk=address_pk)
         number = random.randint(2, 4)
 
         closest = address.find_closest_others()
