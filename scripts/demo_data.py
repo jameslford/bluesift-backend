@@ -100,7 +100,7 @@ def create_demo_users():
 def generate_address_groups():
     addresses = Address.objects.filter(demo=True)
     count = addresses.count()
-    count = count if count < 60 else 60
+    count = count if count < 40 else 40
     addresses = random.sample(list(addresses), count)
     exclude_pks = []
     return_groups = []
