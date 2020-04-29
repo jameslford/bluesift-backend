@@ -99,16 +99,19 @@ def create_demo_users():
 
 def generate_address_groups():
     addresses = Address.objects.filter(demo=True)
+    count = addresses.count()
+    count = count if count < 60 else 60
+    addresses = random.sample(list(addresses), count)
     exclude_pks = []
     return_groups = []
-    for address in addresses:
-        if address.pk in exclude_pks:
+    for address_pk in addresses:
+        if address_pk in exclude_pks:
             continue
+        address = Address.objects.get(pk=address_pk)
         number = random.randint(2, 4)
+
         closest = address.find_closest_others()
         adds = []
-        # for num, close in zip(range(0, number), closest):
-        # for close in closest:
         for num in range(0, number):
             for close in closest:
                 if close.pk in exclude_pks:
@@ -164,7 +167,7 @@ def _generate_retailers(address_group):
         __create_locations(ret_company, loc_add)
 
 
-# @transaction.atomic
+@transaction.atomic
 def main():
     address_groups = generate_address_groups()
     for group in address_groups:
@@ -338,7 +341,8 @@ def create_child_tasks():
 def __create_supplier_products():
     locations: List[SupplierLocation] = SupplierLocation.objects.all()
     min_count = 30
-    for location in locations:
+    for ind, location in enumerate(locations):
+        print(str(ind) + " out of " + str(int(locations.count())) + "locations")
         if location.products.all().count() >= min_count:
             print("products already assigned")
             continue
@@ -347,7 +351,6 @@ def __create_supplier_products():
         max_count = (max_count // 18) + min_count
         rang_int = random.randint(min_count, max_count)
         for num in range(rang_int):
-            print(num, rang_int)
             price = random.uniform(1, 10)
             price = round(float(price), 2)
             price = decimal.Decimal(price)
@@ -367,7 +370,6 @@ def __create_supplier_products():
             sup_prod.in_store_ppu = price
             sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
             sup_prod.offer_installation = offer_install
-            print(f"retailer product {sup_prod.offer_installation} created")
             sup_prod.save()
 
 
@@ -401,8 +403,7 @@ def __create_user(**kwargs):
         is_active=True,
         demo=True,
         full_name=name,
-        is_supplier=is_supplier
-        # **kwargs
+        is_supplier=is_supplier,
     )
     return user
 

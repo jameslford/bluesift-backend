@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.request import Request
 from django.core.cache import cache
+from django.contrib.auth import get_user_model
 from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
@@ -18,7 +19,29 @@ from .tasks import create_indexes
 @api_view(["GET"])
 @permission_classes((IsAdminUser,))
 def dashboard(request: Request):
-    pass
+    from Suppliers.models import SupplierCompany, SupplierLocation, SupplierProduct
+    from Projects.models import Project
+    from Products.models import Product
+
+    user_model = get_user_model()
+    demo_reg_users = user_model.objects.filter(demo=True, is_supplier=False).count()
+    demo_reg_users = user_model.objects.filter(demo=True, is_supplier=False).count()
+    sup_users = user_model.objects.filter(demo=False, is_supplier=True).count()
+    sup_users = user_model.objects.filter(demo=False, is_supplier=True).count()
+    projects = Project.objects.all().count()
+    supplier_products = SupplierProduct.objects.all().count()
+    products = Product.objects.all().count()
+
+    return {
+        "demo_reg_users": demo_reg_users,
+        "demo_reg_users": demo_reg_users,
+        "sup_users": sup_users,
+        "sup_users": sup_users,
+        "projects": projects,
+        "supplier_products": supplier_products,
+        "products": products,
+    }
+
 
 
 @api_view(["GET", "POST", "PUT", "DELETE"])
