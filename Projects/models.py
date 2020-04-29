@@ -230,7 +230,7 @@ class ProjectTask(models.Model):
                     latest = finish
             td = latest - earliest
             return td.total_seconds()
-        return self.duration.total_seconds()
+        return self.duration.total_seconds() if self.duration else 0
 
     def predecessor_type_map(self):
         pred_map = {
