@@ -27,7 +27,7 @@ def delete_fake():
     demos.delete()
 
 
-# @transaction.atomic
+@transaction.atomic
 def replace():
     delete_fake()
     create_demo_users()
@@ -35,8 +35,8 @@ def replace():
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        add_zips()
-        create_addresses()
+        # add_zips()
+        # create_addresses()
         replace()
         add_additonal()
         create_parent_tasks()
