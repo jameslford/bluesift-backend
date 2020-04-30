@@ -78,11 +78,11 @@ class Appliance(ProductSubClass):
         self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         if not self.height:
-            self.height = self.derived_height
+            self.height = (self.derived_height, None)
         if not self.width:
-            self.width = self.derived_width
+            self.width = (self.derived_width, None)
         if not self.depth:
-            self.depth = self.derived_depth
+            self.depth = (self.derived_depth, None)
         return super().save(
             force_insert=force_insert,
             force_update=force_update,

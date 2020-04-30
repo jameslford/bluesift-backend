@@ -112,6 +112,7 @@ class Product(models.Model):
     )
     hash_value = models.CharField(max_length=1200, blank=True, null=True, unique=True)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default=SF, blank=True)
+    category = models.CharField(max_length=80, blank=True, null=True)
 
     manufacturer_url = models.URLField(max_length=300, null=True, blank=True)
     manufacturer_sku = models.CharField(max_length=200)
@@ -198,6 +199,17 @@ class Product(models.Model):
             self.manufacturer_style,
             self.manufacturer_sku,
         ]
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        self.category = self.__class__.__name__
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     def tags(self):
         return self.__static_tags() + self.__dynamic_tags()
