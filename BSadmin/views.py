@@ -9,6 +9,11 @@ from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
 from ProductFilter.models import BaseFacet, QueryIndex
+from Suppliers.models import SupplierCompany, SupplierLocation, SupplierProduct
+from Projects.models import Project
+from Products.models import Product
+from Profiles.models import SupplierEmployeeProfile
+from scripts.suppliers import refresh_supplier_products
 
 # from scripts.finish_surfaces import clean_products
 from .tasks import create_indexes
@@ -19,9 +24,6 @@ from .tasks import create_indexes
 @api_view(["GET"])
 @permission_classes((IsAdminUser,))
 def dashboard(request: Request):
-    from Suppliers.models import SupplierCompany, SupplierLocation, SupplierProduct
-    from Projects.models import Project
-    from Products.models import Product
 
     user_model = get_user_model()
     demo_reg_users = user_model.objects.filter(demo=True, is_supplier=False).count()
@@ -41,7 +43,6 @@ def dashboard(request: Request):
         "supplier_products": supplier_products,
         "products": products,
     }
-
 
 
 @api_view(["GET", "POST", "PUT", "DELETE"])
@@ -139,3 +140,16 @@ def refresh_facets(request):
 def refresh_search(request):
     create_indexes.delay()
     return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes((IsAdminUser,))
+def refresh_supplier_employees(request):
+    pass
+
+
+@api_view(["GET"])
+@permission_classes((IsAdminUser,))
+def refresh_demo_supplier_products(request):
+    refresh_supplier_products()
+    return Response(status=status.HTTP_201_CREATED)

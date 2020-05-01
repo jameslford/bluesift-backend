@@ -6,6 +6,7 @@ from .views import (
     convert_geometries,
     refresh_facets,
     refresh_search,
+    refresh_demo_supplier_products,
 )
 
 urlpatterns = [
@@ -16,4 +17,5 @@ urlpatterns = [
     path("geometry/<int:pk>", convert_geometries),
     path("facets", refresh_facets),
     path("search", refresh_search),
+    path("refresh_demo_supplier_products", refresh_demo_supplier_products),
 ]

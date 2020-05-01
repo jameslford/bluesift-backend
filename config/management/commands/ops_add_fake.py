@@ -4,13 +4,6 @@ from django.contrib.auth import get_user_model
 from Suppliers.models import SupplierCompany
 from Profiles.models import SupplierEmployeeProfile
 from scripts.addresses import add_zips
-from scripts.demo_data import (
-    create_addresses,
-    create_demo_users,
-    add_additonal,
-    create_parent_tasks,
-    create_child_tasks,
-)
 
 
 def delete_fake():
@@ -30,7 +23,7 @@ def delete_fake():
 @transaction.atomic
 def replace():
     delete_fake()
-    create_demo_users()
+    # create_demo_users()
 
 
 class Command(BaseCommand):
@@ -38,6 +31,6 @@ class Command(BaseCommand):
         # add_zips()
         # create_addresses()
         replace()
-        add_additonal()
-        create_parent_tasks()
-        create_child_tasks()
+        # add_additonal()
+        # create_parent_tasks()
+        # create_child_tasks()

@@ -1,5 +1,5 @@
 import datetime
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import TruncDate
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import JSONField
@@ -12,17 +12,15 @@ from Profiles.models import SupplierEmployeeProfile
 from utils.tree import SupplierLocationTree
 
 
-
 class SupplierLocationManager(models.Manager):
-
     def create_location(self, user, **kwargs):
         company = user.get_group()
-        nickname = kwargs.get('nickname')
-        phone_number = kwargs.get('phone_number')
-        address_pk = kwargs.get('address_pk')
+        nickname = kwargs.get("nickname")
+        phone_number = kwargs.get("phone_number")
+        address_pk = kwargs.get("address_pk")
         if not (company or phone_number or address_pk):
-            raise ValidationError('Company, Phone Number, and Address Pk needed')
-        local_admin = user.get('local_admin')
+            raise ValidationError("Company, Phone Number, and Address Pk needed")
+        local_admin = user.get("local_admin")
         if local_admin:
             local_admin = SupplierEmployeeProfile.objects.get(pk=local_admin)
         address = Address.objects.get(pk=address_pk)
@@ -30,38 +28,42 @@ class SupplierLocationManager(models.Manager):
             nickname=nickname,
             phone_number=phone_number,
             address=address,
-            company=company
-            )
+            company=company,
+        )
         return location
 
     def update_location(self, user, **kwargs):
-        pk = kwargs.get('pk')
+        pk = kwargs.get("pk")
         if isinstance(pk, list):
             pk = pk[0]
         if isinstance(pk, str):
             pk = int(pk)
         profile = user.get_profile()
         if not (profile.owner or profile.admin):
-            raise PermissionError(f'{user.email} does not have permission to edit this object')
+            raise PermissionError(
+                f"{user.email} does not have permission to edit this object"
+            )
         location: SupplierLocation = user.get_collections().get(pk=pk)
-        address_pk = kwargs.get('address_pk', location.address.pk)
+        address_pk = kwargs.get("address_pk", location.address.pk)
         address = Address.objects.get(pk=address_pk)
-        location_manager = kwargs.get('location_manager')
-        phone_number = kwargs.get('phone_number', location.phone_number)
-        nickname = kwargs.get('nickname', location.nickname)
-        image = kwargs.get('image')
+        location_manager = kwargs.get("location_manager")
+        phone_number = kwargs.get("phone_number", location.phone_number)
+        nickname = kwargs.get("nickname", location.nickname)
+        image = kwargs.get("image")
         if image:
             try:
                 image = image[0]
                 location.image.save(image.name, image)
-                print('image saved')
+                print("image saved")
             except IndexError:
                 pass
         location.phone_number = phone_number
         location.nickname = nickname
         location.address = address
         if location_manager:
-            location.local_admin = location.company.get_employees().get(pk=location_manager)
+            location.local_admin = location.company.get_employees().get(
+                pk=location_manager
+            )
         location.save()
         return location
 
@@ -69,44 +71,39 @@ class SupplierLocationManager(models.Manager):
 class SupplierLocation(models.Model):
     nickname = models.CharField(max_length=60)
     company = models.ForeignKey(
-        SupplierCompany,
-        on_delete=models.CASCADE,
-        related_name='shipping_locations'
-        )
+        SupplierCompany, on_delete=models.CASCADE, related_name="shipping_locations"
+    )
     local_admin = models.ForeignKey(
         SupplierEmployeeProfile,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='managed_locations'
-        )
+        related_name="managed_locations",
+    )
     address = models.OneToOneField(
-        Address,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        )
+        Address, null=True, blank=True, on_delete=models.SET_NULL,
+    )
     approved_in_store_seller = models.BooleanField(default=False)
     approved_online_seller = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=16)
     email = models.EmailField(null=True, blank=True)
     number = models.IntegerField(null=True, blank=True)
     website = models.URLField(max_length=300, blank=True, null=True)
-    image = models.ImageField(null=True, blank=True, upload_to='storefronts/')
+    image = models.ImageField(null=True, blank=True, upload_to="storefronts/")
     slug = models.SlugField(null=True, blank=True)
     hash_value = models.CharField(max_length=1000, null=True, blank=True)
 
     objects = SupplierLocationManager()
 
     class Meta:
-        unique_together = ('nickname', 'company')
+        unique_together = ("nickname", "company")
 
     def __str__(self):
-        return str(self.company) + ' ' + str(self.number)
+        return str(self.company) + " " + str(self.number)
 
     def average_rating(self):
-        avg_rating = self.ratings.all().aggregate(models.Avg('rating'))
-        avg_rating = avg_rating.get('rating_avg', None)
+        avg_rating = self.ratings.all().aggregate(models.Avg("rating"))
+        avg_rating = avg_rating.get("rating_avg", None)
         return avg_rating
 
     def rating_count(self):
@@ -117,15 +114,18 @@ class SupplierLocation(models.Model):
 
     def view_records(self):
         from Analytics.models import SupplierProductListRecord
-        views = SupplierProductListRecord.objects.filter(
-            recorded__lte=datetime.datetime.today(),
-            recorded__gt=datetime.datetime.today()-datetime.timedelta(days=30),
-            supplier=self.pk
-            ).annotate(date=TruncDate('recorded')).values(
-                'date'
-            ).annotate(count=models.Count('id')).values(
-                'count', 'date'
+
+        views = (
+            SupplierProductListRecord.objects.filter(
+                recorded__lte=datetime.datetime.today(),
+                recorded__gt=datetime.datetime.today() - datetime.timedelta(days=30),
+                supplier=self.pk,
             )
+            .annotate(date=TruncDate("recorded"))
+            .values("date")
+            .annotate(count=models.Count("id"))
+            .values("count", "date")
+        )
         return views
 
     def location_manager(self):
@@ -137,24 +137,21 @@ class SupplierLocation(models.Model):
         owner = self.company.employees.filter(company_account_owner=True).first()
         return owner
 
-
     def get_hash_value(self):
         # if not self.hash_value:
-        hash_list = [
-            self.nickname,
-            self.company.name,
-            self.address.address_string
-            ]
-        return ' '.join(hash_list)
-
+        hash_list = [self.nickname, self.company.name, self.address.address_string]
+        return " ".join(hash_list)
 
     # def clean(self):
     #     # TODO makes sure employee assigned to local_admin is a company employee
 
-
     def assign_number(self):
         # numbers = self.company.shipping_locations.values_list('number', flat=True)
-        numbers = list(SupplierLocation.objects.filter(company=self.company).values_list('number', flat=True))
+        numbers = list(
+            SupplierLocation.objects.filter(company=self.company).values_list(
+                "number", flat=True
+            )
+        )
         if not numbers:
             return 1
         return max(numbers) + 1
@@ -166,9 +163,9 @@ class SupplierLocation(models.Model):
         if not self.number:
             self.number = self.assign_number()
         if not self.nickname:
-            self.nickname = self.company.name + ' ' + str(self.number)
+            self.nickname = self.company.name + " " + str(self.number)
         if self.local_admin and self.local_admin.company != self.company:
-            raise ValidationError('Employee not a company employee')
+            raise ValidationError("Employee not a company employee")
         super(SupplierLocation, self).save(*args, **kwargs)
         tree = SupplierProductTree.objects.get_or_create(location=self)[0]
         tree.refresh()
@@ -177,12 +174,13 @@ class SupplierLocation(models.Model):
 class SupplierProductManager(models.Manager):
     def add_product(self, user, product_pk, collection_pk=None):
         collections = user.get_collections()
-        location = collections.filter(
-            pk=collection_pk).first() if collection_pk else collections.first()
+        location = (
+            collections.filter(pk=collection_pk).first()
+            if collection_pk
+            else collections.first()
+        )
         profile = user.get_profile()
-        if not (profile.admin or
-                profile.owner or
-                location.local_admin == profile):
+        if not (profile.admin or profile.owner or location.local_admin == profile):
             return False
         product = Product.objects.get(pk=product_pk)
         self.get_or_create(product=product, retailer=location)
@@ -190,12 +188,13 @@ class SupplierProductManager(models.Manager):
 
     def delete_product(self, user, product, collection_pk):
         collections = user.get_collections()
-        location = collections.filter(
-            pk=collection_pk).first() if collection_pk else collections.first()
+        location = (
+            collections.filter(pk=collection_pk).first()
+            if collection_pk
+            else collections.first()
+        )
         profile = user.get_profile()
-        if not (profile.admin or
-                profile.owner or
-                location.local_admin == profile):
+        if not (profile.admin or profile.owner or location.local_admin == profile):
             return False
         user_prod = self.get(product__pk=product, retailer=location)
         user_prod.delete()
@@ -203,16 +202,11 @@ class SupplierProductManager(models.Manager):
 
 class SupplierProduct(models.Model):
     product = models.ForeignKey(
-        Product,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='priced'
-        )
+        Product, null=True, on_delete=models.SET_NULL, related_name="priced"
+    )
     location = models.ForeignKey(
-        SupplierLocation,
-        on_delete=models.CASCADE,
-        related_name='products'
-        )
+        SupplierLocation, on_delete=models.CASCADE, related_name="products"
+    )
 
     units_available_in_store = models.IntegerField(default=0, null=True)
     units_per_order = models.DecimalField(max_digits=10, decimal_places=2, default=1)
@@ -223,13 +217,21 @@ class SupplierProduct(models.Model):
     publish_in_store_price = models.BooleanField(default=False)
     publish_online_price = models.BooleanField(default=False)
 
-    in_store_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    online_ppu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    in_store_ppu = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True
+    )
+    online_ppu = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True
+    )
 
     on_sale = models.BooleanField(default=False)
-    sale_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    sale_price = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True
+    )
 
-    lead_time_ts = models.DurationField(blank=True, null=True, default=datetime.timedelta(days=0))
+    lead_time_ts = models.DurationField(
+        blank=True, null=True, default=datetime.timedelta(days=0)
+    )
     offer_installation = models.BooleanField(default=False)
     banner_item = models.BooleanField(default=False)
 
@@ -237,10 +239,10 @@ class SupplierProduct(models.Model):
     subclasses = InheritanceManager()
 
     class Meta:
-        unique_together = ('product', 'location')
+        unique_together = ("product", "location")
 
     def __str__(self):
-        return str(self.location) + ' ' + str(self.product.name)
+        return str(self.location) + " " + str(self.product.name)
 
     # pylint: disable = arguments-differ
     def save(self, *args, **kwargs):
@@ -248,33 +250,33 @@ class SupplierProduct(models.Model):
         self.check_availability()
         if self.publish_in_store_availability:
             self.product.set_locations()
-            print('location set')
+            print("location set")
         return super(SupplierProduct, self).save(*args, **kwargs)
 
     def serialize_mini(self):
         return {
-            'pk': self.pk,
-            'in_store_ppu': self.in_store_ppu,
-            'units_available_in_store': self.units_available_in_store,
-            'units_per_order': self.units_per_order,
-            'location_address': self.location.address.city_state(),
-            'location_id': self.location.pk,
-            'company_name': self.location.company.name,
-            'lead_time_ts': self.lead_time_ts.days,
-            'publish_online_price': self.publish_online_price,
-            'publish_in_store_price': self.publish_in_store_price,
-            'publish_in_store_availability': self.publish_in_store_availability
+            "pk": self.pk,
+            "in_store_ppu": self.in_store_ppu,
+            "units_available_in_store": self.units_available_in_store,
+            "units_per_order": self.units_per_order,
+            "location_address": self.location.address.city_state(),
+            "location_id": self.location.pk,
+            "company_name": self.location.company.name,
+            "lead_time_ts": self.lead_time_ts.days,
+            "publish_online_price": self.publish_online_price,
+            "publish_in_store_price": self.publish_in_store_price,
+            "publish_in_store_availability": self.publish_in_store_availability,
         }
 
     def get_priced(self):
         return {
-            'pk': self.pk,
-            'location_pk': self.location.pk,
-            'name': self.location.nickname,
-            'qty_in_store': self.units_available_in_store,
-            'lead_time': self.lead_time_ts,
-            'price': self.in_store_ppu,
-            }
+            "pk": self.pk,
+            "location_pk": self.location.pk,
+            "name": self.location.nickname,
+            "qty_in_store": self.units_available_in_store,
+            "lead_time": self.lead_time_ts,
+            "price": self.in_store_ppu,
+        }
 
     def percentage_off(self):
         if not self.on_sale and self.sale_price and self.in_store_ppu:
@@ -291,7 +293,9 @@ class SupplierProduct(models.Model):
     def set_banner(self):
         if not self.banner_item:
             return
-        location_banner_item_count = self.location.products.filter(banner_item=True).count()
+        location_banner_item_count = self.location.products.filter(
+            banner_item=True
+        ).count()
         if location_banner_item_count >= 3:
             self.banner_item = False
             return
@@ -319,16 +323,14 @@ class SupplierProduct(models.Model):
 class SupplierProductTree(models.Model):
     tree = JSONField(null=True)
     location = models.OneToOneField(
-        SupplierLocation,
-        on_delete=models.CASCADE,
-        related_name='product_tree'
-        )
+        SupplierLocation, on_delete=models.CASCADE, related_name="product_tree"
+    )
     product_pks = None
 
     def get_location_pks(self):
         if self.product_pks:
             return self.product_pks
-        self.product_pks = self.location.products.values('product__pk')
+        self.product_pks = self.location.products.values("product__pk")
         return self.product_pks
 
     def get_trees(self):
@@ -340,7 +342,7 @@ class SupplierProductTree(models.Model):
             count = current.objects.filter(pk__in=pks).count()
             if count > 0:
                 name = current._meta.verbose_name_plural.lower().strip()
-                link = parent.link + '/' + name
+                link = parent.link + "/" + name
                 new_tree = SupplierLocationTree(name, count, link)
                 parent.children.append(new_tree)
                 for sub in current.__subclasses__():

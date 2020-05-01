@@ -9,21 +9,8 @@ from scripts.finish_surfaces import assign_size, assign_label_color
 
 # from scripts.facets import create_facets
 from scripts.config import create_usertypes
-from scripts.demo_data import create_demo_users, add_additonal
 
-
-# def delete_fake():
-#     user_model = get_user_model()
-#     fake_comps = (
-#         SupplierEmployeeProfile.objects.filter(user__demo=True)
-#         .values_list("company__pk", flat=True)
-#         .distinct()
-#     )
-#     for comp in fake_comps:
-#         company = SupplierCompany.objects.get(pk=comp)
-#         company.delete()
-#     demos = user_model.objects.filter(demo=True)
-#     demos.delete()
+# from scripts.demo_data import create_demo_users, add_additonal
 
 
 class Command(BaseCommand):
@@ -39,6 +26,20 @@ class Command(BaseCommand):
         # create_usertypes()
         # LibraryLink.create_links()
         # delete_fake()
-        create_demo_users()
-        add_additonal()
+        # create_demo_users()
+        # add_additonal()
         ConfigTree.refresh()
+
+
+# def delete_fake():
+#     user_model = get_user_model()
+#     fake_comps = (
+#         SupplierEmployeeProfile.objects.filter(user__demo=True)
+#         .values_list("company__pk", flat=True)
+#         .distinct()
+#     )
+#     for comp in fake_comps:
+#         company = SupplierCompany.objects.get(pk=comp)
+#         company.delete()
+#     demos = user_model.objects.filter(demo=True)
+#     demos.delete()
