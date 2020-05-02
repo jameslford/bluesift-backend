@@ -13,6 +13,7 @@ from scripts.projects import (
     create_parent_tasks,
     create_child_tasks,
     add_group_products,
+    add_task_products,
 )
 
 
@@ -48,3 +49,4 @@ def refresh_all_demo_data():
     add_group_products()
     create_parent_tasks()
     create_child_tasks()
+    add_task_products()
