@@ -54,6 +54,8 @@ def generate_address_groups():
 
 
 def create_addresses():
+    if Zipcode.objects.all().count() < 33144:
+        add_zips()
     addresses_response = requests.get(ADDRESS_URL).json()
     addresses = addresses_response.get("addresses", [])
     addresses = list(addresses)

@@ -1,11 +1,16 @@
 from django.core.management.base import BaseCommand
-from Products.models import Product
-from Projects.models import Project
+from scripts.demo_data import choose_image
+from config.models import ConfigTree
+from Suppliers.models import SupplierProductTree
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        pass
+        # ConfigTree.refresh()
+        for tree in SupplierProductTree.objects.all():
+            tree.refresh()
+
+        # pass
         # prods = Product.subclasses.all().select_subclasses()
         # for prod in prods:
         #     prod.save()

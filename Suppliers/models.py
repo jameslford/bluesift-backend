@@ -250,7 +250,6 @@ class SupplierProduct(models.Model):
         self.check_availability()
         if self.publish_in_store_availability:
             self.product.set_locations()
-            print("location set")
         return super(SupplierProduct, self).save(*args, **kwargs)
 
     def serialize_mini(self):

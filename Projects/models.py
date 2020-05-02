@@ -3,8 +3,6 @@ from datetime import timedelta, datetime
 import pytz
 from django.db import models, transaction
 from django.utils import timezone
-
-# from django.db.models import Min, Max, F, Sum, DateTimeField, DecimalField, ExpressionWrapper, DurationField
 from django.core.exceptions import ValidationError
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
