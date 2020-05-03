@@ -69,12 +69,5 @@ def ut_features(request, user_type: str):
         features = UserFeature.objects.filter(supplier=False)
     else:
         features = UserFeature.objects.filter(supplier=True)
-    res = [
-        {
-            "tag_line": feature.label,
-            "description": feature.description,
-            "img": feature.image,
-        }
-        for feature in features
-    ]
+    res = [feature.serialize() for feature in features]
     return Response(res, status=status.HTTP_200_OK)

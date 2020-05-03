@@ -180,10 +180,10 @@ class LibraryLink(models.Model):
 
 
 class UserFeature(models.Model):
-    label = models.CharField(max_length=40, unique=True)
-    description = models.CharField(max_length=60, blank=True, null=True)
-    draw_path = models.TextField(blank=True, null=True)
-    display = models.FileField(upload_to="misc/", blank=True, null=True)
+    label = models.CharField(max_length=140, unique=True)
+    description = models.CharField(max_length=300, blank=True, null=True)
+    # draw_path = models.TextField(blank=True, null=True)
+    # display = models.FileField(upload_to="misc/", blank=True, null=True)
     image = models.ImageField(upload_to="misc/", blank=True, null=True)
     supplier = models.BooleanField(default=False)
 
@@ -191,24 +191,24 @@ class UserFeature(models.Model):
         return self.label
 
     def save(self, *args, **kwargs):
-        if not self.display:
-            super().save(*args, **kwargs)
-            return
-        o_file = self.display
-        doc = minidom.parse(o_file)
-        paths = doc.getElementsByTagName("path")
-        for path in paths:
-            path_id = path.getAttribute("id")
-            if path_id == "drawPath":
-                self.draw_path = path.getAttribute("d")
-                break
+        # if not self.display:
+        #     super().save(*args, **kwargs)
+        #     return
+        # o_file = self.display
+        # doc = minidom.parse(o_file)
+        # paths = doc.getElementsByTagName("path")
+        # for path in paths:
+        #     path_id = path.getAttribute("id")
+        #     if path_id == "drawPath":
+        #         self.draw_path = path.getAttribute("d")
+        #         break
         super().save(*args, **kwargs)
 
     def serialize(self):
         return {
             "label": self.label,
             "description": self.description,
-            "draw_path": self.draw_path,
+            "img": self.image.url if self.image else None,
         }
 
 
