@@ -9,6 +9,7 @@ from .views import (
     generic_delete,
     get_short_lib,
     pl_status_for_product,
+    ut_features,
 )
 
 
@@ -33,20 +34,10 @@ urlpatterns = [
     path("shortLib/<str:pk>", get_short_lib),
     path("pl_status/<str:pk>", pl_status_for_product),
     path("landing", landing),
+    path("features/<str:user_type>", ut_features),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:
     import debug_toolbar
 
     urlpatterns = [path("__debug__", include(debug_toolbar.urls))] + urlpatterns
-
-    # task_progress,
-    # generic_business_list,
-    # generic_business_detail,
-
-    # path('task-progress', task_progress),
-    # path('mailing-list/', include('MailingList.urls')),
-    # path('scraper/', include('Scraper.urls')),
-    # path('business-detail/<str:category>/<int:pk>', generic_business_detail),
-    # path('businesses', generic_business_list),
-    # path('businesses/<str:category>', generic_business_list),
