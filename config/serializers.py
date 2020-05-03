@@ -10,7 +10,6 @@ from .globals import BusinessType
 
 
 class BusinessSerializer:
-
     def __init__(self, business, full=True):
         self.business = business
         self.business_type = None
@@ -34,8 +33,8 @@ class BusinessSerializer:
 
     def serialize(self):
         ret_dict = vars(self)
-        del ret_dict['business']
-        del ret_dict['full']
+        del ret_dict["business"]
+        del ret_dict["full"]
         new_dict = {k: v for k, v in ret_dict.items() if v}
         return new_dict
 
@@ -55,7 +54,7 @@ class BusinessSerializer:
             if self.full:
                 self.info = business.company.info
                 # if business.local_admin:
-                    # self.location_manager = ProfileSerializer(business.local_admin.user).data
+                # self.location_manager = ProfileSerializer(business.local_admin.user).data
             return self.serialize()
         if isinstance(self.business, SupplierCompany):
             ret_company: SupplierCompany = self.business
@@ -67,21 +66,32 @@ class BusinessSerializer:
             self.address_string = ret_company.business_address.address_string
             self.info = ret_company.info
             self.image = ret_company.image
-            self.plan = PlanSerializer(ret_company.plan).data if ret_company.plan else None
+            self.plan = (
+                PlanSerializer(ret_company.plan).data if ret_company.plan else None
+            )
             if self.full:
                 locations = SupplierLocation.objects.select_related(
-                    'address',
-                    'address__postal_code',
-                    'company',
-                    'local_admin'
+                    "address", "address__postal_code", "company", "local_admin"
                 ).filter(company=ret_company)
-                self.locations = [BusinessSerializer(loc).getData() for loc in locations]
+                self.locations = [
+                    BusinessSerializer(loc).getData() for loc in locations
+                ]
             return self.serialize()
         return
 
 
 class LinkTree:
-    def __init__(self, name=None, link=None, icon=None, description=None, children=None, pk=None, count=None, tree: Tree = None):
+    def __init__(
+        self,
+        name=None,
+        link=None,
+        icon=None,
+        description=None,
+        children=None,
+        pk=None,
+        count=None,
+        tree: Tree = None,
+    ):
         self.name = name
         self.link = link
         self.icon = icon
@@ -100,18 +110,17 @@ class LinkTree:
     @property
     def serialized(self):
         return {
-            'name': self.name,
-            'link': self.link,
-            'icon': self.icon,
-            'description': self.description,
-            'pk': self.pk,
-            'count': self.count,
-            'children': [child.serialized for child in self.children]
+            "name": self.name,
+            "link": self.link,
+            "icon": self.icon,
+            "description": self.description,
+            "pk": self.pk,
+            "count": self.count,
+            "children": [child.serialized for child in self.children],
         }
 
 
 class LinkSerializer:
-
     def __init__(self, user: User):
         self.avatar = None
         self.library_links = []
@@ -119,13 +128,24 @@ class LinkSerializer:
         if user and user.is_authenticated:
             profile = user.get_profile()
             self.avatar = profile.avatar.url if profile.avatar else None
-            self.library_links = [LinkTree(name=child.label, link=child.link) for child in user.get_library_links()]
+            self.library_links = [
+                LinkTree(name=child.label, link=child.link)
+                for child in user.get_library_links()
+            ]
             if user.is_supplier:
-                trees = [ptree['product_tree__tree'] for ptree in user.get_collections().values('product_tree__tree')]
-                self.library_links.append(LinkTree(name='locations', count=None, children=trees))
+                trees = [
+                    ptree["product_tree__tree"]
+                    for ptree in user.get_collections().values("product_tree__tree")
+                ]
+                self.library_links.append(
+                    LinkTree(name="locations", count=None, children=trees)
+                )
             else:
-                plinks = [{'name': val['nickname'], 'link': val['pk']} for val in user.get_collections().values('pk', 'nickname')]
-                self.library_links.append(LinkTree(name='projects', children=plinks))
+                plinks = [
+                    {"name": val["nickname"], "link": val["pk"]}
+                    for val in user.get_collections().values("pk", "nickname")
+                ]
+                self.library_links.append(LinkTree(name="projects", children=plinks))
 
     @property
     def serialized(self):
@@ -133,18 +153,13 @@ class LinkSerializer:
 
 
 class CollectionNote:
-
-    def __init__(self, nickname='library', pk=None, remove=None):
+    def __init__(self, nickname="library", pk=None, remove=None):
         self.nickname = nickname
         self.pk = pk
         self.remove = remove
 
     def serialize(self):
-        return {
-            'nickname': self.nickname,
-            'pk': self.pk,
-            'remove': self.remove
-            }
+        return {"nickname": self.nickname, "pk": self.pk, "remove": self.remove}
 
     @property
     def data(self):
@@ -152,7 +167,6 @@ class CollectionNote:
 
 
 class ShortLib:
-
     def __init__(self, user, pk=None):
         self.user = user
         self.pk = pk
@@ -163,12 +177,11 @@ class ShortLib:
 
     def return_data(self):
         return {
-            'count': self.count,
-            'product_ids': self.product_ids,
-            'pl_short_list': self.pl_short_list,
-            'selected_location': self.selected_location
-            }
-
+            "count": self.count,
+            "product_ids": self.product_ids,
+            "pl_short_list": self.pl_short_list,
+            "selected_location": self.selected_location,
+        }
 
     def retrieve_data(self):
         collection = None
@@ -178,15 +191,21 @@ class ShortLib:
             return
         if self.user.is_supplier:
             collections = self.user.get_collections()
-            self.pl_short_list = [CollectionNote(res).data for res in list(collections.values('nickname', 'pk'))]
+            self.pl_short_list = [
+                CollectionNote(res).data
+                for res in list(collections.values("nickname", "pk"))
+            ]
             collection = collections.get(pk=self.pk) if self.pk else collections.first()
-            self.product_ids = collection.products.values_list('product__pk', flat=True)
-            self.selected_location = CollectionNote(collection.nickname, collection.pk).serialize()
+            self.product_ids = collection.products.values_list("product__pk", flat=True)
+            self.selected_location = CollectionNote(
+                collection.nickname, collection.pk
+            ).serialize()
             return
         group = self.user.get_group()
-        self.product_ids = list(group.products.all().values_list('pk', flat=True))
+        self.product_ids = list(
+            group.products.all().values_list("product__pk", flat=True)
+        )
         self.selected_location = CollectionNote().serialize()
-
 
     @property
     def data(self):
@@ -195,7 +214,6 @@ class ShortLib:
 
 
 class ProductStatus:
-
     def __init__(self, user: User, pk):
         self.user = user
         self.pk = pk
@@ -206,13 +224,22 @@ class ProductStatus:
             return
         group = self.user.get_group()
         if self.user.is_supplier:
-            collections = SupplierLocation.objects.prefetch_related('products').filter(company=group)
-            subquery = SupplierProduct.objects.filter(location=OuterRef('pk'))
-            res = collections.annotate(removed=Exists(subquery)).values('nickname', 'pk', 'removed')
-            self.pl_list = [CollectionNote(col['nickname'], col['pk'], not col['removed']).serialize() for col in res]
+            collections = SupplierLocation.objects.prefetch_related("products").filter(
+                company=group
+            )
+            subquery = SupplierProduct.objects.filter(location=OuterRef("pk"))
+            res = collections.annotate(removed=Exists(subquery)).values(
+                "nickname", "pk", "removed"
+            )
+            self.pl_list = [
+                CollectionNote(
+                    col["nickname"], col["pk"], not col["removed"]
+                ).serialize()
+                for col in res
+            ]
         else:
             remove = group.products.filter(product__pk=self.pk).exists()
-            self.pl_list.append(CollectionNote('workbench', None, remove).serialize())
+            self.pl_list.append(CollectionNote("workbench", None, remove).serialize())
 
     @property
     def data(self):
