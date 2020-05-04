@@ -115,7 +115,7 @@ class SupplierLocation(models.Model):
     def view_records(self):
         from Analytics.models import SupplierProductListRecord
 
-        views = (
+        return (
             SupplierProductListRecord.objects.filter(
                 recorded__lte=datetime.datetime.today(),
                 recorded__gt=datetime.datetime.today() - datetime.timedelta(days=30),
@@ -125,8 +125,7 @@ class SupplierLocation(models.Model):
             .values("date")
             .annotate(count=models.Count("id"))
             .values("count", "date")
-        )
-        return views
+        ).order_by("date")
 
     def location_manager(self):
         if self.local_admin:

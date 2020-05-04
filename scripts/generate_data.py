@@ -7,7 +7,11 @@ from Suppliers.models import SupplierCompany
 from Addresses.models import Address
 from Projects.models import Project
 from scripts.addresses import create_addresses, generate_address_groups
-from scripts.suppliers import generate_retailers, refresh_supplier_products
+from scripts.suppliers import (
+    generate_retailers,
+    refresh_supplier_products,
+    add_view_records,
+)
 from scripts.projects import (
     generate_users,
     create_parent_tasks,
@@ -50,3 +54,4 @@ def refresh_all_demo_data():
     create_parent_tasks()
     create_child_tasks()
     add_task_products()
+    add_view_records()

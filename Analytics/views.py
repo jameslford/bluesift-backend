@@ -1,13 +1,13 @@
 """
 Analytics.views
 """
-from django.db.models import Count
-from django.db.models.functions import TruncDay
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from config.custom_permissions import SupplierAdminPro
-from rest_framework.response import Response
-from Accounts.models import User
+# from django.db.models import Count
+# from django.db.models.functions import TruncDay
+# from rest_framework.decorators import api_view, permission_classes
+# from rest_framework.permissions import IsAuthenticated
+# from config.custom_permissions import SupplierAdminPro
+# from rest_framework.response import Response
+# from Accounts.models import User
 # from .models import ViewRecord
 
 

@@ -1,4 +1,5 @@
 import random
+from operator import add, sub
 from typing import List
 import datetime
 import decimal
@@ -11,6 +12,8 @@ from Products.models import Product
 from Profiles.models import SupplierEmployeeProfile
 from Addresses.models import Address
 from Profiles.models import BaseProfile
+from Analytics.models import SupplierProductListRecord
+from Addresses.models import Coordinate
 from .demo_data import create_user, choose_image
 
 
@@ -131,3 +134,37 @@ def refresh_supplier_products():
             sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
             sup_prod.offer_installation = offer_install
             sup_prod.save()
+
+
+def add_view_records():
+    SupplierProductListRecord.objects.all().delete()
+    # coordinates = Zipcode.objects.values_list("centroid", flat=True)
+    coordinates = list(Coordinate.objects.all())
+    num_days = 30
+    base = datetime.datetime.today() - datetime.timedelta(num_days)
+    date_dicts = [
+        {"date": base + datetime.timedelta(days=x), "x": x} for x in range(num_days)
+    ]
+    locations = SupplierLocation.objects.all()
+    count = locations.count()
+    current = 0
+    ops = (add, sub)
+    current_location = 1
+    for curr, location in enumerate(locations):
+        current = 0
+        print(curr / count)
+        current_location += 1
+        for date_dict in date_dicts:
+            date = date_dict["date"]
+            x = date_dict["x"]
+            views = current + (x // 3) + 1
+            op = random.choice(ops)
+            variabilty = random.randint(0, views // 2)
+            views = op(views, variabilty)
+            current = views
+            for _ in range(views):
+                coordinate = random.choice(coordinates)
+                # coordinate = Coordinate.objects.get(pk=coordinate)
+                SupplierProductListRecord.objects.create(
+                    supplier=location, location=coordinate, recorded=date
+                )
