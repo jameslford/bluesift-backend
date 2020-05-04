@@ -138,20 +138,19 @@ def refresh_supplier_products():
 
 def add_view_records():
     SupplierProductListRecord.objects.all().delete()
-    # coordinates = Zipcode.objects.values_list("centroid", flat=True)
     coordinates = list(Coordinate.objects.all())
-    num_days = 30
+    num_days = 40
     base = datetime.datetime.today() - datetime.timedelta(num_days)
     date_dicts = [
         {"date": base + datetime.timedelta(days=x), "x": x} for x in range(num_days)
     ]
     locations = SupplierLocation.objects.all()
     count = locations.count()
-    current = 0
+    current = 30
     ops = (add, sub)
     current_location = 1
     for curr, location in enumerate(locations):
-        current = 0
+        current = 30
         print(curr / count)
         current_location += 1
         for date_dict in date_dicts:
@@ -159,12 +158,12 @@ def add_view_records():
             x = date_dict["x"]
             views = current + (x // 3) + 1
             op = random.choice(ops)
-            variabilty = random.randint(0, views // 2)
+            variabilty = random.randint(views // 4, views // 3)
             views = op(views, variabilty)
             current = views
+            print(date, "_____", views)
             for _ in range(views):
                 coordinate = random.choice(coordinates)
-                # coordinate = Coordinate.objects.get(pk=coordinate)
                 SupplierProductListRecord.objects.create(
                     supplier=location, location=coordinate, recorded=date
                 )
