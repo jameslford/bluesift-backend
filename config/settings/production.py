@@ -3,7 +3,7 @@ import dj_database_url
 from corsheaders.defaults import default_headers
 from .base import *
 
-DEBUG = True
+DEBUG = False
 ENVIRONMENT = "production"
 CELERY_BROKER_URL = os.environ["REDIS_URL"]
 CELERY_RESULT_BACKEND = "django-db"

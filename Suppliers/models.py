@@ -179,7 +179,11 @@ class SupplierProductManager(models.Manager):
             else collections.first()
         )
         profile = user.get_profile()
-        if not (profile.admin or profile.owner or location.local_admin == profile):
+        if not (
+            profile.company_admin
+            or profile.company_owner
+            or location.local_admin == profile
+        ):
             return False
         product = Product.objects.get(pk=product_pk)
         self.get_or_create(product=product, retailer=location)
