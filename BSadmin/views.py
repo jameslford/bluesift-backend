@@ -9,11 +9,11 @@ from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
 from ProductFilter.models import BaseFacet, QueryIndex
-from Suppliers.models import SupplierCompany, SupplierLocation, SupplierProduct
+from Suppliers.models import SupplierProduct
 from Projects.models import Project
 from Products.models import Product
-from Profiles.models import SupplierEmployeeProfile
 from scripts.suppliers import refresh_supplier_products
+from scripts.generate_data import delete_fake
 
 # from scripts.finish_surfaces import clean_products
 from .tasks import create_indexes
@@ -27,8 +27,8 @@ def dashboard(request: Request):
 
     user_model = get_user_model()
     demo_reg_users = user_model.objects.filter(demo=True, is_supplier=False).count()
-    demo_reg_users = user_model.objects.filter(demo=True, is_supplier=False).count()
-    sup_users = user_model.objects.filter(demo=False, is_supplier=True).count()
+    reg_users = user_model.objects.filter(demo=False, is_supplier=False).count()
+    demo_sup_users = user_model.objects.filter(demo=True, is_supplier=True).count()
     sup_users = user_model.objects.filter(demo=False, is_supplier=True).count()
     projects = Project.objects.all().count()
     supplier_products = SupplierProduct.objects.all().count()
@@ -36,8 +36,8 @@ def dashboard(request: Request):
 
     return {
         "demo_reg_users": demo_reg_users,
-        "demo_reg_users": demo_reg_users,
-        "sup_users": sup_users,
+        "reg_users": reg_users,
+        "demo_sup_users": demo_sup_users,
         "sup_users": sup_users,
         "projects": projects,
         "supplier_products": supplier_products,
@@ -148,8 +148,15 @@ def refresh_supplier_employees(request):
     pass
 
 
-@api_view(["GET"])
+@api_view(["GET", "DELETE"])
 @permission_classes((IsAdminUser,))
-def refresh_demo_supplier_products(request):
-    refresh_supplier_products()
-    return Response(status=status.HTTP_201_CREATED)
+def demo(request):
+    if request.method == "GET":
+        refresh_supplier_products()
+        return Response(status=status.HTTP_201_CREATED)
+
+    if request.method == "DELETE":
+        delete_fake()
+        return Response(status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
