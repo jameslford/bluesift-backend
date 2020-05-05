@@ -47,15 +47,15 @@ class Appliance(ProductSubClass):
 
     def get_height(self):
         # pylint:disable = no-member
-        return float(self.height.lower) if self.height else None
+        return float(self.height.lower) if self.height and self.height.lower else None
 
     def get_width(self):
         # pylint:disable = no-member
-        return float(self.width.lower) if self.width else None
+        return float(self.width.lower) if self.width and self.width.lower else None
 
     def get_depth(self):
         # pylint:disable = no-member
-        return float(self.depth.lower) if self.depth else None
+        return float(self.depth.lower) if self.depth and self.depth.lower else None
 
     def add_proprietary_files(self):
         converter = ApplianceConverter(self)
@@ -68,9 +68,9 @@ class Appliance(ProductSubClass):
     def grouped_fields(self):
         return {
             "size_and_shaped": {
-                "height": self.derived_height if self.derived_height else self.height,
-                "width": self.derived_width if self.derived_width else self.width,
-                "depth": self.derived_depth if self.derived_depth else self.depth,
+                "height": self.get_height(),
+                "width": self.get_width(),
+                "depth": self.get_depth(),
             },
         }
 

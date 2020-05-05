@@ -1,7 +1,12 @@
 from django.core.management.base import BaseCommand
-from scripts.suppliers import add_view_records
+from SpecializedProducts.models import Appliance
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        add_view_records()
+        for app in Appliance.objects.all():
+            if not app._obj_file:
+                app.delete()
+                continue
+            app.unit = "EACH"
+            app.save()

@@ -42,7 +42,8 @@ def generic_add(request, collection_pk=None):
         return Response("invalid pk", status=status.HTTP_400_BAD_REQUEST)
     if request.user.is_supplier:
         SupplierProduct.objects.add_product(request.user, product_pk, collection_pk)
-        return Response(status=status.HTTP_201_CREATED)
+        pl_list = ProductStatus(request.user, collection_pk)
+        return Response(pl_list.data, status=status.HTTP_200_OK)
     LibraryProduct.objects.add_product(request.user, product_pk)
     return Response(status=status.HTTP_201_CREATED)
 
@@ -52,7 +53,8 @@ def generic_add(request, collection_pk=None):
 def generic_delete(request, product_pk, collection_pk=None):
     if request.user.is_supplier:
         SupplierProduct.objects.delete_product(request.user, product_pk, collection_pk)
-        return Response(status=status.HTTP_200_OK)
+        pl_list = ProductStatus(request.user, collection_pk)
+        return Response(pl_list.data, status=status.HTTP_200_OK)
     LibraryProduct.objects.delete_product(request.user, product_pk)
     return Response(status=status.HTTP_200_OK)
 
