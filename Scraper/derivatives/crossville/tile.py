@@ -86,6 +86,11 @@ def run(group: ScraperGroup):
                 print("bad values")
                 continue
 
+            if product.width and product.length:
+                if product.width * product.length < 3:
+                    product.scale_length = 12
+                    product.scale_width = 12
+
             product.floors = bool("Interior floors dry" in applications)
             product.walls = bool("Interior walls dry" in applications)
             product.counter_tops = bool("Counters" in applications)
@@ -95,42 +100,46 @@ def run(group: ScraperGroup):
             product.exterior_walls = bool("Exterior walls" in applications)
             product.pool_lining = bool("Pool fountain full lining" in applications)
             product.scraper_save()
-            # product.pool_lining = bool('Pool fountain waterline' in applications)
 
-    # def clean(self):
-    #     default_products = ScraperFinishSurface.objects.using('scraper_default').filter(subgroup=self.subgroup)
-    #     for default_product in default_products:
-    #         default_product: ScraperFinishSurface = default_product
-    #         sub_material: str = default_product.sub_material.lower()
-    #         revised_product = ScraperFinishSurface.objects.using(
-    #             'scraper_revised').get_or_create(manufacturer_sku=default_product.manufacturer_sku)[0]
-    #         if 'mosaic' in sub_material:
-    #             new_sub_material = sub_material.replace('mosaic', '')
-    #             revised_product.sub_material = new_sub_material.strip()
-    #             revised_product.shape = 'mosaic'
-    #         if (default_product.shower_walls or
-    #                 default_product.covered_walls or
-    #                 default_product.exterior_walls):
-    #             default_product.walls = True
-    #         if (default_product.shower_floors or
-    #                 default_product.covered_floors or
-    #                 default_product.exterior_floors):
-    #             default_product.floors = True
-    #         if 'countertop' in sub_material:
-    #             revised_product.sub_material = 'porcelain'
-    #             revised_product.countertops = True
-    #         length = default_product.length
-    #         if length:
-    #             length = crossvile_measurement(length)
-    #         thickness = default_product.thickness
-    #         if thickness:
-    #             thickness = crossvile_measurement(thickness)
-    #         revised_product.thickness = thickness
-    #         revised_product.length = length
-    #         finish_split = default_product.finish.split('-')
-    #         if len(finish_split) > 1:
-    #             revised_product.finish = finish_split[-1].strip()
-    #         revised_product.save()
+
+# def clean(self):
+
+# product.pool_lining = bool('Pool fountain waterline' in applications)
+
+# def clean(self):
+#     default_products = ScraperFinishSurface.objects.using('scraper_default').filter(subgroup=self.subgroup)
+#     for default_product in default_products:
+#         default_product: ScraperFinishSurface = default_product
+#         sub_material: str = default_product.sub_material.lower()
+#         revised_product = ScraperFinishSurface.objects.using(
+#             'scraper_revised').get_or_create(manufacturer_sku=default_product.manufacturer_sku)[0]
+#         if 'mosaic' in sub_material:
+#             new_sub_material = sub_material.replace('mosaic', '')
+#             revised_product.sub_material = new_sub_material.strip()
+#             revised_product.shape = 'mosaic'
+#         if (default_product.shower_walls or
+#                 default_product.covered_walls or
+#                 default_product.exterior_walls):
+#             default_product.walls = True
+#         if (default_product.shower_floors or
+#                 default_product.covered_floors or
+#                 default_product.exterior_floors):
+#             default_product.floors = True
+#         if 'countertop' in sub_material:
+#             revised_product.sub_material = 'porcelain'
+#             revised_product.countertops = True
+#         length = default_product.length
+#         if length:
+#             length = crossvile_measurement(length)
+#         thickness = default_product.thickness
+#         if thickness:
+#             thickness = crossvile_measurement(thickness)
+#         revised_product.thickness = thickness
+#         revised_product.length = length
+#         finish_split = default_product.finish.split('-')
+#         if len(finish_split) > 1:
+#             revised_product.finish = finish_split[-1].strip()
+#         revised_product.save()
 
 
 def crossvile_measurement(value: str) -> str:
