@@ -34,7 +34,7 @@ def dashboard(request: Request):
     supplier_products = SupplierProduct.objects.all().count()
     products = Product.objects.all().count()
 
-    return {
+    res_dict = {
         "demo_reg_users": demo_reg_users,
         "reg_users": reg_users,
         "demo_sup_users": demo_sup_users,
@@ -43,6 +43,7 @@ def dashboard(request: Request):
         "supplier_products": supplier_products,
         "products": products,
     }
+    return Response(res_dict, status=status.HTTP_200_OK)
 
 
 @api_view(["GET", "POST", "PUT", "DELETE"])
