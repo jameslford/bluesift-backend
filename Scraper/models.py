@@ -95,10 +95,11 @@ class ScraperGroup(models.Model):
         self.get_final_images()
 
     @transaction.atomic
-    def clean(self):
+    def clean_products(self):
         path = self.path()
         mod = importlib.import_module(path)
-        mod.clean(self)
-        self.scraped = True
-        self.save()
-        self.get_final_images()
+        model = self.category.model_class()
+        products = model.objects.filter(manufacturer=self.manufacturer)
+        for product in products:
+            product = mod.clean(product)
+            product.save()

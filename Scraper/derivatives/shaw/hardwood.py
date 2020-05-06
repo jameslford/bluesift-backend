@@ -33,8 +33,13 @@ def get_special(product: Hardwood, item):
     product.finish = gloss
     product.composition = item["Construction"]
     product.species = item["Species"]
+    return product
+
+
+def clean(product: Hardwood):
     if not product.length:
-        product.length = 36
+        product.length = NumericRange(48)
     if product.width > 100:
-        product.width = product.width / 100
+        width = product.width / 100
+        product.width = NumericRange(width)
     return product

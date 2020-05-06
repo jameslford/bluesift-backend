@@ -40,7 +40,7 @@ class ConfigTree(models.Model):
     @classmethod
     def create_category_searches(cls):
         cf_tree: ConfigTree = cls.load()
-        tree = cf_tree.init_trees(cf_tree.product_tree)
+        cf_tree.init_trees(cf_tree.product_tree)
 
     @classmethod
     def load(cls):
@@ -50,8 +50,8 @@ class ConfigTree(models.Model):
     @classmethod
     def refresh(cls):
         tree = cls.load()
-        tree.__refresh_product_tree()
-        tree.__refresh_supplier_tree()
+        tree.refresh_product_tree()
+        tree.refresh_supplier_tree()
 
     def __loop_product(self, current: object, parent):
 
@@ -82,7 +82,7 @@ class ConfigTree(models.Model):
             for child in current.__subclasses__():
                 self.__loop_supplier(child, parent)
 
-    def __refresh_product_tree(self):
+    def refresh_product_tree(self):
         name = Product._meta.verbose_name_plural.lower().strip()
         count = Product.objects.count()
         Product.create_facets()
@@ -93,7 +93,7 @@ class ConfigTree(models.Model):
         self.product_tree = serialized
         self.save()
 
-    def __refresh_supplier_tree(self):
+    def refresh_supplier_tree(self):
         name = "suppliers"
         sups = SupplierLocation.objects.all()
         count = sups.count()

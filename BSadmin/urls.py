@@ -8,6 +8,7 @@ from .views import (
     convert_geometries,
     refresh_facets,
     refresh_search,
+    clean_scraper_group,
 )
 
 urlpatterns = [
@@ -20,4 +21,5 @@ urlpatterns = [
     path("geometry/<int:pk>", convert_geometries),
     path("facets", refresh_facets),
     path("search", refresh_search),
+    path("clean/<int:pk>", clean_scraper_group),
 ]

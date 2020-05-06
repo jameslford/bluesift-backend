@@ -10,6 +10,7 @@ from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
 from ProductFilter.models import BaseFacet, QueryIndex
 from Suppliers.models import SupplierProduct
+from Scraper.models import ScraperGroup
 from Projects.models import Project
 from Products.models import Product
 from scripts.suppliers import refresh_supplier_products
@@ -161,3 +162,11 @@ def demo(request):
         return Response(status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(["GET", "DELETE"])
+@permission_classes((IsAdminUser,))
+def clean_scraper_group(request, pk):
+    scraper: ScraperGroup = ScraperGroup.objects.get(pk=pk)
+    scraper.clean_products()
+    return Response(status=status.HTTP_200_OK)
