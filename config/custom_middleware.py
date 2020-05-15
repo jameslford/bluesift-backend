@@ -4,6 +4,7 @@ from ipware import get_client_ip
 from django.conf import settings
 from django.http import JsonResponse, HttpRequest
 from rest_framework.authtoken.models import Token
+from Analytics.models import GenericRecord
 from .tasks import verify_token
 
 def is_jsonable(x):
@@ -63,11 +64,14 @@ class LastSeenMiddleware:
             'ip_address': ip_address
             }
         header_token = headers.get('HTTP_AUTHORIZATION', None)
+        record: GenericRecord = GenericRecord()
         if header_token:
             verify_token.delay(header_token, request.path, ip_address)
+            record.parse_request(request)
             return self.get_response(request)
         if not request.session or not request.session.session_key:
             request.session.create()
+            record.parse_request(request)
         # request.record_dict.update({'session_id': request.session.session_key})
         return self.get_response(request)
 

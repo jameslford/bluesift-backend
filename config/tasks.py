@@ -5,9 +5,9 @@ from __future__ import absolute_import, unicode_literals
 from django.utils import timezone
 from celery.utils.log import get_task_logger
 from rest_framework.authtoken.models import Token
+from Analytics.models import GenericRecord
 from BSadmin.models import DangerLog
 from config.celery import app
-
 
 
 logger = get_task_logger(__name__)
@@ -15,18 +15,16 @@ logger = get_task_logger(__name__)
 
 @app.task
 def verify_token(token, path, ip_address):
-    token = token.replace('Token', '').strip()
+    token = token.replace("Token", "").strip()
     token_obj = Token.objects.filter(key=token).first()
     if token_obj:
         user = token_obj.user
         user.last_seen = timezone.now()
     else:
-        message = 'unathorized access attempt from faulty token'
+        message = "unathorized access attempt from faulty token"
         DangerLog.objects.create(
-            ip_address=ip_address,
-            message=message,
-            base_path=path,
-            )
+            ip_address=ip_address, message=message, base_path=path,
+        )
 
 
 # @app.task
@@ -72,10 +70,6 @@ def verify_token(token, path, ip_address):
 #         )
 
 
-
-
-
-
 # @app.task
 # def harvest_request(headers: Dict, path, ip_address=None):
 #     time_threshold = datetime.datetime.now() - datetime.timedelta(hours=10)
@@ -85,7 +79,7 @@ def verify_token(token, path, ip_address):
 #         record = ViewRecord.objects.filter(session_id=session_id, recorded__gt=time_threshold).first()
 #         if not record:
 #             record = ViewRecord.object.create(session_id=session_id)
-#     # else 
+#     # else
 #     header_token = headers.get('HTTP_AUTHORIZATION', None)
 #     user: User = None
 #     if header_token:
@@ -107,14 +101,14 @@ def verify_token(token, path, ip_address):
 #     record.path = path
 #     record.save()
 
-    # if user and not user.profile.latest_location:
-                # if zipcode and user:
-                #     if not user.profile.current_zipcode:
-                #         user.profile.current_zipcode = zipcode
-                #         user.profile.save()
-                #     if not user.profile.latest_location:
-                #         user.profile.latest_location = coord
-                #         user.profile.save()
+# if user and not user.profile.latest_location:
+# if zipcode and user:
+#     if not user.profile.current_zipcode:
+#         user.profile.current_zipcode = zipcode
+#         user.profile.save()
+#     if not user.profile.latest_location:
+#         user.profile.latest_location = coord
+#         user.profile.save()
 
 # @shared_task
 # def check_cache():
