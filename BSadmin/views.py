@@ -4,13 +4,15 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.request import Request
 from django.core.cache import cache
+from django.db import models
+from django.db.models.functions import TruncDate
 from django.contrib.auth import get_user_model
 from Scraper.models import ScraperGroup
 from config.models import ConfigTree
 from scripts.scrapers import create_scrapers
 from ProductFilter.models import BaseFacet, QueryIndex
 from Suppliers.models import SupplierProduct
-from Scraper.models import ScraperGroup
+from Analytics.models import GenericRecord
 from Projects.models import Project
 from Products.models import Product
 from scripts.suppliers import refresh_supplier_products
@@ -35,6 +37,15 @@ def dashboard(request: Request):
     supplier_products = SupplierProduct.objects.all().count()
     products = Product.objects.all().count()
 
+    views = (
+        GenericRecord.objects.all()
+        .annotate(date=TruncDate("recorded"))
+        .values("date")
+        .annotate(count=models.Count("id"))
+        .values("count", "date")
+        .order_by("date")
+    )
+
     res_dict = {
         "demo_reg_users": demo_reg_users,
         "reg_users": reg_users,
@@ -43,6 +54,7 @@ def dashboard(request: Request):
         "projects": projects,
         "supplier_products": supplier_products,
         "products": products,
+        "views": views,
     }
     return Response(res_dict, status=status.HTTP_200_OK)
 

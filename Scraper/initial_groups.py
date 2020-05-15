@@ -4,7 +4,7 @@ from SpecializedProducts.models import Resilient, Hardwood, TileAndStone, Lamina
 
 # armstrong = Manufacturer.objects.get_or_create(label='armstrong')[0]
 # crossville = Manufacturer.objects.get_or_create(label='crossville')[0]
-# floridatile = 'florida_tile'
+floridatile = 'florida_tile'
 subzero = 'subzero'
 armstrong = 'armstrong'
 crossville = 'crossville'
@@ -14,7 +14,7 @@ viking = 'viking'
 
 groups = [
     # [
-    #     subzero,
+    #     floridatile,
     # ],
     [
         viking,
