@@ -1,14 +1,3 @@
-from typing import List
-from django.db.transaction import TransactionManagementError
-from django.core.mail import EmailMessage
-from django.contrib.contenttypes.models import ContentType
-from django.db.utils import IntegrityError
-from config.celery import app
-from Search.models import SearchIndex
-from SpecializedProducts.models import FinishSurface, ProductSubClass
-from Products.models import Manufacturer
-
-
 """
 example for met tag:
 for manufacturer in manufacturers:s
@@ -16,7 +5,18 @@ for manufacturer in manufacturers:s
     finishes = product.sublclasses.filter(manu=manufacturer).values_list('finishes, flat=True)
 """
 
-# @transaction.atomic
+from typing import List
+from django.db.transaction import TransactionManagementError
+from django.core.mail import EmailMessage
+
+# from django.contrib.contenttypes.models import ContentType
+from django.db.utils import IntegrityError
+from config.celery import app
+from Search.models import SearchIndex
+from SpecializedProducts.models import FinishSurface, ProductSubClass
+from Products.models import Manufacturer
+
+
 @app.task
 def create_indexes():
     all_si = SearchIndex.objects.all()
@@ -24,7 +24,6 @@ def create_indexes():
     SearchIndex.create_refresh_suppliers()
     SearchIndex.create_refresh_products()
     __create_static_indexes()
-    # __create_fs_indexes()
 
 
 def __create_manu_collections_indexes():
@@ -43,7 +42,7 @@ def __create_tree_index(cls):
     model_types = [cls] + cls._meta.get_parent_list()
     parents = [kls for kls in model_types if not kls._meta.abstract][::-1]
     pnames = [str(kls._meta.verbose_name_plural) for kls in parents]
-    pcts = [ContentType.objects.get_for_model(mod) for mod in parents]
+    # pcts = [ContentType.objects.get_for_model(mod) for mod in parents]
     base_url = "/".join(pnames)
     tag = pnames[-1]
     hash_url = tag
@@ -103,57 +102,6 @@ def __create_fs_indexes():
             print("!!!!-----------error---------------!!!!")
             continue
 
-    # print(base_url)
-    # model = ContentType.objects.get_for_model(cls)
-    # pnames = [kls._meta.verbose_name_plural for kls in parents]
-    # parents = [ContentType.objects.get_for_model(mod) for mod in model_types]
-    # print(pnames)
-
-
-# static = [
-#     {
-#         'name': 'hardwood floors',
-#         'tags': ['wood', 'hardwood', 'floors'],
-#         'return': 'products/finish surfaces/hardwood'
-#     },
-#     {
-
-#     }
-# ]
-
-
-# product_tree = ConfigTree.load().product_tree
-# product_tree: Tree = __init_trees(product_tree)
-# __crawl_tree(product_tree)
-
-# for group in static:
-#     tags = group.get('tags')
-#     tag = '$*'.join(tags)
-#     name = group.get('name')
-#     return_url = group.get('return')
-#     SearchIndex.objects.create(
-#             name=name,
-#             hash_value=tag,
-#             return_url=return_url
-#             )
-
-
-# def __crawl_tree(tree: Tree):
-#     __create_tree_index(tree)
-#     if tree.children:
-#         for child in tree.children:
-#             __crawl_tree(child)
-
-# def __init_trees(**kwargs):
-#     name = kwargs.get('name')
-#     count = kwargs.get('count')
-#     children = kwargs.get('children')
-#     tree = Tree(name, count)
-#     if children:
-#         for child in children:
-#             tree.children.append(__init_trees(child))
-#     return tree
-
 
 @app.task
 def send_danger_log_message(pk):
@@ -165,7 +113,7 @@ def send_danger_log_message(pk):
         subject="Danger",
         body=message,
         from_email="jford@bluesift.com",
-        to="jford@bluesift.com",
+        to=["jford@bluesift.com"],
     )
     email_obj.send()
     return f"dlog {pk} email sent"

@@ -31,24 +31,25 @@ def get_location(location):
 @app.task
 def create_record(model_name, **kwargs):
     from .models import Record
-    for model in Record.__subclasses__():
-        if model.__name__ == model_name:
-            location = kwargs.get('location')
-            location = get_location(location)
-            kwargs['location'] = location
+    models = [model for model in Record.__subclasses__() if model.__name__ == model_name]
+    print(models)
+    if not models:
+        return
+    model = models[0]
+    location = kwargs.get('location')
+    location = get_location(location)
+    kwargs['location'] = location
 
-            user = kwargs.get('user')
-            if user:
-                kwargs['user'] = get_user_model().objects.get(pk=user)
-            else:
-                del kwargs['user']
+    user = kwargs.get('user')
+    if user:
+        kwargs['user'] = get_user_model().objects.get(pk=user)
 
-            if 'supplier' in kwargs:
-                supplier = kwargs.pop('supplier')
-                kwargs['supplier'] = SupplierLocation.objects.get(pk=supplier)
-            
-            if 'product' in kwargs:
-                product = kwargs.pop('product')
-                kwargs['product'] = Product.objects.get(pk=product)
+    if 'supplier' in kwargs:
+        supplier = kwargs.pop('supplier')
+        kwargs['supplier'] = SupplierLocation.objects.get(pk=supplier)
+    
+    if 'product' in kwargs:
+        product = kwargs.pop('product')
+        kwargs['product'] = Product.objects.get(pk=product)
 
-            model.objects.create(**kwargs)
+    model.objects.create(**kwargs)

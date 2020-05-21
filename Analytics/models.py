@@ -39,13 +39,12 @@ class Record(models.Model):
         redict.update(
             {
                 "base_path": request.path,
-                "user": request.user.pk
-                if request.user and request.user.is_authenticated
-                else None,
                 "session_id": request.session.session_key,
                 "path_params": request.GET,
             }
         )
+        if request.user and request.user.is_authenticated:
+            redict.update({"user": request.user.pk})
         redict.update(kwargs)
         create_record.delay(model_name, **redict)
 
