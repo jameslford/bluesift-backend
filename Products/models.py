@@ -5,6 +5,7 @@ Main product class, very other type of product(specialized, project & retailer) 
 import uuid
 from django.contrib.postgres import fields as pg_fields
 from django.contrib.gis.db import models
+from django.contrib.gis.db.models.functions import Distance
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos import MultiPoint
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +16,7 @@ from django.db.models import Min, Case, When
 from django.db.models.functions import Least
 from django.db import transaction
 from model_utils.managers import InheritanceManager
-from Addresses.models import Coordinate
+from Addresses.models import Coordinate, Zipcode
 
 
 class Manufacturer(models.Model):
@@ -242,8 +243,8 @@ class Product(models.Model):
             .filter(publish_online_price=True)
         )
 
-    def get_in_store_priced(self):
-        return (
+    def get_in_store_priced(self, zipcode=None):
+        priced = (
             self.priced.select_related(
                 "location",
                 "location__company",
@@ -254,6 +255,34 @@ class Product(models.Model):
             .all()
             .filter(publish_in_store_price=True)
         )
+        if zipcode:
+            point = Zipcode.objects.get(code=zipcode).centroid.point
+            return priced.annotate(
+                distance=Distance("location__address__coordinates__point", point)
+            )
+        return priced
+
+    def serialize_priced(self, zipcode=None):
+        priced = self.get_in_store_priced(zipcode)
+        return [
+            {
+                "pk": price.pk,
+                "in_store_ppu": price.in_store_ppu,
+                "units_available_in_store": price.units_available_in_store,
+                "units_per_order": price.units_per_order,
+                "location_address": price.location.address.city_state(),
+                "location_id": price.location.pk,
+                "company_name": price.location.company.name,
+                "lead_time_ts": price.lead_time_ts.days,
+                "publish_online_price": price.publish_online_price,
+                "publish_in_store_price": price.publish_in_store_price,
+                "publish_in_store_availability": price.publish_in_store_availability,
+                "distance": str(int(round(float(price.distance.mi), 0)))
+                if zipcode
+                else "Use Location",
+            }
+            for price in priced
+        ]
 
     def set_locations(self):
         self.locations = None

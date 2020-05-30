@@ -50,7 +50,8 @@ def product_detail(request, pk):
     product: ProductSubClass = Product.subclasses.get_subclass(pk=pk)
 
     if request.method == "GET":
-        response = serialize_detail(product)
+        zipcode = request.GET.get("zipcode")
+        response = serialize_detail(product, zipcode)
         if request.user.is_authenticated and request.user.is_admin:
             response.update({"admin_fields": product.get_admin_fields()})
         pdr = ProductDetailRecord()
@@ -67,6 +68,7 @@ def product_detail(request, pk):
         return Response(response, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(["GET"])
 def product_detail_quick(request, pk):
