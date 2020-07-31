@@ -1,5 +1,5 @@
 import datetime
-from django.db import models, transaction
+from django.db import models
 from django.db.models.functions import TruncDate
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import JSONField
@@ -142,7 +142,7 @@ class SupplierLocation(models.Model):
         return " ".join(hash_list)
 
     # def clean(self):
-    #     # TODO makes sure employee assigned to local_admin is a company employee
+    #     # makes sure employee assigned to local_admin is a company employee
 
     def assign_number(self):
         # numbers = self.company.shipping_locations.values_list('number', flat=True)

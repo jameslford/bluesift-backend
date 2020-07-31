@@ -13,7 +13,7 @@ from config.custom_permissions import PrivateSupplierCrud
 from config.serializers import BusinessSerializer
 from Analytics.models import SupplierProductListRecord
 from Profiles.models import SupplierEmployeeProfile
-from ProductFilter.sorter import Sorter, FilterResponse
+from ProductFilter.sorter import FilterResponse
 from .models import SupplierLocation, SupplierProduct
 from .serializers import (
     serialize_location_public_detail,
