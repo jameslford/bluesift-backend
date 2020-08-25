@@ -76,16 +76,33 @@ class ValueCleaner(models.Model):
 
 
 class ProductAvailabilityQuerySet(models.QuerySet):
-    def product_prices(self):
+    def product_prices(self, location_pk=None):
+        if not location_pk:
+            return self.annotate(
+                low_price=Case(
+                    When(
+                        priced__publish_in_store_price=True,
+                        then=Least(
+                            Min("priced__in_store_ppu"), Min("priced__online_ppu")
+                        ),
+                    )
+                )
+            )
+            # low_price=When(
+            #     priced__publish_in_store_price=True,
+            #     # priced__location=location_pk,
+            #     then=Least(Min("priced__in_store_ppu"), Min("priced__online_ppu")),
+            # )
         prods = self.annotate(
             low_price=Case(
                 When(
                     priced__publish_in_store_price=True,
+                    priced__location__pk=location_pk,
                     then=Least(Min("priced__in_store_ppu"), Min("priced__online_ppu")),
                 )
             )
         )
-        return prods
+        return prods.filter(low_price__isnull=False)
 
 
 class ProductPricingManager(models.Manager):

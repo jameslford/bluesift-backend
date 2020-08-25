@@ -21,7 +21,7 @@ from .models import (
 )
 
 page_size = 50
-cache_minutes = 8
+cache_minutes = 20
 
 
 class FilterResponse:
@@ -38,7 +38,6 @@ class FilterResponse:
         self.enabled_values = list(
             {v["expression"]: v for v in enabled_values}.values()
         )
-        # self.enabled_values = enabled_values
 
     def set_cache(self, path_key):
         facets = [facet.serialize_self() for facet in self.facets]
@@ -187,9 +186,7 @@ class Sorter:
         pk_sets = [
             facet.filter_self() for facet in self.facets if facet and not facet.dynamic
         ]
-        pk_sets = [
-            pks for pks in pk_sets if pks and len(pks) < self.initial_product_count
-        ]
+        pk_sets = [pks for pks in pk_sets if pks]
         prods = self.initial_products
         for pks in pk_sets:
             prods = prods.filter(pk__in=pks)
@@ -232,6 +229,6 @@ class Sorter:
         products = (
             Product.objects.select_related("manufacturer")
             .filter(pk__in=products)
-            .product_prices()
+            .product_prices(self.supplier_pk)
         )
         return FilterResponse(product_count, self.facets, products, innis)
