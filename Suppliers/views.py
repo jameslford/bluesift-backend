@@ -119,14 +119,11 @@ def crud_location(request: Request, pk: int = None):
 
 
 @api_view(["DELETE", "GET", "PUT"])
-# @permission_classes((PrivateSupplierCrud,))
 def crud_supplier_products(request: HttpRequest, product_type=None):
 
     imageurl = get_storage_class().base_path()
 
     if request.method == "GET":
-        # lead_time_to_store=ExpressionWrapper(F('lead_time_ts'), output_field=DateTimeField('day'))
-        # model = check_department_string(product_type)
         res = FilterResponse.get_cache(request, product_type)
         pks = [prod["pk"] for prod in res["products"]]
         supplier = request.GET.get("supplier_pk")
@@ -161,44 +158,7 @@ def crud_supplier_products(request: HttpRequest, product_type=None):
             "product__manufacturer__label",
         )
         return Response(res, status=status.HTTP_200_OK)
-        # location = request.user.get_collections().get(pk=location_pk)
-        # model = check_department_string(product_type)
-        # content = Sorter(model, request, location_pk).data
-        # product_pks = list(content.products.values_list('pk', flat=True))
-        # sup_prods = location.products.select_related(
-        #     'product',
-        #     'product__manufacturer'
-        # ).filter(product__pk__in=product_pks).annotate(
-        #     swatch_url=Concat(Value(imageurl), 'product__swatch_image', output_field=CharField()),
-        #     # lead_time_to_store=ExpressionWrapper(F('lead_time_ts'), output_field=DateTimeField('day'))
-        # )
 
-        # serialized_prods = sup_prods.values(
-        #     'pk',
-        #     'in_store_ppu',
-        #     'online_ppu',
-        #     'units_available_in_store',
-        #     'units_per_order',
-        #     'lead_time_ts',
-        #     'offer_installation',
-        #     'publish_in_store_availability',
-        #     'publish_in_store_price',
-        #     'publish_online_price',
-        #     'swatch_url',
-        #     'product__pk',
-        #     'product__unit',
-        #     'product__manufacturer_style',
-        #     'product__manufacturer_collection',
-        #     'product__manufacturer_sku',
-        #     'product__manufacturer__label',
-        #     )
-        # return Response(
-        #     {
-        #         'product_count': content.product_count,
-        #         'enabled_values': content.enabled_values,
-        #         'facets': content.facets,
-        #         'products': serialized_prods
-        #     }, status=status.HTTP_200_OK)
     if request.method == "PUT":
         data = request.data
         profile: SupplierEmployeeProfile = request.user.get_profile()
@@ -226,3 +186,8 @@ def crud_supplier_products(request: HttpRequest, product_type=None):
         return Response(f"{updates} products updated", status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+def supplier_product(request, pk: int):
+    product = SupplierProduct.objects.get(pk=pk)
+    return Response(product.serialize_mini, status=status.HTTP_200_OK)

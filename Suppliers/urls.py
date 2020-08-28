@@ -5,6 +5,7 @@ from .views import (
     public_locations_list_view,
     public_location_detail_view,
     private_locations_list,
+    supplier_product,
 )
 
 urlpatterns = [
@@ -16,4 +17,5 @@ urlpatterns = [
     path("location/<int:pk>", crud_location),
     path("products/<str:product_type>", crud_supplier_products),
     path("products", crud_supplier_products),
+    path("product/<int:pk>", supplier_product),
 ]
