@@ -1,7 +1,10 @@
-from django.db import models
+import random
+from faker import Faker
+from django.db import models, IntegrityError
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
 from Plans.models import SupplierPlan
+from scripts.demo_data import create_user
 
 
 class SupplierGroupManager(models.Manager):
@@ -18,14 +21,14 @@ class SupplierGroupManager(models.Manager):
         group.delete()
         return
 
-    def edit_group(self, user, **kwargs):
-        if not user.is_supplier:
-            return
-        profile = user.get_profile()
-        if not (profile.owner or profile.admin):
-            return
-        # company = user.get_group()
-        # name = kwargs.get('name')
+    # def edit_group(self, user, **kwargs):
+    #     if not user.is_supplier:
+    #         return
+    #     profile = user.get_profile()
+    #     if not (profile.owner or profile.admin):
+    #         return
+    # company = user.get_group()
+    # name = kwargs.get('name')
 
 
 class SupplierCompany(models.Model):
@@ -70,3 +73,33 @@ class SupplierCompany(models.Model):
             )
         )
 
+    def create_demo_employees(self):
+        from Profiles.models import BaseProfile
+
+        user = create_user(is_supplier=True)
+        admin = random.choice([True, False])
+        employee = BaseProfile.objects.create_profile(
+            user=user[0], company=self, company_admin=admin
+        )
+        return employee
+
+    @classmethod
+    def create_demo_supplier_company(cls, user, address):
+        fake = Faker()
+        u_phone = fake.phone_number()
+        u_phone = u_phone[:25] if len(u_phone) > 25 else u_phone
+        ret_com_text = fake.paragraph(nb_sentences=5, variable_nb_sentences=True)
+        ret_com_name = fake.company() + " demo"
+        try:
+            company: SupplierCompany = SupplierCompany.objects.create_group(
+                user=user,
+                business_address=address,
+                phone_number=u_phone,
+                name=ret_com_name,
+                info=ret_com_text,
+            )
+            for _ in range(random.randint(1, 3)):
+                company.create_demo_employees(company)
+            return company
+        except IntegrityError:
+            cls.create_demo_supplier_company(user, address)

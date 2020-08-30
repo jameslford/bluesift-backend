@@ -1,14 +1,15 @@
-from typing import Dict
+import random
+from typing import Dict, List
 from datetime import timedelta, datetime
 import pytz
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from model_utils import Choices
 from model_utils.managers import InheritanceManager
 from Addresses.models import Address
 from Suppliers.models import SupplierProduct
-from Profiles.models import ConsumerProfile, LibraryProduct
+from .demo_list import PROJECT_MIDDLES, PROJECT_SUFFIXES, ROOMS, SUB_TASKS
 
 DAY = 60 * 60 * 24 * 1000
 
@@ -101,7 +102,7 @@ class Project(models.Model):
     )
     nickname = models.CharField(max_length=60)
     owner = models.ForeignKey(
-        ConsumerProfile, on_delete=models.CASCADE, related_name="projects"
+        "Profiles.ConsumerProfile", on_delete=models.CASCADE, related_name="projects"
     )
 
     objects = ProjectManager()
@@ -130,6 +131,86 @@ class Project(models.Model):
 
     # def calculate_progress(self):
     #     tasks = self.tasks.all()
+
+    @classmethod
+    def create_demo_project(cls, user, address: Address):
+        from scripts.demo_data import random_deadline
+
+        deadline = random_deadline()
+        middle = random.choice(PROJECT_MIDDLES)
+        suffix = random.choice(PROJECT_SUFFIXES)
+        nickname = (
+            f"{address.get_short_name()} {middle} {suffix}"
+            if address
+            else f"{middle} {suffix}"
+        )
+        try:
+            project = Project.objects.create_project(
+                user=user, nickname=nickname, deadline=deadline
+            )
+            if address:
+                project.address = address
+                project.save()
+            return project
+        except IntegrityError:
+            return None
+
+    def create_fake_parent_tasks(self):
+        # pylint-disable: nu-member
+        if not self.owner.user.demo:
+            return
+
+        rooms = ROOMS.copy()
+        total_rooms = len(rooms) - 4
+        products = [prod.product for prod in self.owner.products.all()]
+        task_count = range(random.randint(3, total_rooms))
+        for _ in task_count:
+            add_assignment = random.choice([True, False])
+            task_name = random.choice(rooms)
+            task_name = rooms.pop(rooms.index(task_name))
+            task = ProjectTask(project=self)
+            task.name = task_name
+            if add_assignment:
+                prod = random.choice(products)
+                index = products.index(prod)
+                task.product = products.pop(index)
+                task.quantity_needed = random.randint(30, 300)
+                task.procured = random.choice([True, False])
+            task.save()
+        project_tasks = list(self.tasks.all())
+        while len(project_tasks) > 2:
+            rec_task = project_tasks.pop(0)
+            pred_task = project_tasks.pop(1)
+            rec_task.predecessor = pred_task
+            rec_task.save()
+
+    def create_fake_children_task(self):
+        # pylint-disable: nu-member
+        if not self.owner.user.demo:
+            return
+
+        tasks: List[ProjectTask] = ProjectTask.objects.filter(level=0, project=self)
+        for task in tasks:
+            print("creating children for ", task.name)
+            sub_tasks = SUB_TASKS.copy()
+            current_child = None
+            for child in sub_tasks:
+                cont = random.randint(0, 10)
+                if cont < 4:
+                    continue
+                duration = random.randint(3, 5)
+                child_task = ProjectTask()
+                child_task.parent = task
+                child_task.name = child
+                child_task.project = task.project
+                child_task.duration = datetime.timedelta(days=duration)
+                if current_child and random.randint(0, 10) > 4:
+                    child_task.predecessor = current_child
+                try:
+                    child_task.save()
+                    current_child = child_task
+                except ValidationError:
+                    continue
 
 
 class ProjectTask(models.Model):
@@ -288,7 +369,10 @@ class ProjectProduct(models.Model):
         Project, null=True, on_delete=models.CASCADE, related_name="products"
     )
     product = models.ForeignKey(
-        LibraryProduct, null=True, on_delete=models.PROTECT, related_name="projects"
+        "Profiles.LibraryProduct",
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="projects",
     )
     supplier_product = models.ForeignKey(
         SupplierProduct, null=True, on_delete=models.CASCADE, related_name="projects"

@@ -1,4 +1,8 @@
 import datetime
+import random
+import decimal
+from typing import List
+from operator import add, sub
 from django.db import models
 from django.db.models.functions import TruncDate
 from django.core.exceptions import ValidationError
@@ -7,13 +11,13 @@ from model_utils.managers import InheritanceManager
 
 from Addresses.models import Address
 from Products.models import Product
-from Groups.models import SupplierCompany
-from Profiles.models import SupplierEmployeeProfile
 from utils.tree import SupplierLocationTree
 
 
 class SupplierLocationManager(models.Manager):
     def create_location(self, user, **kwargs):
+        from Profiles.models import SupplierEmployeeProfile
+
         company = user.get_group()
         nickname = kwargs.get("nickname")
         phone_number = kwargs.get("phone_number")
@@ -71,10 +75,12 @@ class SupplierLocationManager(models.Manager):
 class SupplierLocation(models.Model):
     nickname = models.CharField(max_length=60)
     company = models.ForeignKey(
-        SupplierCompany, on_delete=models.CASCADE, related_name="shipping_locations"
+        "Groups.SupplierCompany",
+        on_delete=models.CASCADE,
+        related_name="shipping_locations",
     )
     local_admin = models.ForeignKey(
-        SupplierEmployeeProfile,
+        "Profiles.SupplierEmployeeProfile",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -100,14 +106,6 @@ class SupplierLocation(models.Model):
 
     def __str__(self):
         return str(self.company) + " " + str(self.number)
-
-    def average_rating(self):
-        avg_rating = self.ratings.all().aggregate(models.Avg("rating"))
-        avg_rating = avg_rating.get("rating_avg", None)
-        return avg_rating
-
-    def rating_count(self):
-        return self.ratings.all().count()
 
     def coordinates(self):
         return [self.address.lat, self.address.lng]
@@ -168,6 +166,78 @@ class SupplierLocation(models.Model):
         super(SupplierLocation, self).save(*args, **kwargs)
         tree = SupplierProductTree.objects.get_or_create(location=self)[0]
         tree.refresh()
+
+    def refresh_demo_view_records(self):
+        from Profiles.models import SupplierEmployeeProfile
+
+        owner = SupplierEmployeeProfile.objects.filter(owner=True, company=self.company)
+        if not owner.user.demo:
+            return
+
+    def __create_demo_view_records(self):
+        from Analytics.models import SupplierProductListRecord
+        from Addresses.models import Coordinate
+
+        coordinates = list(Coordinate.objects.all())
+        num_days = 40
+        base = datetime.datetime.today() - datetime.timedelta(num_days)
+        date_dicts = [
+            {"date": base + datetime.timedelta(days=x), "x": x} for x in range(num_days)
+        ]
+        # locations = SupplierLocation.objects.all()
+        # count = locations.count()
+        ops = (add, sub)
+        current = 1
+        for date_dict in date_dicts:
+            date = date_dict["date"]
+            x = date_dict["x"]
+            views = current + (x // 3) + 1
+            current += 1
+            op = random.choice(ops)
+            variabilty = random.randint(views // 4, views // 3)
+            views = op(views, variabilty)
+            current = views
+            print(date, "_____", views)
+            for _ in range(views):
+                coordinate = random.choice(coordinates)
+                SupplierProductListRecord.objects.create(
+                    supplier=self, location=coordinate, recorded=date
+                )
+
+    def __delete_demo_view_records(self):
+        from Analytics.models import SupplierProductListRecord
+
+        SupplierProductListRecord.objects.filter(supplier=self).delete()
+
+    def create_demo_products(self):
+        # print(str(ind) + " out of " + str(int(locations.count())) + "locations")
+        min_count = 30
+        if self.products.all().count() >= min_count:
+            return
+        products: List[Product] = list(Product.objects.all())
+        max_count = (len(products) // 18) + min_count
+        rang_int = random.randint(min_count, max_count)
+        for _ in range(rang_int):
+            price = random.uniform(1, 10)
+            price = round(float(price), 2)
+            price = decimal.Decimal(price)
+            units_available = random.randint(10, 60)
+            units_per_order = decimal.Decimal(3.5)
+            select_product = random.choice(products)
+            index = products.index(select_product)
+            select_product = products.pop(index)
+            lead_time = random.randint(1, 14)
+            offer_install = random.choice([True, False])
+            sup_prod: SupplierProduct = SupplierProduct.objects.get_or_create(
+                product=select_product, location=self
+            )[0]
+            sup_prod.units_available_in_store = units_available
+            sup_prod.units_per_order = units_per_order
+            sup_prod.publish_in_store_price = True
+            sup_prod.in_store_ppu = price
+            sup_prod.lead_time_ts = datetime.timedelta(days=lead_time)
+            sup_prod.offer_installation = offer_install
+            sup_prod.save()
 
 
 class SupplierProductManager(models.Manager):
@@ -351,8 +421,8 @@ class SupplierProductTree(models.Model):
                 link = parent.link + "/" + name
                 new_tree = SupplierLocationTree(name, count, link)
                 parent.children.append(new_tree)
-                for sub in current.__subclasses__():
-                    self.__looper(sub, new_tree)
+                for subcls in current.__subclasses__():
+                    self.__looper(subcls, new_tree)
         else:
             for child in current.__subclasses__():
                 self.__looper(child, parent)
@@ -361,7 +431,7 @@ class SupplierProductTree(models.Model):
         name = self.location.nickname
         count = self.location.products.count()
         tree = SupplierLocationTree(name, count, str(self.location.pk))
-        for sub in Product.__subclasses__():
-            self.__looper(sub, tree)
+        for subcls in Product.__subclasses__():
+            self.__looper(subcls, tree)
         self.tree = tree.serialize()
         self.save()

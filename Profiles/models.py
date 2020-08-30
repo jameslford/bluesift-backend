@@ -1,3 +1,4 @@
+import random
 from django.db import models
 from django.conf import settings
 from model_utils.managers import InheritanceManager
@@ -109,6 +110,34 @@ class ConsumerProfile(BaseProfile):
         if self.user.is_supplier:
             raise ValueError("user should not be pro or supplier")
         super(ConsumerProfile, self).save(*args, **kwargs)
+
+    def add_fake_products(self):
+        if not self.user.demo:
+            return
+        products = list(Product.objects.values_list("pk", flat=True))
+        min_prod = 20
+        max_products = random.randint(min_prod, 40)
+        if self.products.all().count() >= min_prod:
+            print("products already assigned")
+            return
+        from Projects.models import ProjectProduct, ProjectTask
+
+        project_products = []
+        for _ in range(max_products):
+            index = random.choice(products)
+            index = products.index(index)
+            product = products.pop(index)
+            product = Product.objects.get(pk=product)
+            pprod = LibraryProduct.objects.create(product=product, owner=self)
+            project_products.append(pprod)
+        tasks = ProjectTask.objects.filter(project__owner=self)
+        for pps, pts in zip(project_products, tasks):
+            prod = ProjectProduct.objects.create(linked_tasks=pts, product=pps)
+            prod.quantity_needed = random.randint(10, 100)
+            if random.randint(0, 10) > 6:
+                prod.supplier_product = prod.product.priced.first()
+                prod.procured = random.choice([True, False])
+            prod.save()
 
 
 class SupplierEmployeeProfile(BaseProfile):
