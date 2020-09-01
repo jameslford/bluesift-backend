@@ -22,10 +22,10 @@ ALLOWED_HOSTS = [
 ]
 CORS_ORIGIN_WHITELIST = [
     "https://www.bluesift.com",
-    "https://www.bluesift.com",
     "https://bluesift-staging-frontend.herokuapp.com",
     "http://personal-frontend.s3-website-us-east-1.amazonaws.com",
     "https://www.jamesleeford.com",
+    "https://jamesleeford.com",
 ]
 
 CORS_ALLOW_HEADERS = list(default_headers) + ["Location", "sessionID"]
