@@ -62,5 +62,7 @@ class ProductDetailRecord(Record):
 
 class SupplierProductListRecord(Record):
     supplier = models.ForeignKey(
-        "Suppliers.SupplierLocation", on_delete=models.CASCADE,
+        "Suppliers.SupplierLocation",
+        on_delete=models.CASCADE,
+        related_name="view_records",
     )

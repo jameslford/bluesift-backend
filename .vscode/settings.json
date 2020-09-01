@@ -11,6 +11,6 @@
     "python.linting.pylintArgs": [
         "--load-plugins=pylint_django",
         "--max-line-length=120",
-        "--disable=arguments-differ"
+        "--disable=arguments-differ, attribute-defined-outside-init"
     ],
 }

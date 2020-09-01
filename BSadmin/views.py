@@ -15,8 +15,7 @@ from Suppliers.models import SupplierProduct
 from Analytics.models import GenericRecord
 from Projects.models import Project
 from Products.models import Product
-from scripts.suppliers import refresh_supplier_products
-from scripts.generate_data import delete_fake
+
 
 # from scripts.finish_surfaces import clean_products
 from .tasks import create_indexes
@@ -166,11 +165,11 @@ def refresh_supplier_employees(request):
 @permission_classes((IsAdminUser,))
 def demo(request):
     if request.method == "GET":
-        refresh_supplier_products()
+        # refresh_supplier_products()
         return Response(status=status.HTTP_201_CREATED)
 
     if request.method == "DELETE":
-        delete_fake()
+        # delete_fake()
         return Response(status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

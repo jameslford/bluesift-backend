@@ -25,10 +25,10 @@ def add_zips():
             Zipcode.objects.get_or_create(code=row[0], centroid=coord)
 
 
-def generate_address_groups():
+def generate_address_groups(maxnum=40):
     addresses = Address.objects.filter(demo=True)
     count = addresses.count()
-    count = count if count < 40 else 40
+    count = count if count < maxnum else maxnum
     addresses = random.sample(list(addresses), count)
     exclude_pks = []
     return_groups = []
@@ -39,7 +39,7 @@ def generate_address_groups():
 
         closest = address.find_closest_others()
         adds = []
-        for num in range(0, number):
+        for _ in range(0, number):
             for close in closest:
                 if close.pk in exclude_pks:
                     continue
