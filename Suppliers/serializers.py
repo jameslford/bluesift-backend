@@ -1,4 +1,5 @@
 from Addresses.serializers import AddressSerializer
+
 from .models import SupplierLocation
 from Profiles.serializers import employee_mini_serializer
 
@@ -30,5 +31,5 @@ def serialize_location_private_detail(business: SupplierLocation):
         "employees": [employee_mini_serializer(emp) for emp in employees],
         "info": business.company.info,
         "tree": business.product_tree.get_trees().serialize(),
-        "views": business.view_records(),
+        "views": business.view_record_list(),
     }

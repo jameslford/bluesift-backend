@@ -77,8 +77,27 @@ def private_locations_list(request):
     group = request.user.get_group()
     locations = SupplierLocation.objects.select_related("address").filter(company=group)
     res = [serialize_location_private_detail(loc) for loc in locations]
-    # series = [{'date': date, store: count for store, count in res}]
-    return Response({"locations": res}, status=status.HTTP_200_OK)
+    views_array = []
+    views = {}
+    for loc in res:
+        loc_name = loc["name"]
+        for date in loc["views"]:
+            date_string = str(date["date"])
+            exists = views.get(date_string)
+            if exists:
+                views[date_string][loc_name] = date["count"]
+            else:
+                views[date_string] = {loc_name: date["count"]}
+        del loc["views"]
+    for key, stores in views.items():
+        new_dict = {"date": key}
+        total = 0
+        for store, count in stores.items():
+            total += count
+            new_dict[store] = count
+            new_dict["total"] = total
+        views_array.append(new_dict)
+    return Response({"locations": res, "views": views_array}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET", "POST", "DELETE", "PUT"])

@@ -110,14 +110,16 @@ class SupplierLocation(models.Model):
     def coordinates(self):
         return [self.address.lat, self.address.lng]
 
-    def view_records(self):
-        from Analytics.models import SupplierProductListRecord
+    def view_record_list(self):
+        # from Analytics.models import SupplierProductListRecord
+
+        # return "hello"
+        # supplier=self.pk,
 
         return (
-            SupplierProductListRecord.objects.filter(
+            self.view_records.filter(
                 recorded__lte=datetime.datetime.today(),
                 recorded__gt=datetime.datetime.today() - datetime.timedelta(days=30),
-                supplier=self.pk,
             )
             .annotate(date=TruncDate("recorded"))
             .values("date")
