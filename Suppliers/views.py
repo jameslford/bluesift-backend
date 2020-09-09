@@ -15,10 +15,7 @@ from Analytics.models import SupplierProductListRecord
 from Profiles.models import SupplierEmployeeProfile
 from ProductFilter.sorter import FilterResponse
 from .models import SupplierLocation, SupplierProduct
-from .serializers import (
-    serialize_location_public_detail,
-    serialize_location_private_detail,
-)
+from .serializers import serialize_location_detail
 
 
 @api_view(["GET"])
@@ -40,11 +37,12 @@ def public_locations_list_view(request: Request, category=None):
         suppliers = suppliers.filter(pk__in=supplier_product_pks)
     res = suppliers.annotate(
         product_count=Count("products"),
+        name=F("nickname"),
         lat=F("address__coordinates__lat"),
         lng=F("address__coordinates__lng"),
         address_string=F("address__address_string"),
     ).values(
-        "nickname",
+        "name",
         "pk",
         "product_count",
         "phone_number",
@@ -65,8 +63,7 @@ def public_location_detail_view(request: HttpRequest, pk: int):
 
     sdr = SupplierProductListRecord()
     sdr.parse_request(request, supplier=pk)
-    info = serialize_location_public_detail(model)
-    # info.update({'tree': model.product_tree.get_trees().serialize()})
+    info = serialize_location_detail(model)
 
     return Response(info, status=status.HTTP_200_OK)
 
@@ -74,30 +71,15 @@ def public_location_detail_view(request: HttpRequest, pk: int):
 @api_view(["GET"])
 @permission_classes((PrivateSupplierCrud,))
 def private_locations_list(request):
-    group = request.user.get_group()
-    locations = SupplierLocation.objects.select_related("address").filter(company=group)
-    res = [serialize_location_private_detail(loc) for loc in locations]
-    views_array = []
-    views = {}
-    for loc in res:
-        loc_name = loc["name"]
-        for date in loc["views"]:
-            date_string = str(date["date"])
-            exists = views.get(date_string)
-            if exists:
-                views[date_string][loc_name] = date["count"]
-            else:
-                views[date_string] = {loc_name: date["count"]}
-        del loc["views"]
-    for key, stores in views.items():
-        new_dict = {"date": key}
-        total = 0
-        for store, count in stores.items():
-            total += count
-            new_dict[store] = count
-            new_dict["total"] = total
-        views_array.append(new_dict)
-    return Response({"locations": res, "views": views_array}, status=status.HTTP_200_OK)
+    if request.method == "GET":
+        group = request.user.get_group()
+        locations = SupplierLocation.objects.select_related("address").filter(
+            company=group
+        )
+        res = [serialize_location_detail(loc) for loc in locations]
+        return Response({"locations": res}, status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET", "POST", "DELETE", "PUT"])

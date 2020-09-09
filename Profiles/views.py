@@ -7,13 +7,11 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 from django.db.models.functions import Concat
-from django.db.models.query import QuerySet, Value
+from django.db.models.query import Value
 from django.db.models import CharField
 from django.core.files.storage import get_storage_class
 
 
-# from config.serializers import serialize_profile
-from Products.serializers import serialize_product
 from Products.models import Product
 from .models import BaseProfile, LibraryProduct
 from .serializers import employee_mini_serializer, base_mini_serializer
@@ -42,7 +40,7 @@ def profile_crud(request: Request):
 
 @api_view(["GET", "PUT", "POST", "DELETE"])
 @permission_classes((IsAuthenticated,))
-def collaborators(request: Request, pk=None):
+def collaborators(request: Request):
 
     if request.method == "GET":
         profile = BaseProfile.subclasses.select_related(
@@ -64,11 +62,21 @@ def collaborators(request: Request, pk=None):
 
 
 @api_view(["GET"])
-def show_employees(request: Request, service_pk: int):
+@permission_classes((IsAuthenticated,))
+def supplier_view_employees(request: Request, employee_pk: int = None):
+    published_employees = [
+        employee_mini_serializer(emp)
+        for emp in request.user.get_group().employees.all()
+    ]
+    return Response(published_employees, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes((IsAuthenticated,))
+def user_view_employees(request: Request, service_pk: int):
     published_employees = BaseProfile.subclasses.filter(
         company__pk=service_pk, publish=True
     ).select_subclasses()
-    published_employees = [employee_mini_serializer(emp) for emp in published_employees]
     if request.user.is_authenticated:
         profile: BaseProfile = request.user.get_profile()
         my_collabs = [prof.pk for prof in profile.collaborators]
@@ -76,7 +84,7 @@ def show_employees(request: Request, service_pk: int):
             prof.update({"add": bool(prof["pk"] in my_collabs)})
             for prof in published_employees
         ]
-    return Response(published_employees, status=status.HTTP_200_OK)
+    return published_employees
 
 
 @api_view(["GET"])
@@ -100,9 +108,6 @@ def palette(request):
             "unit",
             "hash_value",
             "category",
-            # "width",
-            # "height",
-            # "depth",
             "manufacturer_style",
             "manufacturer_collection",
             "manufacturer_sku",
