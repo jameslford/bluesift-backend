@@ -1,16 +1,15 @@
 {
-    "python.pythonPath": "/home/james/benv/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.pylintUseMinimalCheckers": false,
-    "python.formatting.provider": "black",
-    "editor.formatOnSave": true,
-    "python.linting.flake8Args": [
-        "--max-line-length=120"
-    ],
-    "python.linting.pylintArgs": [
-        "--load-plugins=pylint_django",
-        "--max-line-length=120",
-        "--disable=arguments-differ, attribute-defined-outside-init"
-    ],
+  "python.pythonPath": "/home/james/benv/bin/python",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintUseMinimalCheckers": false,
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true,
+  "python.linting.flake8Args": ["--max-line-length=120"],
+  "window.zoomLevel": 0,
+  "python.linting.pylintArgs": [
+    "--load-plugins=pylint_django",
+    "--max-line-length=120",
+    "--disable=arguments-differ, attribute-defined-outside-init"
+  ]
 }

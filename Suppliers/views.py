@@ -77,7 +77,7 @@ def private_locations_list(request):
             company=group
         )
         res = [serialize_location_detail(loc) for loc in locations]
-        return Response({"locations": res}, status=status.HTTP_200_OK)
+        return Response(res, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
